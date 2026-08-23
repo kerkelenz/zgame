@@ -32,7 +32,33 @@ export const colors = {
 
   accent: '#4C8DFF',
   danger: '#FF6B6B',
+  /** Amber: "you cannot do this *yet*" - a soft stop, not a hard one. */
+  warning: '#F5A623',
   success: '#5BD98A',
+
+  /** Track colour behind every progress bar. */
+  track: '#1E2740',
+} as const;
+
+/**
+ * Colour per building category.
+ *
+ * Categories are the fastest way to make a long list scannable: once you learn
+ * that amber means "mine" you stop reading the names to find your mines.
+ */
+export const categoryColor = {
+  mine: '#E8A33D',
+  energy: '#F5C451',
+  storage: '#8B9BC4',
+  facility: '#7B8CFF',
+} as const;
+
+/** Human-readable name per category, for the badge on each building card. */
+export const categoryLabel = {
+  mine: 'Mine',
+  energy: 'Energy',
+  storage: 'Storage',
+  facility: 'Facility',
 } as const;
 
 /** A 4px spacing scale. Consistent rhythm without thinking about it. */

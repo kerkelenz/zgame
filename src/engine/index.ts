@@ -76,7 +76,7 @@ export {
 } from './buildings';
 
 // ---- Queue + time ----------------------------------------------------------
-export { completeFinishedBuilds } from './queue';
+export { buildProgress, completeFinishedBuilds } from './queue';
 export type { CompletionResult } from './queue';
 export { tick } from './tick';
 export type { TickCompletion, TickResult } from './tick';

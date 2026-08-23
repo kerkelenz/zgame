@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BuildStatusBar } from '@/components/BuildStatusBar';
 import { GameImage } from '@/components/GameImage';
 import { ResourceBar } from '@/components/ResourceBar';
 import { useActivePlanet, useGameStore, useSpeed } from '@/state/gameStore';
@@ -57,8 +58,12 @@ function AppShell() {
 
   return (
     <View style={[styles.shell, { paddingTop: insets.top }]}>
-      <View style={styles.resourceBarWrapper}>
+      {/* Both bars sit outside <Tabs>, so they persist across tab switches
+          instead of unmounting and remounting (which would make the numbers
+          flicker every time you navigated). */}
+      <View style={styles.statusStack}>
         <ResourceBar planet={planet} speed={speed} />
+        <BuildStatusBar planet={planet} />
       </View>
 
       <Tabs
@@ -77,14 +82,31 @@ function AppShell() {
           name="index"
           options={{
             title: 'Overview',
-            tabBarIcon: () => <GameImage id="planet.temperate.1" size={22} label="Overview" />,
+            // Tinted from our own palette rather than the navigator's
+            // `color` argument, which is typed as the platform-opaque
+            // `ColorValue`. Same two colours either way - see screenOptions.
+            tabBarIcon: ({ focused }) => (
+              <GameImage
+                id="ui.planet"
+                size={22}
+                tintColor={focused ? colors.accent : colors.textFaint}
+                label=""
+              />
+            ),
           }}
         />
         <Tabs.Screen
           name="buildings"
           options={{
             title: 'Buildings',
-            tabBarIcon: () => <GameImage id="building.metalMine" size={22} label="Buildings" />,
+            tabBarIcon: ({ focused }) => (
+              <GameImage
+                id="ui.buildings"
+                size={22}
+                tintColor={focused ? colors.accent : colors.textFaint}
+                label=""
+              />
+            ),
           }}
         />
         {/* Research, Shipyard, Fleet and Galaxy tabs land in later milestones.
@@ -106,9 +128,10 @@ const styles = StyleSheet.create({
   shell: {
     flex: 1,
   },
-  resourceBarWrapper: {
+  statusStack: {
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
+    gap: spacing.sm,
   },
   tabBar: {
     backgroundColor: colors.surface,

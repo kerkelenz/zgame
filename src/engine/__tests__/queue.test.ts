@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { canAfford, canQueue, cancelBuild, startBuild } from '../buildings';
 import { buildTimeSeconds, buildingCost } from '../formulas';
-import { completeFinishedBuilds } from '../queue';
+import { buildProgress, completeFinishedBuilds } from '../queue';
 import { HOUR, T0, makePlanet, withBuildings } from './helpers';
 
 describe('canAfford', () => {
@@ -173,5 +173,30 @@ describe('completeFinishedBuilds', () => {
 
     expect(result.completed.map((i) => i.targetLevel)).toEqual([4, 5]);
     expect(result.planet.buildings.metalMine).toBe(5);
+  });
+});
+
+describe('buildProgress', () => {
+  const item = {
+    buildingId: 'metalMine' as const,
+    targetLevel: 4,
+    startedAt: T0,
+    finishesAt: T0 + HOUR,
+  };
+
+  it('runs from 0 to 1 across the build window', () => {
+    expect(buildProgress(item, T0)).toBe(0);
+    expect(buildProgress(item, T0 + HOUR / 4)).toBeCloseTo(0.25, 6);
+    expect(buildProgress(item, T0 + HOUR / 2)).toBeCloseTo(0.5, 6);
+    expect(buildProgress(item, T0 + HOUR)).toBe(1);
+  });
+
+  it('clamps outside the window instead of over- or under-shooting', () => {
+    expect(buildProgress(item, T0 - HOUR)).toBe(0);
+    expect(buildProgress(item, T0 + 10 * HOUR)).toBe(1);
+  });
+
+  it('reports a zero-length item as finished rather than dividing by zero', () => {
+    expect(buildProgress({ ...item, finishesAt: T0 }, T0)).toBe(1);
   });
 });

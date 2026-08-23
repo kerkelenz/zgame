@@ -88,6 +88,22 @@ export const ASSET_KEYS = [
   'defense.plasmaTurret',
   'defense.smallShield',
   'defense.largeShield',
+  'ui.time',
+  'ui.production',
+  'ui.storage',
+  'ui.build',
+  'ui.locked',
+  'ui.check',
+  'ui.warning',
+  'ui.cancel',
+  'ui.upgrade',
+  'ui.level',
+  'ui.temperature',
+  'ui.diameter',
+  'ui.coords',
+  'ui.cost',
+  'ui.planet',
+  'ui.buildings',
   'ui.starfield',
   'ui.missing',
 ] as const;
@@ -154,9 +170,65 @@ export const ASSETS: Record<AssetKey, ImageSourcePropType> = {
   'defense.plasmaTurret': require('./placeholders/defense-plasmaTurret.png'),
   'defense.smallShield': require('./placeholders/defense-smallShield.png'),
   'defense.largeShield': require('./placeholders/defense-largeShield.png'),
+  'ui.time': require('./placeholders/ui-time.png'),
+  'ui.production': require('./placeholders/ui-production.png'),
+  'ui.storage': require('./placeholders/ui-storage.png'),
+  'ui.build': require('./placeholders/ui-build.png'),
+  'ui.locked': require('./placeholders/ui-locked.png'),
+  'ui.check': require('./placeholders/ui-check.png'),
+  'ui.warning': require('./placeholders/ui-warning.png'),
+  'ui.cancel': require('./placeholders/ui-cancel.png'),
+  'ui.upgrade': require('./placeholders/ui-upgrade.png'),
+  'ui.level': require('./placeholders/ui-level.png'),
+  'ui.temperature': require('./placeholders/ui-temperature.png'),
+  'ui.diameter': require('./placeholders/ui-diameter.png'),
+  'ui.coords': require('./placeholders/ui-coords.png'),
+  'ui.cost': require('./placeholders/ui-cost.png'),
+  'ui.planet': require('./placeholders/ui-planet.png'),
+  'ui.buildings': require('./placeholders/ui-buildings.png'),
   'ui.starfield': require('./placeholders/ui-starfield.png'),
   'ui.missing': require('./placeholders/ui-missing.png'),
 };
+
+/**
+ * Keys drawn as a single glyph on a transparent background, rather than as a
+ * framed tile with a caption.
+ *
+ * `<GameImage>` uses this to decide whether to draw a rounded card behind the
+ * image, so call sites never have to remember which is which. The `ui.*` ones
+ * are painted white on purpose - tint them at the call site to colour-code
+ * meaning (amber for "cannot afford", red for "blocked", green for "ready").
+ */
+export const ICON_KEYS = [
+  'resource.metal',
+  'resource.crystal',
+  'resource.deuterium',
+  'resource.energy',
+  'ui.time',
+  'ui.production',
+  'ui.storage',
+  'ui.build',
+  'ui.locked',
+  'ui.check',
+  'ui.warning',
+  'ui.cancel',
+  'ui.upgrade',
+  'ui.level',
+  'ui.temperature',
+  'ui.diameter',
+  'ui.coords',
+  'ui.cost',
+  'ui.planet',
+  'ui.buildings',
+] as const satisfies readonly AssetKey[];
+
+export type IconKey = (typeof ICON_KEYS)[number];
+
+const ICON_KEY_SET: ReadonlySet<string> = new Set(ICON_KEYS);
+
+export function isIconKey(key: AssetKey): key is IconKey {
+  return ICON_KEY_SET.has(key);
+}
 
 // ---------------------------------------------------------------------------
 // Planet art selection
@@ -169,6 +241,20 @@ const PLANET_VARIANTS = {
   ice: ASSET_KEYS.filter((k): k is AssetKey => k.startsWith('planet.ice.')),
   gas: ASSET_KEYS.filter((k): k is AssetKey => k.startsWith('planet.gas.')),
 };
+
+export type PlanetType = keyof typeof PLANET_VARIANTS;
+
+/**
+ * A planet's climate type, derived from its average surface temperature.
+ *
+ * Exported separately from `planetArtKey` because the interface wants to *say*
+ * "TEMPERATE" as well as draw it - a label the player can read beats a picture
+ * they have to interpret.
+ */
+export function planetType(planet: Planet): PlanetType {
+  const avgTemp = (planet.temperature.min + planet.temperature.max) / 2;
+  return avgTemp >= 60 ? 'desert' : avgTemp <= -60 ? 'gas' : avgTemp <= -20 ? 'ice' : 'temperate';
+}
 
 /**
  * Pick a planet's artwork deterministically from its own data.
@@ -186,12 +272,7 @@ const PLANET_VARIANTS = {
  * something we can always re-derive.
  */
 export function planetArtKey(planet: Planet): AssetKey {
-  const avgTemp = (planet.temperature.min + planet.temperature.max) / 2;
-
-  const type =
-    avgTemp >= 60 ? 'desert' : avgTemp <= -60 ? 'gas' : avgTemp <= -20 ? 'ice' : 'temperate';
-
-  const variants = PLANET_VARIANTS[type];
+  const variants = PLANET_VARIANTS[planetType(planet)];
   if (variants.length === 0) return 'ui.missing';
 
   // Positions are 1-based, so subtract one before taking the modulus.

@@ -54,3 +54,21 @@ export function completeFinishedBuilds(planet: Planet, now: number): CompletionR
     completed: due,
   };
 }
+
+/**
+ * How far along a queue item is, as a fraction in [0, 1].
+ *
+ * Derived from the two timestamps we already store rather than counted up by a
+ * timer, which is what makes it correct after the app has been closed: reopen
+ * six hours into an eight-hour build and the bar is at 75% on the first frame,
+ * with nothing to catch up on.
+ *
+ * A zero-length item (possible only for a corrupt save, since
+ * `buildTimeSeconds` clamps to one second) reports as finished rather than
+ * dividing by zero.
+ */
+export function buildProgress(item: BuildQueueItem, now: number): number {
+  const total = item.finishesAt - item.startedAt;
+  if (total <= 0) return 1;
+  return Math.max(0, Math.min(1, (now - item.startedAt) / total));
+}

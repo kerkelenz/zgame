@@ -10,12 +10,14 @@
  *   blank space or a red-screen crash.
  * - Sizing is uniform: one `size` prop drives a square, so a grid of buildings
  *   cannot end up ragged because one asset has a different aspect ratio.
+ * - Tiles and icons are told apart automatically, so no call site has to
+ *   remember which keys need a card behind them.
  */
 
 import { Image } from 'expo-image';
-import { StyleSheet, type StyleProp, type ImageStyle } from 'react-native';
+import { StyleSheet, type ImageStyle, type StyleProp } from 'react-native';
 
-import { ASSETS, type AssetKey } from '@/assets/manifest';
+import { ASSETS, isIconKey, type AssetKey } from '@/assets/manifest';
 import { colors, radius } from '@/lib/theme';
 
 type GameImageProps = {
@@ -24,10 +26,24 @@ type GameImageProps = {
   style?: StyleProp<ImageStyle>;
   /** Alt text for screen readers and the web build. */
   label?: string;
+  /**
+   * Recolour a monochrome glyph.
+   *
+   * The `ui.*` icons are generated as white shapes on transparent backgrounds
+   * precisely so one asset can carry several meanings: `ui.warning` is amber
+   * when you simply cannot afford something and red when it is outright
+   * blocked. Tinting a *tile* would flatten it to a silhouette, so this is
+   * meant for icons only.
+   */
+  tintColor?: string;
 };
 
-export function GameImage({ id, size, style, label }: GameImageProps) {
+export function GameImage({ id, size, style, label, tintColor }: GameImageProps) {
   const source = ASSETS[id];
+
+  // Icons are transparent glyphs and must not get a card behind them; tiles are
+  // framed artwork and look unfinished without one.
+  const isIcon = isIconKey(id);
 
   // `id` is typed as `AssetKey`, so in principle this cannot happen. In
   // practice keys arrive from data (a building id, a planet's derived art key),
@@ -40,7 +56,7 @@ export function GameImage({ id, size, style, label }: GameImageProps) {
     return (
       <Image
         source={ASSETS['ui.missing']}
-        style={[styles.image, { width: size, height: size }, style]}
+        style={[styles.tile, { width: size, height: size }, style]}
         contentFit="cover"
         accessibilityLabel={label ?? 'Missing artwork'}
       />
@@ -50,8 +66,9 @@ export function GameImage({ id, size, style, label }: GameImageProps) {
   return (
     <Image
       source={source}
-      style={[styles.image, { width: size, height: size }, style]}
-      contentFit="cover"
+      style={[isIcon ? styles.icon : styles.tile, { width: size, height: size }, style]}
+      contentFit="contain"
+      tintColor={tintColor}
       // Placeholder art has hard pixel edges; a cross-fade on every mount would
       // just look like a flicker in a list.
       transition={0}
@@ -61,8 +78,11 @@ export function GameImage({ id, size, style, label }: GameImageProps) {
 }
 
 const styles = StyleSheet.create({
-  image: {
+  tile: {
     borderRadius: radius.md,
     backgroundColor: colors.surface,
+  },
+  icon: {
+    backgroundColor: 'transparent',
   },
 });

@@ -20,6 +20,20 @@
  * one-line change per asset in the manifest and nothing else in the app moves.
  *
  * ---------------------------------------------------------------------------
+ * TWO KINDS OF OUTPUT
+ * ---------------------------------------------------------------------------
+ * 1. **Tiles** (256px): buildings, planets, research, ships, defence. A solid
+ *    category background, a geometric motif, and the item's name in readable
+ *    text. These are shown large, so the text earns its place.
+ *
+ * 2. **Icons** (64px): resources and UI symbols. These are drawn at 16-22px in
+ *    the interface, where rendered text is an illegible smudge - so an icon is
+ *    a single bold glyph on a *transparent* background, with no label at all.
+ *    UI glyphs are drawn in white specifically so the app can recolour them at
+ *    runtime with expo-image's `tintColor` (one warning icon, tinted amber for
+ *    "expensive" and red for "blocked").
+ *
+ * ---------------------------------------------------------------------------
  * WHY pngjs AND A HAND-ROLLED FONT?
  * ---------------------------------------------------------------------------
  * `sharp` could render SVG with text far more prettily, but text rendering
@@ -102,31 +116,58 @@ const GLYPHS = {
 // pngjs hands us a flat RGBA byte buffer. Everything below is written against
 // that directly - no dependencies, no surprises, fully deterministic.
 
+/**
+ * Sentinel "colour" meaning *punch a hole*.
+ *
+ * Icons need real transparent cut-outs, not dark ones: the app recolours them
+ * with `tintColor`, which repaints every non-transparent pixel. A keyhole drawn
+ * in black would vanish the moment the padlock is tinted. Passing ERASE to any
+ * drawing routine writes RGBA zeroes instead of blending.
+ */
+const ERASE = Symbol('erase');
+
+/** `background` may be null, which leaves the canvas fully transparent. */
 function createCanvas(width, height, background) {
   const png = new PNG({ width, height });
   const canvas = { png, width, height };
-  fillRect(canvas, 0, 0, width, height, background);
+  // pngjs zero-fills, which is already transparent black.
+  if (background) fillRect(canvas, 0, 0, width, height, background);
   return canvas;
 }
 
-/** Alpha-blend a colour into a single pixel. */
-function setPixel(canvas, x, y, [r, g, b, a = 255]) {
-  // Silently clip out-of-bounds writes: drawing routines below are allowed to
-  // be sloppy at the edges, which keeps them much simpler to read.
+/** Source-over alpha compositing for a single pixel. */
+function setPixel(canvas, x, y, color) {
+  // Silently clip out-of-bounds writes: the drawing routines below are allowed
+  // to be sloppy at the edges, which keeps them much simpler to read.
   if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return;
 
   const i = (canvas.width * Math.floor(y) + Math.floor(x)) << 2;
   const data = canvas.png.data;
-  const alpha = a / 255;
-  data[i] = Math.round(data[i] * (1 - alpha) + r * alpha);
-  data[i + 1] = Math.round(data[i + 1] * (1 - alpha) + g * alpha);
-  data[i + 2] = Math.round(data[i + 2] * (1 - alpha) + b * alpha);
-  data[i + 3] = 255;
+
+  if (color === ERASE) {
+    data[i] = data[i + 1] = data[i + 2] = data[i + 3] = 0;
+    return;
+  }
+
+  const [r, g, b, a = 255] = color;
+  const sa = a / 255;
+  const da = data[i + 3] / 255;
+  const outA = sa + da * (1 - sa);
+
+  if (outA === 0) {
+    data[i] = data[i + 1] = data[i + 2] = data[i + 3] = 0;
+    return;
+  }
+
+  data[i] = Math.round((r * sa + data[i] * da * (1 - sa)) / outA);
+  data[i + 1] = Math.round((g * sa + data[i + 1] * da * (1 - sa)) / outA);
+  data[i + 2] = Math.round((b * sa + data[i + 2] * da * (1 - sa)) / outA);
+  data[i + 3] = Math.round(outA * 255);
 }
 
 function fillRect(canvas, x, y, w, h, color) {
-  for (let py = y; py < y + h; py++) {
-    for (let px = x; px < x + w; px++) setPixel(canvas, px, py, color);
+  for (let py = Math.floor(y); py < y + h; py++) {
+    for (let px = Math.floor(x); px < x + w; px++) setPixel(canvas, px, py, color);
   }
 }
 
@@ -148,13 +189,27 @@ function fillCircle(canvas, cx, cy, radius, color) {
   }
 }
 
+/** An annulus: everything between `inner` and `outer` radius. */
+function fillRing(canvas, cx, cy, outer, inner, color) {
+  const o2 = outer * outer;
+  const i2 = inner * inner;
+  for (let y = Math.floor(cy - outer); y <= cy + outer; y++) {
+    for (let x = Math.floor(cx - outer); x <= cx + outer; x++) {
+      const dx = x - cx;
+      const dy = y - cy;
+      const d2 = dx * dx + dy * dy;
+      if (d2 <= o2 && d2 >= i2) setPixel(canvas, x, y, color);
+    }
+  }
+}
+
 /**
  * Scanline-fill an arbitrary convex or concave polygon.
  *
  * The even-odd rule: for each row of pixels, find every place the polygon's
  * edges cross that row, sort those crossings left to right, and fill between
  * pairs. It is the standard textbook algorithm and it handles our triangles,
- * hexagons and shields with one implementation.
+ * hexagons, gems and bolts with one implementation.
  */
 function fillPolygon(canvas, points, color) {
   const ys = points.map((p) => p[1]);
@@ -166,8 +221,7 @@ function fillPolygon(canvas, points, color) {
     for (let i = 0; i < points.length; i++) {
       const [x1, y1] = points[i];
       const [x2, y2] = points[(i + 1) % points.length];
-      // Half-open comparison (`<=` on one end, `<` on the other) avoids
-      // counting a shared vertex twice.
+      // Half-open comparison avoids counting a shared vertex twice.
       if (y1 <= y === y2 <= y) continue;
       crossings.push(x1 + ((y - y1) / (y2 - y1)) * (x2 - x1));
     }
@@ -180,6 +234,26 @@ function fillPolygon(canvas, points, color) {
   }
 }
 
+/** A line with thickness, drawn as a rectangle rotated to match the slope. */
+function fillThickLine(canvas, x1, y1, x2, y2, width, color) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.hypot(dx, dy) || 1;
+  // Unit vector perpendicular to the line, scaled to half the thickness.
+  const px = (-dy / length) * (width / 2);
+  const py = (dx / length) * (width / 2);
+  fillPolygon(
+    canvas,
+    [
+      [x1 + px, y1 + py],
+      [x2 + px, y2 + py],
+      [x2 - px, y2 - py],
+      [x1 - px, y1 - py],
+    ],
+    color,
+  );
+}
+
 function regularPolygon(cx, cy, radius, sides, rotation = 0) {
   const points = [];
   for (let i = 0; i < sides; i++) {
@@ -187,6 +261,18 @@ function regularPolygon(cx, cy, radius, sides, rotation = 0) {
     points.push([cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)]);
   }
   return points;
+}
+
+/**
+ * Scale a colour's brightness. Factor < 1 shades, factor > 1 highlights.
+ *
+ * The clamp is essential, not defensive: channel values land in a `Buffer`,
+ * which masks with `& 255`. Without clamping, a highlight that pushed green
+ * past 255 wrapped around to near-zero and turned a mint-green droplet purple.
+ */
+function tone(color, factor) {
+  const clamp = (v) => Math.max(0, Math.min(255, Math.round(v * factor)));
+  return [clamp(color[0]), clamp(color[1]), clamp(color[2]), color[3] ?? 255];
 }
 
 // ---- Text -----------------------------------------------------------------
@@ -249,7 +335,14 @@ function drawCenteredLabel(canvas, text, centerY, maxWidth, maxHeight, color, sc
 
     let y = Math.round(centerY - totalHeight / 2);
     for (const line of lines) {
-      drawText(canvas, line, Math.round((canvas.width - textWidth(line, scale)) / 2), y, scale, color);
+      drawText(
+        canvas,
+        line,
+        Math.round((canvas.width - textWidth(line, scale)) / 2),
+        y,
+        scale,
+        color,
+      );
       y += lineHeight;
     }
     return;
@@ -310,14 +403,316 @@ function hsl(h, s, l) {
 }
 
 // ===========================================================================
-// 4. Category styling
+// 4. Icons: single glyphs on transparent backgrounds
+// ===========================================================================
+//
+// Every painter draws in a 0..100 coordinate space and is scaled to the output
+// size, so the same glyph can be regenerated at any resolution later.
+//
+// Resource icons are painted in their own identity colour (metal is pewter,
+// crystal is cyan, and so on) because those colours are load-bearing: the same
+// hue is used for that resource everywhere in the interface.
+//
+// UI icons are painted white so the app can tint them per context: one warning
+// glyph serves as amber "you cannot afford this" and red "this is blocked".
+
+const ICON_COLORS = {
+  'resource.metal': [184, 196, 212, 255],
+  'resource.crystal': [95, 211, 243, 255],
+  'resource.deuterium': [124, 231, 176, 255],
+  'resource.energy': [245, 196, 81, 255],
+};
+
+const WHITE = [255, 255, 255, 255];
+
+const ICON_PAINTERS = {
+  // ---- Resources ---------------------------------------------------------
+
+  /** Stacked metal ingots. */
+  'resource.metal': (c, u, color) => {
+    const dark = tone(color, 0.62);
+    const ingot = (x, y, w, h, col) =>
+      fillPolygon(
+        c,
+        [
+          [(x + w * 0.12) * u, y * u],
+          [(x + w * 0.88) * u, y * u],
+          [(x + w) * u, (y + h) * u],
+          [x * u, (y + h) * u],
+        ],
+        col,
+      );
+    ingot(34, 14, 32, 17, color); // top
+    ingot(14, 36, 32, 17, dark); // middle left
+    ingot(54, 36, 32, 17, dark); // middle right
+    ingot(24, 58, 52, 19, color); // bottom
+  },
+
+  /** A cut gem: table on top, pavilion below. */
+  'resource.crystal': (c, u, color) => {
+    const dark = tone(color, 0.6);
+    const light = tone(color, 1.3);
+    fillPolygon(
+      c,
+      [
+        [32 * u, 22 * u],
+        [68 * u, 22 * u],
+        [90 * u, 46 * u],
+        [50 * u, 90 * u],
+        [10 * u, 46 * u],
+      ],
+      color,
+    );
+    // Right-hand facets catch less light.
+    fillPolygon(
+      c,
+      [
+        [68 * u, 22 * u],
+        [90 * u, 46 * u],
+        [50 * u, 90 * u],
+      ],
+      dark,
+    );
+    // The flat table on top.
+    fillPolygon(
+      c,
+      [
+        [32 * u, 22 * u],
+        [68 * u, 22 * u],
+        [60 * u, 40 * u],
+        [40 * u, 40 * u],
+      ],
+      light,
+    );
+  },
+
+  /** A droplet of heavy water: a circle with a point on top. */
+  'resource.deuterium': (c, u, color) => {
+    fillCircle(c, 50 * u, 62 * u, 27 * u, color);
+    fillPolygon(
+      c,
+      [
+        [50 * u, 10 * u],
+        [74 * u, 60 * u],
+        [26 * u, 60 * u],
+      ],
+      color,
+    );
+    fillCircle(c, 39 * u, 54 * u, 7 * u, tone(color, 1.35));
+  },
+
+  /** A lightning bolt. */
+  'resource.energy': (c, u, color) => {
+    fillPolygon(
+      c,
+      [
+        [60 * u, 6 * u],
+        [26 * u, 54 * u],
+        [45 * u, 54 * u],
+        [38 * u, 94 * u],
+        [76 * u, 42 * u],
+        [55 * u, 42 * u],
+      ],
+      color,
+    );
+  },
+
+  // ---- UI symbols --------------------------------------------------------
+
+  /** Clock: build time. */
+  'ui.time': (c, u, color) => {
+    fillRing(c, 50 * u, 50 * u, 42 * u, 32 * u, color);
+    fillThickLine(c, 50 * u, 50 * u, 50 * u, 26 * u, 9 * u, color);
+    fillThickLine(c, 50 * u, 50 * u, 70 * u, 60 * u, 9 * u, color);
+  },
+
+  /** Upward arrow: production, or a gain. */
+  'ui.production': (c, u, color) => {
+    fillPolygon(
+      c,
+      [
+        [50 * u, 8 * u],
+        [86 * u, 46 * u],
+        [14 * u, 46 * u],
+      ],
+      color,
+    );
+    fillRect(c, 36 * u, 46 * u, 28 * u, 46 * u, color);
+  },
+
+  /** A silo, part-filled: storage capacity. */
+  'ui.storage': (c, u, color) => {
+    fillRect(c, 10 * u, 12 * u, 80 * u, 13 * u, color); // lid
+    strokeRect(c, 20 * u, 25 * u, 60 * u, 66 * u, 8 * u, color);
+    fillRect(c, 28 * u, 57 * u, 44 * u, 26 * u, color); // contents, filled to ~half
+  },
+
+  /** Hammer: something under construction. */
+  'ui.build': (c, u, color) => {
+    fillThickLine(c, 44 * u, 36 * u, 66 * u, 90 * u, 13 * u, color);
+    fillPolygon(
+      c,
+      [
+        [14 * u, 20 * u],
+        [66 * u, 12 * u],
+        [70 * u, 34 * u],
+        [18 * u, 42 * u],
+      ],
+      color,
+    );
+  },
+
+  /** Padlock: blocked / unavailable. */
+  'ui.locked': (c, u, color) => {
+    fillRing(c, 50 * u, 44 * u, 25 * u, 16 * u, color);
+    fillRect(c, 22 * u, 46 * u, 56 * u, 44 * u, color);
+    fillCircle(c, 50 * u, 66 * u, 7 * u, ERASE); // keyhole, punched right through
+  },
+
+  /** Tick: ready to go. */
+  'ui.check': (c, u, color) => {
+    fillThickLine(c, 20 * u, 52 * u, 42 * u, 74 * u, 14 * u, color);
+    fillThickLine(c, 42 * u, 74 * u, 80 * u, 24 * u, 14 * u, color);
+  },
+
+  /** Warning triangle: you cannot afford this yet. */
+  'ui.warning': (c, u, color) => {
+    fillPolygon(
+      c,
+      [
+        [50 * u, 8 * u],
+        [94 * u, 86 * u],
+        [6 * u, 86 * u],
+      ],
+      color,
+    );
+    // Punched out, not painted dark, so the glyph survives being tinted.
+    fillRect(c, 45 * u, 36 * u, 10 * u, 26 * u, ERASE);
+    fillRect(c, 45 * u, 67 * u, 10 * u, 10 * u, ERASE);
+  },
+
+  /** Cross: cancel. */
+  'ui.cancel': (c, u, color) => {
+    fillThickLine(c, 24 * u, 24 * u, 76 * u, 76 * u, 14 * u, color);
+    fillThickLine(c, 76 * u, 24 * u, 24 * u, 76 * u, 14 * u, color);
+  },
+
+  /** Double chevron: upgrade. */
+  'ui.upgrade': (c, u, color) => {
+    const chevron = (y) => {
+      fillThickLine(c, 18 * u, (y + 26) * u, 50 * u, y * u, 13 * u, color);
+      fillThickLine(c, 50 * u, y * u, 82 * u, (y + 26) * u, 13 * u, color);
+    };
+    chevron(14);
+    chevron(50);
+  },
+
+  /** Ascending bars: level. */
+  'ui.level': (c, u, color) => {
+    fillRect(c, 14 * u, 62 * u, 20 * u, 28 * u, color);
+    fillRect(c, 40 * u, 42 * u, 20 * u, 48 * u, color);
+    fillRect(c, 66 * u, 18 * u, 20 * u, 72 * u, color);
+  },
+
+  /** Thermometer. */
+  'ui.temperature': (c, u, color) => {
+    fillRect(c, 41 * u, 10 * u, 18 * u, 52 * u, color);
+    fillCircle(c, 50 * u, 12 * u, 9 * u, color);
+    fillCircle(c, 50 * u, 74 * u, 20 * u, color);
+  },
+
+  /** Double-headed arrow: diameter. */
+  'ui.diameter': (c, u, color) => {
+    fillRect(c, 22 * u, 44 * u, 56 * u, 12 * u, color);
+    fillPolygon(
+      c,
+      [
+        [6 * u, 50 * u],
+        [26 * u, 32 * u],
+        [26 * u, 68 * u],
+      ],
+      color,
+    );
+    fillPolygon(
+      c,
+      [
+        [94 * u, 50 * u],
+        [74 * u, 32 * u],
+        [74 * u, 68 * u],
+      ],
+      color,
+    );
+  },
+
+  /** Crosshair: coordinates. */
+  'ui.coords': (c, u, color) => {
+    fillRing(c, 50 * u, 50 * u, 34 * u, 25 * u, color);
+    fillRect(c, 44 * u, 4 * u, 12 * u, 22 * u, color);
+    fillRect(c, 44 * u, 74 * u, 12 * u, 22 * u, color);
+    fillRect(c, 4 * u, 44 * u, 22 * u, 12 * u, color);
+    fillRect(c, 74 * u, 44 * u, 22 * u, 12 * u, color);
+    fillCircle(c, 50 * u, 50 * u, 8 * u, color);
+  },
+
+  /** A price tag: what this costs. */
+  'ui.cost': (c, u, color) => {
+    fillPolygon(
+      c,
+      [
+        [10 * u, 50 * u],
+        [40 * u, 12 * u],
+        [92 * u, 12 * u],
+        [92 * u, 88 * u],
+        [40 * u, 88 * u],
+      ],
+      color,
+    );
+    fillCircle(c, 44 * u, 50 * u, 10 * u, ERASE); // the string hole
+  },
+
+  /** A world with latitude lines: the Overview tab. */
+  'ui.planet': (c, u, color) => {
+    fillCircle(c, 50 * u, 50 * u, 40 * u, color);
+    fillRect(c, 8 * u, 36 * u, 84 * u, 6 * u, ERASE);
+    fillRect(c, 8 * u, 58 * u, 84 * u, 6 * u, ERASE);
+    fillCircle(c, 34 * u, 26 * u, 8 * u, ERASE);
+  },
+
+  /** A skyline: the Buildings tab. */
+  'ui.buildings': (c, u, color) => {
+    fillRect(c, 10 * u, 48 * u, 22 * u, 44 * u, color);
+    fillRect(c, 38 * u, 24 * u, 24 * u, 68 * u, color);
+    fillRect(c, 68 * u, 40 * u, 22 * u, 52 * u, color);
+    // Windows, punched out so they survive tinting.
+    for (const [x, y] of [
+      [16, 56],
+      [24, 56],
+      [16, 70],
+      [24, 70],
+      [44, 34],
+      [52, 34],
+      [44, 48],
+      [52, 48],
+      [44, 62],
+      [52, 62],
+      [74, 50],
+      [82, 50],
+      [74, 64],
+      [82, 64],
+    ]) {
+      fillRect(c, x * u, y * u, 5 * u, 7 * u, ERASE);
+    }
+  },
+};
+
+// ===========================================================================
+// 5. Category styling for the big tiles
 // ===========================================================================
 // Each category gets a solid background colour and a motif shape, so you can
 // tell at a glance what kind of thing a tile is even before reading the label.
 
 const CATEGORIES = {
   building: { background: [26, 35, 56, 255], hue: 210, motif: 'rect' },
-  resource: { background: [24, 30, 44, 255], hue: 35, motif: 'circle' },
   planet: { background: [10, 14, 26, 255], hue: 160, motif: 'planet' },
   research: { background: [30, 24, 52, 255], hue: 275, motif: 'hexagon' },
   ship: { background: [20, 38, 44, 255], hue: 185, motif: 'triangle' },
@@ -346,7 +741,7 @@ function fileNameFor(key) {
 }
 
 // ===========================================================================
-// 5. The tile renderers
+// 6. The tile renderers
 // ===========================================================================
 
 function drawMotif(canvas, motif, accent, shade) {
@@ -360,7 +755,14 @@ function drawMotif(canvas, motif, accent, shade) {
   switch (motif) {
     case 'rect':
       // A blocky "structure" with a darker footing, so buildings read as built.
-      fillRect(canvas, Math.round(cx - r), Math.round(cy - r), Math.round(r * 2), Math.round(r * 2), accent);
+      fillRect(
+        canvas,
+        Math.round(cx - r),
+        Math.round(cy - r),
+        Math.round(r * 2),
+        Math.round(r * 2),
+        accent,
+      );
       fillRect(
         canvas,
         Math.round(cx - r),
@@ -378,11 +780,6 @@ function drawMotif(canvas, motif, accent, shade) {
         Math.max(1, Math.round(r * 0.12)),
         INK,
       );
-      break;
-
-    case 'circle':
-      fillCircle(canvas, cx, cy, r, accent);
-      fillCircle(canvas, cx - r * 0.3, cy - r * 0.3, r * 0.35, INK);
       break;
 
     case 'planet':
@@ -461,18 +858,20 @@ function renderTile(key, size) {
   const shade = hsl(style.hue + hueJitter, 0.5, 0.32);
 
   // A hairline frame keeps tiles from bleeding into a dark UI background.
-  strokeRect(canvas, 0, 0, size, size, Math.max(1, Math.round(size / 128)), [
-    255,
-    255,
-    255,
-    40,
-  ]);
+  strokeRect(canvas, 0, 0, size, size, Math.max(1, Math.round(size / 128)), [255, 255, 255, 40]);
 
   drawMotif(canvas, style.motif, accent, shade);
 
   const scales = size >= 256 ? [3, 2, 1] : [2, 1];
   drawCenteredLabel(canvas, labelFor(key), size * 0.8, size * 0.88, size * 0.3, INK, scales);
 
+  return canvas;
+}
+
+/** A transparent-background glyph, sized for use at 16-24px in the interface. */
+function renderIcon(key, size) {
+  const canvas = createCanvas(size, size, null);
+  ICON_PAINTERS[key](canvas, size / 100, ICON_COLORS[key] ?? WHITE);
   return canvas;
 }
 
@@ -531,12 +930,12 @@ function renderMissing(size) {
       fillRect(canvas, col * cell, row * cell, cell, cell, [255, 0, 255, 255]);
     }
   }
-  drawCenteredLabel(canvas, 'MISSING', size / 2, size * 0.9, size * 0.3, [255, 255, 255, 255], [3, 2, 1]);
+  drawCenteredLabel(canvas, 'MISSING', size / 2, size * 0.9, size * 0.3, WHITE, [3, 2, 1]);
   return canvas;
 }
 
 // ===========================================================================
-// 6. The asset list
+// 7. The asset list
 // ===========================================================================
 // These strings are the manifest keys the app uses. Adding one here and
 // re-running the script is the entire process for adding an asset.
@@ -554,7 +953,12 @@ const BUILDING_KEYS = [
   'building.deuteriumTank',
 ];
 
-const RESOURCE_KEYS = ['resource.metal', 'resource.crystal', 'resource.deuterium', 'resource.energy'];
+const RESOURCE_KEYS = [
+  'resource.metal',
+  'resource.crystal',
+  'resource.deuterium',
+  'resource.energy',
+];
 
 const PLANET_KEYS = [
   'planet.temperate.1',
@@ -608,7 +1012,27 @@ const DEFENSE_KEYS = [
   'defense.largeShield',
 ];
 
-/** key -> pixel size. Resource icons are small because they sit in a status bar. */
+/** Interface glyphs. White on transparent, meant to be tinted at the call site. */
+const UI_ICON_KEYS = [
+  'ui.time',
+  'ui.production',
+  'ui.storage',
+  'ui.build',
+  'ui.locked',
+  'ui.check',
+  'ui.warning',
+  'ui.cancel',
+  'ui.upgrade',
+  'ui.level',
+  'ui.temperature',
+  'ui.diameter',
+  'ui.coords',
+  'ui.cost',
+  'ui.planet',
+  'ui.buildings',
+];
+
+/** key -> pixel size. Icons are small because they are drawn small. */
 const ASSET_SIZES = new Map([
   ...BUILDING_KEYS.map((k) => [k, 256]),
   ...RESOURCE_KEYS.map((k) => [k, 64]),
@@ -616,6 +1040,7 @@ const ASSET_SIZES = new Map([
   ...RESEARCH_KEYS.map((k) => [k, 256]),
   ...SHIP_KEYS.map((k) => [k, 256]),
   ...DEFENSE_KEYS.map((k) => [k, 256]),
+  ...UI_ICON_KEYS.map((k) => [k, 64]),
   ['ui.starfield', 1024],
   ['ui.missing', 256],
 ]);
@@ -623,13 +1048,16 @@ const ASSET_SIZES = new Map([
 const ALL_KEYS = [...ASSET_SIZES.keys()];
 
 // ===========================================================================
-// 7. The manifest
+// 8. The manifest
 // ===========================================================================
 
 function buildManifestSource(keys) {
   const keyList = keys.map((k) => `  '${k}',`).join('\n');
   const requires = keys
     .map((k) => `  '${k}': require('./placeholders/${fileNameFor(k)}'),`)
+    .join('\n');
+  const iconList = Object.keys(ICON_PAINTERS)
+    .map((k) => `  '${k}',`)
     .join('\n');
 
   return `/**
@@ -682,6 +1110,27 @@ export const ASSETS: Record<AssetKey, ImageSourcePropType> = {
 ${requires}
 };
 
+/**
+ * Keys drawn as a single glyph on a transparent background, rather than as a
+ * framed tile with a caption.
+ *
+ * \`<GameImage>\` uses this to decide whether to draw a rounded card behind the
+ * image, so call sites never have to remember which is which. The \`ui.*\` ones
+ * are painted white on purpose - tint them at the call site to colour-code
+ * meaning (amber for "cannot afford", red for "blocked", green for "ready").
+ */
+export const ICON_KEYS = [
+${iconList}
+] as const satisfies readonly AssetKey[];
+
+export type IconKey = (typeof ICON_KEYS)[number];
+
+const ICON_KEY_SET: ReadonlySet<string> = new Set(ICON_KEYS);
+
+export function isIconKey(key: AssetKey): key is IconKey {
+  return ICON_KEY_SET.has(key);
+}
+
 // ---------------------------------------------------------------------------
 // Planet art selection
 // ---------------------------------------------------------------------------
@@ -693,6 +1142,20 @@ const PLANET_VARIANTS = {
   ice: ASSET_KEYS.filter((k): k is AssetKey => k.startsWith('planet.ice.')),
   gas: ASSET_KEYS.filter((k): k is AssetKey => k.startsWith('planet.gas.')),
 };
+
+export type PlanetType = keyof typeof PLANET_VARIANTS;
+
+/**
+ * A planet's climate type, derived from its average surface temperature.
+ *
+ * Exported separately from \`planetArtKey\` because the interface wants to *say*
+ * "TEMPERATE" as well as draw it - a label the player can read beats a picture
+ * they have to interpret.
+ */
+export function planetType(planet: Planet): PlanetType {
+  const avgTemp = (planet.temperature.min + planet.temperature.max) / 2;
+  return avgTemp >= 60 ? 'desert' : avgTemp <= -60 ? 'gas' : avgTemp <= -20 ? 'ice' : 'temperate';
+}
 
 /**
  * Pick a planet's artwork deterministically from its own data.
@@ -710,12 +1173,7 @@ const PLANET_VARIANTS = {
  * something we can always re-derive.
  */
 export function planetArtKey(planet: Planet): AssetKey {
-  const avgTemp = (planet.temperature.min + planet.temperature.max) / 2;
-
-  const type =
-    avgTemp >= 60 ? 'desert' : avgTemp <= -60 ? 'gas' : avgTemp <= -20 ? 'ice' : 'temperate';
-
-  const variants = PLANET_VARIANTS[type];
+  const variants = PLANET_VARIANTS[planetType(planet)];
   if (variants.length === 0) return 'ui.missing';
 
   // Positions are 1-based, so subtract one before taking the modulus.
@@ -725,7 +1183,7 @@ export function planetArtKey(planet: Planet): AssetKey {
 }
 
 // ===========================================================================
-// 8. Run
+// 9. Run
 // ===========================================================================
 
 function main() {
@@ -744,7 +1202,9 @@ function main() {
         ? renderStarfield(size)
         : key === 'ui.missing'
           ? renderMissing(size)
-          : renderTile(key, size);
+          : ICON_PAINTERS[key]
+            ? renderIcon(key, size)
+            : renderTile(key, size);
 
     // `deflateLevel`/`deflateStrategy` are pinned so the compressed bytes are
     // identical run to run - otherwise git would show a diff for every asset
@@ -755,7 +1215,12 @@ function main() {
 
   writeFileSync(MANIFEST_PATH, buildManifestSource(ALL_KEYS), 'utf8');
 
-  console.log(`Generated ${ALL_KEYS.length} placeholder assets in src/assets/placeholders/`);
+  const iconCount = Object.keys(ICON_PAINTERS).length;
+  console.log(
+    `Generated ${ALL_KEYS.length} placeholder assets ` +
+      `(${iconCount} glyph icons, ${ALL_KEYS.length - iconCount - 2} tiles) ` +
+      `in src/assets/placeholders/`,
+  );
   console.log('Regenerated src/assets/manifest.ts');
 }
 
