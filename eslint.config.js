@@ -73,7 +73,7 @@ module.exports = defineConfig([
   ENGINE_PURITY,
   {
     // Node scripts are CommonJS/ESM tooling, not app code.
-    files: ['scripts/**/*.mjs', 'eslint.config.js', 'vitest.config.ts'],
+    files: ['scripts/**/*.mjs', 'eslint.config.js', 'vitest.config.mts'],
     rules: { 'no-console': 'off' },
   },
   prettierConfig,
