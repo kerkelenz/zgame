@@ -3,8 +3,11 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@/*": ["./src/*"],
-      "@/assets/*": ["./assets/*"]
+      // `@/` points at src/. The template also aliased `@/assets/*` to the
+      // repo-root assets/ folder (app icon, splash), but those are referenced
+      // by relative path from app.json and never imported, so the extra alias
+      // only got in the way of `@/assets/manifest`.
+      "@/*": ["./src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
