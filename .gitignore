@@ -4,3 +4,4 @@ client/dist
 data/
 .env
 .patch.mjs
+stellar-dominion.html
