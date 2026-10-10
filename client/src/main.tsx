@@ -1,6 +1,7 @@
 import { StrictMode, useCallback, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { ErrorBoundary } from './ErrorBoundary';
 import { getToken } from './api';
 import { GameProvider } from './game';
 import { Login } from './pages/Login';
@@ -17,4 +18,4 @@ function Root() {
   );
 }
 
-createRoot(document.getElementById('root')!).render(<StrictMode><Root /></StrictMode>);
+createRoot(document.getElementById('root')!).render(<StrictMode><ErrorBoundary><Root /></ErrorBoundary></StrictMode>);

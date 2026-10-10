@@ -23,6 +23,8 @@ interface GameCtx {
   target: Target | null;
   setTarget: (t: Target | null) => void;
   logout: () => void;
+  /** true while the server cannot be reached */
+  offline: boolean;
   chatEvents: any[];
   /** live resources of the selected planet, interpolated */
   live: { metal: number; crystal: number; deuterium: number };
@@ -41,6 +43,7 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [page, setPage] = useState('overview');
   const [target, setTarget] = useState<Target | null>(null);
+  const [offline, setOffline] = useState(false);
   const [chatEvents, setChatEvents] = useState<any[]>([]);
   const toastId = useRef(0);
   const busy = useRef(false);
@@ -60,8 +63,10 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
       setMe(m);
       setPlanets(ps);
       setFleets(fl);
+      setOffline(false);
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) { setToken(''); onLogout(); }
+      else if (!(e instanceof ApiError)) setOffline(true);
     } finally { busy.current = false; }
   }, [onLogout]);
 
@@ -96,6 +101,7 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
         if (msg.type === 'alert') toast(msg.data, 'alert');
         if (msg.type === 'chat') setChatEvents((c) => [...c.slice(-200), msg.data]);
       };
+      ws.onopen = () => void refresh();
       ws.onclose = () => { if (!closed) retry = setTimeout(connect, 3000); };
     };
     connect();
@@ -132,6 +138,6 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
 
   const logout = useCallback(() => { setToken(''); onLogout(); }, [onLogout]);
 
-  const value: GameCtx = { me, planets, planet, fleets, selectPlanet, refresh, now, act, toasts, toast, page, setPage, target, setTarget, logout, chatEvents, live };
+  const value: GameCtx = { me, planets, planet, fleets, selectPlanet, refresh, now, act, toasts, toast, page, setPage, target, setTarget, logout, offline, chatEvents, live };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

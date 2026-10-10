@@ -19,7 +19,7 @@ const NAV: [string, string][] = [
 
 export function App() {
   const g = useGame();
-  const { me, planet, planets, page, setPage, live, toasts, fleets } = g;
+  const { me, planet, planets, page, setPage, live, toasts, fleets, offline } = g;
   if (!me || !planet) return <div className="loading">Loading universe…</div>;
 
   const page_ = (() => {
@@ -59,6 +59,7 @@ export function App() {
           <button className="link" onClick={g.logout}>Log out</button>
         </div>
       </header>
+      {offline && <div className="alertbar" style={{ background: '#4a3a1c', cursor: 'default' }}>Connection to the server lost - retrying…</div>}
       {fleets.incoming.length > 0 && (
         <div className="alertbar" onClick={() => setPage('fleet')}>
           ⚠ {fleets.incoming.length} hostile fleet{fleets.incoming.length > 1 ? 's' : ''} inbound{fleets.incoming.some((f) => f.ally) ? ' (including on allies)' : ''} – click for details
