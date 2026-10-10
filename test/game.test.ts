@@ -1,0 +1,447 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { register } from '../server/accounts';
+import * as AL from '../server/alliance';
+import { cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
+import { processMovements, recallFleet, sendFleet } from '../server/fleet';
+import { createPlanet, playerPoints } from '../server/galaxy';
+import { processRaids, spawnRaid } from '../server/npc';
+import { GameError, createWorld, planetAt, type Planet, type Player, type World } from '../server/world';
+
+const T0 = 1_700_000_000_000;
+const HOUR = 3_600_000;
+
+let w: World;
+let alice: Player, bob: Player;
+let ap: Planet, bp: Planet;
+
+function setup() {
+  w = createWorld({ economySpeed: 100, fleetSpeed: 100, protectionPoints: 0, raidIntervalMin: 0 }, T0);
+  alice = register(w, 'alice', 'secret1', T0).player;
+  bob = register(w, 'bob', 'secret2', T0).player;
+  ap = w.planets[alice.planetIds[0]];
+  bp = w.planets[bob.planetIds[0]];
+  // put them next to each other for short flights
+  ap.coords = { g: 1, s: 5, p: 6 };
+  bp.coords = { g: 1, s: 5, p: 8 };
+  for (const p of [ap, bp]) {
+    p.buildings = { roboticsFactory: 4, shipyard: 6, researchLab: 6, solarPlant: 20, metalStorage: 8, crystalStorage: 8, deuteriumTank: 8 };
+    p.resources = { metal: 2_000_000, crystal: 2_000_000, deuterium: 2_000_000 };
+  }
+  alice.techs = { combustionDrive: 6, impulseDrive: 4, energy: 8, computer: 3, astrophysics: 4, espionage: 4, shielding: 3 };
+  bob.techs = { combustionDrive: 6, impulseDrive: 4, energy: 8, computer: 3, espionage: 2 };
+}
+
+beforeEach(setup);
+
+describe('accounts', () => {
+  it('creates a homeworld with starting resources', () => {
+    const w2 = createWorld({}, T0);
+    const { player, token } = register(w2, 'newbie', 'hunter22', T0);
+    expect(token).toHaveLength(48);
+    const home = w2.planets[player.planetIds[0]];
+    expect(home.isHome).toBe(true);
+    expect(home.fields).toBe(163);
+    expect(home.resources).toEqual(w2.config.startResources);
+  });
+  it('rejects duplicate and invalid names', () => {
+    expect(() => register(w, 'Alice', 'secret1')).toThrow(/taken/);
+    expect(() => register(w, 'x', 'secret1')).toThrow();
+    expect(() => register(w, 'carol', '123')).toThrow();
+  });
+});
+
+describe('economy', () => {
+  it('accrues resources over time, capped by storage', () => {
+    ap.buildings = { metalMine: 5, solarPlant: 8, metalStorage: 0 };
+    ap.resources = { metal: 0, crystal: 0, deuterium: 0 };
+    processPlayer(w, alice, T0 + HOUR);
+    expect(ap.resources.metal).toBeGreaterThan(1000);
+    processPlayer(w, alice, T0 + 1000 * HOUR);
+    expect(ap.resources.metal).toBe(10_000); // level 0 capacity
+  });
+
+  it('building takes resources, completes after its duration, and can be cancelled with refund', () => {
+    ap.buildings = {};
+    ap.resources = { metal: 1000, crystal: 1000, deuterium: 1000 };
+    startBuilding(w, alice, ap, 'metalMine', T0);
+    expect(ap.resources.metal).toBe(940);
+    expect(() => startBuilding(w, alice, ap, 'crystalMine', T0)).toThrow(/in progress/);
+    cancelBuilding(w, ap, T0 + 1);
+    expect(ap.resources.metal).toBeGreaterThanOrEqual(1000);
+    startBuilding(w, alice, ap, 'metalMine', T0 + 10);
+    processPlayer(w, alice, T0 + 10 + HOUR);
+    expect(ap.buildings.metalMine).toBe(1);
+    expect(ap.buildQueue).toBeNull();
+    expect(w.messages.some((m) => m.to === alice.id && /Construction complete/.test(m.subject))).toBe(true);
+  });
+
+  it('enforces requirements and field limits', () => {
+    ap.buildings = {};
+    expect(() => startBuilding(w, alice, ap, 'shipyard', T0)).toThrow(/Requirements/);
+    expect(() => startBuilding(w, alice, ap, 'fusionReactor', T0)).toThrow(/Requirements/);
+    ap.buildings = { metalMine: 3 };
+    ap.fields = 3;
+    expect(() => startBuilding(w, alice, ap, 'solarPlant', T0)).toThrow(/fields/);
+  });
+
+  it('refuses to build without resources', () => {
+    ap.resources = { metal: 0, crystal: 0, deuterium: 0 };
+    expect(() => startBuilding(w, alice, ap, 'metalMine', T0)).toThrow(/resources/);
+  });
+
+  it('research is per-player, one at a time, with refund on cancel', () => {
+    alice.techs = {};
+    startResearch(w, alice, ap, 'energy', T0);
+    expect(() => startResearch(w, alice, ap, 'computer', T0)).toThrow(/in progress/);
+    const before = ap.resources.crystal;
+    cancelResearch(w, alice, T0);
+    expect(ap.resources.crystal).toBeGreaterThan(before);
+    startResearch(w, alice, ap, 'energy', T0);
+    processPlayer(w, alice, T0 + 10 * HOUR);
+    expect(alice.techs.energy).toBe(1);
+    expect(() => startResearch(w, alice, ap, 'ion', T0 + 11 * HOUR)).toThrow(/Requirements/);
+  });
+
+  it('ship production completes units progressively', () => {
+    ap.fleet = {};
+    queueUnits(w, alice, ap, 'lightFighter', 10, T0);
+    const unitMs = ap.shipyardQueue[0].unitMs;
+    processPlayer(w, alice, T0 + Math.floor(unitMs * 3.5));
+    expect(ap.fleet.lightFighter).toBe(3);
+    processPlayer(w, alice, T0 + unitMs * 20);
+    expect(ap.fleet.lightFighter).toBe(10);
+    expect(ap.shipyardQueue).toHaveLength(0);
+  });
+
+  it('shield domes are limited to one per planet', () => {
+    alice.techs.shielding = 6;
+    queueUnits(w, alice, ap, 'smallShield', 1, T0);
+    expect(() => queueUnits(w, alice, ap, 'smallShield', 1, T0)).toThrow(/Only 1/);
+  });
+
+  it('cancelling a shipyard job refunds the remaining units', () => {
+    const before = ap.resources.metal;
+    queueUnits(w, alice, ap, 'rocketLauncher', 100, T0);
+    expect(ap.resources.metal).toBe(before - 200_000);
+    cancelShipyardJob(w, ap, 0, T0);
+    expect(ap.resources.metal).toBe(before);
+  });
+
+  it('solar satellites add energy', () => {
+    ap.buildings = { metalMine: 10 };
+    const none = planetProduction(w, ap).energyProduced;
+    ap.fleet = { solarSatellite: 20 };
+    expect(planetProduction(w, ap).energyProduced).toBeGreaterThan(none);
+  });
+});
+
+describe('fleets', () => {
+  it('validates ownership, ship counts and slots', () => {
+    ap.fleet = { smallCargo: 5 };
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { smallCargo: 6 }, mission: 'transport' }, T0)).toThrow(/Not enough/);
+    expect(() => sendFleet(w, alice, { fromPlanetId: bp.id, to: bp.coords, ships: { smallCargo: 1 }, mission: 'transport' }, T0)).toThrow(/Not your/);
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: {}, mission: 'transport' }, T0)).toThrow(/at least one/);
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: { g: 9, s: 1, p: 1 }, ships: { smallCargo: 1 }, mission: 'transport' }, T0)).toThrow(/Invalid destination/);
+    // computer 3 => 4 slots
+    for (let i = 0; i < 4; i++) sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { smallCargo: 1 }, mission: 'transport' }, T0);
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { smallCargo: 1 }, mission: 'transport' }, T0)).toThrow(/slots/);
+  });
+
+  it('transport delivers resources then flies home', () => {
+    ap.fleet = { largeCargo: 4 };
+    bp.resources = { metal: 0, crystal: 0, deuterium: 0 };
+    bp.buildings = {};
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { largeCargo: 4 }, mission: 'transport', cargo: { metal: 50_000, crystal: 20_000 } }, T0);
+    expect(ap.fleet.largeCargo).toBeUndefined();
+    processMovements(w, m.arriveAt);
+    expect(bp.resources.metal).toBeCloseTo(50_000, -3);
+    expect(w.movements[m.id].phase).toBe('returning');
+    expect(w.messages.some((x) => x.to === bob.id && /Delivery/.test(x.subject))).toBe(true);
+    processMovements(w, m.arriveAt + m.flightMs + 5);
+    expect(w.movements[m.id]).toBeUndefined();
+    expect(ap.fleet.largeCargo).toBe(4);
+  });
+
+  it('rejects cargo above capacity and insufficient fuel', () => {
+    ap.fleet = { smallCargo: 2 };
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { smallCargo: 2 }, mission: 'transport', cargo: { metal: 20_000 } }, T0)).toThrow(/capacity/);
+    ap.resources.deuterium = 0;
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { smallCargo: 2 }, mission: 'transport' }, T0)).toThrow(/resources/);
+  });
+
+  it('deploy moves ships to another own planet permanently', () => {
+    const c2 = createPlanet(w, alice, { g: 1, s: 5, p: 10 }, { now: T0 });
+    ap.fleet = { cruiser: 3 };
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: c2.coords, ships: { cruiser: 3 }, mission: 'deploy' }, T0);
+    processMovements(w, m.arriveAt);
+    expect(c2.fleet.cruiser).toBe(3);
+    expect(w.movements[m.id]).toBeUndefined();
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { cruiser: 1 }, mission: 'deploy' }, T0)).toThrow();
+  });
+
+  it('recall turns a fleet around mid-flight', () => {
+    ap.fleet = { cruiser: 2 };
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { cruiser: 2 }, mission: 'transport' }, T0);
+    const t = T0 + Math.floor((m.arriveAt - T0) / 2);
+    recallFleet(w, alice, m.id, t);
+    expect(m.phase).toBe('returning');
+    expect(m.returnAt! - t).toBeLessThanOrEqual((m.arriveAt - T0) / 2 + 5);
+    expect(() => recallFleet(w, alice, m.id, t)).toThrow(/already/);
+    processMovements(w, m.returnAt!);
+    expect(ap.fleet.cruiser).toBe(2);
+  });
+
+  it('attack: winner loots, creates debris, both get reports, fleet returns with loot', () => {
+    ap.fleet = { battleship: 20, largeCargo: 20 };
+    bp.fleet = { lightFighter: 10 };
+    bp.defenses = { rocketLauncher: 10 };
+    bp.resources = { metal: 100_000, crystal: 60_000, deuterium: 20_000 };
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { battleship: 20, largeCargo: 20 }, mission: 'attack' }, T0);
+    processMovements(w, m.arriveAt);
+    expect(w.movements[m.id].phase).toBe('returning');
+    expect(w.movements[m.id].cargo.metal).toBeGreaterThan(30_000);
+    expect(bp.fleet.lightFighter ?? 0).toBe(0);
+    expect(Object.keys(w.debris).length).toBe(1);
+    const reportA = w.messages.find((x) => x.to === alice.id && x.kind === 'combat');
+    const reportB = w.messages.find((x) => x.to === bob.id && x.kind === 'combat');
+    expect(reportA).toBeTruthy();
+    expect(reportB).toBeTruthy();
+    const before = ap.resources.metal;
+    processMovements(w, m.arriveAt + m.flightMs + 5);
+    expect(ap.resources.metal).toBeGreaterThan(before + 30_000);
+    expect(alice.stats.battlesWon).toBe(1);
+    expect(bob.stats.battlesLost).toBe(1);
+  });
+
+  it('attack: losing fleet is destroyed and does not return', () => {
+    ap.fleet = { lightFighter: 3 };
+    bp.defenses = { heavyLaser: 30, ionCannon: 10 };
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { lightFighter: 3 }, mission: 'attack' }, T0);
+    processMovements(w, m.arriveAt);
+    expect(w.movements[m.id]).toBeUndefined();
+    expect(ap.fleet.lightFighter ?? 0).toBe(0);
+  });
+
+  it('cannot attack alliance members, yourself, or protected players', () => {
+    ap.fleet = { cruiser: 5 };
+    AL.createAlliance(w, alice, 'TEAM', 'The Team');
+    AL.joinAlliance(w, bob, alice.allianceId!);
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { cruiser: 1 }, mission: 'attack' }, T0)).toThrow(/alliance/);
+    AL.leaveAlliance(w, bob);
+    w.config.protectionPoints = 10_000_000;
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { cruiser: 1 }, mission: 'attack' }, T0)).toThrow(/protection/);
+  });
+
+  it('allied hold fleet helps defend and shares the fight', () => {
+    AL.createAlliance(w, alice, 'TEAM', 'The Team');
+    AL.joinAlliance(w, bob, alice.allianceId!);
+    const carol = register(w, 'carol', 'secret3', T0).player;
+    const cp = w.planets[carol.planetIds[0]];
+    cp.coords = { g: 1, s: 5, p: 12 };
+    cp.buildings = { roboticsFactory: 4, shipyard: 6, solarPlant: 20 };
+    cp.resources = { metal: 500_000, crystal: 500_000, deuterium: 500_000 };
+    cp.fleet = { cruiser: 60 };
+    carol.techs = { combustionDrive: 6, impulseDrive: 4, computer: 3 };
+    ap.fleet = { cruiser: 40 };
+    bp.fleet = {};
+    bp.defenses = {};
+
+    // alice (ally of bob) stations cruisers at bob's
+    ap.fleet = { cruiser: 40 };
+    const hold = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { cruiser: 40 }, mission: 'hold', holdHours: 2 }, T0);
+    processMovements(w, hold.arriveAt);
+    expect(hold.phase).toBe('holding');
+
+    // carol (outsider) attacks bob with 60 cruisers
+    const atk = sendFleet(w, carol, { fromPlanetId: cp.id, to: bp.coords, ships: { cruiser: 60 }, mission: 'attack' }, hold.arriveAt);
+    processMovements(w, atk.arriveAt);
+    const report = w.messages.find((x) => x.to === alice.id && x.kind === 'combat');
+    expect(report).toBeTruthy(); // alice was involved as a defender
+    const data = report!.data as { defenders: unknown[] };
+    expect(data.defenders).toHaveLength(2);
+  });
+
+  it('hold requires alliance membership', () => {
+    ap.fleet = { cruiser: 1 };
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { cruiser: 1 }, mission: 'hold' }, T0)).toThrow(/alliance/);
+  });
+
+  it('espionage returns a report with detail depending on probes', () => {
+    ap.fleet = { espionageProbe: 10 };
+    bp.fleet = {};
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { espionageProbe: 10 }, mission: 'espionage' }, T0);
+    processMovements(w, m.arriveAt);
+    const rep = w.messages.find((x) => x.to === alice.id && x.kind === 'espionage' && /Spy report/.test(x.subject));
+    expect(rep).toBeTruthy();
+    const d = rep!.data as Record<string, unknown>;
+    expect(d.resources).toBeTruthy();
+    expect(d.fleet).toBeTruthy();
+    expect(d.defenses).toBeTruthy();
+    expect(d.buildings).toBeTruthy();
+    expect(w.messages.some((x) => x.to === bob.id && x.kind === 'espionage')).toBe(true);
+  });
+
+  it('colonize creates a new planet, and respects the colony limit', () => {
+    ap.fleet = { colonyShip: 3 };
+    const free = { g: 1, s: 5, p: 10 };
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: free, ships: { colonyShip: 1 }, mission: 'colonize' }, T0);
+    processMovements(w, m.arriveAt);
+    const col = planetAt(w, free)!;
+    expect(col.ownerId).toBe(alice.id);
+    expect(alice.planetIds).toHaveLength(2);
+    // astrophysics 4 => 3 planets max
+    const m2 = sendFleet(w, alice, { fromPlanetId: ap.id, to: { g: 1, s: 5, p: 11 }, ships: { colonyShip: 1 }, mission: 'colonize' }, T0);
+    processMovements(w, m2.arriveAt);
+    expect(alice.planetIds).toHaveLength(3);
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: { g: 1, s: 5, p: 13 }, ships: { colonyShip: 1 }, mission: 'colonize' }, T0)).toThrow(/limit/);
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { colonyShip: 1 }, mission: 'colonize' }, T0)).toThrow(/already/);
+  });
+
+  it('recyclers harvest debris fields', () => {
+    w.debris['1:5:9'] = { metal: 30_000, crystal: 10_000 };
+    ap.fleet = { recycler: 1 };
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: { g: 1, s: 5, p: 9 }, ships: { recycler: 1 }, mission: 'recycle' }, T0);
+    processMovements(w, m.arriveAt);
+    expect(m.cargo.metal).toBe(20_000);
+    expect(w.debris['1:5:9'].metal).toBe(10_000);
+    expect(w.debris['1:5:9'].crystal).toBe(10_000);
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: { g: 1, s: 5, p: 14 }, ships: { cruiser: 1 }, mission: 'recycle' }, T0)).toThrow();
+  });
+
+  it('expeditions need astrophysics and resolve into some outcome', () => {
+    ap.fleet = { largeCargo: 5, cruiser: 5 };
+    const to = { g: 1, s: 5, p: w.config.positions + 1 };
+    bob.techs.astrophysics = 0;
+    bp.fleet = { cruiser: 1 };
+    expect(() => sendFleet(w, bob, { fromPlanetId: bp.id, to, ships: { cruiser: 1 }, mission: 'expedition' }, T0)).toThrow(/Astrophysics/);
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0.4); // resource find
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to, ships: { largeCargo: 5, cruiser: 5 }, mission: 'expedition' }, T0);
+    processMovements(w, m.arriveAt);
+    spy.mockRestore();
+    expect(m.phase).toBe('holding');
+    expect(m.cargo.metal + m.cargo.crystal + m.cargo.deuterium).toBeGreaterThan(0);
+    processMovements(w, m.arriveAt + 10 * HOUR);
+    expect(w.movements[m.id]).toBeUndefined();
+    expect(ap.fleet.largeCargo).toBe(5);
+    expect(alice.stats.expeditions).toBe(1);
+  });
+
+  it('expedition black hole loses the fleet', () => {
+    ap.fleet = { cruiser: 2 };
+    const to = { g: 1, s: 5, p: w.config.positions + 1 };
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0.92);
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to, ships: { cruiser: 2 }, mission: 'expedition' }, T0);
+    processMovements(w, m.arriveAt);
+    spy.mockRestore();
+    expect(w.movements[m.id]).toBeUndefined();
+    expect(ap.fleet.cruiser ?? 0).toBe(0);
+  });
+});
+
+describe('npc raids', () => {
+  it('spawns a raid, warns the owner and allies, and credits a bounty when defeated', () => {
+    w.config.protectionPoints = 1;
+    AL.createAlliance(w, alice, 'TEAM', 'The Team');
+    AL.joinAlliance(w, bob, alice.allianceId!);
+    ap.fleet = {};
+    ap.defenses = { plasmaTurret: 40, gaussCannon: 80, largeShield: 1 };
+    bp.fleet = {};
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0); // first candidate
+    const raid = spawnRaid(w, T0, () => 0);
+    spy.mockRestore();
+    expect(raid).toBeTruthy();
+    expect(w.messages.some((x) => x.kind === 'raid')).toBe(true);
+    expect(raid!.arriveAt - T0).toBeGreaterThanOrEqual(600_000);
+    const target = planetAt(w, raid!.to)!;
+    target.defenses = { plasmaTurret: 80, gaussCannon: 200 };
+    const owner = w.players[target.ownerId];
+    const before = target.resources.metal;
+    processMovements(w, raid!.arriveAt);
+    expect(w.movements[raid!.id]).toBeUndefined();
+    expect(owner.stats.raidsRepelled).toBe(1);
+    expect(target.resources.metal).toBeGreaterThanOrEqual(before);
+  });
+
+  it('is skipped when disabled or nobody is eligible', () => {
+    processRaids(w, T0 + 100 * HOUR);
+    expect(Object.keys(w.movements)).toHaveLength(0);
+    w.config.protectionPoints = 1e12;
+    expect(spawnRaid(w, T0)).toBeNull();
+  });
+});
+
+describe('alliances', () => {
+  it('create, join (open), apply (closed), review, leave and disband', () => {
+    const a = AL.createAlliance(w, alice, 'ABC', 'Alpha Co');
+    expect(() => AL.createAlliance(w, bob, 'ABC', 'Other')).toThrow(/taken/);
+    expect(() => AL.createAlliance(w, bob, 'x', 'Other')).toThrow();
+    AL.updateAlliance(w, alice, { open: false });
+    AL.joinAlliance(w, bob, a.id, 'let me in');
+    expect(bob.allianceId).toBeNull();
+    expect(a.applications).toHaveLength(1);
+    AL.reviewApplication(w, alice, bob.id, true);
+    expect(bob.allianceId).toBe(a.id);
+    expect(() => AL.leaveAlliance(w, alice)).toThrow(/leadership/);
+    AL.setRole(w, alice, bob.id, 'officer');
+    AL.setRole(w, alice, bob.id, 'founder');
+    AL.leaveAlliance(w, alice);
+    AL.leaveAlliance(w, bob);
+    expect(Object.keys(w.alliances)).toHaveLength(0);
+  });
+
+  it('bank: donate, withdraw (officers), upgrade grants bonuses', () => {
+    const a = AL.createAlliance(w, alice, 'ABC', 'Alpha Co');
+    AL.joinAlliance(w, bob, a.id);
+    AL.donate(w, alice, ap.id, { metal: 500_000, crystal: 300_000, deuterium: 200_000 }, T0);
+    AL.donate(w, bob, bp.id, { metal: 100_000 }, T0);
+    expect(a.bank.metal).toBe(600_000);
+    expect(() => AL.withdraw(w, bob, bob.id, { metal: 1 }, T0)).toThrow(/Officers/);
+    expect(() => AL.donate(w, alice, ap.id, { metal: 1e12 }, T0)).toThrow(/resources/);
+
+    bp.buildings.metalMine = 5;
+    const before = planetProduction(w, bp).metal;
+    AL.buyUpgrade(w, alice, 'production');
+    expect(a.upgrades.production).toBe(1);
+    expect(planetProduction(w, bp).metal).toBeGreaterThan(before);
+    const bankMetal = a.bank.metal;
+    AL.withdraw(w, alice, bob.id, { metal: 1000 }, T0);
+    expect(a.bank.metal).toBe(bankMetal - 1000);
+    expect(() => AL.buyUpgrade(w, bob, 'research')).toThrow(/Officers/);
+  });
+
+  it('research upgrade shortens research time for members', () => {
+    const a = AL.createAlliance(w, alice, 'ABC', 'Alpha Co');
+    alice.techs = { energy: 8 };
+    startResearch(w, alice, ap, 'energy', T0);
+    const base = alice.research!.end - alice.research!.start;
+    cancelResearch(w, alice, T0);
+    a.bank = { metal: 1e7, crystal: 1e7, deuterium: 1e7 };
+    AL.buyUpgrade(w, alice, 'research');
+    AL.buyUpgrade(w, alice, 'research');
+    startResearch(w, alice, ap, 'energy', T0);
+    expect(alice.research!.end - alice.research!.start).toBeLessThan(base);
+  });
+
+  it('kick respects rank', () => {
+    const a = AL.createAlliance(w, alice, 'ABC', 'Alpha Co');
+    AL.joinAlliance(w, bob, a.id);
+    expect(() => AL.kickMember(w, bob, alice.id)).toThrow(GameError);
+    AL.kickMember(w, alice, bob.id);
+    expect(bob.allianceId).toBeNull();
+  });
+});
+
+describe('points', () => {
+  it('count buildings, research, fleet, defenses', () => {
+    ap.buildings = { metalMine: 15 };
+    ap.fleet = { cruiser: 10 };
+    ap.defenses = { rocketLauncher: 10 };
+    alice.techs = { energy: 3 };
+    const p = playerPoints(w, alice);
+    expect(p.buildings).toBeGreaterThan(0);
+    expect(p.fleet).toBe(290);
+    expect(p.defense).toBe(20);
+    expect(p.research).toBeGreaterThan(0);
+    expect(p.total).toBe(p.buildings + p.research + p.fleet + p.defense);
+  });
+});

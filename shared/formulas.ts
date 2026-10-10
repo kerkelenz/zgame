@@ -1,0 +1,159 @@
+import { BUILDINGS, TECHS, UNITS } from './data';
+import type { BuildingId, Coords, Fleet, Res, ShipId, TechId, UnitId } from './types';
+
+export type Levels<K extends string> = Partial<Record<K, number>>;
+export const lvl = <K extends string>(m: Levels<K> | undefined, k: K) => (m && m[k]) || 0;
+
+export const addRes = (a: Res, b: Res): Res => ({ metal: a.metal + b.metal, crystal: a.crystal + b.crystal, deuterium: a.deuterium + b.deuterium });
+export const subRes = (a: Res, b: Res): Res => ({ metal: a.metal - b.metal, crystal: a.crystal - b.crystal, deuterium: a.deuterium - b.deuterium });
+export const scaleRes = (a: Res, k: number): Res => ({ metal: a.metal * k, crystal: a.crystal * k, deuterium: a.deuterium * k });
+export const canAfford = (have: Res, cost: Res) => have.metal >= cost.metal && have.crystal >= cost.crystal && have.deuterium >= cost.deuterium;
+export const totalRes = (a: Res) => a.metal + a.crystal + a.deuterium;
+export const zeroRes = (): Res => ({ metal: 0, crystal: 0, deuterium: 0 });
+
+/** cost to build the given level (level >= 1) */
+export function buildingCost(id: BuildingId, level: number): Res {
+  const d = BUILDINGS[id];
+  const k = Math.pow(d.factor, level - 1);
+  return { metal: Math.floor(d.base.metal * k), crystal: Math.floor(d.base.crystal * k), deuterium: Math.floor(d.base.deuterium * k) };
+}
+export function techCost(id: TechId, level: number): Res {
+  const d = TECHS[id];
+  const k = Math.pow(d.factor, level - 1);
+  return { metal: Math.floor(d.base.metal * k), crystal: Math.floor(d.base.crystal * k), deuterium: Math.floor(d.base.deuterium * k) };
+}
+
+/** seconds */
+export function buildingTime(cost: Res, robotics: number, nanite: number, speed: number): number {
+  const hours = (cost.metal + cost.crystal) / (2500 * (1 + robotics) * Math.pow(2, nanite) * speed);
+  return Math.max(1, Math.floor(hours * 3600));
+}
+export function researchTime(cost: Res, lab: number, speed: number, allianceBonus = 0): number {
+  const hours = (cost.metal + cost.crystal) / (1000 * (1 + lab) * speed);
+  return Math.max(1, Math.floor(hours * 3600 * (1 - allianceBonus)));
+}
+export function unitTime(id: UnitId, shipyard: number, nanite: number, speed: number): number {
+  const c = UNITS[id].cost;
+  const hours = (c.metal + c.crystal) / (5000 * (1 + shipyard) * Math.pow(2, nanite) * speed);
+  return Math.max(0.1, hours * 3600);
+}
+
+export function storageCapacity(level: number): number {
+  return 5000 * Math.floor(2.5 * Math.exp((20 * level) / 33));
+}
+
+export interface ProductionInput {
+  buildings: Levels<BuildingId>;
+  techs: Levels<TechId>;
+  maxTemp: number;
+  satellites: number;
+  /** 0..1 slider per source; default 1 */
+  settings?: Partial<Record<'metalMine' | 'crystalMine' | 'deuteriumSynthesizer' | 'solarPlant' | 'fusionReactor' | 'solarSatellite', number>>;
+  speed: number;
+  /** alliance production bonus e.g. 0.04 */
+  allianceBonus?: number;
+}
+export interface Production {
+  /** per hour at current efficiency */
+  metal: number; crystal: number; deuterium: number;
+  energyProduced: number; energyUsed: number; efficiency: number;
+  fusionDeutUse: number;
+}
+
+export function production(i: ProductionInput): Production {
+  const s = (k: keyof NonNullable<ProductionInput['settings']>) => Math.min(1, Math.max(0, i.settings?.[k] ?? 1));
+  const m = lvl(i.buildings, 'metalMine'), c = lvl(i.buildings, 'crystalMine'), d = lvl(i.buildings, 'deuteriumSynthesizer');
+  const sp = lvl(i.buildings, 'solarPlant'), fu = lvl(i.buildings, 'fusionReactor');
+  const et = lvl(i.techs, 'energy'), pl = lvl(i.techs, 'plasma');
+
+  const energyProduced =
+    20 * sp * Math.pow(1.1, sp) * s('solarPlant') +
+    30 * fu * Math.pow(1.05 + 0.01 * et, fu) * s('fusionReactor') +
+    i.satellites * Math.max(0, Math.floor((i.maxTemp + 140) / 6)) * s('solarSatellite');
+  const energyUsed =
+    10 * m * Math.pow(1.1, m) * s('metalMine') +
+    10 * c * Math.pow(1.1, c) * s('crystalMine') +
+    20 * d * Math.pow(1.1, d) * s('deuteriumSynthesizer');
+  const efficiency = energyUsed <= 0 ? 1 : Math.min(1, Math.max(0, energyProduced / energyUsed));
+  const ab = 1 + (i.allianceBonus ?? 0);
+  const sp_ = i.speed;
+  const metal = (30 * sp_ + 30 * m * Math.pow(1.1, m) * s('metalMine') * efficiency * (1 + 0.01 * pl) * sp_ * ab);
+  const crystal = (15 * sp_ + 20 * c * Math.pow(1.1, c) * s('crystalMine') * efficiency * (1 + 0.0066 * pl) * sp_ * ab);
+  const deuterium = 10 * d * Math.pow(1.1, d) * (1.44 - 0.004 * i.maxTemp) * s('deuteriumSynthesizer') * efficiency * (1 + 0.0033 * pl) * sp_ * ab;
+  const fusionDeutUse = 10 * fu * Math.pow(1.1, fu) * s('fusionReactor') * sp_;
+  return { metal, crystal, deuterium: deuterium - fusionDeutUse, energyProduced, energyUsed, efficiency, fusionDeutUse };
+}
+
+export const COORD_KEY = (c: Coords) => `${c.g}:${c.s}:${c.p}`;
+export const sameCoords = (a: Coords, b: Coords) => a.g === b.g && a.s === b.s && a.p === b.p;
+
+export function distance(a: Coords, b: Coords): number {
+  if (a.g !== b.g) return 20000 * Math.abs(a.g - b.g);
+  if (a.s !== b.s) return 2700 + 95 * Math.abs(a.s - b.s);
+  if (a.p !== b.p) return 1000 + 5 * Math.abs(a.p - b.p);
+  return 5;
+}
+
+/** effective speed of one ship given the owner's drive techs */
+export function shipSpeed(id: ShipId, techs: Levels<TechId>, logisticsBonus = 0): number {
+  const u = UNITS[id];
+  if (!u.drive) return 0;
+  const per = u.drive === 'combustionDrive' ? 0.1 : u.drive === 'impulseDrive' ? 0.2 : 0.3;
+  let base = u.speed;
+  // OGame: small cargo upgrades to impulse at impulse 5, bomber to hyperspace at 8
+  if (id === 'smallCargo' && lvl(techs, 'impulseDrive') >= 5) return 10000 * (1 + 0.2 * lvl(techs, 'impulseDrive')) * (1 + logisticsBonus);
+  if (id === 'bomber' && lvl(techs, 'hyperspaceDrive') >= 8) return 5000 * (1 + 0.3 * lvl(techs, 'hyperspaceDrive')) * (1 + logisticsBonus);
+  return base * (1 + per * lvl(techs, u.drive)) * (1 + logisticsBonus);
+}
+
+export function fleetSpeed(fleet: Fleet, techs: Levels<TechId>, logisticsBonus = 0): number {
+  let min = Infinity;
+  for (const [id, n] of Object.entries(fleet)) if (n && n > 0) min = Math.min(min, shipSpeed(id as ShipId, techs, logisticsBonus));
+  return Number.isFinite(min) ? min : 0;
+}
+
+/** seconds. speedPct 10..100 */
+export function flightSeconds(dist: number, slowest: number, speedPct: number, universeFleetSpeed: number): number {
+  if (slowest <= 0) return Infinity;
+  return Math.max(1, Math.round((10 + (3500 / (speedPct / 100)) * Math.sqrt((10 * dist) / slowest)) / universeFleetSpeed));
+}
+
+/** one-way deuterium cost */
+export function fuelUse(fleet: Fleet, dist: number, speedPct: number): number {
+  let total = 0;
+  for (const [id, n] of Object.entries(fleet)) {
+    if (!n) continue;
+    const u = UNITS[id as ShipId];
+    if (!u.fuel) continue;
+    total += ((u.fuel * n * dist) / 35000) * Math.pow(speedPct / 100 + 1, 2);
+  }
+  return Math.max(1, Math.round(total) + 1);
+}
+
+export function cargoCapacity(fleet: Fleet): number {
+  let t = 0;
+  for (const [id, n] of Object.entries(fleet)) if (n) t += UNITS[id as ShipId].cargo * n;
+  return t;
+}
+
+export function unitPoints(id: UnitId, count: number): number {
+  return (totalRes(UNITS[id].cost) * count) / 1000;
+}
+export function buildingPoints(id: BuildingId, level: number): number {
+  let t = 0;
+  for (let l = 1; l <= level; l++) t += totalRes(buildingCost(id, l));
+  return t / 1000;
+}
+export function techPoints(id: TechId, level: number): number {
+  let t = 0;
+  for (let l = 1; l <= level; l++) t += totalRes(techCost(id, l));
+  return t / 1000;
+}
+
+export function planetFields(planetFieldsBase: number, buildings: Levels<BuildingId>): { used: number; max: number } {
+  let used = 0;
+  for (const v of Object.values(buildings)) used += v || 0;
+  return { used, max: planetFieldsBase };
+}
+
+export function techBonus(level: number) { return 1 + 0.1 * level; }

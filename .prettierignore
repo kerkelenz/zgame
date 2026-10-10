@@ -1,6 +1,0 @@
-node_modules/
-.expo/
-dist/
-src/assets/placeholders/
-src/assets/manifest.ts
-package-lock.json
