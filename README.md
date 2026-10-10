@@ -60,7 +60,7 @@ client/   React + Vite single-page app
 test/     vitest: formulas & combat, full game flows with a fake clock, HTTP API
 ```
 
-`npm test` runs the suite, `npm run typecheck` runs `tsc`.
+`npm test` runs the suite, `npm run typecheck` runs `tsc`, and `npm run balance -- 72` plays a greedy bot for 72 simulated hours and prints economy milestones (handy when tuning speeds or costs).
 
 ## Not implemented (ideas)
 

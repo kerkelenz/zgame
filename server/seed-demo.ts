@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 import { SHIP_IDS, TECH_IDS } from '../shared/data';
 import { register } from './accounts';
 import { createAlliance, joinAlliance, donate } from './alliance';
-import { createPlanet } from './galaxy';
+import { createMoon, createPlanet } from './galaxy';
 import { saveWorld } from './store';
 import { createWorld } from './world';
 
@@ -33,6 +33,20 @@ export function buildDemoWorld(now = Date.now()) {
   joinAlliance(w, carol, ally.id);
   donate(w, alice, alice.planetIds[0], { metal: 200_000, crystal: 150_000, deuterium: 80_000 }, now);
   createPlanet(w, alice, { g: 1, s: 14, p: 9 }, { name: 'Outpost', now });
+  // a developed moon for alice (phalanx + gate) and a second one on the outpost for jump-gate demos
+  const aliceHome = w.planets[alice.planetIds[0]];
+  const outpost = w.planets[alice.planetIds[1]];
+  for (const parent of [aliceHome, outpost]) {
+    const moon = createMoon(w, parent, now);
+    Object.assign(moon.buildings, { lunarBase: 4, sensorPhalanx: 3, jumpGate: 1, shipyard: 3, roboticsFactory: 2 });
+    Object.assign(moon.resources, { metal: 100_000, crystal: 100_000, deuterium: 100_000 });
+    moon.fleet = { cruiser: 5 };
+  }
+  alice.techs.hyperspace = 7;
+  // missiles for bob
+  const bobHome = w.planets[bob.planetIds[0]];
+  bobHome.buildings.missileSilo = 5;
+  bobHome.defenses = { ...bobHome.defenses, interplanetaryMissile: 10, antiBallisticMissile: 5 };
   void SHIP_IDS;
   return w;
 }

@@ -12,6 +12,7 @@
     "start": "npm run build && tsx server/index.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
+    "balance": "tsx server/balance-sim.ts",
     "demo": "tsx server/seed-demo.ts && cross-env OGAME_SAVE=data/demo-world.json tsx server/index.ts"
   },
   "dependencies": {
