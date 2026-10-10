@@ -57,7 +57,7 @@ describe('economy', () => {
     processPlayer(w, alice, T0 + HOUR);
     expect(ap.resources.metal).toBeGreaterThan(1000);
     processPlayer(w, alice, T0 + 1000 * HOUR);
-    expect(ap.resources.metal).toBe(10_000 * 100); // level-0 capacity, scaled by the x100 economy speed
+    expect(ap.resources.metal).toBe(10_000 * 100 * 5); // level-0 capacity: x100 economy speed, x5 storage boost
   });
 
   it('building takes resources, completes after its duration, and can be cancelled with refund', () => {

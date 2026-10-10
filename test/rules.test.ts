@@ -118,11 +118,11 @@ describe('officers', () => {
     expect(planetProduction(w, ap).energyProduced).toBeGreaterThan(base.energyProduced * 1.14);
 
     alice.officers = {};
-    startResearch(w, alice, ap, 'weapons', T0);
+    startResearch(w, alice, ap, 'energy', T0);
     const slow = alice.research!.end - alice.research!.start;
     alice.research = null;
     alice.officers = { engineer: 3 };
-    startResearch(w, alice, ap, 'weapons', T0);
+    startResearch(w, alice, ap, 'energy', T0);
     expect((alice.research!.end - alice.research!.start) / slow).toBeCloseTo(0.7, 1);
   });
 

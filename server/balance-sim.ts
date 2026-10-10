@@ -7,7 +7,7 @@ import { DEFAULT_CONFIG } from '../shared/config';
 import { buildingCost, canAfford, lvl, techCost, totalRes } from '../shared/formulas';
 import type { BuildingId, TechId, UnitId } from '../shared/types';
 import { register } from './accounts';
-import { planetProduction, processPlayer, queueUnits, requirementsMet, startBuilding, startResearch } from './economy';
+import { planetCapacity, planetProduction, processPlayer, queueUnits, requirementsMet, startBuilding, startResearch } from './economy';
 import { playerPoints } from './galaxy';
 import { GameError, createWorld } from './world';
 
@@ -30,10 +30,8 @@ function cheapestUseful(now: number): BuildingId | null {
   const prod = planetProduction(w, home);
   // energy first
   if (prod.efficiency < 1 || prod.energyProduced - prod.energyUsed < 40) return 'solarPlant';
-  const cap = { metal: 10000, crystal: 10000, deuterium: 10000 };
+  const cap = planetCapacity(w, home);
   for (const [k, id] of [['metal', 'metalStorage'], ['crystal', 'crystalStorage'], ['deuterium', 'deuteriumTank']] as const) {
-    const level = lvl(home.buildings, id);
-    cap[k] = 5000 * Math.floor(2.5 * Math.exp((20 * level) / 33));
     if (home.resources[k] > cap[k] * 0.9) return id;
   }
   // otherwise follow a ratio-based mine ladder
@@ -63,7 +61,7 @@ for (let now = T0; now < T0 + hours * 3_600_000; now += 30_000) {
     if (pick) {
       // can never afford it? raise the storage cap first (what a human would do)
       const cost = buildingCost(pick, level(pick) + 1);
-      const caps = { metal: 5000 * Math.floor(2.5 * Math.exp((20 * level('metalStorage')) / 33)), crystal: 5000 * Math.floor(2.5 * Math.exp((20 * level('crystalStorage')) / 33)), deuterium: 5000 * Math.floor(2.5 * Math.exp((20 * level('deuteriumTank')) / 33)) };
+      const caps = planetCapacity(w, home);
       if (cost.metal > caps.metal) pick = 'metalStorage';
       else if (cost.crystal > caps.crystal) pick = 'crystalStorage';
       else if (cost.deuterium > caps.deuterium) pick = 'deuteriumTank';

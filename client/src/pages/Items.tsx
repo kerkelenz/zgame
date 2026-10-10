@@ -99,7 +99,7 @@ export function Items({ kind }: { kind: Kind }) {
           const d = TECHS[id];
           const level = lvl(techs, id);
           const cost = techCost(id, level + 1);
-          const secs = researchTime(cost, lab, cfg.economySpeed, me.allianceBonuses.research, timeFactor);
+          const secs = researchTime(cost, lab, cfg.economySpeed * cfg.researchBoost, me.allianceBonuses.research, timeFactor);
           const missing = unmet(d.requires, planet.buildings, techs);
           const energyOk = !d.energyReq || planet.production.energyProduced >= d.energyReq * 3 ** level;
           const ok = !missing.length && energyOk && (researchQ ? rBacklog.length < MAXQ : canAfford(have, cost));

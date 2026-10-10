@@ -5,6 +5,12 @@ export interface UniverseConfig {
   positions: number;
   /** multiplies production and divides build/research/ship times */
   economySpeed: number;
+  /** extra multiplier on resource production (mines, basic income, energy-driven output) */
+  productionBoost: number;
+  /** extra multiplier on research speed (divides research time) */
+  researchBoost: number;
+  /** extra multiplier on storage capacity (level-0 storage = 10,000 x economySpeed x storageBoost) */
+  storageBoost: number;
   /** divides fleet flight times */
   fleetSpeed: number;
   /** players below this many points can't be attacked (and can't attack) */
@@ -27,6 +33,9 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   systems: 40,
   positions: 15,
   economySpeed: 20,
+  productionBoost: 5,
+  researchBoost: 5,
+  storageBoost: 5,
   fleetSpeed: 10,
   protectionPoints: 200,
   protectionRatio: 5,

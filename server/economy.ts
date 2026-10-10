@@ -27,7 +27,7 @@ export function planetProduction(w: World, planet: Planet) {
     maxTemp: planet.maxTemp,
     satellites: planet.fleet.solarSatellite || 0,
     settings: planet.settings,
-    speed: w.config.economySpeed,
+    speed: w.config.economySpeed * w.config.productionBoost,
     allianceBonus: allianceBonuses(w, owner).production,
     noBasic: !!planet.isMoon,
     boost: mineBoost(owner),
@@ -37,7 +37,7 @@ export function planetProduction(w: World, planet: Planet) {
 
 /** Storage scales with universe speed: at x20 the mines fill twenty times faster, so a classic-sized silo would waste almost everything. */
 export function planetCapacity(w: World, planet: Planet): Res {
-  const k = Math.max(1, w.config.economySpeed);
+  const k = Math.max(1, w.config.economySpeed) * w.config.storageBoost;
   return {
     metal: storageCapacity(lvl(planet.buildings, 'metalStorage')) * k,
     crystal: storageCapacity(lvl(planet.buildings, 'crystalStorage')) * k,
@@ -242,7 +242,7 @@ function beginResearch(w: World, player: Player, planet: Planet, id: TechId, now
   }
   const cost = techCost(id, level);
   pay(planet, cost);
-  const secs = researchTime(cost, lvl(planet.buildings, 'researchLab'), w.config.economySpeed, allianceBonuses(w, player).research, timeFactor(player));
+  const secs = researchTime(cost, lvl(planet.buildings, 'researchLab'), w.config.economySpeed * w.config.researchBoost, allianceBonuses(w, player).research, timeFactor(player));
   player.research = { id, level, start: now, end: now + secs * 1000, cost, planetId: planet.id };
 }
 
