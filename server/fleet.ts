@@ -337,7 +337,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
 
   let defShips = 0;
   for (const [id, n] of Object.entries(target.fleet)) if (id !== 'solarSatellite') defShips += n || 0;
-  const chance = Math.min(1, ((defShips + 1) * Math.pow(2, -diff)) / (probes * 8 + 1) * 0.25);
+  const chance = Math.min(0.9, ((defShips + 1) * Math.pow(2, -diff)) / (probes * 20 + 1) * 0.25);
   const caught = Math.random() < chance;
 
   notifyPlayer(w, def.id, 'espionage', 'Espionage activity', `Foreign probes were detected near ${target.name} ${fmt(m.to)} (from ${spy.username}).${caught ? ' Your defenses shot them down.' : ''}`);

@@ -536,3 +536,19 @@ describe('abandon', () => {
     expect(planetAt(w, { g: 1, s: 5, p: 10 })).toBeUndefined();
   });
 });
+
+describe('counter-espionage', () => {
+  it('lone probes are caught by a big fleet, a swarm gets through', () => {
+    bp.fleet = { cruiser: 150 };
+    const run = (probes: number) => {
+      ap.fleet = { espionageProbe: probes };
+      const spy = vi.spyOn(Math, 'random').mockReturnValue(0.3);
+      const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { espionageProbe: probes }, mission: 'espionage' }, T0);
+      processMovements(w, m.arriveAt);
+      spy.mockRestore();
+      return w.movements[m.id];
+    };
+    expect(run(1)).toBeUndefined(); // destroyed
+    expect(run(30)?.phase).toBe('returning'); // escaped with a report
+  });
+});
