@@ -28,6 +28,12 @@ export function Overview() {
             <input placeholder="Rename planet" value={name} onChange={(e) => setName(e.target.value)} maxLength={24} />
             <button>Rename</button>
           </form>
+          {!planet.isHome && (
+            <button className="danger" onClick={() => {
+              const n = prompt(`Type "${planet.name}" to abandon this colony forever`);
+              if (n) void act(() => post(`/planets/${planet.id}/abandon`, { name: n }), 'Colony abandoned');
+            }}>Abandon colony</button>
+          )}
         </Card>
 
         <Card title="Commander">

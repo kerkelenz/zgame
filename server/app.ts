@@ -5,7 +5,7 @@ import { BUILDINGS, TECHS, UNITS } from '../shared/data';
 import { bus } from './bus';
 import { authenticate, login, register } from './accounts';
 import * as AL from './alliance';
-import { cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueUnits, startBuilding, startResearch } from './economy';
+import { abandonPlanet, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueUnits, startBuilding, startResearch } from './economy';
 import { flightPlan, recallFleet, sendFleet } from './fleet';
 import { galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
@@ -121,6 +121,10 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
       planet.settings[k] = Math.min(1, Math.max(0, Math.round(Number(v) * 10) / 10));
     }
     return planetView(w, planet, now());
+  }));
+  A.post('/planets/:id/abandon', wrap((req) => {
+    abandonPlanet(w, req.player!, ownedPlanet(w, req.player!.id, req.params.id), str(req.body.name, 40), now());
+    return { ok: true };
   }));
   A.post('/planets/:id/rename', wrap((req) => {
     const planet = ownedPlanet(w, req.player!.id, req.params.id);

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
-import { cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
+import { abandonPlanet, cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
 import { processMovements, recallFleet, sendFleet } from '../server/fleet';
 import { createPlanet, playerPoints } from '../server/galaxy';
 import { processRaids, spawnRaid } from '../server/npc';
@@ -517,5 +517,22 @@ describe('joint attacks', () => {
     expect(lead.phase).toBe('returning');
     processMovements(w, T0 + 10 * HOUR);
     expect(cp.fleet.cruiser).toBe(5);
+  });
+});
+
+describe('abandon', () => {
+  it('lets you drop a colony but never the homeworld, and needs confirmation', () => {
+    const c = createPlanet(w, alice, { g: 1, s: 5, p: 10 }, { name: 'Outpost', now: T0 });
+    expect(() => abandonPlanet(w, alice, ap, ap.name, T0)).toThrow(/homeworld/);
+    expect(() => abandonPlanet(w, alice, c, 'wrong', T0)).toThrow(/confirm/);
+    expect(() => abandonPlanet(w, bob, c, 'Outpost', T0)).toThrow(/Not your/);
+    c.fleet = { cruiser: 1 };
+    sendFleet(w, alice, { fromPlanetId: c.id, to: bp.coords, ships: { cruiser: 1 }, mission: 'transport' }, T0);
+    expect(() => abandonPlanet(w, alice, c, 'Outpost', T0)).toThrow(/in flight/);
+    for (const m of Object.values(w.movements)) delete w.movements[m.id];
+    abandonPlanet(w, alice, c, 'Outpost', T0);
+    expect(w.planets[c.id]).toBeUndefined();
+    expect(alice.planetIds).toEqual([ap.id]);
+    expect(planetAt(w, { g: 1, s: 5, p: 10 })).toBeUndefined();
   });
 });

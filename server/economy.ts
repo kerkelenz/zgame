@@ -199,3 +199,18 @@ export function cancelShipyardJob(w: World, planet: Planet, index: number, now: 
   planet.shipyardQueue.splice(index, 1);
   if (index === 0 && planet.shipyardQueue[0]) planet.shipyardQueue[0].start = now;
 }
+
+export function abandonPlanet(w: World, player: Player, planet: Planet, name: string, now: number) {
+  if (planet.ownerId !== player.id) throw new GameError('Not your planet', 403);
+  if (planet.isHome || player.planetIds.length < 2) throw new GameError('You cannot abandon your homeworld');
+  if (name.trim() !== planet.name) throw new GameError('Type the planet name to confirm');
+  if (player.research?.planetId === planet.id) throw new GameError('Research is running from this planet');
+  for (const m of Object.values(w.movements)) {
+    if (m.fromPlanetId === planet.id && m.ownerId === player.id) throw new GameError('Fleets from this planet are still in flight');
+    const here = m.to.g === planet.coords.g && m.to.s === planet.coords.s && m.to.p === planet.coords.p;
+    if (m.mission === 'hold' && m.phase === 'holding' && here) throw new GameError('Allied fleets are stationed here - ask them to leave first');
+  }
+  updatePlanet(w, planet, now);
+  player.planetIds = player.planetIds.filter((id) => id !== planet.id);
+  delete w.planets[planet.id];
+}

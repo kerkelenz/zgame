@@ -2,6 +2,7 @@ import { useGame } from './game';
 import { fmt, coordStr } from './ui';
 import { Alliance } from './pages/Alliance';
 import { Chat } from './pages/Chat';
+import { Guide } from './pages/Guide';
 import { FleetPage } from './pages/Fleet';
 import { Galaxy } from './pages/Galaxy';
 import { Highscore } from './pages/Highscore';
@@ -13,7 +14,7 @@ import { Resources } from './pages/Resources';
 const NAV: [string, string][] = [
   ['overview', 'Overview'], ['resources', 'Resources'], ['buildings', 'Buildings'], ['research', 'Research'],
   ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['fleet', 'Fleet'], ['galaxy', 'Galaxy'],
-  ['alliance', 'Alliance'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Highscore'],
+  ['alliance', 'Alliance'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Highscore'], ['guide', 'Guide'],
 ];
 
 export function App() {
@@ -34,6 +35,7 @@ export function App() {
       case 'messages': return <Messages />;
       case 'chat': return <Chat />;
       case 'highscore': return <Highscore />;
+      case 'guide': return <Guide />;
       default: return <Overview />;
     }
   })();

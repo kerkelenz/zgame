@@ -38,7 +38,7 @@ Config is stored in the save on first start; env vars override it on later start
 - **Shipyard** – 14 ships, 8 defenses, batch queues with refunds, shield-dome limits.
 - **Fleets** – attack, transport, deploy, espionage, colonize, recycle debris, expeditions, plus **hold (defend ally)**. Fuel, cargo, speed %, fleet slots, recall.
 - **Combat** – 6-round simulation with rapid fire, shield bounce, explosion chance, debris fields, 70 % defense rebuild, loot rules, detailed battle reports.
-- **Co-op** – alliances (open/application), ranks, shared bank with grants, alliance upgrades (+mine output, −research time, +fleet speed for every member), allied fleets that fight alongside a defender, allied alerts when a member is attacked, alliance chat.
+- **Co-op** – alliances (open/application), ranks, shared bank with grants, alliance upgrades (+mine output, −research time, +fleet speed for every member), allied fleets that fight alongside a defender, joint (ACS) attacks that arrive together and split the loot, allied alerts when a member is attacked, alliance chat.
 - **PvE** – periodic NPC raid waves aimed at players; defenders (and allied holders) split a bounty when raiders are crushed. Expeditions can find resources, ships, pirates or a black hole.
 - **Social** – messages (battle/spy/system reports and player mail), global chat, galaxy browser, highscore for players and alliances, newbie protection.
 - **Live UI** – WebSocket push for alerts/messages/chat, interpolated resource counters, countdowns.
@@ -56,4 +56,11 @@ test/     vitest: formulas & combat, full game flows with a fake clock, HTTP API
 
 ## Not implemented (ideas)
 
-Moons/jump gates, missile silos, ACS joint attacks (allies can *defend* together but not attack together), planet abandoning, premium currency.
+Moons/jump gates, missile silos, premium currency, per-planet build queues longer than one item.
+
+## Hosting
+
+```bash
+docker build -t stellar-frontier .
+docker run -p 3000:3000 -v stellar-data:/data stellar-frontier
+```
