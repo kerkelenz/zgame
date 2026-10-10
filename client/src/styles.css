@@ -90,4 +90,8 @@ tr.mine td { background: #1d4f8f22; }
   nav { width: auto; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--line); }
   nav button { white-space: nowrap; }
   main { padding: 10px; }
+  /* wide tables scroll inside themselves instead of dragging the whole page sideways */
+  main table { display: block; max-width: 100%; overflow-x: auto; white-space: nowrap; }
+  .top { gap: 8px; padding: 6px 10px; }
+  .top .res { gap: 8px; font-size: 13px; }
 }
