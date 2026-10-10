@@ -688,3 +688,45 @@ describe('registration cap', () => {
     expect(() => register(small, 'three', 'secret3', T0)).toThrow(/full/);
   });
 });
+
+describe('diplomacy changes mid-flight', () => {
+  it('calls off an attack if the target joined the attacker\'s alliance in the meantime', () => {
+    ap.fleet = { battleship: 10 };
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { battleship: 10 }, mission: 'attack' }, T0);
+    AL.createAlliance(w, alice, 'TEAM', 'The Team');
+    AL.joinAlliance(w, bob, alice.allianceId!);
+    bp.defenses = { rocketLauncher: 5 };
+    processMovements(w, m.arriveAt);
+    expect(w.movements[m.id].phase).toBe('returning');
+    expect(bp.defenses.rocketLauncher).toBe(5);
+    expect(w.messages.some((x) => x.to === alice.id && /called off/.test(x.body))).toBe(true);
+    expect(bob.stats.battlesLost + alice.stats.battlesWon).toBe(0);
+  });
+
+  it('sends stationed fleets home when someone leaves, is kicked, or the alliance disbands', () => {
+    const station = () => {
+      ap.fleet = { cruiser: 5 };
+      const h = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { cruiser: 5 }, mission: 'hold', holdHours: 5 }, T0);
+      processMovements(w, h.arriveAt);
+      expect(h.phase).toBe('holding');
+      return h;
+    };
+    AL.createAlliance(w, alice, 'TEAM', 'The Team');
+    AL.joinAlliance(w, bob, alice.allianceId!);
+
+    const h1 = station();
+    AL.leaveAlliance(w, bob); // the host leaves
+    expect(h1.phase).toBe('returning');
+    AL.joinAlliance(w, bob, alice.allianceId!);
+    const h2 = station();
+    AL.kickMember(w, alice, bob.id);
+    expect(h2.phase).toBe('returning');
+    AL.joinAlliance(w, bob, alice.allianceId!);
+    const h3 = station();
+    AL.disbandAlliance(w, alice);
+    expect(h3.phase).toBe('returning');
+    processMovements(w, h3.returnAt! + 1000);
+    expect(ap.fleet.cruiser).toBe(15); // all three stationed fleets made it home
+    expect(Object.values(w.movements).filter((m) => m.mission === 'hold')).toHaveLength(0);
+  });
+});

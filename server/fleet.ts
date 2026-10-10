@@ -414,6 +414,8 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   };
   if (!target) return abort(`Nothing at ${fmt(lead.to)}.`);
   const defOwner = w.players[target.ownerId];
+  // diplomacy may have changed while the fleets were in flight
+  if (group.some((m) => m.ownerId && (m.ownerId === defOwner.id || sameAlliance(w, m.ownerId, defOwner.id)))) return abort(`The target at ${fmt(lead.to)} is now an ally - attack called off.`);
   processPlayer(w, defOwner, at);
   for (const m of group) { const a = attackerOf(m); if (a) processPlayer(w, a, at); }
 

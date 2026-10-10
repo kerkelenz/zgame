@@ -2,6 +2,7 @@ import { ALLIANCE_UPGRADES } from '../shared/data';
 import { addRes, canAfford, subRes, totalRes } from '../shared/formulas';
 import type { Res } from '../shared/types';
 import { updatePlanet } from './economy';
+import { bus } from './bus';
 import { notifyPlayer } from './messages';
 import { GameError, uid, type Alliance, type Player, type World } from './world';
 
@@ -70,9 +71,27 @@ export function reviewApplication(w: World, actor: Player, applicantId: string, 
   else if (applicant) notifyPlayer(w, applicantId, 'alliance', 'Application declined', `${a.name} declined your application.`);
 }
 
+/** Fleets stationed with allies go home when the alliance bond ends (in either direction). */
+export function releaseHolds(w: World, playerId: string) {
+  const mine = new Set(w.players[playerId]?.planetIds ?? []);
+  for (const m of Object.values(w.movements)) {
+    if (m.mission !== 'hold' || m.phase !== 'holding') continue;
+    const host = Object.values(w.planets).find((pl) => !!pl.isMoon === !!m.toMoon && pl.coords.g === m.to.g && pl.coords.s === m.to.s && pl.coords.p === m.to.p);
+    if (m.ownerId === playerId || (host && mine.has(host.id))) {
+      m.phase = 'returning';
+      m.returnAt = Date.now() + m.flightMs;
+      if (m.ownerId) {
+        notifyPlayer(w, m.ownerId, 'alliance', 'Fleet recalled', 'Your stationed fleet is returning home because the alliance bond ended.');
+        bus.push({ to: m.ownerId, type: 'refresh' });
+      }
+    }
+  }
+}
+
 export function leaveAlliance(w: World, p: Player) {
   const a = requireAlliance(w, p);
   if (isLeader(a, p.id) && a.members.length > 1) throw new GameError('Transfer leadership before leaving');
+  releaseHolds(w, p.id);
   a.members = a.members.filter((m) => m.playerId !== p.id);
   p.allianceId = null;
   if (!a.members.length) delete w.alliances[a.id];
@@ -86,6 +105,7 @@ export function kickMember(w: World, actor: Player, targetId: string) {
   if (!t || t.allianceId !== a.id) throw new GameError('Not a member');
   if (targetId === actor.id) throw new GameError('Use leave instead');
   if (roleOf(a, targetId) === 'founder' || (roleOf(a, targetId) === 'officer' && !isLeader(a, actor.id))) throw new GameError('Insufficient rank', 403);
+  releaseHolds(w, targetId);
   a.members = a.members.filter((m) => m.playerId !== targetId);
   t.allianceId = null;
   log(a, `${t.username} was removed by ${actor.username}.`);
@@ -115,6 +135,7 @@ export function updateAlliance(w: World, actor: Player, patch: { description?: s
 export function disbandAlliance(w: World, actor: Player) {
   const a = requireAlliance(w, actor);
   if (!isLeader(a, actor.id)) throw new GameError('Only the founder can disband', 403);
+  for (const m of a.members) releaseHolds(w, m.playerId);
   for (const m of a.members) { const pl = w.players[m.playerId]; if (pl) pl.allianceId = null; }
   delete w.alliances[a.id];
 }
