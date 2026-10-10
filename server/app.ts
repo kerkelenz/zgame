@@ -31,6 +31,8 @@ const str = (v: unknown, max = 200) => String(v ?? '').slice(0, max);
 export function createApp(w: World, opts: { staticDir?: string; clock?: () => number } = {}) {
   const now = opts.clock ?? Date.now;
   const app = express();
+  // behind a reverse proxy, rate limits must key on the real client address
+  if (process.env.OGAME_TRUST_PROXY) app.set('trust proxy', process.env.OGAME_TRUST_PROXY === 'true' ? true : Number(process.env.OGAME_TRUST_PROXY) || process.env.OGAME_TRUST_PROXY);
   app.use(express.json({ limit: '100kb' }));
 
   const wrap = (fn: (req: Request, res: Response) => unknown) => (req: Request, res: Response, next: NextFunction) => {
@@ -52,7 +54,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
 
   // ---------------------------------------------------------------- public
   app.post('/api/register', wrap((req) => {
-    if (limited('reg:' + req.ip, 10, 60_000)) throw new GameError('Too many attempts, slow down', 429);
+    if (limited('reg:' + req.ip, 10, 60_000) || limited('regday:' + req.ip, 40, 86_400_000)) throw new GameError('Too many attempts, slow down', 429);
     const { player, token } = register(w, str(req.body.username, 40), str(req.body.password, 200), now());
     bus.push({ to: '*', type: 'refresh' });
     return { token, id: player.id };
@@ -210,6 +212,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
   A.post('/messages/send', wrap((req) => {
     const p = req.player!;
+    if (limited('msg:' + p.id, 20, 60_000)) throw new GameError('You are sending messages too fast', 429);
     const to = Object.values(w.players).find((x) => x.username.toLowerCase() === str(req.body.to, 40).toLowerCase());
     if (!to) throw new GameError('No such player', 404);
     const text = str(req.body.text, 1000).trim();

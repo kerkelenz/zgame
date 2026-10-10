@@ -27,6 +27,8 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `OGAME_FLEET_SPEED` | 10 | flight time ÷ |
 | `OGAME_PROTECTION_POINTS` | 200 | players under this can't attack or be attacked |
 | `OGAME_RAID_INTERVAL_MIN` | 45 | minutes between NPC raid waves (0 = off) |
+| `OGAME_MAX_PLAYERS` | 500 | registration closes at this many commanders |
+| `OGAME_TRUST_PROXY` | unset | set to `true` (or a hop count) when behind a reverse proxy so rate limits use the real client IP |
 | `OGAME_GALAXIES`, `OGAME_SYSTEMS`, `OGAME_POSITIONS` | 2 / 40 / 15 | universe size |
 
 Config is stored in the save on first start; env vars override it on later starts.

@@ -13,6 +13,8 @@ export interface UniverseConfig {
   protectionRatio: number;
   /** minutes between NPC raid waves (0 disables) */
   raidIntervalMin: number;
+  /** registration closes at this many commanders */
+  maxPlayers: number;
   startResources: { metal: number; crystal: number; deuterium: number };
 }
 
@@ -25,5 +27,6 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   protectionPoints: 200,
   protectionRatio: 5,
   raidIntervalMin: 45,
+  maxPlayers: 500,
   startResources: { metal: 1500, crystal: 800, deuterium: 300 },
 };

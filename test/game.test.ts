@@ -679,3 +679,12 @@ describe('missiles', () => {
     expect(() => launchMissiles(w, alice, ap.id, bp.coords, 1, T0)).toThrow(/alliance/);
   });
 });
+
+describe('registration cap', () => {
+  it('closes when the universe is full', () => {
+    const small = createWorld({ maxPlayers: 2 }, T0);
+    register(small, 'one', 'secret1', T0);
+    register(small, 'two', 'secret2', T0);
+    expect(() => register(small, 'three', 'secret3', T0)).toThrow(/full/);
+  });
+});

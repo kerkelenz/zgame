@@ -148,3 +148,13 @@ describe('robustness', () => {
     expect((await call('GET', '/api/me', latest)).status).toBe(200);
   });
 });
+
+describe('abuse limits', () => {
+  it('rate-limits private messages', async () => {
+    const t = (await call('POST', '/api/register', undefined, { username: 'spammer', password: 'secret1' })).json.token;
+    const codes: number[] = [];
+    for (let i = 0; i < 22; i++) codes.push((await call('POST', '/api/messages/send', t, { to: 'alice', text: 'buy now' })).status);
+    expect(codes.slice(0, 20).every((c) => c === 200)).toBe(true);
+    expect(codes.slice(20)).toEqual([429, 429]);
+  });
+});
