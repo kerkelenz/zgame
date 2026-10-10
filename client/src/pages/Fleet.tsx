@@ -12,13 +12,14 @@ const MISSIONS: [Mission, string][] = [
 ];
 
 export function FleetPage() {
-  const { me, planet, fleets, act, target, setTarget } = useGame();
+  const { me, planet, fleets, act, target, setTarget, now } = useGame();
   const [ships, setShips] = useState<Partial<Record<ShipId, number>>>({});
   const [to, setTo] = useState({ g: planet.coords.g, s: planet.coords.s, p: planet.coords.p === 1 ? 2 : 1 });
   const [mission, setMission] = useState<Mission>('transport');
   const [speedPct, setSpeedPct] = useState(100);
   const [cargo, setCargo] = useState({ metal: 0, crystal: 0, deuterium: 0 });
   const [holdHours, setHoldHours] = useState(1);
+  const [joinId, setJoinId] = useState('');
   const [plan, setPlan] = useState<{ dist: number; secs: number; fuel: number } | null>(null);
 
   useEffect(() => {
@@ -41,7 +42,8 @@ export function FleetPage() {
   }, [JSON.stringify(chosen), to.g, to.s, to.p, speedPct, planet.id]);
 
   const send = async () => {
-    const r = await act(() => post('/fleets/send', { fromPlanetId: planet.id, to, ships: chosen, mission, speedPct, cargo, holdHours }), 'Fleet dispatched');
+    const r = await act(() => post('/fleets/send', { fromPlanetId: planet.id, to, ships: chosen, mission, speedPct, cargo, holdHours, joinFleetId: mission === 'attack' && joinId ? joinId : undefined }), 'Fleet dispatched');
+    setJoinId('');
     if (r) { setShips({}); setCargo({ metal: 0, crystal: 0, deuterium: 0 }); }
   };
 
@@ -113,6 +115,14 @@ export function FleetPage() {
                   {[100, 90, 80, 70, 60, 50, 40, 30, 20, 10].map((v) => <option key={v} value={v}>{v}%</option>)}
                 </select>
               </label>
+              {mission === 'attack' && fleets.joinable.length > 0 && (
+                <label>Joint attack
+                  <select value={joinId} onChange={(e) => { setJoinId(e.target.value); const j = fleets.joinable.find((x) => x.id === e.target.value); if (j) setTo(j.to); }}>
+                    <option value="">attack separately</option>
+                    {fleets.joinable.map((j) => <option key={j.id} value={j.id}>join {j.ownerName} → {j.targetName} {coordStr(j.to)} ({fmtDur(j.arriveAt - now)} left)</option>)}
+                  </select>
+                </label>
+              )}
               {mission === 'hold' && <label>Hold (hours)<input type="number" className="sm" min={0.1} max={48} step={0.5} value={holdHours} onChange={(e) => setHoldHours(Number(e.target.value))} /></label>}
               {mission === 'expedition' && <button type="button" onClick={() => setTo({ ...to, p: me.config.positions + 1 })}>Set deep space slot</button>}
             </div>

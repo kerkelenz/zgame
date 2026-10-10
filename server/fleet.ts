@@ -19,6 +19,8 @@ export interface SendRequest {
   speedPct?: number;
   cargo?: Partial<Res>;
   holdHours?: number;
+  /** join an allied outbound attack (same target) instead of attacking separately */
+  joinFleetId?: string;
 }
 
 const fmt = (c: Coords) => `[${c.g}:${c.s}:${c.p}]`;
@@ -74,6 +76,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   const target = planetAt(w, to);
   const targetOwner = target ? w.players[target.ownerId] : null;
   const has = (id: ShipId) => (ships[id] || 0) > 0;
+  let joinLead: Movement | undefined;
 
   switch (mission) {
     case 'attack': {
@@ -82,6 +85,13 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
       if (sameAlliance(w, player.id, targetOwner.id)) throw new GameError('Cannot attack an alliance member');
       if (!SHIP_IDS.some((id) => has(id) && UNITS[id].attack > 1)) throw new GameError('Your fleet has no combat ships');
       if (isProtected(w, player, targetOwner)) throw new GameError('That player is under newbie protection');
+      if (req.joinFleetId) {
+        joinLead = w.movements[req.joinFleetId];
+        if (!joinLead || joinLead.mission !== 'attack' || joinLead.phase !== 'outbound' || !joinLead.ownerId || joinLead.acsId) throw new GameError('That attack cannot be joined');
+        if (joinLead.ownerId !== player.id && !sameAlliance(w, player.id, joinLead.ownerId)) throw new GameError('You can only join attacks of your alliance');
+        if (!sameCoords(joinLead.to, to)) throw new GameError('The joined attack targets a different planet');
+        if (Object.values(w.movements).filter((x) => x.acsId === joinLead!.id).length >= 4) throw new GameError('The attack group is full');
+      }
       break;
     }
     case 'transport':
@@ -127,6 +137,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   const need = addRes(cargo, { metal: 0, crystal: 0, deuterium: plan.fuel });
   if (!canAfford(planet.resources, need)) throw new GameError(`Not enough resources (fuel: ${num(plan.fuel)} deuterium)`);
 
+  if (joinLead && now + plan.secs * 1000 > joinLead.arriveAt) throw new GameError('Your fleet is too slow to arrive together with that attack');
   planet.resources = subRes(planet.resources, need);
   for (const [id, n] of Object.entries(ships)) planet.fleet[id as ShipId] = (planet.fleet[id as ShipId] || 0) - (n || 0);
   for (const id of SHIP_IDS) if (!planet.fleet[id]) delete planet.fleet[id];
@@ -137,6 +148,12 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     speedPct, departAt: now, arriveAt: now + plan.secs * 1000, flightMs: plan.secs * 1000,
     holdHours: mission === 'hold' ? Math.min(48, Math.max(0.1, Number(req.holdHours) || 1)) : undefined,
   };
+  if (joinLead) {
+    // arrive together with the leader; the return trip still takes the natural flight time
+    m.arriveAt = joinLead.arriveAt;
+    m.acsId = joinLead.id;
+    if (joinLead.ownerId && joinLead.ownerId !== player.id) notifyPlayer(w, joinLead.ownerId, 'alliance', 'Ally joined your attack', `${player.username} joined your attack on ${fmt(to)} with ${fleetCount(ships)} ships.`);
+  }
   w.movements[m.id] = m;
 
   if (mission === 'attack' && targetOwner) {
@@ -154,6 +171,19 @@ export function recallFleet(w: World, player: Player, id: string, now: number) {
   const m = w.movements[id];
   if (!m || m.ownerId !== player.id) throw new GameError('Unknown fleet', 404);
   if (m.phase === 'returning') throw new GameError('Fleet is already returning');
+  if (m.phase === 'outbound' && m.mission === 'attack') {
+    // recalling a leader recalls its whole joint-attack group; a joiner just leaves the group
+    for (const j of Object.values(w.movements)) {
+      if (j.acsId === m.id && j.phase === 'outbound') {
+        j.acsId = undefined;
+        j.returnAt = now + Math.max(0, now - j.departAt);
+        j.flightMs = Math.max(0, now - j.departAt);
+        j.phase = 'returning';
+        if (j.ownerId) bus.push({ to: j.ownerId, type: 'refresh' });
+      }
+    }
+    m.acsId = undefined;
+  }
   if (m.phase === 'outbound') {
     const elapsed = now - m.departAt;
     m.returnAt = now + elapsed;
@@ -216,7 +246,14 @@ function land(w: World, m: Movement, at: number, dest?: Planet) {
 function arrive(w: World, m: Movement, at: number) {
   const target = planetAt(w, m.to);
   switch (m.mission) {
-    case 'attack': return resolveAttack(w, m, at);
+    case 'attack': {
+      if (m.acsId) {
+        const lead = w.movements[m.acsId];
+        if (lead && lead.phase === 'outbound') return resolveAttack(w, lead, at);
+        m.acsId = undefined;
+      }
+      return resolveAttack(w, m, at);
+    }
     case 'espionage': return resolveEspionage(w, m, at);
     case 'transport': {
       if (!target) { sendHome(m, at); return; }
@@ -358,28 +395,29 @@ function summarize(units: Record<string, number | undefined>): string {
   return parts.length ? parts.join(', ') : 'nothing';
 }
 
-function resolveAttack(w: World, m: Movement, at: number) {
-  const target = planetAt(w, m.to);
-  const attacker = m.ownerId ? w.players[m.ownerId] : null;
-  if (!target) {
-    if (attacker) { notifyPlayer(w, attacker.id, 'combat', 'Attack aborted', `Nothing at ${fmt(m.to)}.`); sendHome(m, at); }
-    else delete w.movements[m.id];
-    return;
-  }
+function resolveAttack(w: World, lead: Movement, at: number) {
+  // joint attack: every ally fleet that joined this one fights in the same battle
+  const group = [lead, ...Object.values(w.movements).filter((x) => x.acsId === lead.id && x.phase === 'outbound' && x.mission === 'attack')];
+  const target = planetAt(w, lead.to);
+  const attackerOf = (m: Movement) => (m.ownerId ? w.players[m.ownerId] : null);
+  const abort = (msg: string) => {
+    for (const m of group) {
+      if (m.ownerId) { notifyPlayer(w, m.ownerId, 'combat', 'Attack aborted', msg); sendHome(m, at); m.acsId = undefined; }
+      else delete w.movements[m.id];
+    }
+  };
+  if (!target) return abort(`Nothing at ${fmt(lead.to)}.`);
   const defOwner = w.players[target.ownerId];
   processPlayer(w, defOwner, at);
-  if (attacker) processPlayer(w, attacker, at);
+  for (const m of group) { const a = attackerOf(m); if (a) processPlayer(w, a, at); }
 
-  const holders = Object.values(w.movements).filter((h) => h.phase === 'holding' && h.mission === 'hold' && sameCoords(h.to, m.to));
+  const holders = Object.values(w.movements).filter((h) => h.phase === 'holding' && h.mission === 'hold' && sameCoords(h.to, lead.to));
   const defenders: Combatant[] = [combatant(w, defOwner, defOwner.username, target.fleet, target.defenses)];
   for (const h of holders) defenders.push(combatant(w, w.players[h.ownerId!], h.ownerName, h.ships));
 
   const rng = makeRng(Math.floor(Math.random() * 2 ** 31));
-  const res: CombatResult = simulateCombat(
-    [combatant(w, attacker, m.ownerName, m.ships)], defenders, rng,
-  );
+  const res: CombatResult = simulateCombat(group.map((m) => combatant(w, attackerOf(m), m.ownerName, m.ships)), defenders, rng);
 
-  // apply results
   const planetAfter = res.defenders[0].after;
   target.fleet = onlyShips(planetAfter);
   target.defenses = onlyDefs(planetAfter);
@@ -388,21 +426,29 @@ function resolveAttack(w: World, m: Movement, at: number) {
     if (fleetCount(after)) h.ships = after;
     else delete w.movements[h.id];
   });
-  m.ships = onlyShips(res.attackers[0].after);
-  addDebris(w, m.to, res.debris.metal, res.debris.crystal);
+  group.forEach((m, i) => { m.ships = onlyShips(res.attackers[i].after); });
+  addDebris(w, lead.to, res.debris.metal, res.debris.crystal);
 
+  // loot: bounded by the survivors' combined free cargo, split by each fleet's share of it
   let loot: Res = zeroRes();
-  const survivors = fleetCount(m.ships) > 0;
-  if (res.winner === 'attacker' && survivors) {
-    const free = cargoCapacity(m.ships) - totalRes(m.cargo);
-    loot = computeLoot(target.resources, Math.max(0, free));
+  const lootBy: Record<string, Res> = {};
+  const free = group.map((m) => (fleetCount(m.ships) ? Math.max(0, cargoCapacity(m.ships) - totalRes(m.cargo)) : 0));
+  const freeTotal = free.reduce((a, b) => a + b, 0);
+  if (res.winner === 'attacker' && freeTotal > 0) {
+    loot = computeLoot(target.resources, freeTotal);
     target.resources = subRes(target.resources, loot);
-    if (attacker) m.cargo = addRes(m.cargo, loot);
+    group.forEach((m, i) => {
+      const share = free[i] / freeTotal;
+      const part: Res = { metal: Math.floor(loot.metal * share), crystal: Math.floor(loot.crystal * share), deuterium: Math.floor(loot.deuterium * share) };
+      lootBy[m.id] = part;
+      if (m.ownerId) m.cargo = addRes(m.cargo, part);
+    });
   }
 
   // NPC bounty: defenders share a reward when raiders are crushed
   let bounty = 0;
-  if (!attacker && res.winner === 'defender') {
+  const npc = !lead.ownerId;
+  if (npc && res.winner === 'defender') {
     bounty = Math.floor(fleetValue(onlyShips(res.attackers[0].before)) * 0.25);
     const owners = new Set<string>([defOwner.id, ...holders.map((h) => h.ownerId!)]);
     const share = Math.floor(bounty / owners.size);
@@ -416,34 +462,41 @@ function resolveAttack(w: World, m: Movement, at: number) {
     }
   }
 
+  const lost = (before: Record<string, number | undefined>, after: Record<string, number | undefined>, rebuilt: Record<string, number | undefined> = {}) =>
+    summarize(Object.fromEntries(Object.entries(before).map(([k, v]) => [k, (v || 0) - (after[k] || 0) + (rebuilt[k] || 0)])));
+  const names = group.map((m) => m.ownerName).join(' + ');
   const report = {
-    coords: m.to, planet: target.name, rounds: res.rounds, winner: res.winner, debris: res.debris, loot, bounty,
+    coords: lead.to, planet: target.name, rounds: res.rounds, winner: res.winner, debris: res.debris, loot, bounty,
     attackers: res.attackers.map((a) => ({ name: a.name, before: a.before, after: a.after, lost: a.lost })),
     defenders: res.defenders.map((d) => ({ name: d.name, before: d.before, after: d.after, lost: d.lost, rebuilt: d.rebuilt })),
   };
   const headline = res.winner === 'attacker' ? 'Attacker victory' : res.winner === 'defender' ? 'Defender victory' : 'Draw';
   const body =
-    `${m.ownerName} vs ${defOwner.username} at ${target.name} ${fmt(m.to)} - ${headline} after ${res.rounds} round(s).\n` +
-    `Attacker lost: ${summarize(Object.fromEntries(Object.entries(res.attackers[0].before).map(([k, v]) => [k, (v || 0) - (res.attackers[0].after[k as ShipId] || 0)])))}.\n` +
-    `Defender lost: ${summarize(Object.fromEntries(Object.entries(res.defenders[0].before).map(([k, v]) => [k, (v || 0) - (res.defenders[0].after[k as ShipId] || 0) + (res.defenders[0].rebuilt[k as keyof Defenses] || 0)])))}.\n` +
+    `${names} vs ${defOwner.username} at ${target.name} ${fmt(lead.to)} - ${headline} after ${res.rounds} round(s).\n` +
+    res.attackers.map((a) => `${a.name} lost: ${lost(a.before, a.after)}.\n`).join('') +
+    `Defender lost: ${lost(res.defenders[0].before, res.defenders[0].after, res.defenders[0].rebuilt)}.\n` +
     (totalRes(loot) ? `Loot: ${num(loot.metal)} metal, ${num(loot.crystal)} crystal, ${num(loot.deuterium)} deuterium.\n` : '') +
     (res.debris.metal || res.debris.crystal ? `Debris field: ${num(res.debris.metal)} metal, ${num(res.debris.crystal)} crystal.\n` : '') +
     (bounty ? `Raider bounty: ${num(bounty)} resources shared among defenders.` : '');
 
   const involved = new Set<string>();
-  if (attacker) involved.add(attacker.id);
+  for (const m of group) if (m.ownerId) involved.add(m.ownerId);
   involved.add(defOwner.id);
   for (const h of holders) involved.add(h.ownerId!);
-  for (const pid of involved) notifyPlayer(w, pid, m.ownerId ? 'combat' : 'raid', `Battle at ${fmt(m.to)}: ${headline}`, body, report);
+  for (const pid of involved) notifyPlayer(w, pid, npc ? 'raid' : 'combat', `Battle at ${fmt(lead.to)}: ${headline}`, body, report);
 
-  if (attacker) {
-    if (res.winner === 'attacker') { attacker.stats.battlesWon++; defOwner.stats.battlesLost++; }
-    else if (res.winner === 'defender') { attacker.stats.battlesLost++; defOwner.stats.battlesWon++; }
+  for (const m of group) {
+    const a = attackerOf(m);
+    if (!a) continue;
+    if (res.winner === 'attacker') { a.stats.battlesWon++; defOwner.stats.battlesLost++; }
+    else if (res.winner === 'defender') { a.stats.battlesLost++; defOwner.stats.battlesWon++; }
   }
   bus.push({ to: '*', type: 'refresh' });
 
-  if (!survivors || !attacker) delete w.movements[m.id];
-  else sendHome(m, at);
+  for (const m of group) {
+    if (!m.ownerId || !fleetCount(m.ships)) delete w.movements[m.id];
+    else { sendHome(m, at); m.acsId = undefined; }
+  }
 }
 
 // ---------------------------------------------------------------- expeditions

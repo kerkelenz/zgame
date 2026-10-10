@@ -445,3 +445,77 @@ describe('points', () => {
     expect(p.total).toBe(p.buildings + p.research + p.fleet + p.defense);
   });
 });
+
+describe('joint attacks', () => {
+  function allies() {
+    AL.createAlliance(w, alice, 'TEAM', 'The Team');
+    const carol = register(w, 'carol', 'secret3', T0).player;
+    AL.joinAlliance(w, carol, alice.allianceId!);
+    const cp = w.planets[carol.planetIds[0]];
+    cp.coords = { g: 1, s: 5, p: 4 };
+    cp.buildings = { roboticsFactory: 4, shipyard: 6, solarPlant: 20 };
+    cp.resources = { metal: 2e6, crystal: 2e6, deuterium: 2e6 };
+    carol.techs = { ...bob.techs };
+    return { carol, cp };
+  }
+
+  it('allies arrive together, fight as one, split the loot and all get reports', () => {
+    const { carol, cp } = allies();
+    ap.fleet = { battleship: 10, largeCargo: 10 };
+    cp.fleet = { battleship: 10, largeCargo: 10 };
+    bp.fleet = { cruiser: 6 };
+    bp.defenses = { rocketLauncher: 10 };
+    bp.resources = { metal: 400_000, crystal: 200_000, deuterium: 100_000 };
+    const lead = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { battleship: 10, largeCargo: 10 }, mission: 'attack' }, T0);
+    const join = sendFleet(w, carol, { fromPlanetId: cp.id, to: bp.coords, ships: { battleship: 10, largeCargo: 10 }, mission: 'attack', joinFleetId: lead.id }, T0);
+    expect(join.arriveAt).toBe(lead.arriveAt);
+    expect(join.acsId).toBe(lead.id);
+    processMovements(w, lead.arriveAt);
+    const reports = w.messages.filter((m) => m.kind === 'combat');
+    expect(new Set(reports.map((r) => r.to))).toEqual(new Set([alice.id, bob.id, carol.id]));
+    expect((reports[0].data as { attackers: unknown[] }).attackers).toHaveLength(2);
+    expect(lead.phase).toBe('returning');
+    expect(join.phase).toBe('returning');
+    expect(lead.cargo.metal).toBeGreaterThan(20_000);
+    expect(join.cargo.metal).toBeGreaterThan(20_000);
+    expect(lead.acsId).toBeUndefined();
+    expect(alice.stats.battlesWon).toBe(1);
+    expect(carol.stats.battlesWon).toBe(1);
+    processMovements(w, lead.arriveAt + 2 * lead.flightMs + 5000);
+    expect(ap.fleet.battleship).toBeGreaterThan(0);
+    expect(cp.fleet.battleship).toBeGreaterThan(0);
+  });
+
+  it('rejects joining non-allies, other targets, and fleets that are too slow', () => {
+    const { carol, cp } = allies();
+    ap.fleet = { cruiser: 5 };
+    cp.fleet = { smallCargo: 1, cruiser: 5 };
+    const lead = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { cruiser: 5 }, mission: 'attack' }, T0);
+    // outsider
+    bp.fleet = { cruiser: 5 };
+    expect(() => sendFleet(w, bob, { fromPlanetId: bp.id, to: bp.coords, ships: { cruiser: 1 }, mission: 'attack', joinFleetId: lead.id }, T0)).toThrow();
+    // wrong target
+    const other = createPlanet(w, bob, { g: 1, s: 5, p: 12 }, { now: T0 });
+    expect(() => sendFleet(w, carol, { fromPlanetId: cp.id, to: other.coords, ships: { cruiser: 1 }, mission: 'attack', joinFleetId: lead.id }, T0)).toThrow(/different planet/);
+    // too slow: join late with slow ships
+    expect(() => sendFleet(w, carol, { fromPlanetId: cp.id, to: bp.coords, ships: { cruiser: 1 }, mission: 'attack', joinFleetId: lead.id }, lead.arriveAt - 1)).toThrow(/too slow/);
+    expect(() => sendFleet(w, carol, { fromPlanetId: cp.id, to: bp.coords, ships: { cruiser: 1 }, mission: 'attack', joinFleetId: 'nope' }, T0)).toThrow(/cannot be joined/);
+  });
+
+  it('recalling the leader recalls the group; a joiner can leave alone', () => {
+    const { carol, cp } = allies();
+    ap.fleet = { cruiser: 5 };
+    cp.fleet = { cruiser: 5 };
+    const lead = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { cruiser: 5 }, mission: 'attack' }, T0);
+    const j1 = sendFleet(w, carol, { fromPlanetId: cp.id, to: bp.coords, ships: { cruiser: 2 }, mission: 'attack', joinFleetId: lead.id }, T0);
+    const j2 = sendFleet(w, carol, { fromPlanetId: cp.id, to: bp.coords, ships: { cruiser: 2 }, mission: 'attack', joinFleetId: lead.id }, T0);
+    recallFleet(w, carol, j2.id, T0 + 1000);
+    expect(j2.phase).toBe('returning');
+    expect(lead.phase).toBe('outbound');
+    recallFleet(w, alice, lead.id, T0 + 1000);
+    expect(j1.phase).toBe('returning');
+    expect(lead.phase).toBe('returning');
+    processMovements(w, T0 + 10 * HOUR);
+    expect(cp.fleet.cruiser).toBe(5);
+  });
+});

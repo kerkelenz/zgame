@@ -4,7 +4,7 @@ import { activeSlots } from './fleet';
 import { maxPlanets, playerPoints } from './galaxy';
 import { sameCoords } from '../shared/formulas';
 import { upgradeCost } from './alliance';
-import type { Alliance, Movement, Planet, Player, World } from './world';
+import { planetAt, type Alliance, type Movement, type Planet, type Player, type World } from './world';
 
 export function planetView(w: World, planet: Planet, now: number) {
   updatePlanet(w, planet, now);
@@ -65,7 +65,7 @@ export function meView(w: World, p: Player, now: number) {
 const mv = (m: Movement, mine: boolean) => ({
   id: m.id, mission: m.mission, phase: m.phase, from: m.from, to: m.to, ships: m.ships,
   cargo: mine ? m.cargo : undefined, arriveAt: m.arriveAt, returnAt: m.returnAt, holdUntil: m.holdUntil,
-  ownerName: m.ownerName, ownerId: m.ownerId, speedPct: m.speedPct, flightMs: m.flightMs, departAt: m.departAt,
+  acsId: m.acsId, ownerName: m.ownerName, ownerId: m.ownerId, speedPct: m.speedPct, flightMs: m.flightMs, departAt: m.departAt,
 });
 
 export function fleetsView(w: World, p: Player) {
@@ -78,6 +78,7 @@ export function fleetsView(w: World, p: Player) {
   const mine: ReturnType<typeof mv>[] = [];
   const incoming: (ReturnType<typeof mv> & { target: string; ally: boolean })[] = [];
   const stationed: ReturnType<typeof mv>[] = [];
+  const joinable: (ReturnType<typeof mv> & { targetName: string })[] = [];
   for (const m of Object.values(w.movements)) {
     if (m.ownerId === p.id) mine.push(mv(m, true));
     if (m.mission === 'attack' && m.phase === 'outbound' && m.ownerId !== p.id) {
@@ -86,7 +87,10 @@ export function fleetsView(w: World, p: Player) {
       if (hitMe) incoming.push({ ...mv(m, false), ships: {}, target: 'you', ally: false });
       else if (hitAlly) incoming.push({ ...mv(m, false), ships: {}, target: `${hitAlly.owner} (${hitAlly.name})`, ally: true });
     }
+    if (m.mission === 'attack' && m.phase === 'outbound' && m.ownerId && !m.acsId && (m.ownerId === p.id || allyIds.has(m.ownerId))) {
+      joinable.push({ ...mv(m, false), ships: {}, targetName: planetAt(w, m.to)?.name ?? '?' });
+    }
     if (m.mission === 'hold' && m.phase === 'holding' && m.ownerId !== p.id && myCoords.some((c) => sameCoords(c, m.to))) stationed.push(mv(m, false));
   }
-  return { mine, incoming, stationed };
+  return { mine, incoming, stationed, joinable };
 }

@@ -144,7 +144,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const b = req.body || {};
     const m = sendFleet(w, p, {
       fromPlanetId: str(b.fromPlanetId), to: { g: Number(b.to?.g), s: Number(b.to?.s), p: Number(b.to?.p) },
-      ships: b.ships || {}, mission: str(b.mission) as never, speedPct: Number(b.speedPct) || 100, cargo: b.cargo || {}, holdHours: Number(b.holdHours) || 1,
+      ships: b.ships || {}, mission: str(b.mission) as never, speedPct: Number(b.speedPct) || 100, cargo: b.cargo || {}, holdHours: Number(b.holdHours) || 1, joinFleetId: b.joinFleetId ? str(b.joinFleetId) : undefined,
     }, now());
     return { id: m.id, arriveAt: m.arriveAt };
   }));

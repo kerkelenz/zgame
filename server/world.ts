@@ -71,6 +71,8 @@ export interface Movement {
   holdHours?: number;
   /** for expeditions, a flag set when the outcome has been resolved */
   resolved?: boolean;
+  /** joint attack: id of the leading movement this fleet joined */
+  acsId?: string;
 }
 
 export interface Alliance {

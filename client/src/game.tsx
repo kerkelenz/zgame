@@ -10,7 +10,7 @@ interface GameCtx {
   me: any | null;
   planets: any[];
   planet: any | null;
-  fleets: { mine: any[]; incoming: any[]; stationed: any[] };
+  fleets: { mine: any[]; incoming: any[]; stationed: any[]; joinable: any[] };
   selectPlanet: (id: string) => void;
   refresh: () => Promise<void>;
   /** server-corrected current time (ms) */
@@ -34,7 +34,7 @@ export const useGame = () => useContext(Ctx);
 export function GameProvider({ onLogout, children }: { onLogout: () => void; children: ReactNode }) {
   const [me, setMe] = useState<any | null>(null);
   const [planets, setPlanets] = useState<any[]>([]);
-  const [fleets, setFleets] = useState({ mine: [] as any[], incoming: [] as any[], stationed: [] as any[] });
+  const [fleets, setFleets] = useState({ mine: [] as any[], incoming: [] as any[], stationed: [] as any[], joinable: [] as any[] });
   const [selected, setSelected] = useState<string>(() => { try { return localStorage.getItem('sf.planet') || ''; } catch { return ''; } });
   const [skew, setSkew] = useState(0);
   const [tick, setTick] = useState(0);
