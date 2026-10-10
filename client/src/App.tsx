@@ -1,7 +1,11 @@
+import { useEffect, useRef } from 'react';
+import { drawStarfield } from './art';
 import { useGame } from './game';
 import { fmt, coordStr } from './ui';
 import { Alliance } from './pages/Alliance';
 import { Chat } from './pages/Chat';
+import { Command } from './pages/Command';
+import { Simulator } from './pages/Simulator';
 import { Empire } from './pages/Empire';
 import { Guide } from './pages/Guide';
 import { FleetPage } from './pages/Fleet';
@@ -15,11 +19,18 @@ import { Resources } from './pages/Resources';
 const NAV: [string, string][] = [
   ['overview', 'Overview'], ['empire', 'Empire'], ['resources', 'Resources'], ['buildings', 'Buildings'], ['research', 'Research'],
   ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['fleet', 'Fleet'], ['galaxy', 'Galaxy'],
-  ['alliance', 'Alliance'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Highscore'], ['guide', 'Guide'],
+  ['alliance', 'Alliance'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['guide', 'Guide'],
 ];
 
 export function App() {
   const g = useGame();
+  const stars = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const draw = () => stars.current && drawStarfield(stars.current);
+    draw();
+    window.addEventListener('resize', draw);
+    return () => window.removeEventListener('resize', draw);
+  }, []);
   const { me, planet, planets, page, setPage, live, toasts, fleets, offline } = g;
   if (!me || !planet) return <div className="loading">Loading universe…</div>;
 
@@ -38,6 +49,8 @@ export function App() {
       case 'chat': return <Chat />;
       case 'highscore': return <Highscore />;
       case 'guide': return <Guide />;
+      case 'command': return <Command />;
+      case 'simulator': return <Simulator />;
       default: return <Overview />;
     }
   })();
@@ -45,6 +58,7 @@ export function App() {
   const energy = planet.production.energyProduced - planet.production.energyUsed;
   return (
     <div className="shell">
+      <canvas id="stars" ref={stars} aria-hidden="true" />
       <header className="top">
         <div className="brand">Stellar Frontier</div>
         <select value={planet.id} onChange={(e) => g.selectPlanet(e.target.value)}>
@@ -57,11 +71,13 @@ export function App() {
           <span className={energy < 0 ? 'bad' : 'energy'} title="Energy balance">⚡ {fmt(energy)}</span>
         </div>
         <div className="who">
+          <span className="energy" title="Command Credits" onClick={() => setPage('command')} style={{ cursor: 'pointer' }}>★ {fmt(me.credits)}</span>
           {me.alliance && <span className="tag">[{me.alliance.tag}]</span>} {me.player.username}
           <button className="link" onClick={g.logout}>Log out</button>
         </div>
       </header>
       {offline && <div className="alertbar" style={{ background: '#4a3a1c', cursor: 'default' }}>Connection to the server lost - retrying…</div>}
+      {me.pendingTributes > 0 && <div className="alertbar" onClick={() => setPage('command')}>⚠ A hostile empire is demanding tribute - open Command to answer before the deadline</div>}
       {fleets.incoming.length > 0 && (
         <div className="alertbar" onClick={() => setPage('fleet')}>
           ⚠ {fleets.incoming.length} hostile fleet{fleets.incoming.length > 1 ? 's' : ''} inbound{fleets.incoming.some((f) => f.ally) ? ' (including on allies)' : ''} – click for details

@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { post } from '../api';
+import { TRADE_FEE, tradeQuote } from '../../../shared/data';
 import { useGame } from '../game';
 import { Card, Page, fmt } from '../ui';
 
@@ -12,6 +14,9 @@ export function Resources() {
   const p = planet.production;
   const lvl = (id: string) => planet.buildings[id] ?? planet.fleet[id] ?? 0;
   const ab = me.allianceBonuses.production;
+  const [give, setGive] = useState<'metal' | 'crystal' | 'deuterium'>('metal');
+  const [get, setGet] = useState<'metal' | 'crystal' | 'deuterium'>('crystal');
+  const [amount, setAmount] = useState(10000);
   return (
     <Page title="Resources">
       <Card title="Hourly production">
@@ -25,6 +30,17 @@ export function Resources() {
         </table>
         {ab > 0 && <p className="muted">Alliance mining network bonus: +{Math.round(ab * 100)}% on mine output.</p>}
         {p.efficiency < 1 && <p className="bad">Energy shortage! Build more solar plants or satellites – mines are running at {Math.round(p.efficiency * 100)}%.</p>}
+      </Card>
+      <Card title="Travelling merchant">
+        <p className="muted small">Swaps resources at 3 metal : 2 crystal : 1 deuterium and keeps a {Math.round(TRADE_FEE * 100)}% cut. Works on {planet.name}'s stock.</p>
+        <div className="row wrap">
+          <label>Give<select value={give} onChange={(e) => setGive(e.target.value as typeof give)}>{(['metal', 'crystal', 'deuterium'] as const).map((k) => <option key={k} value={k}>{k}</option>)}</select></label>
+          <input type="number" min={0} value={amount} onChange={(e) => setAmount(Math.max(0, Number(e.target.value)))} />
+          <button onClick={() => setAmount(Math.floor(planet.resources[give]))}>all</button>
+          <label>Get<select value={get} onChange={(e) => setGet(e.target.value as typeof get)}>{(['metal', 'crystal', 'deuterium'] as const).map((k) => <option key={k} value={k}>{k}</option>)}</select></label>
+          <b>{give === get ? '–' : fmt(tradeQuote(give, get, amount))}</b>
+          <button className="primary" disabled={give === get || amount <= 0} onClick={() => void act(() => post(`/planets/${planet.id}/trade`, { give, get, amount }), 'Trade done')}>Trade</button>
+        </div>
       </Card>
       <Card title="Production settings">
         <table className="kv">

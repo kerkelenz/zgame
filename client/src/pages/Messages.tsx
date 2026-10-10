@@ -4,7 +4,7 @@ import { del, get, post } from '../api';
 import { useGame } from '../game';
 import { Card, Page, coordStr, fmt, when } from '../ui';
 
-const KINDS = ['all', 'combat', 'espionage', 'raid', 'expedition', 'transport', 'alliance', 'player', 'system'];
+const KINDS = ['all', 'combat', 'espionage', 'raid', 'news', 'expedition', 'transport', 'alliance', 'player', 'system'];
 
 const name = (id: string) => (UNITS as any)[id]?.name ?? (BUILDINGS as any)[id]?.name ?? (TECHS as any)[id]?.name ?? id;
 const List = ({ data }: { data?: Record<string, number> }) => {

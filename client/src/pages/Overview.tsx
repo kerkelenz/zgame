@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BUILDINGS, TECHS, UNITS } from '../../../shared/data';
 import { post } from '../api';
+import { Art } from '../art';
 import { useGame } from '../game';
 import { Card, Countdown, Page, Progress, coordStr, fmt } from '../ui';
 
@@ -15,8 +16,10 @@ export function Overview() {
     <Page title={`${planet.name} ${coordStr(planet.coords)}`}>
       <div className="grid2">
         <Card title="Planet">
+          <img className="planetpic" src={Art.planet(planet.id, planet.maxTemp, !!planet.isMoon)} alt="" />
           <table className="kv">
             <tbody>
+              {planet.diameter && <tr><td>Diameter</td><td>{fmt(planet.diameter)} km</td></tr>}
               <tr><td>Fields</td><td>{planet.usedFields} / {planet.fields}</td></tr>
               <tr><td>Max temperature</td><td>{planet.maxTemp} °C</td></tr>
               <tr><td>Position</td><td>{coordStr(planet.coords)}</td></tr>
@@ -48,6 +51,12 @@ export function Overview() {
           </table>
         </Card>
       </div>
+
+      {me.objective && (
+        <Card title={`Objective ${me.objective.step} of ${me.objective.of}: ${me.objective.name}`} right={<button onClick={() => setPage('command')}>All objectives</button>}>
+          <p>{me.objective.hint}</p>
+        </Card>
+      )}
 
       <Card title="In progress">
         {!b && !r && !q && <p className="muted">Nothing is being built. Head to Buildings or Research.</p>}

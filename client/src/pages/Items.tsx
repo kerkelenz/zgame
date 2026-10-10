@@ -5,6 +5,7 @@ import {
 import { buildingCost, buildingTime, canAfford, lvl, researchTime, scaleRes, techCost, unitTime } from '../../../shared/formulas';
 import type { BuildingId, TechId, UnitId } from '../../../shared/types';
 import { post } from '../api';
+import { Art } from '../art';
 import { useGame } from '../game';
 import { Card, Cost, Countdown, Page, Progress, ReqList, fmtDur, unmet, fmt } from '../ui';
 
@@ -18,6 +19,8 @@ export function Items({ kind }: { kind: Kind }) {
   const have = { metal: live.metal, crystal: live.crystal, deuterium: live.deuterium };
   const [counts, setCounts] = useState<Record<string, number>>({});
 
+  // the Chief Engineer shortens every timer; the server applies the same factor
+  const timeFactor = Math.max(0.1, 1 - 0.1 * (me.player.officers?.engineer ?? 0));
   const robotics = lvl(planet.buildings, 'roboticsFactory');
   const nanite = lvl(planet.buildings, 'naniteFactory');
   const shipyard = lvl(planet.buildings, 'shipyard');
@@ -77,12 +80,12 @@ export function Items({ kind }: { kind: Kind }) {
           const d = BUILDINGS[id];
           const level = lvl(planet.buildings, id);
           const cost = buildingCost(id, level + 1);
-          const secs = buildingTime(cost, robotics, nanite, cfg.economySpeed);
+          const secs = buildingTime(cost, robotics, nanite, cfg.economySpeed, timeFactor);
           const missing = unmet(d.requires, planet.buildings, techs);
           const ok = !missing.length && (buildQ ? bBacklog.length < MAXQ : canAfford(have, cost)) && planet.usedFields + bBacklog.length < planet.fields;
           return (
             <Card key={id} title={<>{d.name} <span className="lvl">{level}</span></>}>
-              <p className="muted">{d.desc}</p>
+              <div className="cardtop"><img className="icon" src={Art.icon('building', id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
               <div>Next: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
               {missing.length > 0 && <ReqList reqs={missing} />}
               <button className="primary" disabled={!ok} onClick={() => void act(() => post(`/planets/${planet.id}/build`, { id }), `${d.name} upgrade started`)}>
@@ -96,13 +99,15 @@ export function Items({ kind }: { kind: Kind }) {
           const d = TECHS[id];
           const level = lvl(techs, id);
           const cost = techCost(id, level + 1);
-          const secs = researchTime(cost, lab, cfg.economySpeed, me.allianceBonuses.research);
+          const secs = researchTime(cost, lab, cfg.economySpeed, me.allianceBonuses.research, timeFactor);
           const missing = unmet(d.requires, planet.buildings, techs);
-          const ok = !missing.length && (researchQ ? rBacklog.length < MAXQ : canAfford(have, cost));
+          const energyOk = !d.energyReq || planet.production.energyProduced >= d.energyReq * 3 ** level;
+          const ok = !missing.length && energyOk && (researchQ ? rBacklog.length < MAXQ : canAfford(have, cost));
           return (
             <Card key={id} title={<>{d.name} <span className="lvl">{level}</span></>}>
-              <p className="muted">{d.desc}</p>
+              <div className="cardtop"><img className="icon" src={Art.icon('tech', id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
               <div>Next: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
+              {d.energyReq && <div className="small" style={{ color: planet.production.energyProduced >= d.energyReq * 3 ** level ? 'var(--good)' : 'var(--bad)' }}>Needs {fmt(d.energyReq * 3 ** level)} energy production on this planet (this one makes {fmt(planet.production.energyProduced)})</div>}
               {missing.length > 0 && <ReqList reqs={missing} />}
               <button className="primary" disabled={!ok} onClick={() => void act(() => post(`/planets/${planet.id}/research`, { id }), `${researchQ ? 'Queued' : 'Researching'} ${d.name}`)}>{researchQ ? 'Queue' : 'Research'} level {level + 1}</button>
             </Card>
@@ -115,7 +120,7 @@ export function Items({ kind }: { kind: Kind }) {
           const n = Math.max(1, counts[id] || 1);
           const missing = unmet(d.requires, planet.buildings, techs);
           const total = scaleRes(d.cost, n);
-          const msUnit = unitTime(id, shipyard, nanite, cfg.economySpeed) * 1000;
+          const msUnit = unitTime(id, shipyard, nanite, cfg.economySpeed, timeFactor) * 1000;
           const maxAfford = Math.floor(Math.min(
             d.cost.metal ? have.metal / d.cost.metal : Infinity,
             d.cost.crystal ? have.crystal / d.cost.crystal : Infinity,
@@ -124,7 +129,7 @@ export function Items({ kind }: { kind: Kind }) {
           const ok = !missing.length && canAfford(have, total) && shipyard > 0;
           return (
             <Card key={id} title={<>{d.name} <span className="lvl">{fmt(owned)}</span></>}>
-              <p className="muted">{d.desc}</p>
+              <div className="cardtop"><img className="icon" src={Art.icon((kind === 'ship' ? 'ship' : 'defense'), id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
               <div className="stats">
                 <span>⚔ {fmt(d.attack)}</span><span>🛡 {fmt(d.shield)}</span><span>❤ {fmt(d.hull)}</span>
                 {d.cargo > 0 && <span>📦 {fmt(d.cargo)}</span>}{d.speed > 0 && <span>🚀 {fmt(d.speed)}</span>}

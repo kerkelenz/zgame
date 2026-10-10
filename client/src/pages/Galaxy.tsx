@@ -45,8 +45,8 @@ export function Galaxy() {
               <tr key={sl.p} className={pl?.mine ? 'mine' : ''}>
                 <td>{sl.p}</td>
                 <td>{pl ? pl.name : <span className="muted">empty</span>}{sl.moon && <span title={sl.moon.name}> 🌙</span>}</td>
-                <td>{pl ? <>{pl.owner}{pl.protectedFor && <span title="Under protection" className="muted"> (p)</span>}</> : ''}</td>
-                <td>{pl?.alliance ? `[${pl.alliance}]` : ''}</td>
+                <td>{pl ? <>{pl.owner}{pl.npc && <span className={`tag ${pl.npc}`}>{pl.npc}</span>}{pl.protectedFor && <span title="Under protection" className="muted"> (p)</span>}</> : ''}</td>
+                <td>{pl?.alliance ? `[${pl.alliance}]` : pl?.faction ? <span className="muted small">{pl.faction}</span> : ''}</td>
                 <td>{sl.debris ? <a onClick={() => go(sl.p, 'recycle')} className="crystal">{fmt(sl.debris.metal)} M / {fmt(sl.debris.crystal)} C</a> : ''}</td>
                 <td className="actions">
                   {!pl && <button onClick={() => go(sl.p, 'colonize')}>Colonize</button>}

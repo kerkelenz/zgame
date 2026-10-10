@@ -27,6 +27,8 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `OGAME_FLEET_SPEED` | 10 | flight time ÷ |
 | `OGAME_PROTECTION_POINTS` | 200 | players under this can't attack or be attacked |
 | `OGAME_RAID_INTERVAL_MIN` | 45 | minutes between NPC raid waves (0 = off) |
+| `OGAME_NPC_DENSITY` | 0.3 | share of free slots settled by computer empires when the universe is created (0 = none; an existing save without empires gets them on next start) |
+| `OGAME_RAID_STRENGTH` | 1 | size of raiding fleets: 0.6 relaxed, 1 standard, 1.35 brutal |
 | `OGAME_MAX_PLAYERS` | 500 | registration closes at this many commanders |
 | `OGAME_TRUST_PROXY` | unset | set to `true` (or a hop count) when behind a reverse proxy so rate limits use the real client IP |
 | `OGAME_GALAXIES`, `OGAME_SYSTEMS`, `OGAME_POSITIONS` | 2 / 40 / 15 | universe size |
@@ -39,6 +41,11 @@ Config is stored in the save on first start; env vars override it on later start
 - **Tech** – 14 researches with OGame-style prerequisites; drives change ship speeds, weapons/shielding/armour change combat.
 - **Shipyard** – 14 ships, 8 defenses, batch queues with refunds, shield-dome limits. Buildings and research can queue 4 deep (paid when each starts).
 - **Moons** – big debris fields can condense into a moon (1% per 100k, max 20%). Build a Lunar Base for room, a **Sensor Phalanx** to scan fleet movements around planets in range (spot raiders heading for allies) and a **Jump Gate** to teleport ships between your moons. Missions can target moons.
+- **Computer empires** – hundreds of bot empires (inactive / active / aggressive) fill the galaxy with raid targets. They develop, expand, fight each other (wars leave debris and moons, with galaxy news), and aggressive ones raid commanders in fleets sized to your defenses. Raiding one builds a grudge that can turn it hostile; strong ones demand tribute (pay for a truce, refuse and face their fleet).
+- **Factions and reputation** – four factions with rival pairs. Raiding a faction's empires costs standing with it and earns half as much with its rival; at 40 standing you can join for a perk (shields, weapons, mine output, or plunder + cargo), a pact with its members (they stop raiding you) and supply convoys. Hit your own and you are expelled.
+- **Command** – Command Credits (from expeditions, objectives and achievements) buy permanent Officers: Quartermaster, Chief Engineer, Fleet Admiral, Spymaster, Geologist. 12 guided **objectives** walk new players through the first hours; 13 **achievements** pay credits.
+- **Tools** – a Travelling Merchant (3:2:1 resource swaps), a Battle Simulator that can load defenders straight from spy reports, fleet presets, and Standing charts of your points, fleet and rank over time.
+- **Late game** – Terraformer (+5 fields per level), Graviton Technology (costs nothing but needs a planet making 300,000+ energy; unlocks the Deathstar). Storage scales with universe speed.
 - **Missiles** – missile silo, anti-ballistic and interplanetary missiles: strike defenses in range, ABMs intercept one-for-one.
 - **Fleets** – attack, transport, deploy, espionage, colonize, recycle debris, expeditions, plus **hold (defend ally)**. Fuel, cargo, speed %, fleet slots, recall.
 - **Combat** – 6-round simulation with rapid fire, shield bounce, explosion chance, debris fields, 70 % defense rebuild, loot rules, detailed battle reports.

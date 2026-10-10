@@ -9,11 +9,12 @@ import { SHIP_IDS, TECH_IDS } from '../shared/data';
 import { register } from './accounts';
 import { createAlliance, joinAlliance, donate } from './alliance';
 import { createMoon, createPlanet } from './galaxy';
+import { generateEmpires } from './empires';
 import { saveWorld } from './store';
 import { createWorld } from './world';
 
 export function buildDemoWorld(now = Date.now()) {
-  const w = createWorld({ economySpeed: 60, fleetSpeed: 30, protectionPoints: 100, raidIntervalMin: 20 }, now);
+  const w = createWorld({ economySpeed: 60, fleetSpeed: 30, protectionPoints: 100, raidIntervalMin: 20, npcDensity: 0.2 }, now);
   const names = ['alice', 'bob', 'carol', 'rival'];
   const players = names.map((n) => register(w, n, 'demo1234', now).player);
   players.forEach((p, i) => {
@@ -47,6 +48,10 @@ export function buildDemoWorld(now = Date.now()) {
   const bobHome = w.planets[bob.planetIds[0]];
   bobHome.buildings.missileSilo = 5;
   bobHome.defenses = { ...bobHome.defenses, interplanetaryMissile: 10, antiBallisticMissile: 5 };
+  alice.credits = 1500; // enough to hire a couple of officers
+  alice.rep.chain = 45; // ready to join the Black Chain
+  const n = generateEmpires(w, now, 20260101);
+  void n;
   void SHIP_IDS;
   return w;
 }

@@ -20,6 +20,15 @@ export function Guide() {
           <li>Use <b>Chat</b> (global and alliance) to coordinate.</li>
         </ul>
       </Card>
+      <Card title="Empires, factions and Command">
+        <ul>
+          <li><b>Computer empires</b> fill the galaxy. <i>Inactive</i> ones never spend - spy on them and take their stockpile. <i>Aggressive</i> ones raid you; a grudge from your own raids can turn any empire hostile.</li>
+          <li>A strong hostile empire may <b>demand tribute</b>. Paying buys a truce; refusing (or ignoring it) brings their fleet. Answer in <b>Command</b>.</li>
+          <li>Raiding a <b>faction's</b> empires costs standing with it and earns half as much with its rival. At 40 standing you can join: members stop raiding you and you get the faction's perk.</li>
+          <li>Follow the <b>objectives</b> on the Overview for your first hours. Objectives, achievements and expeditions pay <b>Command Credits</b>, which buy permanent officers.</li>
+          <li>The <b>Battle Simulator</b> predicts a fight before you fly it - load a defender straight from a spy report.</li>
+        </ul>
+      </Card>
       <Card title="Fleet tips">
         <ul>
           <li>Flights cost deuterium. Slower speed % uses less fuel. Recall at any time - the fleet returns after the time already travelled.</li>

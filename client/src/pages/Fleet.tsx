@@ -20,6 +20,10 @@ export function FleetPage() {
   const [cargo, setCargo] = useState({ metal: 0, crystal: 0, deuterium: 0 });
   const [holdHours, setHoldHours] = useState(1);
   const [joinId, setJoinId] = useState('');
+  const [presets, setPresets] = useState<{ name: string; ships: Partial<Record<ShipId, number>> }[]>(() => {
+    try { return JSON.parse(localStorage.getItem('sf.presets') || '[]'); } catch { return []; }
+  });
+  const savePresets = (p: typeof presets) => { setPresets(p); try { localStorage.setItem('sf.presets', JSON.stringify(p)); } catch { /* ignore */ } };
   const [toMoon, setToMoon] = useState(false);
   const [scanTo, setScanTo] = useState({ g: planet.coords.g, s: planet.coords.s, p: 1 });
   const [scan, setScan] = useState<any>(null);
@@ -152,6 +156,15 @@ export function FleetPage() {
                 ))}
               </tbody>
             </table>
+            <div className="chips">
+              <button onClick={() => { const name = prompt('Name this fleet preset'); if (name && count) savePresets([...presets.filter((p) => p.name !== name), { name, ships: { ...chosen } }].slice(-8)); }} disabled={!count}>+ save selection as preset</button>
+              {presets.map((p) => (
+                <span key={p.name} className="preset">
+                  <button onClick={() => { const s: typeof ships = {}; for (const [id, n] of Object.entries(p.ships)) { const have = planet.fleet[id] || 0; if (have) s[id as ShipId] = Math.min(n as number, have); } setShips(s); }}>{p.name}</button>
+                  <button className="link" title="Delete preset" onClick={() => savePresets(presets.filter((x) => x.name !== p.name))}>×</button>
+                </span>
+              ))}
+            </div>
             <div className="row wrap">
               <label>Target
                 <span className="row">

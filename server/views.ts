@@ -50,7 +50,7 @@ export function meView(w: World, p: Player, now: number) {
   return {
     now,
     player: {
-      id: p.id, username: p.username, techs: p.techs, research: p.research, researchBacklog: p.researchBacklog ?? [], allianceId: p.allianceId,
+      id: p.id, username: p.username, techs: p.techs, research: p.research, researchBacklog: p.researchBacklog ?? [], officers: p.officers, allianceId: p.allianceId,
       points: playerPoints(w, p), stats: p.stats,
     },
     planets: p.planetIds.map((id) => {
@@ -66,6 +66,7 @@ export function meView(w: World, p: Player, now: number) {
     unread: w.messages.filter((m) => m.to === p.id && !m.read).length,
     credits: Math.floor(p.credits),
     faction: p.faction,
+    pendingTributes: p.tributes.filter((t) => !t.answered).length,
     objective: (() => { const o = currentObjective(p); return o ? { id: o.id, name: o.name, hint: o.hint, step: OBJECTIVES.indexOf(o) + 1, of: OBJECTIVES.length } : null; })(),
   };
 }
