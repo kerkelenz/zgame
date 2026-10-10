@@ -26,6 +26,8 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `OGAME_ECONOMY_SPEED` | 20 | production ×, build/research/ship time ÷ |
 | `OGAME_PRODUCTION_BOOST` | 5 | extra multiplier on all resource production, on top of the economy speed |
 | `OGAME_RESEARCH_BOOST` | 5 | extra multiplier on research speed |
+| `OGAME_CONSTRUCTION_BOOST` | 5 | extra multiplier on building construction speed |
+| `OGAME_SHIPYARD_BOOST` | 5 | extra multiplier on ship and defense build speed |
 | `OGAME_STORAGE_BOOST` | 5 | extra multiplier on storage (level-0 storage = 10,000 × economy speed × this = 1,000,000 by default) |
 | `OGAME_FLEET_SPEED` | 10 | flight time ÷ |
 | `OGAME_PROTECTION_POINTS` | 200 | players under this can't attack or be attacked |

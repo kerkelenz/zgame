@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { register } from '../server/accounts';
-import { planetCapacity, planetProduction, startBuilding, startResearch } from '../server/economy';
+import { planetCapacity, planetProduction, queueUnits, startBuilding, startResearch } from '../server/economy';
 import { flightPlan } from '../server/fleet';
 import { createWorld, type World } from '../server/world';
 import { DEFAULT_CONFIG } from '../shared/config';
@@ -61,6 +61,43 @@ describe('what the boosts change', () => {
   });
 });
 
+describe('construction and shipyard speed', () => {
+  it('default to 5x', () => {
+    expect(DEFAULT_CONFIG.constructionBoost).toBe(5);
+    expect(DEFAULT_CONFIG.shipyardBoost).toBe(5);
+  });
+
+  it('buildings take one fifth of the time', () => {
+    const base = setup({ constructionBoost: 1 }), boosted = setup({ constructionBoost: 5 });
+    startBuilding(base.w, base.p, base.planet, 'metalMine', T0);
+    startBuilding(boosted.w, boosted.p, boosted.planet, 'metalMine', T0);
+    const t1 = base.planet.buildQueue!.end - base.planet.buildQueue!.start, t5 = boosted.planet.buildQueue!.end - boosted.planet.buildQueue!.start;
+    expect(t1).toBeGreaterThan(20_000); // far from the 1-second floor, so the ratio is meaningful
+    expect(t1 / t5).toBeCloseTo(5, 0);
+  });
+
+  it('ships and defenses take one fifth of the time', () => {
+    const make = (shipyardBoost: number) => {
+      const x = setup({ shipyardBoost });
+      x.planet.buildings.shipyard = 6;
+      x.p.techs.combustionDrive = 4;
+      queueUnits(x.w, x.p, x.planet, 'lightFighter', 10, T0);
+      return x.planet.shipyardQueue[0].unitMs;
+    };
+    const t1 = make(1), t5 = make(5);
+    expect(t1).toBeGreaterThan(5_000);
+    expect(t1 / t5).toBeCloseTo(5, 0);
+  });
+
+  it('the two speeds are independent of each other', () => {
+    const a = setup({ constructionBoost: 5, shipyardBoost: 1 }), b = setup({ constructionBoost: 1, shipyardBoost: 5 });
+    for (const x of [a, b]) { x.planet.buildings.shipyard = 6; x.p.techs.combustionDrive = 4; startBuilding(x.w, x.p, x.planet, 'metalMine', T0); queueUnits(x.w, x.p, x.planet, 'lightFighter', 5, T0); }
+    const build = (x: typeof a) => x.planet.buildQueue!.end - x.planet.buildQueue!.start;
+    expect(build(b) / build(a)).toBeCloseTo(5, 0); // b builds 5x slower than a
+    expect(a.planet.shipyardQueue[0].unitMs / b.planet.shipyardQueue[0].unitMs).toBeCloseTo(5, 0); // a ships 5x slower than b
+  });
+});
+
 describe('what the boosts leave alone', () => {
   it('fleet flight times and fuel are unaffected', () => {
     const a = setup({ productionBoost: 1, researchBoost: 1, storageBoost: 1 }), b = setup({ productionBoost: 5, researchBoost: 5, storageBoost: 5 });
@@ -72,7 +109,7 @@ describe('what the boosts leave alone', () => {
     expect(b.w.config.fleetSpeed).toBe(DEFAULT_CONFIG.fleetSpeed);
   });
 
-  it('construction time is unaffected', () => {
+  it('production, research and storage boosts do not change construction or shipyard time', () => {
     const a = setup({ productionBoost: 1, researchBoost: 1, storageBoost: 1 }), b = setup({ productionBoost: 5, researchBoost: 5, storageBoost: 5 });
     startBuilding(a.w, a.p, a.planet, 'metalMine', T0);
     startBuilding(b.w, b.p, b.planet, 'metalMine', T0);

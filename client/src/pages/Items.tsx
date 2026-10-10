@@ -80,7 +80,7 @@ export function Items({ kind }: { kind: Kind }) {
           const d = BUILDINGS[id];
           const level = lvl(planet.buildings, id);
           const cost = buildingCost(id, level + 1);
-          const secs = buildingTime(cost, robotics, nanite, cfg.economySpeed, timeFactor);
+          const secs = buildingTime(cost, robotics, nanite, cfg.economySpeed * cfg.constructionBoost, timeFactor);
           const missing = unmet(d.requires, planet.buildings, techs);
           const ok = !missing.length && (buildQ ? bBacklog.length < MAXQ : canAfford(have, cost)) && planet.usedFields + bBacklog.length < planet.fields;
           return (
@@ -120,7 +120,7 @@ export function Items({ kind }: { kind: Kind }) {
           const n = Math.max(1, counts[id] || 1);
           const missing = unmet(d.requires, planet.buildings, techs);
           const total = scaleRes(d.cost, n);
-          const msUnit = unitTime(id, shipyard, nanite, cfg.economySpeed, timeFactor) * 1000;
+          const msUnit = unitTime(id, shipyard, nanite, cfg.economySpeed * cfg.shipyardBoost, timeFactor) * 1000;
           const maxAfford = Math.floor(Math.min(
             d.cost.metal ? have.metal / d.cost.metal : Infinity,
             d.cost.crystal ? have.crystal / d.cost.crystal : Infinity,

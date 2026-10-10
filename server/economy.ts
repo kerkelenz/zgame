@@ -196,7 +196,7 @@ function beginBuilding(w: World, player: Player, planet: Planet, id: BuildingId,
   const level = lvl(planet.buildings, id) + 1;
   const cost = buildingCost(id, level);
   pay(planet, cost);
-  const secs = buildingTime(cost, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed, timeFactor(player));
+  const secs = buildingTime(cost, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.constructionBoost, timeFactor(player));
   planet.buildQueue = { id, level, start: now, end: now + secs * 1000, cost };
 }
 
@@ -279,7 +279,7 @@ export function queueUnits(w: World, player: Player, planet: Planet, id: UnitId,
   }
   const total = scaleRes(def.cost, count);
   pay(planet, total);
-  const unitMs = unitTime(id, lvl(planet.buildings, 'shipyard'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed, timeFactor(player)) * 1000;
+  const unitMs = unitTime(id, lvl(planet.buildings, 'shipyard'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.shipyardBoost, timeFactor(player)) * 1000;
   const start = planet.shipyardQueue.length ? now : now;
   planet.shipyardQueue.push({ id, total: count, remaining: count, unitMs, start, unitCost: def.cost });
   if (planet.shipyardQueue.length === 1) planet.shipyardQueue[0].start = now;

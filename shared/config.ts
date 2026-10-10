@@ -9,6 +9,10 @@ export interface UniverseConfig {
   productionBoost: number;
   /** extra multiplier on research speed (divides research time) */
   researchBoost: number;
+  /** extra multiplier on building construction speed (divides construction time) */
+  constructionBoost: number;
+  /** extra multiplier on ship and defense build speed (divides shipyard time) */
+  shipyardBoost: number;
   /** extra multiplier on storage capacity (level-0 storage = 10,000 x economySpeed x storageBoost) */
   storageBoost: number;
   /** divides fleet flight times */
@@ -35,6 +39,8 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   economySpeed: 20,
   productionBoost: 5,
   researchBoost: 5,
+  constructionBoost: 5,
+  shipyardBoost: 5,
   storageBoost: 5,
   fleetSpeed: 10,
   protectionPoints: 200,
