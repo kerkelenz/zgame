@@ -5,11 +5,12 @@ import { BUILDINGS, TECHS, UNITS } from '../shared/data';
 import { bus } from './bus';
 import { authenticate, login, register } from './accounts';
 import * as AL from './alliance';
-import { abandonPlanet, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueBuilding, queueResearch, queueUnits, unqueueBuilding, unqueueResearch } from './economy';
+import { abandonPlanet, tradeResources, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueBuilding, queueResearch, queueUnits, unqueueBuilding, unqueueResearch } from './economy';
 import { flightPlan, jumpGate, launchMissiles, phalanxScan, recallFleet, sendFleet } from './fleet';
 import { colonyCount, galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
-import { allianceView, fleetsView, meView, planetView } from './views';
+import { allianceView, commandView, fleetsView, meView, planetView } from './views';
+import { checkProgress, hireOfficer, joinFaction, leaveFaction } from './progress';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
 
 declare global {
@@ -70,6 +71,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.get('/me', wrap((req) => {
     const p = req.player!;
     processPlayer(w, p, now());
+    checkProgress(w, p, now());
     return meView(w, p, now());
   }));
   A.get('/planets/:id', wrap((req) => {
@@ -141,6 +143,11 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     return phalanxScan(w, req.player!, req.params.id, { g: Number(b.to?.g), s: Number(b.to?.s), p: Number(b.to?.p) }, now());
   }));
   A.post('/planets/:id/jump', wrap((req) => jumpGate(w, req.player!, req.params.id, str(req.body.toPlanetId), req.body.ships || {}, now())));
+  A.post('/planets/:id/trade', wrap((req) => {
+    const p = req.player!;
+    const out = tradeResources(w, ownedPlanet(w, p.id, req.params.id), str(req.body.give), str(req.body.get), Number(req.body.amount), now());
+    return { out, planet: planetView(w, w.planets[req.params.id], now()) };
+  }));
   A.post('/planets/:id/rename', wrap((req) => {
     const planet = ownedPlanet(w, req.player!.id, req.params.id);
     const name = str(req.body.name, 24).trim();
@@ -194,6 +201,10 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     })).sort((a, b) => b.total - a.total).map((a, i) => ({ rank: i + 1, ...a }));
     return { players, alliances };
   }));
+  A.get('/command', wrap((req) => commandView(w, req.player!)));
+  A.post('/officers/hire', wrap((req) => { hireOfficer(w, req.player!, str(req.body.id)); return commandView(w, req.player!); }));
+  A.post('/faction/join', wrap((req) => { joinFaction(req.player!, str(req.body.id)); return commandView(w, req.player!); }));
+  A.post('/faction/leave', wrap((req) => { leaveFaction(req.player!); return commandView(w, req.player!); }));
   A.get('/defs', wrap(() => ({ BUILDINGS, TECHS, UNITS })));
 
   // ---------------------------------------------------------------- messages & chat

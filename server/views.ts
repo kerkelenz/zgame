@@ -4,6 +4,8 @@ import { activeSlots } from './fleet';
 import { colonyCount, maxPlanets, playerPoints } from './galaxy';
 import { sameCoords } from '../shared/formulas';
 import { upgradeCost } from './alliance';
+import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
+import { OFFICERS, OFFICER_MAX, FACTIONS, JOIN_REP, FACTION_BY_ID } from '../shared/data';
 import { planetAt, type Alliance, type Movement, type Planet, type Player, type World } from './world';
 
 export function planetView(w: World, planet: Planet, now: number) {
@@ -62,6 +64,29 @@ export function meView(w: World, p: Player, now: number) {
     maxPlanets: maxPlanets(p),
     colonies: colonyCount(w, p),
     unread: w.messages.filter((m) => m.to === p.id && !m.read).length,
+    credits: Math.floor(p.credits),
+    faction: p.faction,
+    objective: (() => { const o = currentObjective(p); return o ? { id: o.id, name: o.name, hint: o.hint, step: OBJECTIVES.indexOf(o) + 1, of: OBJECTIVES.length } : null; })(),
+  };
+}
+
+export function commandView(w: World, p: Player) {
+  const cur = currentObjective(p);
+  return {
+    credits: Math.floor(p.credits),
+    officers: OFFICERS.map((o) => {
+      const rank = p.officers[o.id] ?? 0;
+      return { id: o.id, name: o.name, desc: o.desc, rank, max: OFFICER_MAX, nextCost: rank < OFFICER_MAX ? o.cost[rank] : null };
+    }),
+    faction: p.faction,
+    factions: FACTIONS.map((f) => ({
+      id: f.id, name: f.name, tag: f.tag, perk: f.perk, rival: f.rival, rivalName: FACTION_BY_ID[f.rival].name,
+      rep: Math.round(p.rep[f.id] || 0), joinRep: JOIN_REP, joined: p.faction === f.id,
+      empires: Object.values(w.players).filter((x) => x.npc?.faction === f.id).length,
+    })),
+    achievements: ACHIEVEMENTS.map((a) => ({ id: a.id, name: a.name, desc: a.desc, reward: a.reward, doneAt: p.achievements[a.id] ?? null })),
+    objectives: OBJECTIVES.map((o) => ({ id: o.id, name: o.name, hint: o.hint, reward: o.reward, doneAt: p.objectives[o.id] ?? null, current: cur?.id === o.id })),
+    stats: p.stats,
   };
 }
 

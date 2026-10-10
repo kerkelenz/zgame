@@ -8,6 +8,7 @@ import { bus, type PushEvent } from './bus';
 import { processPlayer } from './economy';
 import { processMovements } from './fleet';
 import { processRaids } from './npc';
+import { checkProgress } from './progress';
 import { loadWorld, saveWorld } from './store';
 
 const num = (k: string, d: number) => (process.env[k] !== undefined ? Number(process.env[k]) : d);
@@ -52,12 +53,14 @@ bus.on('push', (e: PushEvent) => {
 });
 
 let dirty = true;
+let lastProgress = 0;
 function tick() {
   const now = Date.now();
   try {
     processMovements(world, now);
     processRaids(world, now);
     for (const p of Object.values(world.players)) processPlayer(world, p, now);
+    if (now - lastProgress > 5000) { lastProgress = now; for (const p of Object.values(world.players)) checkProgress(world, p, now); }
     dirty = true;
   } catch (e) {
     console.error('tick failed', e);

@@ -1,4 +1,4 @@
-import { ALLIANCE_UPGRADES, BUILDINGS, TECHS, UNITS, buildingAllowed } from '../shared/data';
+import { ALLIANCE_UPGRADES, BUILDINGS, TECHS, UNITS, buildingAllowed, tradeQuote } from '../shared/data';
 import {
   buildingCost, buildingTime, canAfford, production, researchTime, scaleRes, storageCapacity,
   subRes, addRes, techCost, unitTime, lvl,
@@ -310,4 +310,21 @@ export function abandonPlanet(w: World, player: Player, planet: Planet, name: st
   for (const moon of Object.values(w.planets)) if (moon.parentId === planet.id) { player.planetIds = player.planetIds.filter((id) => id !== moon.id); delete w.planets[moon.id]; }
   player.planetIds = player.planetIds.filter((id) => id !== planet.id);
   delete w.planets[planet.id];
+}
+
+/** Travelling merchant: swaps resources at a fixed 3:2:1 rate, keeping a 12% cut. */
+export function tradeResources(w: World, planet: Planet, give: string, get: string, amount: number, now: number): number {
+  const keys = ['metal', 'crystal', 'deuterium'] as const;
+  if (!keys.includes(give as never) || !keys.includes(get as never)) throw new GameError('Unknown resource');
+  if (give === get) throw new GameError('Pick two different resources');
+  amount = Math.floor(amount);
+  if (!(amount > 0)) throw new GameError('Enter an amount to trade');
+  updatePlanet(w, planet, now);
+  const g = give as (typeof keys)[number], t = get as (typeof keys)[number];
+  if (planet.resources[g] < amount) throw new GameError(`Not enough ${g} on ${planet.name}`);
+  const out = tradeQuote(g, t, amount);
+  if (out <= 0) throw new GameError('That is too small a load for the merchant to bother with');
+  planet.resources[g] -= amount;
+  planet.resources[t] += out;
+  return out;
 }

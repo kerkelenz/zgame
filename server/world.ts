@@ -151,7 +151,7 @@ export interface Alliance {
   createdAt: number;
 }
 
-export type MessageKind = 'system' | 'espionage' | 'combat' | 'expedition' | 'transport' | 'player' | 'alliance' | 'raid';
+export type MessageKind = 'system' | 'espionage' | 'combat' | 'expedition' | 'transport' | 'player' | 'alliance' | 'raid' | 'news';
 export interface Message {
   id: string;
   to: string;
