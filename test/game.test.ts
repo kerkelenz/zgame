@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
-import { abandonPlanet, cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
+import { abandonPlanet, queueBuilding, queueResearch, unqueueBuilding, cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
 import { processMovements, recallFleet, sendFleet } from '../server/fleet';
 import { createPlanet, playerPoints } from '../server/galaxy';
 import { processRaids, spawnRaid } from '../server/npc';
@@ -550,5 +550,66 @@ describe('counter-espionage', () => {
     };
     expect(run(1)).toBeUndefined(); // destroyed
     expect(run(30)?.phase).toBe('returning'); // escaped with a report
+  });
+});
+
+describe('queues', () => {
+  it('queued buildings start automatically when the active one finishes, paying then', () => {
+    ap.buildings = { roboticsFactory: 4 };
+    ap.resources = { metal: 100_000, crystal: 100_000, deuterium: 100_000 };
+    queueBuilding(w, alice, ap, 'metalMine', T0);
+    queueBuilding(w, alice, ap, 'metalMine', T0);
+    queueBuilding(w, alice, ap, 'solarPlant', T0);
+    expect(ap.buildBacklog).toEqual(['metalMine', 'solarPlant']);
+    const paidAtQueue = ap.resources.metal;
+    expect(paidAtQueue).toBe(100_000 - 60); // only the first was paid
+    processPlayer(w, alice, T0 + 100 * HOUR);
+    expect(ap.buildings.metalMine).toBe(2);
+    expect(ap.buildings.solarPlant).toBe(1);
+    expect(ap.buildQueue).toBeNull();
+    expect(ap.buildBacklog).toEqual([]);
+  });
+
+  it('drops queued items that became unaffordable and tells the player', () => {
+    ap.buildings = { roboticsFactory: 4 };
+    ap.resources = { metal: 200, crystal: 100, deuterium: 0 };
+    ap.settings = {};
+    queueBuilding(w, alice, ap, 'metalMine', T0);
+    queueBuilding(w, alice, ap, 'naniteFactory', T0);
+    processPlayer(w, alice, T0 + HOUR);
+    expect(ap.buildings.naniteFactory).toBeUndefined();
+    expect(w.messages.some((m) => /dropped/.test(m.subject))).toBe(true);
+  });
+
+  it('enforces queue size and supports removal', () => {
+    ap.resources = { metal: 1e6, crystal: 1e6, deuterium: 1e6 };
+    for (let i = 0; i < 5; i++) queueBuilding(w, alice, ap, 'solarPlant', T0);
+    expect(ap.buildBacklog).toHaveLength(4);
+    expect(() => queueBuilding(w, alice, ap, 'solarPlant', T0)).toThrow(/full/);
+    unqueueBuilding(ap, 0);
+    expect(ap.buildBacklog).toHaveLength(3);
+    expect(() => unqueueBuilding(ap, 9)).toThrow();
+  });
+
+  it('cancelling the active job starts the next queued one', () => {
+    ap.resources = { metal: 1e6, crystal: 1e6, deuterium: 1e6 };
+    queueBuilding(w, alice, ap, 'metalMine', T0);
+    queueBuilding(w, alice, ap, 'crystalMine', T0);
+    cancelBuilding(w, ap, T0 + 1);
+    expect(ap.buildQueue?.id).toBe('crystalMine');
+  });
+
+  it('research queue runs back to back', () => {
+    alice.techs = { energy: 8 };
+    ap.resources = { metal: 1e7, crystal: 1e7, deuterium: 1e7 };
+    queueResearch(w, alice, ap, 'energy', T0);
+    queueResearch(w, alice, ap, 'computer', T0);
+    queueResearch(w, alice, ap, 'armour', T0);
+    expect(alice.researchBacklog).toHaveLength(2);
+    processPlayer(w, alice, T0 + 500 * HOUR);
+    expect(alice.techs.energy).toBe(9);
+    expect(alice.techs.computer).toBe(1);
+    expect(alice.techs.armour).toBe(1);
+    expect(alice.research).toBeNull();
   });
 });

@@ -61,8 +61,12 @@ describe('http api', () => {
     expect(ok.status).toBe(200);
     expect(ok.json.buildQueue.id).toBe('metalMine');
     const dup = await call('POST', `/api/planets/${homeA}/build`, ta, { id: 'solarPlant' });
-    expect(dup.status).toBe(400);
-    expect(dup.json.error).toMatch(/progress/);
+    expect(dup.status).toBe(200);
+    expect(dup.json.buildBacklog).toEqual(["solarPlant"]);
+    const full = [];
+    for (let i = 0; i < 4; i++) full.push((await call("POST", `/api/planets/${homeA}/build`, ta, { id: "crystalMine" })).status);
+    expect(full).toEqual([200, 200, 200, 400]);
+    expect((await call("POST", `/api/planets/${homeA}/build/unqueue`, ta, { index: 0 })).json.buildBacklog).not.toContain("solarPlant");
     const bad = await call('POST', `/api/planets/${homeA}/build`, tb, { id: 'metalMine' });
     expect(bad.status).toBe(403);
     expect((await call('POST', `/api/planets/${homeB}/build`, tb, { id: 'doesNotExist' })).status).toBe(400);

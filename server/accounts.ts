@@ -12,7 +12,7 @@ export function register(w: World, username: string, password: string, now = Dat
   const salt = randomBytes(8).toString('hex');
   const player: Player = {
     id: uid(), username, salt, hash: hash(password, salt), createdAt: now, lastSeen: now,
-    techs: {}, research: null, allianceId: null, planetIds: [],
+    techs: {}, research: null, researchBacklog: [], allianceId: null, planetIds: [],
     stats: { raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0 },
   };
   w.players[player.id] = player;

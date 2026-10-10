@@ -39,6 +39,7 @@ export function createPlanet(w: World, owner: Player, coords: Coords, opts: { ho
     resources: home ? { ...w.config.startResources } : { metal: 500, crystal: 300, deuterium: 100 },
     updatedAt: now,
     buildQueue: null,
+    buildBacklog: [],
     shipyardQueue: [],
     fleet: {},
     defenses: {},

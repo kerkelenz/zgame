@@ -25,12 +25,35 @@ export function Items({ kind }: { kind: Kind }) {
 
   const buildQ = planet.buildQueue;
   const researchQ = me.player.research;
+  const bBacklog: string[] = planet.buildBacklog ?? [];
+  const rBacklog: { id: string }[] = me.player.researchBacklog ?? [];
+  const MAXQ = 4;
 
   return (
     <Page title={TITLES[kind]}>
       {kind === 'building' && buildQ && (
         <Card title="Under construction" right={<button onClick={() => void act(() => post(`/planets/${planet.id}/build/cancel`), 'Cancelled')}>Cancel</button>}>
           <div className="job"><div>{BUILDINGS[buildQ.id as BuildingId].name} → level {buildQ.level} · <Countdown to={buildQ.end} /></div><Progress from={buildQ.start} to={buildQ.end} /></div>
+        </Card>
+      )}
+      {kind === 'building' && bBacklog.length > 0 && (
+        <Card title={`Queue (${bBacklog.length}/${MAXQ})`}>
+          {bBacklog.map((id, i) => (
+            <div className="row between" key={i}>
+              <span>{i + 1}. {BUILDINGS[id as BuildingId].name}</span>
+              <button onClick={() => void act(() => post(`/planets/${planet.id}/build/unqueue`, { index: i }))}>Remove</button>
+            </div>
+          ))}
+        </Card>
+      )}
+      {kind === 'tech' && rBacklog.length > 0 && (
+        <Card title={`Queue (${rBacklog.length}/${MAXQ})`}>
+          {rBacklog.map((q, i) => (
+            <div className="row between" key={i}>
+              <span>{i + 1}. {TECHS[q.id as TechId].name}</span>
+              <button onClick={() => void act(() => post('/research/unqueue', { index: i }))}>Remove</button>
+            </div>
+          ))}
         </Card>
       )}
       {kind === 'tech' && researchQ && (
@@ -56,14 +79,14 @@ export function Items({ kind }: { kind: Kind }) {
           const cost = buildingCost(id, level + 1);
           const secs = buildingTime(cost, robotics, nanite, cfg.economySpeed);
           const missing = unmet(d.requires, planet.buildings, techs);
-          const ok = !missing.length && canAfford(have, cost) && !buildQ && planet.usedFields < planet.fields;
+          const ok = !missing.length && (buildQ ? bBacklog.length < MAXQ : canAfford(have, cost)) && planet.usedFields + bBacklog.length < planet.fields;
           return (
             <Card key={id} title={<>{d.name} <span className="lvl">{level}</span></>}>
               <p className="muted">{d.desc}</p>
               <div>Next: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
               {missing.length > 0 && <ReqList reqs={missing} />}
               <button className="primary" disabled={!ok} onClick={() => void act(() => post(`/planets/${planet.id}/build`, { id }), `${d.name} upgrade started`)}>
-                {level === 0 ? 'Build' : `Upgrade to ${level + 1}`}
+                {buildQ ? 'Add to queue' : level === 0 ? 'Build' : `Upgrade to ${level + 1}`}
               </button>
             </Card>
           );
@@ -75,13 +98,13 @@ export function Items({ kind }: { kind: Kind }) {
           const cost = techCost(id, level + 1);
           const secs = researchTime(cost, lab, cfg.economySpeed, me.allianceBonuses.research);
           const missing = unmet(d.requires, planet.buildings, techs);
-          const ok = !missing.length && canAfford(have, cost) && !researchQ;
+          const ok = !missing.length && (researchQ ? rBacklog.length < MAXQ : canAfford(have, cost));
           return (
             <Card key={id} title={<>{d.name} <span className="lvl">{level}</span></>}>
               <p className="muted">{d.desc}</p>
               <div>Next: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
               {missing.length > 0 && <ReqList reqs={missing} />}
-              <button className="primary" disabled={!ok} onClick={() => void act(() => post(`/planets/${planet.id}/research`, { id }), `Researching ${d.name}`)}>Research level {level + 1}</button>
+              <button className="primary" disabled={!ok} onClick={() => void act(() => post(`/planets/${planet.id}/research`, { id }), `${researchQ ? 'Queued' : 'Researching'} ${d.name}`)}>{researchQ ? 'Queue' : 'Research'} level {level + 1}</button>
             </Card>
           );
         })}

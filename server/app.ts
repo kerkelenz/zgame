@@ -5,7 +5,7 @@ import { BUILDINGS, TECHS, UNITS } from '../shared/data';
 import { bus } from './bus';
 import { authenticate, login, register } from './accounts';
 import * as AL from './alliance';
-import { abandonPlanet, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueUnits, startBuilding, startResearch } from './economy';
+import { abandonPlanet, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueBuilding, queueResearch, queueUnits, unqueueBuilding, unqueueResearch } from './economy';
 import { flightPlan, recallFleet, sendFleet } from './fleet';
 import { galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
@@ -84,7 +84,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   // ---------------------------------------------------------------- planet actions
   A.post('/planets/:id/build', wrap((req) => {
     const p = req.player!;
-    startBuilding(w, p, ownedPlanet(w, p.id, req.params.id), str(req.body.id) as never, now());
+    queueBuilding(w, p, ownedPlanet(w, p.id, req.params.id), str(req.body.id) as never, now());
     return planetView(w, w.planets[req.params.id], now());
   }));
   A.post('/planets/:id/build/cancel', wrap((req) => {
@@ -94,8 +94,16 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
   A.post('/planets/:id/research', wrap((req) => {
     const p = req.player!;
-    startResearch(w, p, ownedPlanet(w, p.id, req.params.id), str(req.body.id) as never, now());
+    queueResearch(w, p, ownedPlanet(w, p.id, req.params.id), str(req.body.id) as never, now());
     return planetView(w, w.planets[req.params.id], now());
+  }));
+  A.post('/planets/:id/build/unqueue', wrap((req) => {
+    unqueueBuilding(ownedPlanet(w, req.player!.id, req.params.id), Number(req.body.index));
+    return planetView(w, w.planets[req.params.id], now());
+  }));
+  A.post('/research/unqueue', wrap((req) => {
+    unqueueResearch(req.player!, Number(req.body.index));
+    return { ok: true };
   }));
   A.post('/research/cancel', wrap((req) => {
     cancelResearch(w, req.player!, now());

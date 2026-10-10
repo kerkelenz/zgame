@@ -20,6 +20,8 @@ export interface Player {
   lastSeen: number;
   techs: Levels<TechId>;
   research: ResearchJob | null;
+  /** research waiting behind the active job; paid for when it starts */
+  researchBacklog: { id: TechId; planetId: string }[];
   allianceId: string | null;
   planetIds: string[];
   /** expedition statistics etc. */
@@ -38,6 +40,8 @@ export interface Planet {
   resources: Res;
   updatedAt: number;
   buildQueue: BuildJob | null;
+  /** buildings waiting behind the active job; paid for when they start */
+  buildBacklog: BuildingId[];
   shipyardQueue: ShipyardJob[];
   fleet: Fleet;
   defenses: Defenses;

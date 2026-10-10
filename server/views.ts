@@ -18,7 +18,7 @@ export function planetView(w: World, planet: Planet, now: number) {
       energyProduced: prod.energyProduced, energyUsed: prod.energyUsed, efficiency: prod.efficiency,
     },
     settings: planet.settings,
-    buildQueue: planet.buildQueue, shipyardQueue: planet.shipyardQueue,
+    buildQueue: planet.buildQueue, buildBacklog: planet.buildBacklog ?? [], shipyardQueue: planet.shipyardQueue,
     fleet: planet.fleet, defenses: planet.defenses, updatedAt: planet.updatedAt,
   };
 }
@@ -46,7 +46,7 @@ export function meView(w: World, p: Player, now: number) {
   return {
     now,
     player: {
-      id: p.id, username: p.username, techs: p.techs, research: p.research, allianceId: p.allianceId,
+      id: p.id, username: p.username, techs: p.techs, research: p.research, researchBacklog: p.researchBacklog ?? [], allianceId: p.allianceId,
       points: playerPoints(w, p), stats: p.stats,
     },
     planets: p.planetIds.map((id) => {
