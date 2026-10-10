@@ -254,6 +254,13 @@ export function queueUnits(w: World, player: Player, planet: Planet, id: UnitId,
     const queued = planet.shipyardQueue.filter((j) => j.id === id).reduce((s, j) => s + j.remaining, 0);
     if (have + queued + count > def.max) throw new GameError(`Only ${def.max} allowed per planet`);
   }
+  if (def.missile) {
+    const slots = (u: string) => (u === 'interplanetaryMissile' ? 2 : 1);
+    const cap = 10 * lvl(planet.buildings, 'missileSilo');
+    const stored = Object.entries(planet.defenses).reduce((s, [k, n]) => s + (UNITS[k as UnitId].missile ? slots(k) * (n || 0) : 0), 0);
+    const queued = planet.shipyardQueue.reduce((s, j) => s + (UNITS[j.id].missile ? slots(j.id) * j.remaining : 0), 0);
+    if (stored + queued + slots(id) * count > cap) throw new GameError(`The silo can hold ${cap} missile slots (an interplanetary missile uses 2)`);
+  }
   const total = scaleRes(def.cost, count);
   pay(planet, total);
   const unitMs = unitTime(id, lvl(planet.buildings, 'shipyard'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed) * 1000;

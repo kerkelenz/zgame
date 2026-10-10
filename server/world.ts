@@ -77,6 +77,8 @@ export interface Movement {
   resolved?: boolean;
   /** joint attack: id of the leading movement this fleet joined */
   acsId?: string;
+  /** interplanetary missile strikes */
+  missiles?: number;
 }
 
 export interface Alliance {

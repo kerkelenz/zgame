@@ -20,6 +20,8 @@ export function FleetPage() {
   const [cargo, setCargo] = useState({ metal: 0, crystal: 0, deuterium: 0 });
   const [holdHours, setHoldHours] = useState(1);
   const [joinId, setJoinId] = useState('');
+  const [mTo, setMTo] = useState({ g: planet.coords.g, s: planet.coords.s, p: 1 });
+  const [mCount, setMCount] = useState(1);
   const [plan, setPlan] = useState<{ dist: number; secs: number; fuel: number } | null>(null);
 
   useEffect(() => {
@@ -69,9 +71,9 @@ export function FleetPage() {
           <div className="row between fleetrow" key={m.id}>
             <div>
               <b>{m.mission}</b> {coordStr(m.from)} → {coordStr(m.to)} <span className="muted">({m.phase})</span> · <Countdown to={phaseTime(m)} />
-              <div className="muted small">{shipList(m.ships)}{m.cargo && m.cargo.metal + m.cargo.crystal + m.cargo.deuterium > 0 ? ` · cargo ${fmt(m.cargo.metal)}M ${fmt(m.cargo.crystal)}C ${fmt(m.cargo.deuterium)}D` : ''}</div>
+              <div className="muted small">{m.missiles ? `${m.missiles} interplanetary missile(s)` : shipList(m.ships)}{m.cargo && m.cargo.metal + m.cargo.crystal + m.cargo.deuterium > 0 ? ` · cargo ${fmt(m.cargo.metal)}M ${fmt(m.cargo.crystal)}C ${fmt(m.cargo.deuterium)}D` : ''}</div>
             </div>
-            {m.phase !== 'returning' && <button onClick={() => void act(() => post(`/fleets/${m.id}/recall`), 'Recalled')}>Recall</button>}
+            {m.phase !== 'returning' && m.mission !== 'missile' && <button onClick={() => void act(() => post(`/fleets/${m.id}/recall`), 'Recalled')}>Recall</button>}
           </div>
         ))}
       </Card>
@@ -79,6 +81,23 @@ export function FleetPage() {
       {fleets.stationed.length > 0 && (
         <Card title="Allied fleets defending your planets">
           {fleets.stationed.map((m) => <div key={m.id}>{m.ownerName}: {shipList(m.ships)} at {coordStr(m.to)} · leaves in <Countdown to={m.holdUntil} /></div>)}
+        </Card>
+      )}
+
+      {(planet.defenses.interplanetaryMissile || 0) > 0 && (
+        <Card title={`Missile strike (${planet.defenses.interplanetaryMissile} ready, range ${Math.max(0, 5 * (planet.buildings.missileSilo || 0) - 1)} systems)`}>
+          <div className="row wrap">
+            <label>Target
+              <span className="row">
+                <input type="number" className="sm" value={mTo.g} onChange={(e) => setMTo({ ...mTo, g: Number(e.target.value) })} />
+                <input type="number" className="sm" value={mTo.s} onChange={(e) => setMTo({ ...mTo, s: Number(e.target.value) })} />
+                <input type="number" className="sm" value={mTo.p} onChange={(e) => setMTo({ ...mTo, p: Number(e.target.value) })} />
+              </span>
+            </label>
+            <label>Missiles<input type="number" className="sm" min={1} max={planet.defenses.interplanetaryMissile} value={mCount} onChange={(e) => setMCount(Number(e.target.value))} /></label>
+            <button className="danger" onClick={() => void act(() => post('/fleets/missile', { fromPlanetId: planet.id, to: mTo, count: mCount }), 'Missiles launched')}>Fire</button>
+          </div>
+          <p className="muted small">Each missile destroys defenses (not ships). The target's anti-ballistic missiles intercept one each.</p>
         </Card>
       )}
 

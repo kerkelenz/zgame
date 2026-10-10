@@ -69,7 +69,7 @@ export function simulateCombat(attackers: Combatant[], defenders: Combatant[], r
     list.forEach((c, who) => {
       const bag: Partial<Record<UnitId, number>> = {};
       const add = (id: UnitId, n: number) => {
-        if (!n || n <= 0) return;
+        if (!n || n <= 0 || UNITS[id].missile) return;
         bag[id] = (bag[id] || 0) + n;
         const u = UNITS[id];
         const sh = u.shield * (1 + 0.1 * c.shielding);

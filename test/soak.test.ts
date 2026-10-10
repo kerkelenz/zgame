@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
 import { cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch } from '../server/economy';
-import { processMovements, recallFleet, sendFleet } from '../server/fleet';
+import { launchMissiles, processMovements, recallFleet, sendFleet } from '../server/fleet';
 import { processRaids } from '../server/npc';
 import { BUILDING_IDS, SHIP_IDS, TECH_IDS, DEFENSE_IDS } from '../shared/data';
 import { createWorld, GameError, type World } from '../server/world';
@@ -48,7 +48,7 @@ describe('soak', () => {
         for (const id of p.planetIds) {
           const pl = w.planets[id];
           Object.assign(pl.resources, { metal: 5e7, crystal: 5e7, deuterium: 5e7 });
-          Object.assign(pl.buildings, { roboticsFactory: 6, shipyard: 12, researchLab: 10, solarPlant: 15, metalStorage: 10, crystalStorage: 10, deuteriumTank: 10 });
+          Object.assign(pl.buildings, { roboticsFactory: 6, shipyard: 12, missileSilo: 6, researchLab: 10, solarPlant: 15, metalStorage: 10, crystalStorage: 10, deuteriumTank: 10 });
           for (const sid of SHIP_IDS) if (sid !== 'deathstar') pl.fleet[sid] = 5 + Math.floor(rng() * 40);
           for (const did of DEFENSE_IDS) pl.defenses[did] = did.endsWith('Shield') ? 1 : Math.floor(rng() * 30);
         }
@@ -61,7 +61,7 @@ describe('soak', () => {
           now += Math.floor(rng() * 900_000);
           const p = pick(players);
           const planet = w.planets[pick(p.planetIds)];
-          const act = Math.floor(rng() * 12);
+          const act = Math.floor(rng() * 13);
           try {
             switch (act) {
               case 0: startBuilding(w, p, planet, pick(BUILDING_IDS), now); break;
@@ -85,6 +85,7 @@ describe('soak', () => {
               case 8: if (p.allianceId) AL.donate(w, p, planet.id, { metal: Math.floor(rng() * 1e6), crystal: Math.floor(rng() * 1e5) }, now); break;
               case 9: if (p.allianceId) AL.buyUpgrade(w, p, pick(['production', 'research', 'logistics'])); break;
               case 10: cancelBuilding(w, planet, now); break;
+              case 12: launchMissiles(w, p, planet.id, w.planets[pick(Object.keys(w.planets))].coords, 1 + Math.floor(rng() * 8), now); break;
               case 11: rng() < 0.5 ? cancelResearch(w, p, now) : processPlayer(w, p, now); break;
             }
             ok++;

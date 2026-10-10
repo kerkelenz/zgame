@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
 import { abandonPlanet, queueBuilding, queueResearch, unqueueBuilding, cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
-import { processMovements, recallFleet, sendFleet } from '../server/fleet';
+import { launchMissiles, processMovements, recallFleet, sendFleet } from '../server/fleet';
 import { createPlanet, playerPoints } from '../server/galaxy';
 import { processRaids, spawnRaid } from '../server/npc';
 import { GameError, createWorld, planetAt, type Planet, type Player, type World } from '../server/world';
@@ -611,5 +611,71 @@ describe('queues', () => {
     expect(alice.techs.computer).toBe(1);
     expect(alice.techs.armour).toBe(1);
     expect(alice.research).toBeNull();
+  });
+});
+
+describe('missiles', () => {
+  beforeEach(() => {
+    ap.buildings.missileSilo = 5; // 50 slots, range 24 systems
+    alice.techs.impulseDrive = 2;
+    bp.defenses = { rocketLauncher: 100, heavyLaser: 20, antiBallisticMissile: 0 };
+    bp.fleet = { cruiser: 5 };
+  });
+
+  it('silo capacity and requirements gate missile production', () => {
+    ap.buildings.missileSilo = 1;
+    expect(() => queueUnits(w, alice, ap, 'interplanetaryMissile', 1, T0)).toThrow(/Requirements/);
+    ap.buildings.missileSilo = 4; // 40 slots => 20 IPM
+    queueUnits(w, alice, ap, 'interplanetaryMissile', 20, T0);
+    expect(() => queueUnits(w, alice, ap, 'interplanetaryMissile', 1, T0)).toThrow(/silo can hold/);
+    expect(() => queueUnits(w, alice, ap, 'antiBallisticMissile', 1, T0)).toThrow(/silo can hold/);
+  });
+
+  it('missiles do not fight in normal battles and survive them', () => {
+    bp.defenses = { rocketLauncher: 10, antiBallisticMissile: 5, interplanetaryMissile: 3 };
+    ap.fleet = { battleship: 20 };
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { battleship: 20 }, mission: 'attack' }, T0);
+    processMovements(w, m.arriveAt);
+    expect(bp.defenses.antiBallisticMissile).toBe(5);
+    expect(bp.defenses.interplanetaryMissile).toBe(3);
+  });
+
+  it('strikes destroy defenses in priority order and spare ships', () => {
+    ap.defenses = { interplanetaryMissile: 5 };
+    bp.defenses = { rocketLauncher: 100, heavyLaser: 40 };
+    const m = launchMissiles(w, alice, ap.id, bp.coords, 3, T0);
+    expect(ap.defenses.interplanetaryMissile).toBe(2);
+    expect(m.arriveAt).toBeGreaterThan(T0);
+    expect(() => recallFleet(w, alice, m.id, T0)).toThrow(/cannot be recalled/);
+    processMovements(w, m.arriveAt);
+    expect(w.movements[m.id]).toBeUndefined();
+    // 3 missiles * 12000 * (1 + 0.1*weapons) ~ 36000+ damage; rockets have 200 hull each => all 100 die first
+    expect(bp.defenses.rocketLauncher ?? 0).toBe(0);
+    expect(bp.defenses.heavyLaser).toBeGreaterThan(0);
+    expect(bp.defenses.heavyLaser).toBeLessThan(40);
+    expect(bp.fleet.cruiser).toBe(5);
+    expect(w.messages.filter((x) => x.subject === 'Missile strike report').map((x) => x.to).sort()).toEqual([alice.id, bob.id].sort());
+  });
+
+  it('anti-ballistic missiles intercept one-for-one', () => {
+    ap.defenses = { interplanetaryMissile: 4 };
+    bp.defenses = { rocketLauncher: 100, antiBallisticMissile: 4 };
+    const m = launchMissiles(w, alice, ap.id, bp.coords, 4, T0);
+    processMovements(w, m.arriveAt);
+    expect(bp.defenses.rocketLauncher).toBe(100);
+    expect(bp.defenses.antiBallisticMissile ?? 0).toBe(0);
+  });
+
+  it('validates range, ownership, allies and protection', () => {
+    ap.defenses = { interplanetaryMissile: 5 };
+    expect(() => launchMissiles(w, alice, ap.id, ap.coords, 1, T0)).toThrow();
+    expect(() => launchMissiles(w, alice, ap.id, bp.coords, 9, T0)).toThrow(/Not enough/);
+    ap.buildings.missileSilo = 1; // range 4 systems
+    const far = createPlanet(w, bob, { g: 1, s: 30, p: 3 }, { now: T0 });
+    expect(() => launchMissiles(w, alice, ap.id, far.coords, 1, T0)).toThrow(/range/);
+    ap.buildings.missileSilo = 5;
+    AL.createAlliance(w, alice, 'TEAM', 'The Team');
+    AL.joinAlliance(w, bob, alice.allianceId!);
+    expect(() => launchMissiles(w, alice, ap.id, bp.coords, 1, T0)).toThrow(/alliance/);
   });
 });

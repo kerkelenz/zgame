@@ -6,7 +6,7 @@ import { bus } from './bus';
 import { authenticate, login, register } from './accounts';
 import * as AL from './alliance';
 import { abandonPlanet, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueBuilding, queueResearch, queueUnits, unqueueBuilding, unqueueResearch } from './economy';
-import { flightPlan, recallFleet, sendFleet } from './fleet';
+import { flightPlan, launchMissiles, recallFleet, sendFleet } from './fleet';
 import { galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
 import { allianceView, fleetsView, meView, planetView } from './views';
@@ -158,6 +158,11 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
       fromPlanetId: str(b.fromPlanetId), to: { g: Number(b.to?.g), s: Number(b.to?.s), p: Number(b.to?.p) },
       ships: b.ships || {}, mission: str(b.mission) as never, speedPct: Number(b.speedPct) || 100, cargo: b.cargo || {}, holdHours: Number(b.holdHours) || 1, joinFleetId: b.joinFleetId ? str(b.joinFleetId) : undefined,
     }, now());
+    return { id: m.id, arriveAt: m.arriveAt };
+  }));
+  A.post('/fleets/missile', wrap((req) => {
+    const b = req.body || {};
+    const m = launchMissiles(w, req.player!, str(b.fromPlanetId), { g: Number(b.to?.g), s: Number(b.to?.s), p: Number(b.to?.p) }, Number(b.count), now());
     return { id: m.id, arriveAt: m.arriveAt };
   }));
   A.post('/fleets/:id/recall', wrap((req) => {

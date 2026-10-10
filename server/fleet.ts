@@ -3,7 +3,7 @@ import {
   addRes, cargoCapacity, canAfford, distance, flightSeconds, fleetSpeed, fuelUse, lvl, sameCoords, subRes, totalRes, zeroRes,
 } from '../shared/formulas';
 import { computeLoot, fleetCount, makeRng, simulateCombat, type Combatant, type CombatResult } from '../shared/combat';
-import type { Coords, Defenses, Fleet, Mission, Res, ShipId } from '../shared/types';
+import type { Coords, DefenseId, Defenses, Fleet, Mission, Res, ShipId } from '../shared/types';
 import { bus } from './bus';
 import { allianceBonuses, planetCapacity, processPlayer, updatePlanet } from './economy';
 import { createPlanet, inBounds, isProtected, maxExpeditions, maxPlanets } from './galaxy';
@@ -29,7 +29,7 @@ const num = (n: number) => Math.round(n).toLocaleString('en-US');
 export function activeSlots(w: World, player: Player) {
   const mine = Object.values(w.movements).filter((m) => m.ownerId === player.id);
   return {
-    used: mine.filter((m) => m.mission !== 'expedition').length,
+    used: mine.filter((m) => m.mission !== 'expedition' && m.mission !== 'missile').length,
     max: 1 + lvl(player.techs, 'computer'),
     expUsed: mine.filter((m) => m.mission === 'expedition').length,
     expMax: maxExpeditions(player),
@@ -170,6 +170,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
 export function recallFleet(w: World, player: Player, id: string, now: number) {
   const m = w.movements[id];
   if (!m || m.ownerId !== player.id) throw new GameError('Unknown fleet', 404);
+  if (m.mission === 'missile') throw new GameError('Missiles cannot be recalled');
   if (m.phase === 'returning') throw new GameError('Fleet is already returning');
   if (m.phase === 'outbound' && m.mission === 'attack') {
     // recalling a leader recalls its whole joint-attack group; a joiner just leaves the group
@@ -282,6 +283,7 @@ function arrive(w: World, m: Movement, at: number) {
       bus.push({ to: target.ownerId, type: 'refresh' });
       return;
     }
+    case 'missile': return resolveMissiles(w, m, at);
     case 'colonize': return resolveColonize(w, m, at);
     case 'recycle': return resolveRecycle(w, m, at);
     case 'expedition': return resolveExpedition(w, m, at);
@@ -420,7 +422,9 @@ function resolveAttack(w: World, lead: Movement, at: number) {
 
   const planetAfter = res.defenders[0].after;
   target.fleet = onlyShips(planetAfter);
-  target.defenses = onlyDefs(planetAfter);
+  const missilesBefore: Defenses = {};
+  for (const id of DEFENSE_IDS) if (UNITS[id].missile && target.defenses[id]) missilesBefore[id] = target.defenses[id];
+  target.defenses = { ...onlyDefs(planetAfter), ...missilesBefore };
   holders.forEach((h, i) => {
     const after = onlyShips(res.defenders[i + 1].after);
     if (fleetCount(after)) h.ships = after;
@@ -559,3 +563,79 @@ function resolveExpedition(w: World, m: Movement, at: number) {
   m.resolved = true;
 }
 
+
+// ---------------------------------------------------------------- missiles
+
+const MISSILE_TARGET_ORDER: DefenseId[] = ['rocketLauncher', 'lightLaser', 'ionCannon', 'heavyLaser', 'gaussCannon', 'plasmaTurret', 'smallShield', 'largeShield'];
+
+export function missileRangeSystems(silo: number) { return Math.max(0, 5 * silo - 1); }
+
+export function launchMissiles(w: World, player: Player, fromPlanetId: string, to: Coords, count: number, now: number): Movement {
+  const planet = w.planets[fromPlanetId];
+  if (!planet || planet.ownerId !== player.id) throw new GameError('Not your planet', 403);
+  updatePlanet(w, planet, now);
+  count = Math.floor(count);
+  if (!(count >= 1)) throw new GameError('Choose how many missiles to fire');
+  if ((planet.defenses.interplanetaryMissile || 0) < count) throw new GameError('Not enough interplanetary missiles');
+  if (!inBounds(w, to)) throw new GameError('Invalid destination');
+  const target = planetAt(w, to);
+  const owner = target ? w.players[target.ownerId] : null;
+  if (!target || !owner) throw new GameError('There is no planet there');
+  if (owner.id === player.id) throw new GameError('You cannot fire at yourself');
+  if (sameAlliance(w, player.id, owner.id)) throw new GameError('Cannot attack an alliance member');
+  if (isProtected(w, player, owner)) throw new GameError('That player is under newbie protection');
+  if (to.g !== planet.coords.g) throw new GameError('Missiles cannot leave the galaxy');
+  const ds = Math.abs(to.s - planet.coords.s);
+  const range = missileRangeSystems(lvl(planet.buildings, 'missileSilo'));
+  if (ds > range) throw new GameError(`Out of range (your silo reaches ${range} systems)`);
+  planet.defenses.interplanetaryMissile = (planet.defenses.interplanetaryMissile || 0) - count;
+  if (!planet.defenses.interplanetaryMissile) delete planet.defenses.interplanetaryMissile;
+  const secs = Math.max(10, Math.round((30 + 60 * ds) / w.config.fleetSpeed));
+  const m: Movement = {
+    id: uid(), ownerId: player.id, ownerName: player.username, mission: 'missile', phase: 'outbound',
+    from: { ...planet.coords }, fromPlanetId: planet.id, to: { ...to }, ships: {}, cargo: zeroRes(), speedPct: 100,
+    departAt: now, arriveAt: now + secs * 1000, flightMs: secs * 1000, missiles: count,
+  };
+  w.movements[m.id] = m;
+  notifyPlayer(w, owner.id, 'system', 'Missile launch detected', `${count} interplanetary missile(s) from ${player.username} are heading for ${target.name} ${fmt(to)}.`);
+  bus.push({ to: owner.id, type: 'alert', data: `Missiles inbound to ${target.name}!` });
+  bus.push({ to: player.id, type: 'refresh' });
+  return m;
+}
+
+function resolveMissiles(w: World, m: Movement, at: number) {
+  delete w.movements[m.id];
+  const target = planetAt(w, m.to);
+  const attacker = w.players[m.ownerId!];
+  if (!target) return;
+  const owner = w.players[target.ownerId];
+  processPlayer(w, owner, at);
+  const launched = m.missiles || 0;
+  const abm = target.defenses.antiBallisticMissile || 0;
+  const intercepted = Math.min(abm, launched);
+  const striking = launched - intercepted;
+  if (intercepted) {
+    target.defenses.antiBallisticMissile = abm - intercepted;
+    if (!target.defenses.antiBallisticMissile) delete target.defenses.antiBallisticMissile;
+  }
+  let damage = striking * UNITS.interplanetaryMissile.attack * (1 + 0.1 * lvl(attacker.techs, 'weapons'));
+  const destroyed: Defenses = {};
+  for (const id of MISSILE_TARGET_ORDER) {
+    const have = target.defenses[id] || 0;
+    if (!have || damage <= 0) continue;
+    const hull = UNITS[id].hull * (1 + 0.1 * lvl(owner.techs, 'armour'));
+    const kill = Math.min(have, Math.floor(damage / hull));
+    if (kill > 0) {
+      destroyed[id] = kill;
+      damage -= kill * hull;
+      target.defenses[id] = have - kill;
+      if (!target.defenses[id]) delete target.defenses[id];
+    }
+  }
+  const list = (d: Defenses) => Object.entries(d).filter(([, n]) => n).map(([k, n]) => `${n}× ${UNITS[k as DefenseId].name}`).join(', ') || 'nothing';
+  const body = `${launched} missile(s) from ${attacker.username} hit ${target.name} ${fmt(m.to)}. ${intercepted} intercepted by ABMs. Defenses destroyed: ${list(destroyed)}.`;
+  const report = { coords: m.to, launched, intercepted, destroyed };
+  notifyPlayer(w, attacker.id, 'combat', 'Missile strike report', body, report);
+  notifyPlayer(w, owner.id, 'combat', 'Missile strike report', body, report);
+  bus.push({ to: '*', type: 'refresh' });
+}

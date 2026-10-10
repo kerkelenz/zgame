@@ -65,7 +65,7 @@ export function meView(w: World, p: Player, now: number) {
 const mv = (m: Movement, mine: boolean) => ({
   id: m.id, mission: m.mission, phase: m.phase, from: m.from, to: m.to, ships: m.ships,
   cargo: mine ? m.cargo : undefined, arriveAt: m.arriveAt, returnAt: m.returnAt, holdUntil: m.holdUntil,
-  acsId: m.acsId, ownerName: m.ownerName, ownerId: m.ownerId, speedPct: m.speedPct, flightMs: m.flightMs, departAt: m.departAt,
+  acsId: m.acsId, missiles: m.missiles, ownerName: m.ownerName, ownerId: m.ownerId, speedPct: m.speedPct, flightMs: m.flightMs, departAt: m.departAt,
 });
 
 export function fleetsView(w: World, p: Player) {
@@ -81,7 +81,7 @@ export function fleetsView(w: World, p: Player) {
   const joinable: (ReturnType<typeof mv> & { targetName: string })[] = [];
   for (const m of Object.values(w.movements)) {
     if (m.ownerId === p.id) mine.push(mv(m, true));
-    if (m.mission === 'attack' && m.phase === 'outbound' && m.ownerId !== p.id) {
+    if ((m.mission === 'attack' || m.mission === 'missile') && m.phase === 'outbound' && m.ownerId !== p.id) {
       const hitMe = myCoords.some((c) => sameCoords(c, m.to));
       const hitAlly = allyCoords.find((a) => sameCoords(a.c, m.to));
       if (hitMe) incoming.push({ ...mv(m, false), ships: {}, target: 'you', ally: false });

@@ -3,7 +3,7 @@ export type Res = { metal: number; crystal: number; deuterium: number };
 export type BuildingId =
   | 'metalMine' | 'crystalMine' | 'deuteriumSynthesizer' | 'solarPlant' | 'fusionReactor'
   | 'roboticsFactory' | 'naniteFactory' | 'shipyard' | 'researchLab'
-  | 'metalStorage' | 'crystalStorage' | 'deuteriumTank';
+  | 'metalStorage' | 'crystalStorage' | 'deuteriumTank' | 'missileSilo';
 
 export type TechId =
   | 'energy' | 'laser' | 'ion' | 'hyperspace' | 'plasma'
@@ -17,7 +17,8 @@ export type ShipId =
 
 export type DefenseId =
   | 'rocketLauncher' | 'lightLaser' | 'heavyLaser' | 'gaussCannon' | 'ionCannon'
-  | 'plasmaTurret' | 'smallShield' | 'largeShield';
+  | 'plasmaTurret' | 'smallShield' | 'largeShield'
+  | 'antiBallisticMissile' | 'interplanetaryMissile';
 
 export type UnitId = ShipId | DefenseId;
 export type ItemId = BuildingId | TechId | UnitId;
@@ -29,7 +30,7 @@ export type Coords = { g: number; s: number; p: number };
 
 export type Mission =
   | 'attack' | 'transport' | 'deploy' | 'espionage' | 'colonize'
-  | 'recycle' | 'expedition' | 'hold';
+  | 'recycle' | 'expedition' | 'hold' | 'missile';
 
 export interface Requirement { id: BuildingId | TechId; level: number }
 
@@ -49,4 +50,6 @@ export interface UnitDef {
   rapidFire: Partial<Record<UnitId, number>>;
   requires: Requirement[];
   max?: number;
+  /** stored in the silo, never takes part in regular combat */
+  missile?: boolean;
 }

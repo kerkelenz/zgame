@@ -16,6 +16,7 @@ export const BUILDINGS: Record<BuildingId, BuildingDef> = {
   researchLab: { id: 'researchLab', name: 'Research Lab', desc: 'Required for research; speeds it up.', base: r(200, 400, 200), factor: 2, requires: [] },
   metalStorage: { id: 'metalStorage', name: 'Metal Storage', desc: 'Raises metal capacity.', base: r(1000), factor: 2, requires: [] },
   crystalStorage: { id: 'crystalStorage', name: 'Crystal Storage', desc: 'Raises crystal capacity.', base: r(1000, 500), factor: 2, requires: [] },
+  missileSilo: { id: 'missileSilo', name: 'Missile Silo', desc: 'Stores 10 missile slots per level and sets missile range (5 systems per level).', base: r(20000, 20000, 1000), factor: 2, requires: [{ id: 'shipyard', level: 1 }] },
   deuteriumTank: { id: 'deuteriumTank', name: 'Deuterium Tank', desc: 'Raises deuterium capacity.', base: r(1000, 1000), factor: 2, requires: [] },
 };
 
@@ -64,6 +65,8 @@ export const UNITS: Record<UnitId, UnitDef> = {
   gaussCannon: def('gaussCannon', 'Gauss Cannon', { desc: 'Powerful kinetic cannon.', cost: r(20000, 15000, 2000), attack: 1100, shield: 200, hull: 3500, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, requires: [{ id: 'shipyard', level: 6 }, { id: 'energy', level: 6 }, { id: 'weapons', level: 3 }, { id: 'shielding', level: 1 }] }),
   ionCannon: def('ionCannon', 'Ion Cannon', { desc: 'Strips enemy shields.', cost: r(5000, 3000), attack: 150, shield: 500, hull: 800, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, requires: [{ id: 'shipyard', level: 4 }, { id: 'ion', level: 4 }] }),
   plasmaTurret: def('plasmaTurret', 'Plasma Turret', { desc: 'Devastating plasma defense.', cost: r(50000, 50000, 30000), attack: 3000, shield: 300, hull: 10000, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, requires: [{ id: 'shipyard', level: 8 }, { id: 'plasma', level: 7 }] }),
+  antiBallisticMissile: def('antiBallisticMissile', 'Anti-Ballistic Missile', { desc: 'Intercepts one incoming interplanetary missile. Uses 1 silo slot.', cost: r(8000, 0, 2000), attack: 1, shield: 1, hull: 1, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, missile: true, requires: [{ id: 'shipyard', level: 1 }, { id: 'missileSilo', level: 2 }] }),
+  interplanetaryMissile: def('interplanetaryMissile', 'Interplanetary Missile', { desc: 'Destroys defenses on another planet in range. Uses 2 silo slots.', cost: r(12500, 2500, 10000), attack: 12000, shield: 1, hull: 1, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, missile: true, requires: [{ id: 'shipyard', level: 1 }, { id: 'missileSilo', level: 4 }, { id: 'impulseDrive', level: 1 }] }),
   smallShield: def('smallShield', 'Small Shield Dome', { desc: 'Envelops the planet in a shield. Max 1.', cost: r(10000, 10000), attack: 1, shield: 2000, hull: 2000, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, max: 1, requires: [{ id: 'shipyard', level: 1 }, { id: 'shielding', level: 2 }] }),
   largeShield: def('largeShield', 'Large Shield Dome', { desc: 'A far stronger shield dome. Max 1.', cost: r(50000, 50000), attack: 1, shield: 10000, hull: 10000, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, max: 1, requires: [{ id: 'shipyard', level: 6 }, { id: 'shielding', level: 6 }] }),
 };
