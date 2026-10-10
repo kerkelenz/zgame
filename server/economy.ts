@@ -126,7 +126,7 @@ function pay(planet: Planet, cost: Res) {
 export function startBuilding(w: World, player: Player, planet: Planet, id: BuildingId, now: number) {
   updatePlanet(w, planet, now);
   const def = BUILDINGS[id];
-  if (!def) throw new GameError('Unknown building');
+  if (!Object.hasOwn(BUILDINGS, id)) throw new GameError('Unknown building');
   if (planet.buildQueue) throw new GameError('Construction already in progress');
   if (!requirementsMet(planet, player, def.requires)) throw new GameError('Requirements not met');
   if (usedFields(planet) >= planet.fields) throw new GameError('No free fields left on this planet');
@@ -149,7 +149,7 @@ export function cancelBuilding(w: World, planet: Planet, now: number) {
 export function startResearch(w: World, player: Player, planet: Planet, id: TechId, now: number) {
   updatePlanet(w, planet, now);
   const def = TECHS[id];
-  if (!def) throw new GameError('Unknown technology');
+  if (!Object.hasOwn(TECHS, id)) throw new GameError('Unknown technology');
   if (player.research) throw new GameError('Research already in progress');
   if (planet.buildQueue?.id === 'researchLab') throw new GameError('The research lab is being upgraded');
   if (!requirementsMet(planet, player, def.requires)) throw new GameError('Requirements not met');
@@ -172,7 +172,7 @@ export function cancelResearch(w: World, player: Player, now: number) {
 export function queueUnits(w: World, player: Player, planet: Planet, id: UnitId, count: number, now: number) {
   updatePlanet(w, planet, now);
   const def = UNITS[id];
-  if (!def) throw new GameError('Unknown unit');
+  if (!Object.hasOwn(UNITS, id)) throw new GameError('Unknown unit');
   count = Math.floor(count);
   if (!(count >= 1) || count > 1_000_000) throw new GameError('Invalid amount');
   if (lvl(planet.buildings, 'shipyard') < 1) throw new GameError('A shipyard is required');

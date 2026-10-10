@@ -115,3 +115,17 @@ describe('http api', () => {
     expect(f.json.mine).toEqual([]);
   });
 });
+
+describe('input hardening', () => {
+  it('rejects prototype-key item ids with 400, not 500', async () => {
+    const t = (await call('POST', '/api/register', undefined, { username: 'mallory', password: 'secret9' })).json.token;
+    const id = (await call('GET', '/api/me', t)).json.planets[0].id;
+    for (const path of ['build', 'research', 'produce']) {
+      const r = await call('POST', `/api/planets/${id}/${path}`, t, { id: 'constructor', count: 1 });
+      expect(r.status, path).toBe(400);
+    }
+    const a = await call('POST', '/api/alliance/create', t, { tag: 'MAL', name: 'Mal Corp' });
+    expect(a.status).toBe(200);
+    expect((await call('POST', '/api/alliance/upgrade', t, { key: 'constructor' })).status).toBe(400);
+  });
+});

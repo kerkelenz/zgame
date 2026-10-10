@@ -157,7 +157,7 @@ export function upgradeCost(key: string, level: number): Res {
 export function buyUpgrade(w: World, actor: Player, key: string) {
   const a = requireAlliance(w, actor);
   if (!isOfficer(a, actor.id)) throw new GameError('Officers only', 403);
-  if (!ALLIANCE_UPGRADES[key]) throw new GameError('Unknown upgrade');
+  if (!Object.hasOwn(ALLIANCE_UPGRADES, key)) throw new GameError('Unknown upgrade');
   const level = a.upgrades[key] || 0;
   if (level >= 10) throw new GameError('Maximum level reached');
   const cost = upgradeCost(key, level);

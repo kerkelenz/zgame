@@ -1,0 +1,105 @@
+import { useCallback, useEffect, useState } from 'react';
+import { BUILDINGS, TECHS, UNITS } from '../../../shared/data';
+import { del, get, post } from '../api';
+import { useGame } from '../game';
+import { Card, Page, coordStr, fmt, when } from '../ui';
+
+const KINDS = ['all', 'combat', 'espionage', 'raid', 'expedition', 'transport', 'alliance', 'player', 'system'];
+
+const name = (id: string) => (UNITS as any)[id]?.name ?? (BUILDINGS as any)[id]?.name ?? (TECHS as any)[id]?.name ?? id;
+const List = ({ data }: { data?: Record<string, number> }) => {
+  const e = Object.entries(data || {}).filter(([, n]) => n);
+  return e.length ? <>{e.map(([k, n]) => <div key={k}>{name(k)}: {fmt(n)}</div>)}</> : <span className="muted">–</span>;
+};
+
+function SpyReport({ d }: { d: any }) {
+  return (
+    <div className="grid2">
+      <div><h4>Resources</h4><List data={d.resources} /></div>
+      {d.fleet && <div><h4>Fleet</h4><List data={d.fleet} /></div>}
+      {d.defenses && <div><h4>Defense</h4><List data={d.defenses} /></div>}
+      {d.buildings && <div><h4>Buildings</h4><List data={d.buildings} /></div>}
+      {d.techs && <div><h4>Research</h4><List data={d.techs} /></div>}
+    </div>
+  );
+}
+
+function BattleReport({ d }: { d: any }) {
+  const side = (title: string, list: any[]) => (
+    <div>
+      <h4>{title}</h4>
+      {list.map((s, i) => (
+        <div key={i} className="muted">
+          <b>{s.name}</b>
+          {Object.keys(s.before || {}).map((k) => <div key={k}>{name(k)}: {fmt(s.before[k])} → {fmt(s.after?.[k] ?? 0)}</div>)}
+        </div>
+      ))}
+    </div>
+  );
+  return (
+    <>
+      <p>{d.winner === 'attacker' ? 'Attacker won' : d.winner === 'defender' ? 'Defender won' : 'Draw'} after {d.rounds} rounds at {coordStr(d.coords)}.</p>
+      <div className="grid2">{side('Attackers', d.attackers)}{side('Defenders', d.defenders)}</div>
+      {(d.loot?.metal || d.loot?.crystal || d.loot?.deuterium) ? <p>Loot: {fmt(d.loot.metal)} M, {fmt(d.loot.crystal)} C, {fmt(d.loot.deuterium)} D</p> : null}
+      {(d.debris?.metal || d.debris?.crystal) ? <p>Debris: {fmt(d.debris.metal)} M, {fmt(d.debris.crystal)} C</p> : null}
+      {d.bounty ? <p className="metal">Raider bounty: {fmt(d.bounty)}</p> : null}
+    </>
+  );
+}
+
+export function Messages() {
+  const { refresh, act, toast } = useGame();
+  const [msgs, setMsgs] = useState<any[]>([]);
+  const [kind, setKind] = useState('all');
+  const [open, setOpen] = useState<string | null>(null);
+  const [to, setTo] = useState('');
+  const [text, setText] = useState('');
+
+  const load = useCallback(async () => setMsgs(await get('/messages')), []);
+  useEffect(() => { void load(); }, [load]);
+
+  const show = (m: any) => {
+    setOpen(open === m.id ? null : m.id);
+    if (!m.read) void post('/messages/read', { id: m.id }).then(() => { void load(); void refresh(); });
+  };
+  const list = msgs.filter((m) => kind === 'all' || m.kind === kind);
+
+  return (
+    <Page title="Messages">
+      <Card title="Compose">
+        <form className="row" onSubmit={async (e) => {
+          e.preventDefault();
+          const r = await act(() => post('/messages/send', { to, text }), 'Message sent');
+          if (r) { setText(''); }
+        }}>
+          <input placeholder="Commander name" value={to} onChange={(e) => setTo(e.target.value)} />
+          <input className="grow" placeholder="Message" value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} />
+          <button className="primary">Send</button>
+        </form>
+      </Card>
+      <Card title="Inbox" right={<>
+        <button onClick={async () => { await post('/messages/read'); await load(); await refresh(); }}>Mark all read</button>{' '}
+        <button onClick={async () => { if (confirm('Delete all messages?')) { await post('/messages/clear'); await load(); await refresh(); toast('Inbox cleared'); } }}>Clear</button>
+      </>}>
+        <div className="chips">{KINDS.map((k) => <button key={k} className={kind === k ? 'active' : ''} onClick={() => setKind(k)}>{k}</button>)}</div>
+        {list.length === 0 && <p className="muted">No messages.</p>}
+        {list.map((m) => (
+          <div key={m.id} className={`msg ${m.read ? '' : 'unread'}`}>
+            <div className="msghead" onClick={() => show(m)}>
+              <span className={`kind ${m.kind}`}>{m.kind}</span> <b>{m.subject}</b>{m.from && <span className="muted"> from {m.from}</span>}
+              <span className="muted right">{when(m.at)}</span>
+            </div>
+            {open === m.id && (
+              <div className="msgbody">
+                {m.kind === 'espionage' && m.data?.resources ? <SpyReport d={m.data} /> : null}
+                {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers ? <BattleReport d={m.data} /> : <p style={{ whiteSpace: 'pre-wrap' }}>{m.body}</p>}
+                <button onClick={async () => { await del(`/messages/${m.id}`); setOpen(null); await load(); }}>Delete</button>
+                {m.kind === 'player' && m.from && <button onClick={() => setTo(m.from)}>Reply</button>}
+              </div>
+            )}
+          </div>
+        ))}
+      </Card>
+    </Page>
+  );
+}
