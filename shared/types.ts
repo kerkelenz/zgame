@@ -4,12 +4,12 @@ export type BuildingId =
   | 'metalMine' | 'crystalMine' | 'deuteriumSynthesizer' | 'solarPlant' | 'fusionReactor'
   | 'roboticsFactory' | 'naniteFactory' | 'shipyard' | 'researchLab'
   | 'metalStorage' | 'crystalStorage' | 'deuteriumTank' | 'missileSilo'
-  | 'lunarBase' | 'sensorPhalanx' | 'jumpGate';
+  | 'lunarBase' | 'sensorPhalanx' | 'jumpGate' | 'terraformer';
 
 export type TechId =
   | 'energy' | 'laser' | 'ion' | 'hyperspace' | 'plasma'
   | 'combustionDrive' | 'impulseDrive' | 'hyperspaceDrive'
-  | 'espionage' | 'computer' | 'astrophysics' | 'weapons' | 'shielding' | 'armour';
+  | 'espionage' | 'computer' | 'astrophysics' | 'weapons' | 'shielding' | 'armour' | 'graviton';
 
 export type ShipId =
   | 'smallCargo' | 'largeCargo' | 'lightFighter' | 'heavyFighter' | 'cruiser' | 'battleship'
@@ -44,7 +44,12 @@ export interface BuildingDef {
 export interface TechDef {
   id: TechId; name: string; desc: string;
   base: Res; factor: number; requires: Requirement[];
+  /** needs a planet producing this much energy (x3 per further level) */
+  energyReq?: number;
 }
+
+export type FactionId = 'iron' | 'verge' | 'solar' | 'chain';
+export type OfficerId = 'quartermaster' | 'engineer' | 'admiral' | 'spymaster' | 'geologist';
 export interface UnitDef {
   id: UnitId; name: string; desc: string; kind: 'ship' | 'defense';
   cost: Res; attack: number; shield: number; hull: number;

@@ -8,6 +8,7 @@ import { bus } from './bus';
 import { allianceBonuses, planetCapacity, processPlayer, updatePlanet } from './economy';
 import { colonyCount, createMoon, createPlanet, inBounds, isProtected, maxExpeditions, maxPlanets } from './galaxy';
 import { notifyPlayer } from './messages';
+import { cargoMul, debrisShare, expeditionYield, extraFleetSlots, lootShare, shieldMul, spyBonus, spyEvasion, weaponMul } from './perks';
 import { buildNpcFleet, fleetValue } from './npc';
 import { GameError, ck, planetAt, sameAlliance, uid, type Movement, type Planet, type Player, type World } from './world';
 
@@ -32,7 +33,7 @@ export function activeSlots(w: World, player: Player) {
   const mine = Object.values(w.movements).filter((m) => m.ownerId === player.id);
   return {
     used: mine.filter((m) => m.mission !== 'expedition' && m.mission !== 'missile').length,
-    max: 1 + lvl(player.techs, 'computer'),
+    max: 1 + lvl(player.techs, 'computer') + extraFleetSlots(player),
     expUsed: mine.filter((m) => m.mission === 'expedition').length,
     expMax: maxExpeditions(player),
   };
@@ -136,7 +137,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     deuterium: Math.max(0, Math.floor(req.cargo?.deuterium || 0)),
   };
   if (mission === 'attack' || mission === 'espionage') { cargo.metal = cargo.crystal = cargo.deuterium = 0; }
-  const cap = cargoCapacity(ships);
+  const cap = Math.floor(cargoCapacity(ships) * cargoMul(player));
   if (totalRes(cargo) > cap) throw new GameError(`Cargo exceeds capacity (${num(cap)})`);
   const need = addRes(cargo, { metal: 0, crystal: 0, deuterium: plan.fuel });
   if (!canAfford(planet.resources, need)) throw new GameError(`Not enough resources (fuel: ${num(plan.fuel)} deuterium)`);
@@ -325,6 +326,7 @@ function resolveRecycle(w: World, m: Movement, at: number) {
   d.metal -= takeM; d.crystal -= takeC;
   if (d.metal <= 0 && d.crystal <= 0) delete w.debris[key];
   m.cargo.metal += takeM; m.cargo.crystal += takeC;
+  owner.stats.harvested += takeM + takeC;
   notifyPlayer(w, owner.id, 'system', 'Debris collected', `Recyclers harvested ${num(takeM)} metal and ${num(takeC)} crystal at ${fmt(m.to)}.`);
   sendHome(m, at);
 }
@@ -339,11 +341,11 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   processPlayer(w, def, at);
   const probes = m.ships.espionageProbe || 0;
   const diff = lvl(spy.techs, 'espionage') - lvl(def.techs, 'espionage');
-  const level = probes + (diff >= 0 ? diff * diff : -(diff * diff));
+  const level = probes + (diff >= 0 ? diff * diff : -(diff * diff)) + spyBonus(spy);
 
   let defShips = 0;
   for (const [id, n] of Object.entries(target.fleet)) if (id !== 'solarSatellite') defShips += n || 0;
-  const chance = Math.min(0.9, ((defShips + 1) * Math.pow(2, -diff)) / (probes * 20 + 1) * 0.25);
+  const chance = Math.min(0.9, ((defShips + 1) * Math.pow(2, -diff)) / (probes * 20 + 1) * 0.25) * spyEvasion(spy);
   const caught = Math.random() < chance;
 
   notifyPlayer(w, def.id, 'espionage', 'Espionage activity', `Foreign probes were detected near ${target.name} ${fmt(m.to)} (from ${spy.username}).${caught ? ' Your defenses shot them down.' : ''}`);
@@ -374,6 +376,7 @@ function combatant(w: World, player: Player | null, name: string, fleet: Fleet, 
   return {
     owner: player?.id ?? null, name,
     weapons: lvl(player?.techs, 'weapons'), shielding: lvl(player?.techs, 'shielding'), armour: lvl(player?.techs, 'armour'),
+    weaponMul: weaponMul(player), shieldMul: shieldMul(player),
     fleet: { ...fleet }, defenses: defenses ? { ...defenses } : undefined,
   };
 }
@@ -424,7 +427,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   for (const h of holders) defenders.push(combatant(w, w.players[h.ownerId!], h.ownerName, h.ships));
 
   const rng = makeRng(Math.floor(Math.random() * 2 ** 31));
-  const res: CombatResult = simulateCombat(group.map((m) => combatant(w, attackerOf(m), m.ownerName, m.ships)), defenders, rng);
+  const res: CombatResult = simulateCombat(group.map((m) => combatant(w, attackerOf(m), m.ownerName, m.ships)), defenders, rng, { debrisRatio: debrisShare(attackerOf(lead)) });
 
   const planetAfter = res.defenders[0].after;
   target.fleet = onlyShips(planetAfter);
@@ -439,14 +442,15 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   group.forEach((m, i) => { m.ships = onlyShips(res.attackers[i].after); });
   addDebris(w, lead.to, res.debris.metal, res.debris.crystal);
   const newMoon = maybeCreateMoon(w, target, res.debris, at);
+  const leadPlayer = attackerOf(lead);
 
   // loot: bounded by the survivors' combined free cargo, split by each fleet's share of it
   let loot: Res = zeroRes();
   const lootBy: Record<string, Res> = {};
-  const free = group.map((m) => (fleetCount(m.ships) ? Math.max(0, cargoCapacity(m.ships) - totalRes(m.cargo)) : 0));
+  const free = group.map((m) => (fleetCount(m.ships) ? Math.max(0, Math.floor(cargoCapacity(m.ships) * cargoMul(attackerOf(m))) - totalRes(m.cargo)) : 0));
   const freeTotal = free.reduce((a, b) => a + b, 0);
   if (res.winner === 'attacker' && freeTotal > 0) {
-    loot = computeLoot(target.resources, freeTotal);
+    loot = computeLoot(target.resources, freeTotal, lootShare(leadPlayer));
     target.resources = subRes(target.resources, loot);
     group.forEach((m, i) => {
       const share = free[i] / freeTotal;
@@ -497,12 +501,18 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   for (const h of holders) involved.add(h.ownerId!);
   for (const pid of involved) notifyPlayer(w, pid, npc ? 'raid' : 'combat', `Battle at ${fmt(lead.to)}: ${headline}`, body, report);
 
+  const attackersLost = res.attackers.reduce((s, a) => s + totalRes(a.lost), 0);
+  const defendersLost = res.defenders.reduce((s, d) => s + totalRes(d.lost), 0);
+  const humans = group.map(attackerOf).filter((a): a is Player => !!a);
   for (const m of group) {
     const a = attackerOf(m);
     if (!a) continue;
     if (res.winner === 'attacker') { a.stats.battlesWon++; defOwner.stats.battlesLost++; }
     else if (res.winner === 'defender') { a.stats.battlesLost++; defOwner.stats.battlesWon++; }
+    a.stats.destroyed += defendersLost / humans.length;
+    a.stats.plundered += totalRes(lootBy[m.id] ?? zeroRes());
   }
+  if (res.winner === 'defender') defOwner.stats.destroyed += attackersLost;
   bus.push({ to: '*', type: 'refresh' });
 
   for (const m of group) {
@@ -516,14 +526,20 @@ function resolveAttack(w: World, lead: Movement, at: number) {
 function resolveExpedition(w: World, m: Movement, at: number) {
   const owner = w.players[m.ownerId!];
   owner.stats.expeditions++;
-  const value = fleetValue(m.ships);
+  const value = fleetValue(m.ships) * expeditionYield(owner);
   const r = Math.random();
   const free = Math.max(0, cargoCapacity(m.ships) - totalRes(m.cargo));
   let title = 'Expedition: nothing found';
   let text = 'Your fleet drifted through empty space and found nothing of interest.';
   let hold = 3_600_000 / w.config.fleetSpeed;
 
-  if (r < 0.3) {
+  if (Math.random() < 0.15) {
+    // deep space sometimes pays in Command Credits instead of cargo
+    const cc = Math.round(20 + Math.random() * 40 + Math.sqrt(value / 1000) * 4);
+    owner.credits += cc;
+    title = 'Expedition: command gear salvaged';
+    text = `The crew stripped intact command gear from a derelict and sold it on the way home: ${num(cc)} Command Credits.`;
+  } else if (r < 0.3) {
     // nothing
   } else if (r < 0.58) {
     const kind = (['metal', 'crystal', 'deuterium'] as const)[Math.floor(Math.random() * 3)];
@@ -640,6 +656,10 @@ function resolveMissiles(w: World, m: Movement, at: number) {
       if (!target.defenses[id]) delete target.defenses[id];
     }
   }
+  if (Object.keys(destroyed).length) {
+    attacker.stats.ipmKills++;
+    attacker.stats.destroyed += Object.entries(destroyed).reduce((s, [k, n]) => s + totalRes(UNITS[k as DefenseId].cost) * (n || 0), 0);
+  }
   const list = (d: Defenses) => Object.entries(d).filter(([, n]) => n).map(([k, n]) => `${n}× ${UNITS[k as DefenseId].name}`).join(', ') || 'nothing';
   const body = `${launched} missile(s) from ${attacker.username} hit ${target.name} ${fmt(m.to)}. ${intercepted} intercepted by ABMs. Defenses destroyed: ${list(destroyed)}.`;
   const report = { coords: m.to, launched, intercepted, destroyed };
@@ -656,7 +676,7 @@ export function maybeCreateMoon(w: World, target: Planet, debris: { metal: numbe
   if (Object.values(w.planets).some((p) => p.parentId === target.id)) return null;
   const chance = Math.min(20, Math.floor((debris.metal + debris.crystal) / 100_000));
   if (chance <= 0 || Math.random() * 100 >= chance) return null;
-  const moon = createMoon(w, target, at);
+  const moon = createMoon(w, target, at, chance / 100);
   notifyPlayer(w, target.ownerId, 'system', 'A moon formed!', `The wreckage above ${target.name} ${fmt(target.coords)} condensed into a moon. Build a Lunar Base to make it usable.`);
   return moon;
 }

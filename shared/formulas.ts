@@ -24,18 +24,18 @@ export function techCost(id: TechId, level: number): Res {
 }
 
 /** seconds */
-export function buildingTime(cost: Res, robotics: number, nanite: number, speed: number): number {
+export function buildingTime(cost: Res, robotics: number, nanite: number, speed: number, factor = 1): number {
   const hours = (cost.metal + cost.crystal) / (2500 * (1 + robotics) * Math.pow(2, nanite) * speed);
-  return Math.max(1, Math.floor(hours * 3600));
+  return Math.max(1, Math.floor(hours * 3600 * factor));
 }
-export function researchTime(cost: Res, lab: number, speed: number, allianceBonus = 0): number {
+export function researchTime(cost: Res, lab: number, speed: number, allianceBonus = 0, factor = 1): number {
   const hours = (cost.metal + cost.crystal) / (1000 * (1 + lab) * speed);
-  return Math.max(1, Math.floor(hours * 3600 * (1 - allianceBonus)));
+  return Math.max(1, Math.floor(hours * 3600 * (1 - allianceBonus) * factor));
 }
-export function unitTime(id: UnitId, shipyard: number, nanite: number, speed: number): number {
+export function unitTime(id: UnitId, shipyard: number, nanite: number, speed: number, factor = 1): number {
   const c = UNITS[id].cost;
   const hours = (c.metal + c.crystal) / (5000 * (1 + shipyard) * Math.pow(2, nanite) * speed);
-  return Math.max(0.1, hours * 3600);
+  return Math.max(0.1, hours * 3600 * factor);
 }
 
 export function storageCapacity(level: number): number {
@@ -54,6 +54,10 @@ export interface ProductionInput {
   allianceBonus?: number;
   /** moons have no free basic income */
   noBasic?: boolean;
+  /** multiplies mine output (officers, faction perks) */
+  boost?: number;
+  /** multiplies energy production (officers) */
+  energyBoost?: number;
 }
 export interface Production {
   /** per hour at current efficiency */
@@ -68,16 +72,16 @@ export function production(i: ProductionInput): Production {
   const sp = lvl(i.buildings, 'solarPlant'), fu = lvl(i.buildings, 'fusionReactor');
   const et = lvl(i.techs, 'energy'), pl = lvl(i.techs, 'plasma');
 
-  const energyProduced =
+  const energyProduced = Math.floor((
     20 * sp * Math.pow(1.1, sp) * s('solarPlant') +
     30 * fu * Math.pow(1.05 + 0.01 * et, fu) * s('fusionReactor') +
-    i.satellites * Math.max(0, Math.floor((i.maxTemp + 140) / 6)) * s('solarSatellite');
+    i.satellites * Math.max(0, Math.floor((i.maxTemp + 140) / 6)) * s('solarSatellite')) * (i.energyBoost ?? 1));
   const energyUsed =
     10 * m * Math.pow(1.1, m) * s('metalMine') +
     10 * c * Math.pow(1.1, c) * s('crystalMine') +
     20 * d * Math.pow(1.1, d) * s('deuteriumSynthesizer');
   const efficiency = energyUsed <= 0 ? 1 : Math.min(1, Math.max(0, energyProduced / energyUsed));
-  const ab = 1 + (i.allianceBonus ?? 0);
+  const ab = (1 + (i.allianceBonus ?? 0)) * (i.boost ?? 1);
   const sp_ = i.speed;
   const basic = i.noBasic ? 0 : 1;
   const metal = (basic * 30 * sp_ + 30 * m * Math.pow(1.1, m) * s('metalMine') * efficiency * (1 + 0.01 * pl) * sp_ * ab);

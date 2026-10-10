@@ -1,5 +1,5 @@
 import type {
-  BuildingDef, BuildingId, DefenseId, ShipId, TechDef, TechId, UnitDef, UnitId, Res,
+  BuildingDef, BuildingId, DefenseId, FactionId, OfficerId, ShipId, TechDef, TechId, UnitDef, UnitId, Res,
 } from './types';
 
 const r = (metal = 0, crystal = 0, deuterium = 0): Res => ({ metal, crystal, deuterium });
@@ -17,6 +17,7 @@ export const BUILDINGS: Record<BuildingId, BuildingDef> = {
   metalStorage: { id: 'metalStorage', name: 'Metal Storage', desc: 'Raises metal capacity.', base: r(1000), factor: 2, requires: [] },
   crystalStorage: { id: 'crystalStorage', name: 'Crystal Storage', desc: 'Raises crystal capacity.', base: r(1000, 500), factor: 2, requires: [] },
   missileSilo: { id: 'missileSilo', name: 'Missile Silo', desc: 'Stores 10 missile slots per level and sets missile range (5 systems per level).', base: r(20000, 20000, 1000), factor: 2, requires: [{ id: 'shipyard', level: 1 }] },
+  terraformer: { id: 'terraformer', name: 'Terraformer', desc: 'Reshapes the surface to create 5 extra building fields per level.', base: r(0, 50000, 100000), factor: 2, requires: [{ id: 'naniteFactory', level: 1 }, { id: 'energy', level: 12 }] },
   lunarBase: { id: 'lunarBase', name: 'Lunar Base', desc: 'Moons have almost no room: each level adds 3 usable fields.', base: r(20000, 40000, 20000), factor: 2, requires: [], moonOnly: true },
   sensorPhalanx: { id: 'sensorPhalanx', name: 'Sensor Phalanx', desc: 'Scans fleet movements around a planet within (level² - 1) systems. Each scan costs 5,000 deuterium.', base: r(20000, 40000, 20000), factor: 2, requires: [{ id: 'lunarBase', level: 1 }], moonOnly: true },
   jumpGate: { id: 'jumpGate', name: 'Jump Gate', desc: 'Instantly teleports ships to another of your moons with a gate. Cooldown after each jump.', base: r(200000, 400000, 200000), factor: 2, requires: [{ id: 'lunarBase', level: 1 }, { id: 'hyperspace', level: 7 }], moonOnly: true },
@@ -37,6 +38,7 @@ export const TECHS: Record<TechId, TechDef> = {
   astrophysics: { id: 'astrophysics', name: 'Astrophysics', desc: 'Allows more colonies (+1 planet per 2 levels) and expeditions.', base: r(4000, 8000, 4000), factor: 1.75, requires: [{ id: 'researchLab', level: 3 }, { id: 'espionage', level: 4 }, { id: 'impulseDrive', level: 3 }] },
   weapons: { id: 'weapons', name: 'Weapons Technology', desc: '+10% attack per level.', base: r(800, 200), factor: 2, requires: [{ id: 'researchLab', level: 4 }] },
   shielding: { id: 'shielding', name: 'Shielding Technology', desc: '+10% shields per level.', base: r(200, 600), factor: 2, requires: [{ id: 'researchLab', level: 6 }, { id: 'energy', level: 3 }] },
+  graviton: { id: 'graviton', name: 'Graviton Technology', desc: 'Costs no resources, but needs a planet producing 300,000 energy (x3 per level). Unlocks the Deathstar.', base: r(0, 0, 0), factor: 3, requires: [{ id: 'researchLab', level: 12 }], energyReq: 300_000 },
   armour: { id: 'armour', name: 'Armour Technology', desc: '+10% hull per level.', base: r(1000), factor: 2, requires: [{ id: 'researchLab', level: 2 }] },
 };
 
@@ -56,7 +58,7 @@ export const UNITS: Record<UnitId, UnitDef> = {
   battlecruiser: ship('battlecruiser', 'Battlecruiser', { desc: 'Raider hunting transports and fighters.', cost: r(30000, 40000, 15000), attack: 700, shield: 400, hull: 7000, cargo: 750, speed: 10000, fuel: 250, drive: 'hyperspaceDrive', rapidFire: { smallCargo: 3, largeCargo: 3, heavyFighter: 4, cruiser: 4, battleship: 7, ...PS }, requires: [{ id: 'shipyard', level: 8 }, { id: 'hyperspace', level: 5 }, { id: 'laser', level: 12 }, { id: 'hyperspaceDrive', level: 5 }] }),
   bomber: ship('bomber', 'Bomber', { desc: 'Smashes planetary defenses.', cost: r(50000, 25000, 15000), attack: 1000, shield: 500, hull: 7500, cargo: 500, speed: 4000, fuel: 700, drive: 'impulseDrive', rapidFire: { rocketLauncher: 20, lightLaser: 20, heavyLaser: 10, ionCannon: 10, gaussCannon: 5, ...PS }, requires: [{ id: 'shipyard', level: 8 }, { id: 'impulseDrive', level: 6 }, { id: 'plasma', level: 5 }] }),
   destroyer: ship('destroyer', 'Destroyer', { desc: 'Heavy warship.', cost: r(60000, 50000, 15000), attack: 2000, shield: 500, hull: 11000, cargo: 2000, speed: 5000, fuel: 1000, drive: 'hyperspaceDrive', rapidFire: { lightLaser: 10, battlecruiser: 2, ...PS }, requires: [{ id: 'shipyard', level: 9 }, { id: 'hyperspace', level: 5 }, { id: 'hyperspaceDrive', level: 6 }] }),
-  deathstar: ship('deathstar', 'Deathstar', { desc: 'The ultimate weapon.', cost: r(5_000_000, 4_000_000, 1_000_000), attack: 200000, shield: 50000, hull: 900000, cargo: 1_000_000, speed: 100, fuel: 1, drive: 'hyperspaceDrive', rapidFire: { smallCargo: 250, largeCargo: 250, lightFighter: 200, heavyFighter: 100, cruiser: 33, battleship: 30, battlecruiser: 15, bomber: 25, destroyer: 5, recycler: 250, colonyShip: 250, rocketLauncher: 200, lightLaser: 200, heavyLaser: 100, gaussCannon: 50, ionCannon: 100, espionageProbe: 1250, solarSatellite: 1250 }, requires: [{ id: 'shipyard', level: 12 }, { id: 'hyperspaceDrive', level: 7 }, { id: 'hyperspace', level: 6 }] }),
+  deathstar: ship('deathstar', 'Deathstar', { desc: 'The ultimate weapon.', cost: r(5_000_000, 4_000_000, 1_000_000), attack: 200000, shield: 50000, hull: 900000, cargo: 1_000_000, speed: 100, fuel: 1, drive: 'hyperspaceDrive', rapidFire: { smallCargo: 250, largeCargo: 250, lightFighter: 200, heavyFighter: 100, cruiser: 33, battleship: 30, battlecruiser: 15, bomber: 25, destroyer: 5, recycler: 250, colonyShip: 250, rocketLauncher: 200, lightLaser: 200, heavyLaser: 100, gaussCannon: 50, ionCannon: 100, espionageProbe: 1250, solarSatellite: 1250 }, requires: [{ id: 'shipyard', level: 12 }, { id: 'hyperspaceDrive', level: 7 }, { id: 'hyperspace', level: 6 }, { id: 'graviton', level: 1 }] }),
   recycler: ship('recycler', 'Recycler', { desc: 'Collects debris fields.', cost: r(10000, 6000, 2000), attack: 1, shield: 10, hull: 1600, cargo: 20000, speed: 2000, fuel: 300, drive: 'combustionDrive', rapidFire: { ...PS }, requires: [{ id: 'shipyard', level: 4 }, { id: 'combustionDrive', level: 6 }, { id: 'shielding', level: 2 }] }),
   espionageProbe: ship('espionageProbe', 'Espionage Probe', { desc: 'Spies on other planets.', cost: r(0, 1000), attack: 0, shield: 0, hull: 100, cargo: 5, speed: 100_000_000, fuel: 1, drive: 'combustionDrive', rapidFire: none, requires: [{ id: 'shipyard', level: 3 }, { id: 'combustionDrive', level: 3 }, { id: 'espionage', level: 2 }] }),
   colonyShip: ship('colonyShip', 'Colony Ship', { desc: 'Founds new colonies.', cost: r(10000, 20000, 10000), attack: 50, shield: 100, hull: 3000, cargo: 7500, speed: 2500, fuel: 1000, drive: 'impulseDrive', rapidFire: none, requires: [{ id: 'shipyard', level: 4 }, { id: 'impulseDrive', level: 3 }] }),
@@ -85,6 +87,39 @@ export const TECH_IDS = Object.keys(TECHS) as TechId[];
 
 export const isShip = (id: string): id is ShipId => id in UNITS && UNITS[id as UnitId].kind === 'ship';
 export const isDefense = (id: string): id is DefenseId => id in UNITS && UNITS[id as UnitId].kind === 'defense';
+
+/** Planet diameter by orbital position [min, max] km: inner = small and hot, middle = large. */
+export const POS_DIAMETER: ([number, number] | null)[] = [null,
+  [5800, 9800], [5800, 9800], [6600, 10800], [9200, 14800], [9200, 15200], [9200, 15600],
+  [10600, 17000], [10600, 17400], [10600, 16600], [9000, 15400], [8000, 14200], [7400, 13000],
+  [6400, 12400], [5400, 11200], [5000, 10000]];
+export const fieldsFromDiameter = (km: number) => Math.floor((km / 1000) ** 2);
+
+export interface FactionDef { id: FactionId; name: string; rival: FactionId; perk: string; tag: string }
+export const FACTIONS: FactionDef[] = [
+  { id: 'iron', name: 'Concord of Iron', rival: 'chain', perk: '+10% shield strength on everything you own', tag: 'Defensive bloc of old mining houses.' },
+  { id: 'verge', name: 'Verge Syndicate', rival: 'solar', perk: '+15% plunder and +10% cargo space', tag: 'Smugglers, salvagers and privateers.' },
+  { id: 'solar', name: 'Solar Covenant', rival: 'verge', perk: '+8% output from every mine', tag: 'Industrial worlds that trade rather than raid.' },
+  { id: 'chain', name: 'Black Chain', rival: 'iron', perk: '+10% weapon damage', tag: 'Warlords who measure wealth in wreckage.' },
+];
+export const FACTION_BY_ID = Object.fromEntries(FACTIONS.map((f) => [f.id, f])) as Record<FactionId, FactionDef>;
+export const JOIN_REP = 40;
+
+export interface OfficerDef { id: OfficerId; name: string; cost: [number, number, number]; desc: string }
+export const OFFICERS: OfficerDef[] = [
+  { id: 'quartermaster', name: 'Quartermaster', cost: [400, 1200, 3000], desc: '+5% output from every mine in your empire, per rank.' },
+  { id: 'engineer', name: 'Chief Engineer', cost: [400, 1200, 3000], desc: '-10% building, research and shipyard time per rank, and +5% energy.' },
+  { id: 'admiral', name: 'Fleet Admiral', cost: [600, 1600, 4000], desc: '+1 fleet slot per rank, and +1 expedition slot every second rank.' },
+  { id: 'spymaster', name: 'Spymaster', cost: [500, 1400, 3500], desc: 'Spy reports reveal more, and your probes are caught far less often.' },
+  { id: 'geologist', name: 'Geologist', cost: [500, 1400, 3500], desc: '+5% debris from every battle per rank, and +15% from expedition finds.' },
+];
+export const OFFICER_MAX = 3;
+
+/** Travelling merchant: swaps resources at a fixed 3:2:1 rate, keeping a cut. */
+export const TRADE_VALUE = { metal: 1, crystal: 1.5, deuterium: 3 } as const;
+export const TRADE_FEE = 0.12;
+export const tradeQuote = (give: keyof typeof TRADE_VALUE, get: keyof typeof TRADE_VALUE, amount: number) =>
+  Math.floor((Math.max(0, amount) * TRADE_VALUE[give]) / TRADE_VALUE[get] * (1 - TRADE_FEE));
 
 export interface AllianceUpgrade { id: string; name: string; desc: string; base: Res; factor: number; perLevel: number }
 export const ALLIANCE_UPGRADES: Record<string, AllianceUpgrade> = {

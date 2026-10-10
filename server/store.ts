@@ -1,7 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { DEFAULT_CONFIG, type UniverseConfig } from '../shared/config';
-import { createWorld, type World } from './world';
+import { createWorld, migratePlayer, type World } from './world';
 
 export function loadWorld(file: string, overrides: Partial<UniverseConfig> = {}): World {
   if (existsSync(file)) {
@@ -10,6 +10,7 @@ export function loadWorld(file: string, overrides: Partial<UniverseConfig> = {})
       if (!w || typeof w !== 'object' || !w.players || !w.planets) throw new Error('not a world file');
       // new config keys added since the save get defaults; explicit overrides win
       w.config = { ...DEFAULT_CONFIG, ...w.config, ...overrides };
+      for (const p of Object.values(w.players)) migratePlayer(p);
       return w;
     } catch (e) {
       // never let the next autosave overwrite a save we could not read

@@ -1,6 +1,6 @@
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { createPlanet, findHomeSlot } from './galaxy';
-import { GameError, uid, type Player, type World } from './world';
+import { GameError, blankPlayer, uid, type Player, type World } from './world';
 
 export const MAX_SESSIONS = 8;
 const hash = (pw: string, salt: string) => scryptSync(pw, salt, 32).toString('hex');
@@ -10,13 +10,9 @@ export function register(w: World, username: string, password: string, now = Dat
   if (!/^[A-Za-z0-9_\-]{3,16}$/.test(username)) throw new GameError('Username must be 3-16 letters, numbers, - or _');
   if (!password || password.length < 6) throw new GameError('Password must be at least 6 characters');
   if (Object.values(w.players).some((p) => p.username.toLowerCase() === username.toLowerCase())) throw new GameError('Username already taken');
-  if (Object.keys(w.players).length >= w.config.maxPlayers) throw new GameError('This universe is full', 503);
+  if (Object.values(w.players).filter((p) => !p.npc).length >= w.config.maxPlayers) throw new GameError('This universe is full', 503);
   const salt = randomBytes(8).toString('hex');
-  const player: Player = {
-    id: uid(), username, salt, hash: hash(password, salt), createdAt: now, lastSeen: now,
-    techs: {}, research: null, researchBacklog: [], allianceId: null, planetIds: [],
-    stats: { raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0 },
-  };
+  const player = blankPlayer(uid(), username, now, { salt, hash: hash(password, salt) });
   w.players[player.id] = player;
   createPlanet(w, player, findHomeSlot(w), { home: true, name: `${username}'s Homeworld`, now });
   return { player, token: issueToken(w, player) };

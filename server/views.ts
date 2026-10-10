@@ -13,7 +13,8 @@ export function planetView(w: World, planet: Planet, now: number) {
     id: planet.id, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon,
     jumpReadyAt: planet.jumpReadyAt ?? 0,
     maxTemp: planet.maxTemp, isHome: planet.isHome, buildings: planet.buildings, resources: planet.resources,
-    capacity: planetCapacity(planet),
+    capacity: planetCapacity(w, planet),
+    diameter: planet.diameter ?? null,
     production: {
       metal: prod.metal, crystal: prod.crystal, deuterium: prod.deuterium,
       energyProduced: prod.energyProduced, energyUsed: prod.energyUsed, efficiency: prod.efficiency,

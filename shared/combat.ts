@@ -22,6 +22,9 @@ export interface Combatant {
   weapons: number;
   shielding: number;
   armour: number;
+  /** faction perks etc. (default 1) */
+  weaponMul?: number;
+  shieldMul?: number;
   fleet: Fleet;
   defenses?: Defenses;
 }
@@ -60,7 +63,8 @@ interface Unit {
 const DEBRIS_RATIO = 0.3;
 const DEFENSE_REBUILD = 0.7;
 
-export function simulateCombat(attackers: Combatant[], defenders: Combatant[], rng: Rng): CombatResult {
+export function simulateCombat(attackers: Combatant[], defenders: Combatant[], rng: Rng, opts: { debrisRatio?: number } = {}): CombatResult {
+  const debrisRatio = opts.debrisRatio ?? DEBRIS_RATIO;
   const sides: Combatant[][] = [attackers, defenders];
   let units: Unit[] = [];
   const before: Partial<Record<UnitId, number>>[][] = [[], []];
@@ -72,10 +76,10 @@ export function simulateCombat(attackers: Combatant[], defenders: Combatant[], r
         if (!n || n <= 0 || UNITS[id].missile) return;
         bag[id] = (bag[id] || 0) + n;
         const u = UNITS[id];
-        const sh = u.shield * (1 + 0.1 * c.shielding);
+        const sh = u.shield * (1 + 0.1 * c.shielding) * (c.shieldMul ?? 1);
         const hull = u.hull * (1 + 0.1 * c.armour);
         for (let i = 0; i < n; i++) {
-          units.push({ side: side as 0 | 1, who, id, att: u.attack * (1 + 0.1 * c.weapons), shieldMax: sh, shield: sh, hullMax: hull, hull, dead: false });
+          units.push({ side: side as 0 | 1, who, id, att: u.attack * (1 + 0.1 * c.weapons) * (c.weaponMul ?? 1), shieldMax: sh, shield: sh, hullMax: hull, hull, dead: false });
         }
       };
       for (const [id, n] of Object.entries(c.fleet)) add(id as UnitId, n || 0);
@@ -148,8 +152,8 @@ export function simulateCombat(attackers: Combatant[], defenders: Combatant[], r
             after[uid] = (after[uid] || 0) + back;
           }
         } else {
-          debrisM += def.cost.metal * destroyed * DEBRIS_RATIO;
-          debrisC += def.cost.crystal * destroyed * DEBRIS_RATIO;
+          debrisM += def.cost.metal * destroyed * debrisRatio;
+          debrisC += def.cost.crystal * destroyed * debrisRatio;
         }
       }
       return { owner: c.owner, name: c.name, before: before[side][who], after, lost, rebuilt };
@@ -165,8 +169,8 @@ export function simulateCombat(attackers: Combatant[], defenders: Combatant[], r
 }
 
 /** OGame-style loot: up to half the planet's stock, bounded by free cargo. */
-export function computeLoot(stock: Res, capacity: number): Res {
-  const half = { metal: stock.metal / 2, crystal: stock.crystal / 2, deuterium: stock.deuterium / 2 };
+export function computeLoot(stock: Res, capacity: number, share = 0.5): Res {
+  const half = { metal: stock.metal * share, crystal: stock.crystal * share, deuterium: stock.deuterium * share };
   let cap = capacity;
   const metal = Math.min(half.metal, cap / 3);
   cap -= metal;

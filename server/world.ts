@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { DEFAULT_CONFIG, type UniverseConfig } from '../shared/config';
 import type {
-  BuildingId, Coords, Defenses, Fleet, Mission, Res, TechId, UnitId,
+  BuildingId, Coords, Defenses, FactionId, Fleet, Mission, OfficerId, Res, TechId, UnitId,
 } from '../shared/types';
 import type { Levels } from '../shared/formulas';
 
@@ -25,8 +25,54 @@ export interface Player {
   allianceId: string | null;
   planetIds: string[];
   /** expedition statistics etc. */
-  stats: { raidsRepelled: number; battlesWon: number; battlesLost: number; expeditions: number };
+  stats: PlayerStats;
+  /** Command Credits: earned from expeditions, objectives and achievements; spent on officers */
+  credits: number;
+  officers: Partial<Record<OfficerId, number>>;
+  achievements: Record<string, number>;
+  objectives: Record<string, number>;
+  faction: FactionId | null;
+  /** standing with each faction (-100..100) */
+  rep: Record<string, number>;
+  /** grudge each NPC empire holds against this commander */
+  heat: Record<string, number>;
+  /** npc id -> timestamp until which that empire leaves this commander alone */
+  truces: Record<string, number>;
+  tributes: Tribute[];
+  nextTribute: number;
+  history: HistoryPoint[];
+  /** set for computer-controlled empires (no login) */
+  npc?: NpcInfo;
 }
+
+export interface PlayerStats {
+  raidsRepelled: number; battlesWon: number; battlesLost: number; expeditions: number;
+  destroyed: number; plundered: number; harvested: number; ipmKills: number;
+}
+export interface Tribute { id: string; npc: string; want: Res; deadline: number; answered: false | 'paid' | 'refused' | 'ignored' }
+export interface HistoryPoint { t: number; points: number; rank: number; fleet: number }
+export type NpcStatus = 'inactive' | 'active' | 'aggressive';
+export interface NpcInfo { status: NpcStatus; seedPoints: number; faction: FactionId | null }
+
+export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0, destroyed: 0, plundered: 0, harvested: 0, ipmKills: 0 });
+
+export function blankPlayer(id: string, username: string, now: number, extra: Partial<Player> = {}): Player {
+  return {
+    id, username, salt: '', hash: '', createdAt: now, lastSeen: now, techs: {}, research: null, researchBacklog: [],
+    allianceId: null, planetIds: [], stats: blankStats(), credits: 0, officers: {}, achievements: {}, objectives: {},
+    faction: null, rep: {}, heat: {}, truces: {}, tributes: [], nextTribute: 0, history: [], ...extra,
+  };
+}
+
+/** Fill fields added after a save was written. */
+export function migratePlayer(p: Player) {
+  const d = blankPlayer(p.id, p.username, p.createdAt);
+  p.stats = { ...d.stats, ...(p.stats ?? {}) };
+  p.credits ??= 0; p.officers ??= {}; p.achievements ??= {}; p.objectives ??= {}; p.faction ??= null;
+  p.rep ??= {}; p.heat ??= {}; p.truces ??= {}; p.tributes ??= []; p.nextTribute ??= 0; p.history ??= [];
+  p.researchBacklog ??= [];
+}
+export const isNpc = (p: Player | null | undefined): p is Player & { npc: NpcInfo } => !!p?.npc;
 
 export interface Planet {
   id: string;
@@ -36,6 +82,8 @@ export interface Planet {
   fields: number;
   maxTemp: number;
   isHome: boolean;
+  /** planet diameter in km (fields derive from it) */
+  diameter?: number;
   /** moons share their parent's coordinates */
   isMoon?: boolean;
   parentId?: string;
@@ -133,6 +181,8 @@ export interface World {
   chat: ChatMsg[];
   sessions: Record<string, string>;
   nextRaidAt: number;
+  /** next computer-empire economy / war tick */
+  nextNpcTick?: number;
   rngSeed: number;
 }
 

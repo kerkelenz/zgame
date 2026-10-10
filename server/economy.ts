@@ -6,6 +6,7 @@ import {
 import type { BuildingId, Requirement, Res, TechId, UnitId } from '../shared/types';
 import { bus } from './bus';
 import { notifyPlayer } from './messages';
+import { energyBoost, mineBoost, timeFactor } from './perks';
 import { GameError, allianceOf, type Planet, type Player, type World } from './world';
 
 export interface AllianceBonuses { production: number; research: number; logistics: number }
@@ -29,14 +30,18 @@ export function planetProduction(w: World, planet: Planet) {
     speed: w.config.economySpeed,
     allianceBonus: allianceBonuses(w, owner).production,
     noBasic: !!planet.isMoon,
+    boost: mineBoost(owner),
+    energyBoost: energyBoost(owner),
   });
 }
 
-export function planetCapacity(planet: Planet): Res {
+/** Storage scales with universe speed: at x20 the mines fill twenty times faster, so a classic-sized silo would waste almost everything. */
+export function planetCapacity(w: World, planet: Planet): Res {
+  const k = Math.max(1, w.config.economySpeed);
   return {
-    metal: storageCapacity(lvl(planet.buildings, 'metalStorage')),
-    crystal: storageCapacity(lvl(planet.buildings, 'crystalStorage')),
-    deuterium: storageCapacity(lvl(planet.buildings, 'deuteriumTank')),
+    metal: storageCapacity(lvl(planet.buildings, 'metalStorage')) * k,
+    crystal: storageCapacity(lvl(planet.buildings, 'crystalStorage')) * k,
+    deuterium: storageCapacity(lvl(planet.buildings, 'deuteriumTank')) * k,
   };
 }
 
@@ -44,7 +49,7 @@ function accrue(w: World, planet: Planet, from: number, to: number) {
   const dt = (to - from) / 3_600_000;
   if (dt <= 0) return;
   const prod = planetProduction(w, planet);
-  const cap = planetCapacity(planet);
+  const cap = planetCapacity(w, planet);
   const r = planet.resources;
   const step = (cur: number, rate: number, max: number) => {
     const next = cur + rate * dt;
@@ -141,7 +146,7 @@ export function requirementsMet(planet: Planet | null, player: Player, reqs: Req
 }
 
 export function maxFields(planet: Planet): number {
-  return planet.fields + (planet.isMoon ? 3 * lvl(planet.buildings, 'lunarBase') : 0);
+  return planet.fields + (planet.isMoon ? 3 * lvl(planet.buildings, 'lunarBase') : 5 * lvl(planet.buildings, 'terraformer'));
 }
 
 export function usedFields(planet: Planet): number {
@@ -171,7 +176,7 @@ export function queueBuilding(w: World, player: Player, planet: Planet, id: Buil
   const backlog = (planet.buildBacklog ||= []);
   if (backlog.length >= MAX_BACKLOG) throw new GameError(`Queue is full (${MAX_BACKLOG})`);
   if (!buildingAllowed(id, !!planet.isMoon)) throw new GameError(planet.isMoon ? 'That cannot be built on a moon' : 'That can only be built on a moon');
-  if (usedFields(planet) + backlog.length >= maxFields(planet)) throw new GameError('No free fields left on this planet');
+  if (id !== 'terraformer' && usedFields(planet) + backlog.length >= maxFields(planet)) throw new GameError('No free fields left on this planet');
   backlog.push(id);
 }
 
@@ -186,12 +191,12 @@ function beginBuilding(w: World, player: Player, planet: Planet, id: BuildingId,
   if (planet.buildQueue) throw new GameError('Construction already in progress');
   if (!requirementsMet(planet, player, def.requires)) throw new GameError('Requirements not met');
   if (!buildingAllowed(id, !!planet.isMoon)) throw new GameError(planet.isMoon ? 'That cannot be built on a moon' : 'That can only be built on a moon');
-  if (usedFields(planet) >= maxFields(planet)) throw new GameError('No free fields left on this planet');
+  if (id !== 'terraformer' && usedFields(planet) >= maxFields(planet)) throw new GameError('No free fields left on this planet');
   if (id === 'researchLab' && player.research) throw new GameError('Cannot upgrade the lab while research is running');
   const level = lvl(planet.buildings, id) + 1;
   const cost = buildingCost(id, level);
   pay(planet, cost);
-  const secs = buildingTime(cost, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed);
+  const secs = buildingTime(cost, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed, timeFactor(player));
   planet.buildQueue = { id, level, start: now, end: now + secs * 1000, cost };
 }
 
@@ -231,9 +236,13 @@ function beginResearch(w: World, player: Player, planet: Planet, id: TechId, now
   if (planet.buildQueue?.id === 'researchLab') throw new GameError('The research lab is being upgraded');
   if (!requirementsMet(planet, player, def.requires)) throw new GameError('Requirements not met');
   const level = lvl(player.techs, id) + 1;
+  if (def.energyReq) {
+    const need = def.energyReq * Math.pow(3, level - 1);
+    if (planetProduction(w, planet).energyProduced < need) throw new GameError(`Needs ${Math.round(need).toLocaleString('en-US')} energy production on this planet`);
+  }
   const cost = techCost(id, level);
   pay(planet, cost);
-  const secs = researchTime(cost, lvl(planet.buildings, 'researchLab'), w.config.economySpeed, allianceBonuses(w, player).research);
+  const secs = researchTime(cost, lvl(planet.buildings, 'researchLab'), w.config.economySpeed, allianceBonuses(w, player).research, timeFactor(player));
   player.research = { id, level, start: now, end: now + secs * 1000, cost, planetId: planet.id };
 }
 
@@ -270,7 +279,7 @@ export function queueUnits(w: World, player: Player, planet: Planet, id: UnitId,
   }
   const total = scaleRes(def.cost, count);
   pay(planet, total);
-  const unitMs = unitTime(id, lvl(planet.buildings, 'shipyard'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed) * 1000;
+  const unitMs = unitTime(id, lvl(planet.buildings, 'shipyard'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed, timeFactor(player)) * 1000;
   const start = planet.shipyardQueue.length ? now : now;
   planet.shipyardQueue.push({ id, total: count, remaining: count, unitMs, start, unitCost: def.cost });
   if (planet.shipyardQueue.length === 1) planet.shipyardQueue[0].start = now;

@@ -1,5 +1,6 @@
 import { buildingPoints, techPoints, unitPoints, lvl } from '../shared/formulas';
-import { BUILDING_IDS, DEFENSE_IDS, SHIP_IDS, TECH_IDS } from '../shared/data';
+import { BUILDING_IDS, DEFENSE_IDS, SHIP_IDS, TECH_IDS, POS_DIAMETER, fieldsFromDiameter } from '../shared/data';
+import { extraExpeditionSlots } from './perks';
 import type { Coords, UnitId } from '../shared/types';
 import { GameError, ck, planetAt, uid, type Planet, type Player, type World } from './world';
 
@@ -8,13 +9,14 @@ const rnd = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)
 export function tempFor(p: number): number {
   return Math.round(240 - (p - 1) * 26 + rnd(-20, 20));
 }
-export function fieldsFor(p: number, home: boolean): number {
-  if (home) return 163;
-  if (p <= 3) return rnd(55, 95);
-  if (p <= 6) return rnd(105, 195);
-  if (p <= 9) return rnd(150, 215);
-  if (p <= 12) return rnd(120, 165);
-  return rnd(65, 95);
+/** Orbit decides the size: inner worlds are small, middle ones large. Homeworlds are a fixed classic 163 fields. */
+export function diameterFor(p: number, home: boolean): number {
+  if (home) return 12800;
+  const [lo, hi] = POS_DIAMETER[p] ?? [8000, 12000];
+  return Math.round((lo + Math.random() * (hi - lo)) / 100) * 100;
+}
+export function fieldsFor(diameter: number, home: boolean): number {
+  return home ? 163 : fieldsFromDiameter(diameter);
 }
 
 export function inBounds(w: World, c: Coords, allowExpedition = false): boolean {
@@ -27,12 +29,14 @@ export function inBounds(w: World, c: Coords, allowExpedition = false): boolean 
 export function createPlanet(w: World, owner: Player, coords: Coords, opts: { home?: boolean; name?: string; now?: number } = {}): Planet {
   const now = opts.now ?? Date.now();
   const home = !!opts.home;
+  const diameter = diameterFor(coords.p, home);
   const planet: Planet = {
     id: uid(),
     ownerId: owner.id,
     name: opts.name ?? (home ? 'Homeworld' : 'Colony'),
     coords,
-    fields: fieldsFor(coords.p, home),
+    diameter,
+    fields: fieldsFor(diameter, home),
     maxTemp: tempFor(coords.p),
     isHome: home,
     buildings: {},
@@ -68,10 +72,11 @@ export function colonyCount(w: World, player: Player): number {
   return player.planetIds.filter((id) => !w.planets[id]?.isMoon).length;
 }
 
-export function createMoon(w: World, parent: Planet, now: number): Planet {
+export function createMoon(w: World, parent: Planet, now: number, chance = 0.05): Planet {
   const owner = w.players[parent.ownerId];
   const moon: Planet = {
     id: uid(), ownerId: owner.id, name: `${parent.name} Moon`, coords: { ...parent.coords }, fields: 1,
+    diameter: Math.round(1000 + chance * 30000 + Math.random() * 3000),
     maxTemp: parent.maxTemp - 20, isHome: false, isMoon: true, parentId: parent.id, buildings: {},
     resources: { metal: 0, crystal: 0, deuterium: 0 }, updatedAt: now, buildQueue: null, buildBacklog: [], shipyardQueue: [],
     fleet: {}, defenses: {}, settings: {},
@@ -85,7 +90,7 @@ export function maxPlanets(player: Player): number {
   return 1 + Math.ceil(lvl(player.techs, 'astrophysics') / 2);
 }
 export function maxExpeditions(player: Player): number {
-  return Math.floor(Math.sqrt(lvl(player.techs, 'astrophysics')));
+  return Math.floor(Math.sqrt(lvl(player.techs, 'astrophysics'))) + extraExpeditionSlots(player);
 }
 
 export interface Points { buildings: number; research: number; fleet: number; defense: number; total: number }
@@ -109,6 +114,7 @@ export function playerPoints(w: World, p: Player): Points {
 }
 
 export function isProtected(w: World, attacker: Player, target: Player): boolean {
+  if (target.npc) return false; // computer empires are always fair game
   const a = playerPoints(w, attacker).total, t = playerPoints(w, target).total;
   const { protectionPoints, protectionRatio } = w.config;
   const min = Math.min(a, t), max = Math.max(a, t);
