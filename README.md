@@ -62,6 +62,8 @@ client/   React + Vite single-page app
 test/     vitest: formulas & combat, full game flows with a fake clock, HTTP API
 ```
 
+Performance: `npm run bench -- 300` builds a 300-commander universe and times the hot paths (a full server tick is ~1 ms, a save ~5 ms, so a small server is nowhere near its limits).
+
 `npm test` runs the suite, `npm run typecheck` runs `tsc`, and `npm run balance -- 72` plays a greedy bot for 72 simulated hours and prints economy milestones (handy when tuning speeds or costs).
 
 ## Not implemented (ideas)
