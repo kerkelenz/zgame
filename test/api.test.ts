@@ -133,3 +133,18 @@ describe('input hardening', () => {
     expect((await call('POST', '/api/alliance/upgrade', t, { key: 'constructor' })).status).toBe(400);
   });
 });
+
+describe('robustness', () => {
+  it('malformed JSON is a 400, not a 500', async () => {
+    const res = await fetch(base + '/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{nope' });
+    expect(res.status).toBe(400);
+  });
+
+  it('old session tokens are revoked past the per-player cap', async () => {
+    const first = (await call('POST', '/api/register', undefined, { username: 'sessy', password: 'secret1' })).json.token;
+    for (let i = 0; i < 9; i++) await call('POST', '/api/login', undefined, { username: 'sessy', password: 'secret1' });
+    expect((await call('GET', '/api/me', first)).status).toBe(401);
+    const latest = (await call('POST', '/api/login', undefined, { username: 'sessy', password: 'secret1' })).json.token;
+    expect((await call('GET', '/api/me', latest)).status).toBe(200);
+  });
+});

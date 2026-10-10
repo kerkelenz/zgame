@@ -35,6 +35,17 @@ wss.on('connection', (ws, req) => {
   ws.send(JSON.stringify({ type: 'hello', data: { now: Date.now() } }));
 });
 
+// keep connections alive through proxies and drop dead peers
+setInterval(() => {
+  for (const ws of sockets.keys()) {
+    const s = ws as WebSocket & { alive?: boolean };
+    if (s.alive === false) { s.terminate(); continue; }
+    s.alive = false;
+    s.ping();
+  }
+}, 30_000);
+wss.on('connection', (ws) => { const s = ws as WebSocket & { alive?: boolean }; s.alive = true; ws.on('pong', () => { s.alive = true; }); });
+
 bus.on('push', (e: PushEvent) => {
   const payload = JSON.stringify({ type: e.type, data: e.data });
   for (const [ws, pid] of sockets) if ((e.to === '*' || e.to === pid) && ws.readyState === ws.OPEN) ws.send(payload);

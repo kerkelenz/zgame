@@ -35,13 +35,19 @@ Config is stored in the save on first start; env vars override it on later start
 
 - **Economy** – metal/crystal/deuterium mines, solar/fusion/satellite energy, storage caps, production sliders, robotics/nanite build speed, planet fields & temperature.
 - **Tech** – 14 researches with OGame-style prerequisites; drives change ship speeds, weapons/shielding/armour change combat.
-- **Shipyard** – 14 ships, 8 defenses, batch queues with refunds, shield-dome limits.
+- **Shipyard** – 14 ships, 8 defenses, batch queues with refunds, shield-dome limits. Buildings and research can queue 4 deep (paid when each starts).
 - **Fleets** – attack, transport, deploy, espionage, colonize, recycle debris, expeditions, plus **hold (defend ally)**. Fuel, cargo, speed %, fleet slots, recall.
 - **Combat** – 6-round simulation with rapid fire, shield bounce, explosion chance, debris fields, 70 % defense rebuild, loot rules, detailed battle reports.
 - **Co-op** – alliances (open/application), ranks, shared bank with grants, alliance upgrades (+mine output, −research time, +fleet speed for every member), allied fleets that fight alongside a defender, joint (ACS) attacks that arrive together and split the loot, allied alerts when a member is attacked, alliance chat.
 - **PvE** – periodic NPC raid waves aimed at players; defenders (and allied holders) split a bounty when raiders are crushed. Expeditions can find resources, ships, pirates or a black hole.
 - **Social** – messages (battle/spy/system reports and player mail), global chat, galaxy browser, highscore for players and alliances, newbie protection.
 - **Live UI** – WebSocket push for alerts/messages/chat, interpolated resource counters, countdowns.
+
+## Try it with a demo universe
+
+```bash
+npm run demo   # seeds alice/bob/carol (allied) + rival, password demo1234, then starts the server
+```
 
 ## Layout
 
@@ -56,7 +62,7 @@ test/     vitest: formulas & combat, full game flows with a fake clock, HTTP API
 
 ## Not implemented (ideas)
 
-Moons/jump gates, missile silos, premium currency, per-planet build queues longer than one item.
+Moons/jump gates, missile silos, premium currency, shipyard queues beyond the batch system.
 
 ## Hosting
 

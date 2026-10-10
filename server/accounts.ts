@@ -2,6 +2,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { createPlanet, findHomeSlot } from './galaxy';
 import { GameError, uid, type Player, type World } from './world';
 
+export const MAX_SESSIONS = 8;
 const hash = (pw: string, salt: string) => scryptSync(pw, salt, 32).toString('hex');
 
 export function register(w: World, username: string, password: string, now = Date.now()): { player: Player; token: string } {
@@ -32,6 +33,9 @@ export function login(w: World, username: string, password: string): { player: P
 
 function issueToken(w: World, p: Player): string {
   const token = randomBytes(24).toString('hex');
+  // keep at most MAX_SESSIONS live tokens per player (oldest are revoked first; object keys keep insertion order)
+  const mine = Object.keys(w.sessions).filter((t) => w.sessions[t] === p.id);
+  for (const old of mine.slice(0, Math.max(0, mine.length - (MAX_SESSIONS - 1)))) delete w.sessions[old];
   w.sessions[token] = p.id;
   return token;
 }

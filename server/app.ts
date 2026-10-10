@@ -261,6 +261,8 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof GameError) return res.status(err.status).json({ error: err.message });
+    const status = (err as { status?: number })?.status;
+    if (typeof status === 'number' && status >= 400 && status < 500) return res.status(status).json({ error: 'Bad request' });
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   });
