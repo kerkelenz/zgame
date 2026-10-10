@@ -64,6 +64,23 @@ export function findHomeSlot(w: World): Coords {
   throw new GameError('The universe is full', 503);
 }
 
+export function colonyCount(w: World, player: Player): number {
+  return player.planetIds.filter((id) => !w.planets[id]?.isMoon).length;
+}
+
+export function createMoon(w: World, parent: Planet, now: number): Planet {
+  const owner = w.players[parent.ownerId];
+  const moon: Planet = {
+    id: uid(), ownerId: owner.id, name: `${parent.name} Moon`, coords: { ...parent.coords }, fields: 1,
+    maxTemp: parent.maxTemp - 20, isHome: false, isMoon: true, parentId: parent.id, buildings: {},
+    resources: { metal: 0, crystal: 0, deuterium: 0 }, updatedAt: now, buildQueue: null, buildBacklog: [], shipyardQueue: [],
+    fleet: {}, defenses: {}, settings: {},
+  };
+  w.planets[moon.id] = moon;
+  owner.planetIds.push(moon.id);
+  return moon;
+}
+
 export function maxPlanets(player: Player): number {
   return 1 + Math.ceil(lvl(player.techs, 'astrophysics') / 2);
 }
@@ -102,6 +119,7 @@ export function isProtected(w: World, attacker: Player, target: Player): boolean
 
 export interface GalaxySlot {
   p: number;
+  moon: null | { id: string; name: string };
   planet: null | {
     id: string; name: string; owner: string; ownerId: string; alliance: string | null;
     mine: boolean; protectedFor: boolean; debris: { metal: number; crystal: number } | null;
@@ -116,12 +134,14 @@ export function galaxyView(w: World, viewer: Player, g: number, s: number): Gala
   for (let p = 1; p <= w.config.positions; p++) {
     const pl = byPos[p];
     const debris = w.debris[ck({ g, s, p })] ?? null;
-    if (!pl) { slots.push({ p, planet: null, debris }); continue; }
+    const moon = Object.values(w.planets).find((x) => x.isMoon && x.coords.g === g && x.coords.s === s && x.coords.p === p);
+    if (!pl) { slots.push({ p, planet: null, moon: null, debris }); continue; }
     const owner = w.players[pl.ownerId];
     const ally = owner.allianceId ? w.alliances[owner.allianceId]?.tag ?? null : null;
     slots.push({
       p,
       debris,
+      moon: moon ? { id: moon.id, name: moon.name } : null,
       planet: {
         id: pl.id, name: pl.name, owner: owner.username, ownerId: owner.id, alliance: ally,
         mine: owner.id === viewer.id,

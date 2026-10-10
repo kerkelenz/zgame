@@ -4,7 +4,7 @@ import { ApiError, get, getToken, post, setToken } from './api';
 
 export interface Toast { id: number; text: string; kind: 'info' | 'alert' | 'error' }
 
-export interface Target { coords: Coords; mission?: Mission }
+export interface Target { coords: Coords; mission?: Mission; toMoon?: boolean }
 
 interface GameCtx {
   me: any | null;

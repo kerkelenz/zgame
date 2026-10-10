@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  BUILDINGS, BUILDING_IDS, DEFENSE_IDS, SHIP_IDS, TECHS, TECH_IDS, UNITS,
+  BUILDINGS, BUILDING_IDS, DEFENSE_IDS, buildingAllowed, SHIP_IDS, TECHS, TECH_IDS, UNITS,
 } from '../../../shared/data';
 import { buildingCost, buildingTime, canAfford, lvl, researchTime, scaleRes, techCost, unitTime } from '../../../shared/formulas';
 import type { BuildingId, TechId, UnitId } from '../../../shared/types';
@@ -73,7 +73,7 @@ export function Items({ kind }: { kind: Kind }) {
       )}
 
       <div className="items">
-        {kind === 'building' && BUILDING_IDS.map((id) => {
+        {kind === 'building' && BUILDING_IDS.filter((id) => buildingAllowed(id, !!planet.isMoon)).map((id) => {
           const d = BUILDINGS[id];
           const level = lvl(planet.buildings, id);
           const cost = buildingCost(id, level + 1);

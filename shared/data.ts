@@ -17,6 +17,9 @@ export const BUILDINGS: Record<BuildingId, BuildingDef> = {
   metalStorage: { id: 'metalStorage', name: 'Metal Storage', desc: 'Raises metal capacity.', base: r(1000), factor: 2, requires: [] },
   crystalStorage: { id: 'crystalStorage', name: 'Crystal Storage', desc: 'Raises crystal capacity.', base: r(1000, 500), factor: 2, requires: [] },
   missileSilo: { id: 'missileSilo', name: 'Missile Silo', desc: 'Stores 10 missile slots per level and sets missile range (5 systems per level).', base: r(20000, 20000, 1000), factor: 2, requires: [{ id: 'shipyard', level: 1 }] },
+  lunarBase: { id: 'lunarBase', name: 'Lunar Base', desc: 'Moons have almost no room: each level adds 3 usable fields.', base: r(20000, 40000, 20000), factor: 2, requires: [], moonOnly: true },
+  sensorPhalanx: { id: 'sensorPhalanx', name: 'Sensor Phalanx', desc: 'Scans fleet movements around a planet within (level² - 1) systems. Each scan costs 5,000 deuterium.', base: r(20000, 40000, 20000), factor: 2, requires: [{ id: 'lunarBase', level: 1 }], moonOnly: true },
+  jumpGate: { id: 'jumpGate', name: 'Jump Gate', desc: 'Instantly teleports ships to another of your moons with a gate. Cooldown after each jump.', base: r(200000, 400000, 200000), factor: 2, requires: [{ id: 'lunarBase', level: 1 }, { id: 'hyperspace', level: 7 }], moonOnly: true },
   deuteriumTank: { id: 'deuteriumTank', name: 'Deuterium Tank', desc: 'Raises deuterium capacity.', base: r(1000, 1000), factor: 2, requires: [] },
 };
 
@@ -70,6 +73,10 @@ export const UNITS: Record<UnitId, UnitDef> = {
   smallShield: def('smallShield', 'Small Shield Dome', { desc: 'Envelops the planet in a shield. Max 1.', cost: r(10000, 10000), attack: 1, shield: 2000, hull: 2000, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, max: 1, requires: [{ id: 'shipyard', level: 1 }, { id: 'shielding', level: 2 }] }),
   largeShield: def('largeShield', 'Large Shield Dome', { desc: 'A far stronger shield dome. Max 1.', cost: r(50000, 50000), attack: 1, shield: 10000, hull: 10000, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, max: 1, requires: [{ id: 'shipyard', level: 6 }, { id: 'shielding', level: 6 }] }),
 };
+
+/** buildings a moon may host (plus every moonOnly building); planets may not host moonOnly ones */
+export const MOON_BUILDINGS: BuildingId[] = ['lunarBase', 'sensorPhalanx', 'jumpGate', 'roboticsFactory', 'shipyard', 'missileSilo', 'metalStorage', 'crystalStorage', 'deuteriumTank'];
+export const buildingAllowed = (id: BuildingId, moon: boolean) => (moon ? MOON_BUILDINGS.includes(id) : !BUILDINGS[id].moonOnly);
 
 export const SHIP_IDS = (Object.keys(UNITS) as UnitId[]).filter((k) => UNITS[k].kind === 'ship') as ShipId[];
 export const DEFENSE_IDS = (Object.keys(UNITS) as UnitId[]).filter((k) => UNITS[k].kind === 'defense') as DefenseId[];

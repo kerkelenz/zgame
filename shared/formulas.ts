@@ -52,6 +52,8 @@ export interface ProductionInput {
   speed: number;
   /** alliance production bonus e.g. 0.04 */
   allianceBonus?: number;
+  /** moons have no free basic income */
+  noBasic?: boolean;
 }
 export interface Production {
   /** per hour at current efficiency */
@@ -77,8 +79,9 @@ export function production(i: ProductionInput): Production {
   const efficiency = energyUsed <= 0 ? 1 : Math.min(1, Math.max(0, energyProduced / energyUsed));
   const ab = 1 + (i.allianceBonus ?? 0);
   const sp_ = i.speed;
-  const metal = (30 * sp_ + 30 * m * Math.pow(1.1, m) * s('metalMine') * efficiency * (1 + 0.01 * pl) * sp_ * ab);
-  const crystal = (15 * sp_ + 20 * c * Math.pow(1.1, c) * s('crystalMine') * efficiency * (1 + 0.0066 * pl) * sp_ * ab);
+  const basic = i.noBasic ? 0 : 1;
+  const metal = (basic * 30 * sp_ + 30 * m * Math.pow(1.1, m) * s('metalMine') * efficiency * (1 + 0.01 * pl) * sp_ * ab);
+  const crystal = (basic * 15 * sp_ + 20 * c * Math.pow(1.1, c) * s('crystalMine') * efficiency * (1 + 0.0066 * pl) * sp_ * ab);
   const deuterium = 10 * d * Math.pow(1.1, d) * (1.44 - 0.004 * i.maxTemp) * s('deuteriumSynthesizer') * efficiency * (1 + 0.0033 * pl) * sp_ * ab;
   const fusionDeutUse = 10 * fu * Math.pow(1.1, fu) * s('fusionReactor') * sp_;
   return { metal, crystal, deuterium: deuterium - fusionDeutUse, energyProduced, energyUsed, efficiency, fusionDeutUse };

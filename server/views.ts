@@ -1,7 +1,7 @@
 import { ALLIANCE_UPGRADES } from '../shared/data';
-import { allianceBonuses, planetCapacity, planetProduction, updatePlanet, usedFields } from './economy';
+import { allianceBonuses, maxFields, planetCapacity, planetProduction, updatePlanet, usedFields } from './economy';
 import { activeSlots } from './fleet';
-import { maxPlanets, playerPoints } from './galaxy';
+import { colonyCount, maxPlanets, playerPoints } from './galaxy';
 import { sameCoords } from '../shared/formulas';
 import { upgradeCost } from './alliance';
 import { planetAt, type Alliance, type Movement, type Planet, type Player, type World } from './world';
@@ -10,7 +10,8 @@ export function planetView(w: World, planet: Planet, now: number) {
   updatePlanet(w, planet, now);
   const prod = planetProduction(w, planet);
   return {
-    id: planet.id, name: planet.name, coords: planet.coords, fields: planet.fields, usedFields: usedFields(planet),
+    id: planet.id, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon,
+    jumpReadyAt: planet.jumpReadyAt ?? 0,
     maxTemp: planet.maxTemp, isHome: planet.isHome, buildings: planet.buildings, resources: planet.resources,
     capacity: planetCapacity(planet),
     production: {
@@ -51,13 +52,14 @@ export function meView(w: World, p: Player, now: number) {
     },
     planets: p.planetIds.map((id) => {
       const pl = w.planets[id];
-      return { id: pl.id, name: pl.name, coords: pl.coords, isHome: pl.isHome };
+      return { id: pl.id, name: pl.name, coords: pl.coords, isHome: pl.isHome, isMoon: !!pl.isMoon };
     }),
     alliance: a ? { id: a.id, tag: a.tag, name: a.name } : null,
     allianceBonuses: allianceBonuses(w, p),
     config: w.config,
     slots: activeSlots(w, p),
     maxPlanets: maxPlanets(p),
+    colonies: colonyCount(w, p),
     unread: w.messages.filter((m) => m.to === p.id && !m.read).length,
   };
 }
@@ -65,7 +67,7 @@ export function meView(w: World, p: Player, now: number) {
 const mv = (m: Movement, mine: boolean) => ({
   id: m.id, mission: m.mission, phase: m.phase, from: m.from, to: m.to, ships: m.ships,
   cargo: mine ? m.cargo : undefined, arriveAt: m.arriveAt, returnAt: m.returnAt, holdUntil: m.holdUntil,
-  acsId: m.acsId, missiles: m.missiles, ownerName: m.ownerName, ownerId: m.ownerId, speedPct: m.speedPct, flightMs: m.flightMs, departAt: m.departAt,
+  acsId: m.acsId, toMoon: m.toMoon, missiles: m.missiles, ownerName: m.ownerName, ownerId: m.ownerId, speedPct: m.speedPct, flightMs: m.flightMs, departAt: m.departAt,
 });
 
 export function fleetsView(w: World, p: Player) {
@@ -88,7 +90,7 @@ export function fleetsView(w: World, p: Player) {
       else if (hitAlly) incoming.push({ ...mv(m, false), ships: {}, target: `${hitAlly.owner} (${hitAlly.name})`, ally: true });
     }
     if (m.mission === 'attack' && m.phase === 'outbound' && m.ownerId && !m.acsId && (m.ownerId === p.id || allyIds.has(m.ownerId))) {
-      joinable.push({ ...mv(m, false), ships: {}, targetName: planetAt(w, m.to)?.name ?? '?' });
+      joinable.push({ ...mv(m, false), ships: {}, targetName: planetAt(w, m.to, !!m.toMoon)?.name ?? '?' });
     }
     if (m.mission === 'hold' && m.phase === 'holding' && m.ownerId !== p.id && myCoords.some((c) => sameCoords(c, m.to))) stationed.push(mv(m, false));
   }

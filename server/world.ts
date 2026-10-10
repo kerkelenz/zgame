@@ -36,6 +36,11 @@ export interface Planet {
   fields: number;
   maxTemp: number;
   isHome: boolean;
+  /** moons share their parent's coordinates */
+  isMoon?: boolean;
+  parentId?: string;
+  /** jump gate cooldown (ms timestamp) */
+  jumpReadyAt?: number;
   buildings: Levels<BuildingId>;
   resources: Res;
   updatedAt: number;
@@ -77,6 +82,8 @@ export interface Movement {
   resolved?: boolean;
   /** joint attack: id of the leading movement this fleet joined */
   acsId?: string;
+  /** target is the moon at the destination coordinates */
+  toMoon?: boolean;
   /** interplanetary missile strikes */
   missiles?: number;
 }
@@ -158,8 +165,8 @@ export class GameError extends Error {
 
 export const ck = (c: Coords) => `${c.g}:${c.s}:${c.p}`;
 
-export function planetAt(w: World, c: Coords): Planet | undefined {
-  for (const p of Object.values(w.planets)) if (p.coords.g === c.g && p.coords.s === c.s && p.coords.p === c.p) return p;
+export function planetAt(w: World, c: Coords, moon = false): Planet | undefined {
+  for (const p of Object.values(w.planets)) if (!!p.isMoon === moon && p.coords.g === c.g && p.coords.s === c.s && p.coords.p === c.p) return p;
   return undefined;
 }
 

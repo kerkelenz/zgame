@@ -28,7 +28,7 @@ export function Overview() {
             <input placeholder="Rename planet" value={name} onChange={(e) => setName(e.target.value)} maxLength={24} />
             <button>Rename</button>
           </form>
-          {!planet.isHome && (
+          {!planet.isHome && !planet.isMoon && (
             <button className="danger" onClick={() => {
               const n = prompt(`Type "${planet.name}" to abandon this colony forever`);
               if (n) void act(() => post(`/planets/${planet.id}/abandon`, { name: n }), 'Colony abandoned');
@@ -40,7 +40,7 @@ export function Overview() {
           <table className="kv">
             <tbody>
               <tr><td>Points</td><td><b>{fmt(pts.total)}</b> (B {fmt(pts.buildings)} · R {fmt(pts.research)} · F {fmt(pts.fleet)} · D {fmt(pts.defense)})</td></tr>
-              <tr><td>Colonies</td><td>{planets.length} / {me.maxPlanets}</td></tr>
+              <tr><td>Colonies</td><td>{me.colonies} / {me.maxPlanets}</td></tr>
               <tr><td>Fleet slots</td><td>{me.slots.used} / {me.slots.max} · expeditions {me.slots.expUsed} / {me.slots.expMax}</td></tr>
               <tr><td>Battles</td><td>{me.player.stats.battlesWon}W / {me.player.stats.battlesLost}L · raids repelled {me.player.stats.raidsRepelled}</td></tr>
               <tr><td>Alliance</td><td>{me.alliance ? `[${me.alliance.tag}] ${me.alliance.name}` : <a onClick={() => setPage('alliance')}>none – find one</a>}</td></tr>
@@ -64,7 +64,7 @@ export function Overview() {
 
       {planets.length > 1 && (
         <Card title="Your planets">
-          <div className="chips">{planets.map((p) => <button key={p.id} className={p.id === planet.id ? 'active' : ''} onClick={() => selectPlanet(p.id)}>{p.name} {coordStr(p.coords)}</button>)}</div>
+          <div className="chips">{planets.map((p) => <button key={p.id} className={p.id === planet.id ? 'active' : ''} onClick={() => selectPlanet(p.id)}>{p.isMoon ? '🌙 ' : ''}{p.name} {coordStr(p.coords)}</button>)}</div>
         </Card>
       )}
     </Page>

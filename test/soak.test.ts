@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
 import { cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch } from '../server/economy';
-import { launchMissiles, processMovements, recallFleet, sendFleet } from '../server/fleet';
+import { jumpGate, launchMissiles, phalanxScan, processMovements, recallFleet, sendFleet } from '../server/fleet';
+import { createMoon } from '../server/galaxy';
 import { processRaids } from '../server/npc';
 import { BUILDING_IDS, SHIP_IDS, TECH_IDS, DEFENSE_IDS } from '../shared/data';
 import { createWorld, GameError, type World } from '../server/world';
@@ -21,6 +22,17 @@ function invariants(w: World) {
     }
     for (const [id, n] of Object.entries(p.buildings)) expect(Number.isInteger(n) && (n as number) >= 0, id).toBe(true);
     expect(w.players[p.ownerId]).toBeTruthy();
+  }
+  const moonAt = new Set<string>();
+  for (const p of Object.values(w.planets)) {
+    if (!p.isMoon) continue;
+    const parent = w.planets[p.parentId!];
+    expect(parent && !parent.isMoon, 'moon parent').toBeTruthy();
+    expect(parent.coords).toEqual(p.coords);
+    expect(parent.ownerId).toBe(p.ownerId);
+    const key = p.coords.g + ':' + p.coords.s + ':' + p.coords.p;
+    expect(moonAt.has(key), 'duplicate moon ' + key).toBe(false);
+    moonAt.add(key);
   }
   for (const m of Object.values(w.movements)) {
     for (const [id, n] of Object.entries(m.ships)) expect(Number.isInteger(n) && (n as number) > 0, `movement ${m.mission} ${id}=${n}`).toBe(true);
@@ -53,6 +65,14 @@ describe('soak', () => {
           for (const did of DEFENSE_IDS) pl.defenses[did] = did.endsWith('Shield') ? 1 : Math.floor(rng() * 30);
         }
       }
+      for (const p of players) {
+        for (const hid of [...p.planetIds]) {
+          const moon = createMoon(w, w.planets[hid], T0);
+          Object.assign(moon.buildings, { lunarBase: 4, sensorPhalanx: 3, jumpGate: 1, shipyard: 4, roboticsFactory: 3 });
+          Object.assign(moon.resources, { metal: 1e7, crystal: 1e7, deuterium: 1e7 });
+          moon.fleet = { cruiser: 20, largeCargo: 10 };
+        }
+      }
       let now = T0;
       let ok = 0, rejected = 0;
       const spy = (() => { const orig = Math.random; Math.random = rng; return () => { Math.random = orig; }; })();
@@ -61,7 +81,8 @@ describe('soak', () => {
           now += Math.floor(rng() * 900_000);
           const p = pick(players);
           const planet = w.planets[pick(p.planetIds)];
-          const act = Math.floor(rng() * 13);
+          const moonShot = rng() < 0.25;
+          const act = Math.floor(rng() * 15);
           try {
             switch (act) {
               case 0: startBuilding(w, p, planet, pick(BUILDING_IDS), now); break;
@@ -76,7 +97,7 @@ describe('soak', () => {
                   fromPlanetId: planet.id, to: target, ships,
                   mission: pick(['attack', 'transport', 'deploy', 'hold', 'espionage', 'colonize', 'recycle', 'expedition'] as const),
                   speedPct: 10 * (1 + Math.floor(rng() * 10)), cargo: { metal: Math.floor(rng() * 5000), crystal: Math.floor(rng() * 5000) }, holdHours: rng() * 3,
-                  joinFleetId: rng() < 0.3 ? join?.id : undefined,
+                  joinFleetId: rng() < 0.3 ? join?.id : undefined, toMoon: moonShot,
                 }, now);
                 break;
               }
@@ -85,6 +106,8 @@ describe('soak', () => {
               case 8: if (p.allianceId) AL.donate(w, p, planet.id, { metal: Math.floor(rng() * 1e6), crystal: Math.floor(rng() * 1e5) }, now); break;
               case 9: if (p.allianceId) AL.buyUpgrade(w, p, pick(['production', 'research', 'logistics'])); break;
               case 10: cancelBuilding(w, planet, now); break;
+              case 13: phalanxScan(w, p, planet.id, w.planets[pick(Object.keys(w.planets))].coords, now); break;
+              case 14: jumpGate(w, p, planet.id, w.planets[pick(p.planetIds)].id, { cruiser: 1 + Math.floor(rng() * 5) }, now); break;
               case 12: launchMissiles(w, p, planet.id, w.planets[pick(Object.keys(w.planets))].coords, 1 + Math.floor(rng() * 8), now); break;
               case 11: rng() < 0.5 ? cancelResearch(w, p, now) : processPlayer(w, p, now); break;
             }

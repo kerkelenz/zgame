@@ -6,8 +6,8 @@ import { bus } from './bus';
 import { authenticate, login, register } from './accounts';
 import * as AL from './alliance';
 import { abandonPlanet, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueBuilding, queueResearch, queueUnits, unqueueBuilding, unqueueResearch } from './economy';
-import { flightPlan, launchMissiles, recallFleet, sendFleet } from './fleet';
-import { galaxyView, inBounds, playerPoints } from './galaxy';
+import { flightPlan, jumpGate, launchMissiles, phalanxScan, recallFleet, sendFleet } from './fleet';
+import { colonyCount, galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
 import { allianceView, fleetsView, meView, planetView } from './views';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
@@ -134,6 +134,11 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     abandonPlanet(w, req.player!, ownedPlanet(w, req.player!.id, req.params.id), str(req.body.name, 40), now());
     return { ok: true };
   }));
+  A.post('/planets/:id/phalanx', wrap((req) => {
+    const b = req.body || {};
+    return phalanxScan(w, req.player!, req.params.id, { g: Number(b.to?.g), s: Number(b.to?.s), p: Number(b.to?.p) }, now());
+  }));
+  A.post('/planets/:id/jump', wrap((req) => jumpGate(w, req.player!, req.params.id, str(req.body.toPlanetId), req.body.ships || {}, now())));
   A.post('/planets/:id/rename', wrap((req) => {
     const planet = ownedPlanet(w, req.player!.id, req.params.id);
     const name = str(req.body.name, 24).trim();
@@ -156,7 +161,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const b = req.body || {};
     const m = sendFleet(w, p, {
       fromPlanetId: str(b.fromPlanetId), to: { g: Number(b.to?.g), s: Number(b.to?.s), p: Number(b.to?.p) },
-      ships: b.ships || {}, mission: str(b.mission) as never, speedPct: Number(b.speedPct) || 100, cargo: b.cargo || {}, holdHours: Number(b.holdHours) || 1, joinFleetId: b.joinFleetId ? str(b.joinFleetId) : undefined,
+      ships: b.ships || {}, mission: str(b.mission) as never, speedPct: Number(b.speedPct) || 100, cargo: b.cargo || {}, holdHours: Number(b.holdHours) || 1, toMoon: !!b.toMoon, joinFleetId: b.joinFleetId ? str(b.joinFleetId) : undefined,
     }, now());
     return { id: m.id, arriveAt: m.arriveAt };
   }));
@@ -179,7 +184,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.get('/highscore', wrap(() => {
     const players = Object.values(w.players).map((p) => ({
       id: p.id, username: p.username, alliance: p.allianceId ? w.alliances[p.allianceId]?.tag ?? null : null,
-      planets: p.planetIds.length, ...playerPoints(w, p),
+      planets: colonyCount(w, p), ...playerPoints(w, p),
     })).sort((a, b) => b.total - a.total).map((p, i) => ({ rank: i + 1, ...p }));
     const alliances = Object.values(w.alliances).map((a) => ({
       id: a.id, tag: a.tag, name: a.name, members: a.members.length,

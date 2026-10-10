@@ -41,7 +41,8 @@ export function spawnRaid(w: World, now: number, rng: Rng = Math.random): Moveme
   const target = candidates[Math.floor(rng() * candidates.length)];
   // NPCs never attack someone the universe would consider protected from the average player
   const pts = playerPoints(w, target).total;
-  const planetId = target.planetIds[Math.floor(rng() * target.planetIds.length)];
+  const targets = target.planetIds.filter((id) => !w.planets[id]?.isMoon);
+  const planetId = targets[Math.floor(rng() * targets.length)];
   const planet: Planet = w.planets[planetId];
   const budget = Math.max(6000, pts * 1000 * (0.06 + rng() * 0.1));
   const ships = buildNpcFleet(budget, rng);

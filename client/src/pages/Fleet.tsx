@@ -12,7 +12,7 @@ const MISSIONS: [Mission, string][] = [
 ];
 
 export function FleetPage() {
-  const { me, planet, fleets, act, target, setTarget, now } = useGame();
+  const { me, planet, planets, fleets, act, target, setTarget, now } = useGame();
   const [ships, setShips] = useState<Partial<Record<ShipId, number>>>({});
   const [to, setTo] = useState({ g: planet.coords.g, s: planet.coords.s, p: planet.coords.p === 1 ? 2 : 1 });
   const [mission, setMission] = useState<Mission>('transport');
@@ -20,12 +20,16 @@ export function FleetPage() {
   const [cargo, setCargo] = useState({ metal: 0, crystal: 0, deuterium: 0 });
   const [holdHours, setHoldHours] = useState(1);
   const [joinId, setJoinId] = useState('');
+  const [toMoon, setToMoon] = useState(false);
+  const [scanTo, setScanTo] = useState({ g: planet.coords.g, s: planet.coords.s, p: 1 });
+  const [scan, setScan] = useState<any>(null);
+  const [jumpTo, setJumpTo] = useState('');
   const [mTo, setMTo] = useState({ g: planet.coords.g, s: planet.coords.s, p: 1 });
   const [mCount, setMCount] = useState(1);
   const [plan, setPlan] = useState<{ dist: number; secs: number; fuel: number } | null>(null);
 
   useEffect(() => {
-    if (target) { setTo(target.coords); if (target.mission) setMission(target.mission); setTarget(null); }
+    if (target) { setTo(target.coords); if (target.mission) setMission(target.mission); setToMoon(!!target.toMoon); setTarget(null); }
   }, [target, setTarget]);
 
   const available = SHIP_IDS.filter((id) => id !== 'solarSatellite' && (planet.fleet[id] || 0) > 0);
@@ -44,7 +48,7 @@ export function FleetPage() {
   }, [JSON.stringify(chosen), to.g, to.s, to.p, speedPct, planet.id]);
 
   const send = async () => {
-    const r = await act(() => post('/fleets/send', { fromPlanetId: planet.id, to, ships: chosen, mission, speedPct, cargo, holdHours, joinFleetId: mission === 'attack' && joinId ? joinId : undefined }), 'Fleet dispatched');
+    const r = await act(() => post('/fleets/send', { fromPlanetId: planet.id, to, ships: chosen, mission, speedPct, cargo, holdHours, toMoon, joinFleetId: mission === 'attack' && joinId ? joinId : undefined }), 'Fleet dispatched');
     setJoinId('');
     if (r) { setShips({}); setCargo({ metal: 0, crystal: 0, deuterium: 0 }); }
   };
@@ -81,6 +85,38 @@ export function FleetPage() {
       {fleets.stationed.length > 0 && (
         <Card title="Allied fleets defending your planets">
           {fleets.stationed.map((m) => <div key={m.id}>{m.ownerName}: {shipList(m.ships)} at {coordStr(m.to)} · leaves in <Countdown to={m.holdUntil} /></div>)}
+        </Card>
+      )}
+
+      {planet.isMoon && (planet.buildings.sensorPhalanx || 0) > 0 && (
+        <Card title={`Sensor Phalanx (level ${planet.buildings.sensorPhalanx}, range ${planet.buildings.sensorPhalanx ** 2 - 1} systems)`}>
+          <div className="row wrap">
+            <input type="number" className="sm" value={scanTo.g} onChange={(e) => setScanTo({ ...scanTo, g: Number(e.target.value) })} />
+            <input type="number" className="sm" value={scanTo.s} onChange={(e) => setScanTo({ ...scanTo, s: Number(e.target.value) })} />
+            <input type="number" className="sm" value={scanTo.p} onChange={(e) => setScanTo({ ...scanTo, p: Number(e.target.value) })} />
+            <button onClick={async () => { const r = await act(() => post(`/planets/${planet.id}/phalanx`, { to: scanTo })); if (r) setScan(r); }}>Scan (5,000 deuterium)</button>
+          </div>
+          {scan && (
+            <div>
+              <p className="muted">{scan.planet} ({scan.owner}) {coordStr(scan.coords)}</p>
+              {scan.movements.length === 0 && <p className="muted">No fleet movements.</p>}
+              {scan.movements.map((m: any, i: number) => <div key={i}>{m.ownerName}: {m.mission} {coordStr(m.from)} → {coordStr(m.to)} · {fmt(m.ships)} ships · <Countdown to={m.at} /></div>)}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {planet.isMoon && (planet.buildings.jumpGate || 0) > 0 && (
+        <Card title="Jump Gate">
+          <div className="row wrap">
+            <select value={jumpTo} onChange={(e) => setJumpTo(e.target.value)}>
+              <option value="">destination moon…</option>
+              {planets.filter((p: any) => p.isMoon && p.id !== planet.id).map((p: any) => <option key={p.id} value={p.id}>{p.name} {coordStr(p.coords)}</option>)}
+            </select>
+            <button className="primary" disabled={!count || !jumpTo || planet.jumpReadyAt > now} onClick={() => void act(() => post(`/planets/${planet.id}/jump`, { toPlanetId: jumpTo, ships: chosen }), 'Fleet jumped')}>Jump selected ships</button>
+            {planet.jumpReadyAt > now && <span className="muted">recharging <Countdown to={planet.jumpReadyAt} /></span>}
+          </div>
+          <p className="muted small">Select ships in the form below, then jump. Both gates recharge afterwards.</p>
         </Card>
       )}
 
@@ -143,6 +179,7 @@ export function FleetPage() {
                 </label>
               )}
               {mission === 'hold' && <label>Hold (hours)<input type="number" className="sm" min={0.1} max={48} step={0.5} value={holdHours} onChange={(e) => setHoldHours(Number(e.target.value))} /></label>}
+              <label className="row"><input type="checkbox" checked={toMoon} onChange={(e) => setToMoon(e.target.checked)} /> target the moon</label>
               {mission === 'expedition' && <button type="button" onClick={() => setTo({ ...to, p: me.config.positions + 1 })}>Set deep space slot</button>}
             </div>
             {(mission === 'transport' || mission === 'deploy' || mission === 'hold' || mission === 'colonize' || mission === 'expedition') && (

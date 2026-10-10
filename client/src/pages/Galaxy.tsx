@@ -18,7 +18,7 @@ export function Galaxy() {
     return () => { live = false; };
   }, [g, s, now > 0 && Math.floor(now / 20000)]);
 
-  const go = (p: number, mission: Mission) => { setTarget({ coords: { g, s, p }, mission }); setPage('fleet'); };
+  const go = (p: number, mission: Mission, toMoon = false) => { setTarget({ coords: { g, s, p }, mission, toMoon }); setPage('fleet'); };
   const clampS = (v: number) => Math.min(cfg.systems, Math.max(1, v));
 
   return (
@@ -44,7 +44,7 @@ export function Galaxy() {
             return (
               <tr key={sl.p} className={pl?.mine ? 'mine' : ''}>
                 <td>{sl.p}</td>
-                <td>{pl ? pl.name : <span className="muted">empty</span>}</td>
+                <td>{pl ? pl.name : <span className="muted">empty</span>}{sl.moon && <span title={sl.moon.name}> 🌙</span>}</td>
                 <td>{pl ? <>{pl.owner}{pl.protectedFor && <span title="Under protection" className="muted"> (p)</span>}</> : ''}</td>
                 <td>{pl?.alliance ? `[${pl.alliance}]` : ''}</td>
                 <td>{sl.debris ? <a onClick={() => go(sl.p, 'recycle')} className="crystal">{fmt(sl.debris.metal)} M / {fmt(sl.debris.crystal)} C</a> : ''}</td>
@@ -55,8 +55,10 @@ export function Galaxy() {
                     <button onClick={() => go(sl.p, 'attack')}>Attack</button>
                     <button onClick={() => go(sl.p, 'transport')}>Transport</button>
                     <button onClick={() => go(sl.p, 'hold')}>Defend</button>
+                    {sl.moon && <button onClick={() => go(sl.p, 'attack', true)} title="Target the moon">🌙 Attack</button>}
                   </>}
                   {pl?.mine && <button onClick={() => go(sl.p, 'deploy')}>Deploy</button>}
+                  {pl?.mine && sl.moon && <button onClick={() => go(sl.p, 'deploy', true)}>🌙 Deploy</button>}
                 </td>
               </tr>
             );

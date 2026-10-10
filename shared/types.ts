@@ -3,7 +3,8 @@ export type Res = { metal: number; crystal: number; deuterium: number };
 export type BuildingId =
   | 'metalMine' | 'crystalMine' | 'deuteriumSynthesizer' | 'solarPlant' | 'fusionReactor'
   | 'roboticsFactory' | 'naniteFactory' | 'shipyard' | 'researchLab'
-  | 'metalStorage' | 'crystalStorage' | 'deuteriumTank' | 'missileSilo';
+  | 'metalStorage' | 'crystalStorage' | 'deuteriumTank' | 'missileSilo'
+  | 'lunarBase' | 'sensorPhalanx' | 'jumpGate';
 
 export type TechId =
   | 'energy' | 'laser' | 'ion' | 'hyperspace' | 'plasma'
@@ -37,6 +38,8 @@ export interface Requirement { id: BuildingId | TechId; level: number }
 export interface BuildingDef {
   id: BuildingId; name: string; desc: string;
   base: Res; factor: number; requires: Requirement[];
+  /** can only be built on moons */
+  moonOnly?: boolean;
 }
 export interface TechDef {
   id: TechId; name: string; desc: string;

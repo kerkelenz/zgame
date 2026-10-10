@@ -1,4 +1,4 @@
-import { ALLIANCE_UPGRADES, BUILDINGS, TECHS, UNITS } from '../shared/data';
+import { ALLIANCE_UPGRADES, BUILDINGS, TECHS, UNITS, buildingAllowed } from '../shared/data';
 import {
   buildingCost, buildingTime, canAfford, production, researchTime, scaleRes, storageCapacity,
   subRes, addRes, techCost, unitTime, lvl,
@@ -28,6 +28,7 @@ export function planetProduction(w: World, planet: Planet) {
     settings: planet.settings,
     speed: w.config.economySpeed,
     allianceBonus: allianceBonuses(w, owner).production,
+    noBasic: !!planet.isMoon,
   });
 }
 
@@ -139,6 +140,10 @@ export function requirementsMet(planet: Planet | null, player: Player, reqs: Req
   });
 }
 
+export function maxFields(planet: Planet): number {
+  return planet.fields + (planet.isMoon ? 3 * lvl(planet.buildings, 'lunarBase') : 0);
+}
+
 export function usedFields(planet: Planet): number {
   let n = 0;
   for (const v of Object.values(planet.buildings)) n += v || 0;
@@ -165,7 +170,8 @@ export function queueBuilding(w: World, player: Player, planet: Planet, id: Buil
   if (!planet.buildQueue) return beginBuilding(w, player, planet, id, now);
   const backlog = (planet.buildBacklog ||= []);
   if (backlog.length >= MAX_BACKLOG) throw new GameError(`Queue is full (${MAX_BACKLOG})`);
-  if (usedFields(planet) + backlog.length >= planet.fields) throw new GameError('No free fields left on this planet');
+  if (!buildingAllowed(id, !!planet.isMoon)) throw new GameError(planet.isMoon ? 'That cannot be built on a moon' : 'That can only be built on a moon');
+  if (usedFields(planet) + backlog.length >= maxFields(planet)) throw new GameError('No free fields left on this planet');
   backlog.push(id);
 }
 
@@ -179,7 +185,8 @@ function beginBuilding(w: World, player: Player, planet: Planet, id: BuildingId,
   if (!Object.hasOwn(BUILDINGS, id)) throw new GameError('Unknown building');
   if (planet.buildQueue) throw new GameError('Construction already in progress');
   if (!requirementsMet(planet, player, def.requires)) throw new GameError('Requirements not met');
-  if (usedFields(planet) >= planet.fields) throw new GameError('No free fields left on this planet');
+  if (!buildingAllowed(id, !!planet.isMoon)) throw new GameError(planet.isMoon ? 'That cannot be built on a moon' : 'That can only be built on a moon');
+  if (usedFields(planet) >= maxFields(planet)) throw new GameError('No free fields left on this planet');
   if (id === 'researchLab' && player.research) throw new GameError('Cannot upgrade the lab while research is running');
   const level = lvl(planet.buildings, id) + 1;
   const cost = buildingCost(id, level);
@@ -280,15 +287,18 @@ export function cancelShipyardJob(w: World, planet: Planet, index: number, now: 
 
 export function abandonPlanet(w: World, player: Player, planet: Planet, name: string, now: number) {
   if (planet.ownerId !== player.id) throw new GameError('Not your planet', 403);
-  if (planet.isHome || player.planetIds.length < 2) throw new GameError('You cannot abandon your homeworld');
+  if (planet.isMoon) throw new GameError('Moons cannot be abandoned');
+  if (planet.isHome || player.planetIds.filter((id) => !w.planets[id]?.isMoon).length < 2) throw new GameError('You cannot abandon your homeworld');
   if (name.trim() !== planet.name) throw new GameError('Type the planet name to confirm');
   if (player.research?.planetId === planet.id) throw new GameError('Research is running from this planet');
   for (const m of Object.values(w.movements)) {
-    if (m.fromPlanetId === planet.id && m.ownerId === player.id) throw new GameError('Fleets from this planet are still in flight');
+    const moonId = Object.values(w.planets).find((x) => x.parentId === planet.id)?.id;
+    if ((m.fromPlanetId === planet.id || (moonId && m.fromPlanetId === moonId)) && m.ownerId === player.id) throw new GameError('Fleets from this planet are still in flight');
     const here = m.to.g === planet.coords.g && m.to.s === planet.coords.s && m.to.p === planet.coords.p;
     if (m.mission === 'hold' && m.phase === 'holding' && here) throw new GameError('Allied fleets are stationed here - ask them to leave first');
   }
   updatePlanet(w, planet, now);
+  for (const moon of Object.values(w.planets)) if (moon.parentId === planet.id) { player.planetIds = player.planetIds.filter((id) => id !== moon.id); delete w.planets[moon.id]; }
   player.planetIds = player.planetIds.filter((id) => id !== planet.id);
   delete w.planets[planet.id];
 }

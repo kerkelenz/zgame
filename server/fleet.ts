@@ -6,7 +6,7 @@ import { computeLoot, fleetCount, makeRng, simulateCombat, type Combatant, type 
 import type { Coords, DefenseId, Defenses, Fleet, Mission, Res, ShipId } from '../shared/types';
 import { bus } from './bus';
 import { allianceBonuses, planetCapacity, processPlayer, updatePlanet } from './economy';
-import { createPlanet, inBounds, isProtected, maxExpeditions, maxPlanets } from './galaxy';
+import { colonyCount, createMoon, createPlanet, inBounds, isProtected, maxExpeditions, maxPlanets } from './galaxy';
 import { notifyPlayer } from './messages';
 import { buildNpcFleet, fleetValue } from './npc';
 import { GameError, ck, planetAt, sameAlliance, uid, type Movement, type Planet, type Player, type World } from './world';
@@ -19,6 +19,8 @@ export interface SendRequest {
   speedPct?: number;
   cargo?: Partial<Res>;
   holdHours?: number;
+  /** target the moon at the destination coordinates */
+  toMoon?: boolean;
   /** join an allied outbound attack (same target) instead of attacking separately */
   joinFleetId?: string;
 }
@@ -62,10 +64,11 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   const speedPct = Math.min(100, Math.max(10, Math.round((req.speedPct ?? 100) / 10) * 10));
   const mission = req.mission;
   const to = req.to;
+  const toMoon = !!req.toMoon;
   const expedition = mission === 'expedition';
   if (!inBounds(w, to, expedition)) throw new GameError('Invalid destination');
   if (expedition !== (to.p === w.config.positions + 1)) throw new GameError(expedition ? 'Expeditions must target deep space (position ' + (w.config.positions + 1) + ')' : 'Invalid destination');
-  if (sameCoords(to, planet.coords)) throw new GameError('You are already there');
+  if (sameCoords(to, planet.coords) && toMoon === !!planet.isMoon) throw new GameError('You are already there');
 
   const slots = activeSlots(w, player);
   if (expedition) {
@@ -73,7 +76,8 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     if (slots.expUsed >= slots.expMax) throw new GameError('No free expedition slots');
   } else if (slots.used >= slots.max) throw new GameError('No free fleet slots (research Computer Technology)');
 
-  const target = planetAt(w, to);
+  if (toMoon && !['attack', 'transport', 'deploy', 'hold', 'espionage'].includes(mission)) throw new GameError('That mission cannot target a moon');
+  const target = planetAt(w, to, toMoon);
   const targetOwner = target ? w.players[target.ownerId] : null;
   const has = (id: ShipId) => (ships[id] || 0) > 0;
   let joinLead: Movement | undefined;
@@ -112,7 +116,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     case 'colonize':
       if (target) throw new GameError('That position is already colonized');
       if (!has('colonyShip')) throw new GameError('A colony ship is required');
-      if (player.planetIds.length >= maxPlanets(player)) throw new GameError(`Colony limit reached (${maxPlanets(player)} - research Astrophysics)`);
+      if (colonyCount(w, player) >= maxPlanets(player)) throw new GameError(`Colony limit reached (${maxPlanets(player)} - research Astrophysics)`);
       break;
     case 'recycle':
       if (!has('recycler')) throw new GameError('Recyclers are required');
@@ -144,7 +148,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
 
   const m: Movement = {
     id: uid(), ownerId: player.id, ownerName: player.username, mission, phase: 'outbound',
-    from: { ...planet.coords }, fromPlanetId: planet.id, to: { ...to }, ships, cargo,
+    from: { ...planet.coords }, fromPlanetId: planet.id, to: { ...to }, ships, cargo, toMoon: toMoon || undefined,
     speedPct, departAt: now, arriveAt: now + plan.secs * 1000, flightMs: plan.secs * 1000,
     holdHours: mission === 'hold' ? Math.min(48, Math.max(0.1, Number(req.holdHours) || 1)) : undefined,
   };
@@ -245,7 +249,7 @@ function land(w: World, m: Movement, at: number, dest?: Planet) {
 }
 
 function arrive(w: World, m: Movement, at: number) {
-  const target = planetAt(w, m.to);
+  const target = planetAt(w, m.to, !!m.toMoon);
   switch (m.mission) {
     case 'attack': {
       if (m.acsId) {
@@ -294,7 +298,7 @@ function arrive(w: World, m: Movement, at: number) {
 
 function resolveColonize(w: World, m: Movement, at: number) {
   const owner = w.players[m.ownerId!];
-  if (planetAt(w, m.to) || owner.planetIds.length >= maxPlanets(owner) || !(m.ships.colonyShip || 0)) {
+  if (planetAt(w, m.to) || colonyCount(w, owner) >= maxPlanets(owner) || !(m.ships.colonyShip || 0)) {
     notifyPlayer(w, owner.id, 'system', 'Colonization failed', `Could not settle ${fmt(m.to)} - the position is taken or you reached your colony limit. The fleet is returning.`);
     sendHome(m, at);
     return;
@@ -328,7 +332,7 @@ function resolveRecycle(w: World, m: Movement, at: number) {
 // ---------------------------------------------------------------- espionage
 
 function resolveEspionage(w: World, m: Movement, at: number) {
-  const target = planetAt(w, m.to);
+  const target = planetAt(w, m.to, !!m.toMoon);
   const spy = w.players[m.ownerId!];
   if (!target) { sendHome(m, at); return; }
   const def = w.players[target.ownerId];
@@ -400,7 +404,7 @@ function summarize(units: Record<string, number | undefined>): string {
 function resolveAttack(w: World, lead: Movement, at: number) {
   // joint attack: every ally fleet that joined this one fights in the same battle
   const group = [lead, ...Object.values(w.movements).filter((x) => x.acsId === lead.id && x.phase === 'outbound' && x.mission === 'attack')];
-  const target = planetAt(w, lead.to);
+  const target = planetAt(w, lead.to, !!lead.toMoon);
   const attackerOf = (m: Movement) => (m.ownerId ? w.players[m.ownerId] : null);
   const abort = (msg: string) => {
     for (const m of group) {
@@ -413,7 +417,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   processPlayer(w, defOwner, at);
   for (const m of group) { const a = attackerOf(m); if (a) processPlayer(w, a, at); }
 
-  const holders = Object.values(w.movements).filter((h) => h.phase === 'holding' && h.mission === 'hold' && sameCoords(h.to, lead.to));
+  const holders = Object.values(w.movements).filter((h) => h.phase === 'holding' && h.mission === 'hold' && sameCoords(h.to, lead.to) && !!h.toMoon === !!lead.toMoon);
   const defenders: Combatant[] = [combatant(w, defOwner, defOwner.username, target.fleet, target.defenses)];
   for (const h of holders) defenders.push(combatant(w, w.players[h.ownerId!], h.ownerName, h.ships));
 
@@ -432,6 +436,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   });
   group.forEach((m, i) => { m.ships = onlyShips(res.attackers[i].after); });
   addDebris(w, lead.to, res.debris.metal, res.debris.crystal);
+  const newMoon = maybeCreateMoon(w, target, res.debris, at);
 
   // loot: bounded by the survivors' combined free cargo, split by each fleet's share of it
   let loot: Res = zeroRes();
@@ -481,7 +486,8 @@ function resolveAttack(w: World, lead: Movement, at: number) {
     `Defender lost: ${lost(res.defenders[0].before, res.defenders[0].after, res.defenders[0].rebuilt)}.\n` +
     (totalRes(loot) ? `Loot: ${num(loot.metal)} metal, ${num(loot.crystal)} crystal, ${num(loot.deuterium)} deuterium.\n` : '') +
     (res.debris.metal || res.debris.crystal ? `Debris field: ${num(res.debris.metal)} metal, ${num(res.debris.crystal)} crystal.\n` : '') +
-    (bounty ? `Raider bounty: ${num(bounty)} resources shared among defenders.` : '');
+    (bounty ? `Raider bounty: ${num(bounty)} resources shared among defenders.\n` : '') +
+    (newMoon ? 'The debris condensed into a moon!' : '');
 
   const involved = new Set<string>();
   for (const m of group) if (m.ownerId) involved.add(m.ownerId);
@@ -638,4 +644,72 @@ function resolveMissiles(w: World, m: Movement, at: number) {
   notifyPlayer(w, attacker.id, 'combat', 'Missile strike report', body, report);
   notifyPlayer(w, owner.id, 'combat', 'Missile strike report', body, report);
   bus.push({ to: '*', type: 'refresh' });
+}
+
+// ---------------------------------------------------------------- moons
+
+/** 1% moon chance per 100k debris (max 20%); only planets that have no moon yet. */
+export function maybeCreateMoon(w: World, target: Planet, debris: { metal: number; crystal: number }, at: number): Planet | null {
+  if (target.isMoon) return null;
+  if (Object.values(w.planets).some((p) => p.parentId === target.id)) return null;
+  const chance = Math.min(20, Math.floor((debris.metal + debris.crystal) / 100_000));
+  if (chance <= 0 || Math.random() * 100 >= chance) return null;
+  const moon = createMoon(w, target, at);
+  notifyPlayer(w, target.ownerId, 'system', 'A moon formed!', `The wreckage above ${target.name} ${fmt(target.coords)} condensed into a moon. Build a Lunar Base to make it usable.`);
+  return moon;
+}
+
+export function phalanxRange(level: number) { return Math.max(0, level * level - 1); }
+export const PHALANX_COST = 5000;
+
+export function phalanxScan(w: World, player: Player, moonId: string, to: Coords, now: number) {
+  const moon = w.planets[moonId];
+  if (!moon || moon.ownerId !== player.id || !moon.isMoon) throw new GameError('Use one of your moons', 403);
+  updatePlanet(w, moon, now);
+  const level = lvl(moon.buildings, 'sensorPhalanx');
+  if (level < 1) throw new GameError('This moon has no Sensor Phalanx');
+  if (!inBounds(w, to)) throw new GameError('Invalid coordinates');
+  if (to.g !== moon.coords.g || Math.abs(to.s - moon.coords.s) > phalanxRange(level)) throw new GameError(`Out of range (this phalanx reaches ${phalanxRange(level)} systems)`);
+  const target = planetAt(w, to);
+  if (!target) throw new GameError('There is no planet there');
+  if (moon.resources.deuterium < PHALANX_COST) throw new GameError(`The moon needs ${PHALANX_COST} deuterium per scan - transport some there`);
+  moon.resources.deuterium -= PHALANX_COST;
+  const moves = Object.values(w.movements).filter((m) => m.mission !== 'missile' && m.ownerId !== player.id && (sameCoords(m.from, to) || sameCoords(m.to, to)));
+  return {
+    planet: target.name, owner: w.players[target.ownerId].username, coords: to,
+    movements: moves.map((m) => ({
+      mission: m.mission, phase: m.phase, ownerName: m.ownerName, from: m.from, to: m.to, ships: fleetCount(m.ships),
+      at: m.phase === 'outbound' ? m.arriveAt : m.phase === 'holding' ? m.holdUntil ?? m.arriveAt : m.returnAt ?? m.arriveAt,
+    })).sort((a, b) => a.at - b.at),
+  };
+}
+
+export function jumpCooldownMs(w: World, gateLevel: number) { return Math.max(30_000, 3_600_000 / (Math.max(1, gateLevel) * w.config.fleetSpeed)); }
+
+export function jumpGate(w: World, player: Player, fromId: string, toId: string, ships: Fleet, now: number) {
+  const a = w.planets[fromId], b = w.planets[toId];
+  if (!a || !b || a.ownerId !== player.id || b.ownerId !== player.id || !a.isMoon || !b.isMoon) throw new GameError('Jump gates connect two of your moons', 403);
+  if (a.id === b.id) throw new GameError('Choose another moon');
+  updatePlanet(w, a, now); updatePlanet(w, b, now);
+  const la = lvl(a.buildings, 'jumpGate'), lb = lvl(b.buildings, 'jumpGate');
+  if (la < 1 || lb < 1) throw new GameError('Both moons need a Jump Gate');
+  if ((a.jumpReadyAt ?? 0) > now) throw new GameError('The gate is still recharging');
+  if ((b.jumpReadyAt ?? 0) > now) throw new GameError('The destination gate is still recharging');
+  const moved: Fleet = {};
+  for (const [id, n] of Object.entries(ships || {})) {
+    const c = Math.floor(Number(n));
+    if (!c || c < 0) continue;
+    if (!isShip(id) || id === 'solarSatellite') throw new GameError('Invalid ship ' + id);
+    if (c > (a.fleet[id] || 0)) throw new GameError(`Not enough ${UNITS[id].name}`);
+    moved[id] = c;
+  }
+  if (!fleetCount(moved)) throw new GameError('Select at least one ship');
+  for (const [id, n] of Object.entries(moved)) {
+    a.fleet[id as ShipId] = (a.fleet[id as ShipId] || 0) - (n || 0);
+    if (!a.fleet[id as ShipId]) delete a.fleet[id as ShipId];
+    b.fleet[id as ShipId] = (b.fleet[id as ShipId] || 0) + (n || 0);
+  }
+  a.jumpReadyAt = b.jumpReadyAt = now + jumpCooldownMs(w, Math.min(la, lb));
+  bus.push({ to: player.id, type: 'refresh' });
+  return { moved, readyAt: a.jumpReadyAt };
 }

@@ -46,7 +46,7 @@ export function App() {
       <header className="top">
         <div className="brand">Stellar Frontier</div>
         <select value={planet.id} onChange={(e) => g.selectPlanet(e.target.value)}>
-          {planets.map((p) => <option key={p.id} value={p.id}>{p.name} {coordStr(p.coords)}</option>)}
+          {planets.map((p) => <option key={p.id} value={p.id}>{p.isMoon ? '🌙 ' : ''}{p.name} {coordStr(p.coords)}</option>)}
         </select>
         <div className="res">
           <span className="metal" title="Metal">M {fmt(live.metal)}<small>/{fmt(planet.capacity.metal)}</small></span>
