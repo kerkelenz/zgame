@@ -87,6 +87,7 @@ export function commandView(w: World, p: Player) {
     achievements: ACHIEVEMENTS.map((a) => ({ id: a.id, name: a.name, desc: a.desc, reward: a.reward, doneAt: p.achievements[a.id] ?? null })),
     objectives: OBJECTIVES.map((o) => ({ id: o.id, name: o.name, hint: o.hint, reward: o.reward, doneAt: p.objectives[o.id] ?? null, current: cur?.id === o.id })),
     stats: p.stats,
+    tributes: p.tributes.filter((t) => !t.answered).map((t) => ({ id: t.id, npc: w.players[t.npc]?.username ?? '?', want: t.want, deadline: t.deadline })),
   };
 }
 

@@ -13,6 +13,10 @@ export interface UniverseConfig {
   protectionRatio: number;
   /** minutes between NPC raid waves (0 disables) */
   raidIntervalMin: number;
+  /** share of free slots settled by computer empires at world creation (0 = none) */
+  npcDensity: number;
+  /** multiplies the size of raiding fleets (0.6 relaxed, 1 standard, 1.35 brutal) */
+  raidStrength: number;
   /** registration closes at this many commanders */
   maxPlayers: number;
   startResources: { metal: number; crystal: number; deuterium: number };
@@ -27,6 +31,8 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   protectionPoints: 200,
   protectionRatio: 5,
   raidIntervalMin: 45,
+  npcDensity: 0.3,
+  raidStrength: 1,
   maxPlayers: 500,
   startResources: { metal: 1500, crystal: 800, deuterium: 300 },
 };

@@ -19,7 +19,7 @@ export function register(w: World, username: string, password: string, now = Dat
 }
 
 export function login(w: World, username: string, password: string): { player: Player; token: string } {
-  const player = Object.values(w.players).find((p) => p.username.toLowerCase() === (username || '').trim().toLowerCase());
+  const player = Object.values(w.players).find((p) => !p.npc && p.username.toLowerCase() === (username || '').trim().toLowerCase());
   const bad = new GameError('Invalid username or password', 401);
   if (!player) throw bad;
   const a = Buffer.from(hash(password || '', player.salt), 'hex');

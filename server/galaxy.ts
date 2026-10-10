@@ -129,6 +129,8 @@ export interface GalaxySlot {
   planet: null | {
     id: string; name: string; owner: string; ownerId: string; alliance: string | null;
     mine: boolean; protectedFor: boolean; debris: { metal: number; crystal: number } | null;
+    /** computer empire disposition, or null for a commander */
+    npc: string | null; faction: string | null;
   };
   debris: { metal: number; crystal: number } | null;
 }
@@ -151,6 +153,8 @@ export function galaxyView(w: World, viewer: Player, g: number, s: number): Gala
       planet: {
         id: pl.id, name: pl.name, owner: owner.username, ownerId: owner.id, alliance: ally,
         mine: owner.id === viewer.id,
+        npc: owner.npc?.status ?? null,
+        faction: owner.npc ? owner.npc.faction : owner.faction,
         protectedFor: owner.id !== viewer.id && isProtected(w, viewer, owner),
         debris,
       },

@@ -4,6 +4,8 @@ import * as AL from '../server/alliance';
 import { cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch } from '../server/economy';
 import { jumpGate, launchMissiles, phalanxScan, processMovements, recallFleet, sendFleet } from '../server/fleet';
 import { createMoon } from '../server/galaxy';
+import { answerTribute, generateEmpires, npcTick, processTributes } from '../server/empires';
+import { checkProgress } from '../server/progress';
 import { processRaids } from '../server/npc';
 import { BUILDING_IDS, SHIP_IDS, TECH_IDS, DEFENSE_IDS } from '../shared/data';
 import { createWorld, GameError, type World } from '../server/world';
@@ -22,6 +24,12 @@ function invariants(w: World) {
     }
     for (const [id, n] of Object.entries(p.buildings)) expect(Number.isInteger(n) && (n as number) >= 0, id).toBe(true);
     expect(w.players[p.ownerId]).toBeTruthy();
+  }
+  for (const p of Object.values(w.players)) {
+    expect(Number.isFinite(p.credits) && p.credits >= 0, p.username + ' credits').toBe(true);
+    for (const [k, v] of Object.entries(p.heat)) expect(Number.isFinite(v) && v >= 0, 'heat ' + k).toBe(true);
+    for (const v of Object.values(p.rep)) expect(v >= -100 && v <= 100).toBe(true);
+    if (p.npc) expect(p.planetIds.length).toBeGreaterThan(0);
   }
   const moonAt = new Set<string>();
   for (const p of Object.values(w.planets)) {
@@ -52,7 +60,7 @@ describe('soak', () => {
     it(`random play for simulated days keeps the world consistent (seed ${seed})`, () => {
       const rng = makeRng(seed);
       const pick = <T,>(a: readonly T[]) => a[Math.floor(rng() * a.length)];
-      const w = createWorld({ galaxies: 1, systems: 3, positions: 15, economySpeed: 200, fleetSpeed: 200, protectionPoints: 5, raidIntervalMin: 90 }, T0);
+      const w = createWorld({ galaxies: 1, systems: 6, positions: 15, npcDensity: 0.25, economySpeed: 200, fleetSpeed: 200, protectionPoints: 5, raidIntervalMin: 90 }, T0);
       const players = ['a', 'b', 'c', 'd', 'e', 'f'].map((n) => register(w, 'bot_' + n, 'password1', T0).player);
       // rich start so all systems get exercised
       for (const p of players) {
@@ -73,6 +81,7 @@ describe('soak', () => {
           moon.fleet = { cruiser: 20, largeCargo: 10 };
         }
       }
+      generateEmpires(w, T0, seed * 977);
       let now = T0;
       let ok = 0, rejected = 0;
       const spy = (() => { const orig = Math.random; Math.random = rng; return () => { Math.random = orig; }; })();
@@ -118,6 +127,13 @@ describe('soak', () => {
           }
           processMovements(w, now);
           processRaids(w, now);
+          if (w.nextNpcTick && now >= w.nextNpcTick) npcTick(w, now);
+          processTributes(w, now);
+          for (const q of players) {
+            checkProgress(w, q, now);
+            const open = q.tributes.find((t) => !t.answered);
+            if (open && rng() < 0.5) { try { answerTribute(w, q, open.id, rng() < 0.5 ? 'pay' : 'refuse', now); } catch (e) { if (!(e instanceof GameError)) throw e; } }
+          }
           for (const q of players) processPlayer(w, q, now);
           if (step % 25 === 0) invariants(w);
         }

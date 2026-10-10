@@ -10,6 +10,7 @@ import { processMovements } from './fleet';
 import { processRaids } from './npc';
 import { checkProgress } from './progress';
 import { loadWorld, saveWorld } from './store';
+import { NPC_TICK_MS, generateEmpires, hasEmpires, npcTick, processTributes } from './empires';
 
 const num = (k: string, d: number) => (process.env[k] !== undefined ? Number(process.env[k]) : d);
 const overrides: Partial<UniverseConfig> = {};
@@ -21,6 +22,11 @@ for (const k of Object.keys(DEFAULT_CONFIG) as (keyof UniverseConfig)[]) {
 const PORT = num('PORT', 3000);
 const SAVE_FILE = resolve(process.env.OGAME_SAVE || 'data/world.json');
 const world = loadWorld(SAVE_FILE, overrides);
+if (world.config.npcDensity > 0 && !hasEmpires(world)) {
+  const n = generateEmpires(world);
+  console.log(`Settled ${n} computer empires.`);
+}
+if (hasEmpires(world) && !world.nextNpcTick) world.nextNpcTick = Date.now() + NPC_TICK_MS;
 
 const app = createApp(world, { staticDir: resolve('client/dist') });
 const server = createServer(app);
@@ -59,6 +65,8 @@ function tick() {
   try {
     processMovements(world, now);
     processRaids(world, now);
+    if (world.nextNpcTick && now >= world.nextNpcTick) npcTick(world, now);
+    processTributes(world, now);
     for (const p of Object.values(world.players)) processPlayer(world, p, now);
     if (now - lastProgress > 5000) { lastProgress = now; for (const p of Object.values(world.players)) checkProgress(world, p, now); }
     dirty = true;

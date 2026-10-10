@@ -11,6 +11,9 @@ import { colonyCount, galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
 import { allianceView, commandView, fleetsView, meView, planetView } from './views';
 import { checkProgress, hireOfficer, joinFaction, leaveFaction } from './progress';
+import { answerTribute } from './empires';
+import { spawnRaid } from './npc';
+import { rankings } from './rankings';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
 
 declare global {
@@ -191,10 +194,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     return { g, s, slots: galaxyView(w, req.player!, g, s) };
   }));
   A.get('/highscore', wrap(() => {
-    const players = Object.values(w.players).map((p) => ({
-      id: p.id, username: p.username, alliance: p.allianceId ? w.alliances[p.allianceId]?.tag ?? null : null,
-      planets: colonyCount(w, p), ...playerPoints(w, p),
-    })).sort((a, b) => b.total - a.total).map((p, i) => ({ rank: i + 1, ...p }));
+    const players = rankings(w, true);
     const alliances = Object.values(w.alliances).map((a) => ({
       id: a.id, tag: a.tag, name: a.name, members: a.members.length,
       total: a.members.reduce((s, m) => s + playerPoints(w, w.players[m.playerId]).total, 0),
@@ -203,6 +203,13 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
   A.get('/command', wrap((req) => commandView(w, req.player!)));
   A.post('/officers/hire', wrap((req) => { hireOfficer(w, req.player!, str(req.body.id)); return commandView(w, req.player!); }));
+  A.get('/history', wrap((req) => req.player!.history));
+  A.post('/tribute/:id', wrap((req) => {
+    const p = req.player!;
+    const answer = str(req.body.answer) === 'pay' ? 'pay' : 'refuse';
+    answerTribute(w, p, req.params.id, answer, now(), (npcId) => { spawnRaid(w, now(), Math.random, { targetPlayerId: p.id, sourceNpcId: npcId }); });
+    return commandView(w, p);
+  }));
   A.post('/faction/join', wrap((req) => { joinFaction(req.player!, str(req.body.id)); return commandView(w, req.player!); }));
   A.post('/faction/leave', wrap((req) => { leaveFaction(req.player!); return commandView(w, req.player!); }));
   A.get('/defs', wrap(() => ({ BUILDINGS, TECHS, UNITS })));
@@ -224,7 +231,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.post('/messages/send', wrap((req) => {
     const p = req.player!;
     if (limited('msg:' + p.id, 20, 60_000)) throw new GameError('You are sending messages too fast', 429);
-    const to = Object.values(w.players).find((x) => x.username.toLowerCase() === str(req.body.to, 40).toLowerCase());
+    const to = Object.values(w.players).find((x) => !x.npc && x.username.toLowerCase() === str(req.body.to, 40).toLowerCase());
     if (!to) throw new GameError('No such player', 404);
     const text = str(req.body.text, 1000).trim();
     if (!text) throw new GameError('Empty message');

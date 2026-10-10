@@ -8,6 +8,7 @@ import { bus } from './bus';
 import { allianceBonuses, planetCapacity, processPlayer, updatePlanet } from './economy';
 import { colonyCount, createMoon, createPlanet, inBounds, isProtected, maxExpeditions, maxPlanets } from './galaxy';
 import { notifyPlayer } from './messages';
+import { adjustRep } from './progress';
 import { cargoMul, debrisShare, expeditionYield, extraFleetSlots, lootShare, shieldMul, spyBonus, spyEvasion, weaponMul } from './perks';
 import { buildNpcFleet, fleetValue } from './npc';
 import { GameError, ck, planetAt, sameAlliance, uid, type Movement, type Planet, type Player, type World } from './world';
@@ -381,18 +382,18 @@ function combatant(w: World, player: Player | null, name: string, fleet: Fleet, 
   };
 }
 
-const onlyShips = (a: Record<string, number | undefined>): Fleet => {
+export const onlyShips = (a: Record<string, number | undefined>): Fleet => {
   const f: Fleet = {};
   for (const id of SHIP_IDS) if (a[id]) f[id] = a[id];
   return f;
 };
-const onlyDefs = (a: Record<string, number | undefined>): Defenses => {
+export const onlyDefs = (a: Record<string, number | undefined>): Defenses => {
   const d: Defenses = {};
   for (const id of DEFENSE_IDS) if (a[id]) d[id] = a[id];
   return d;
 };
 
-function addDebris(w: World, c: Coords, metal: number, crystal: number) {
+export function addDebris(w: World, c: Coords, metal: number, crystal: number) {
   if (metal <= 0 && crystal <= 0) return;
   const k = ck(c);
   const d = (w.debris[k] ||= { metal: 0, crystal: 0 });
@@ -462,7 +463,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
 
   // NPC bounty: defenders share a reward when raiders are crushed
   let bounty = 0;
-  const npc = !lead.ownerId;
+  const npc = !lead.ownerId || !!attackerOf(lead)?.npc;
   if (npc && res.winner === 'defender') {
     bounty = Math.floor(fleetValue(onlyShips(res.attackers[0].before)) * 0.25);
     const owners = new Set<string>([defOwner.id, ...holders.map((h) => h.ownerId!)]);
@@ -503,14 +504,20 @@ function resolveAttack(w: World, lead: Movement, at: number) {
 
   const attackersLost = res.attackers.reduce((s, a) => s + totalRes(a.lost), 0);
   const defendersLost = res.defenders.reduce((s, d) => s + totalRes(d.lost), 0);
-  const humans = group.map(attackerOf).filter((a): a is Player => !!a);
+  const humans = group.map(attackerOf).filter((a): a is Player => !!a && !a.npc);
   for (const m of group) {
     const a = attackerOf(m);
     if (!a) continue;
     if (res.winner === 'attacker') { a.stats.battlesWon++; defOwner.stats.battlesLost++; }
     else if (res.winner === 'defender') { a.stats.battlesLost++; defOwner.stats.battlesWon++; }
-    a.stats.destroyed += defendersLost / humans.length;
+    a.stats.destroyed += defendersLost / Math.max(1, humans.length);
     a.stats.plundered += totalRes(lootBy[m.id] ?? zeroRes());
+    // raiding an empire makes it hold a grudge, and costs standing with its faction
+    if (!a.npc && defOwner.npc) {
+      const heat = defendersLost / Math.max(1, humans.length) + totalRes(lootBy[m.id] ?? zeroRes());
+      a.heat[defOwner.id] = (a.heat[defOwner.id] || 0) + heat;
+      adjustRep(w, a, defOwner.npc.faction, -heat / 20000);
+    }
   }
   if (res.winner === 'defender') defOwner.stats.destroyed += attackersLost;
   bus.push({ to: '*', type: 'refresh' });
