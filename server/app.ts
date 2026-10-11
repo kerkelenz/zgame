@@ -23,6 +23,7 @@ import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { buyItem, shopView } from './shop';
 import * as AUTO from './automation';
+import { sectorOf, sectorsView, territoryCount } from './sectors';
 import { claimContract, contractsView } from './contracts';
 import { recoverAccount } from './account';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
@@ -214,6 +215,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const r = claimContract(w, req.player!, str(req.body.id), now());
     return { ...r, view: contractsView(w, req.player!, now()), credits_total: Math.floor(req.player!.credits) };
   }));
+  A.get('/sectors', wrap((req) => sectorsView(w, req.player!.allianceId)));
   A.get('/spy-archive', wrap((req) => SOC.spyArchiveView(w, req.player!)));
   A.post('/report', wrap((req) => { SOC.reportPlayer(w, req.player!, str(req.body.id), str(req.body.reason, 300), now()); return { ok: true }; }));
 
@@ -376,7 +378,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.get('/galaxy/:g/:s', wrap((req) => {
     const g = Number(req.params.g), s = Number(req.params.s);
     if (!inBounds(w, { g, s, p: 1 })) throw new GameError('Out of bounds');
-    return { g, s, slots: galaxyView(w, req.player!, g, s, now()) };
+    return { g, s, slots: galaxyView(w, req.player!, g, s, now()), sector: sectorOf(w, g, s, req.player!.allianceId) };
   }));
   A.get('/players/:id', wrap((req) => profileView(w, req.params.id, now())));
   A.get('/highscore', wrap((req) => {
@@ -385,7 +387,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const byId = new Map(players.map((r) => [r.id, r.value]));
     const alliances = Object.values(w.alliances).map((a) => ({
       id: a.id, tag: a.tag, name: a.name, members: a.members.length,
-      total: a.members.reduce((s, m) => s + (byId.get(m.playerId) ?? 0), 0),
+      total: a.members.reduce((s, m) => s + (byId.get(m.playerId) ?? 0), 0), sectors: territoryCount(w, a.id),
     })).sort((a, b) => b.total - a.total).map((a, i) => ({ rank: i + 1, ...a }));
     return { players, alliances, category, categories: SCORE_CATEGORIES.map((c) => ({ id: c.id, label: c.label, unit: c.unit })) };
   }));

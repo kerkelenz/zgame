@@ -62,7 +62,7 @@ export function endSeason(w: World, now: number, reason: 'time' | 'victory' | 'a
 /** Wipe the universe for a new season. Accounts, credits, officers, achievements, class, alliances and contacts survive. */
 export function resetSeason(w: World, now: number) {
   const s = ensureSeason(w, now);
-  w.movements = {}; w.debris = {}; w.wrecks = {}; w.shared = {};
+  w.movements = {}; w.debris = {}; w.wrecks = {}; w.shared = {}; w.sectors = {};
   w.planets = {};
   w.messages = [];
   for (const [id, p] of Object.entries(w.players)) if (p.npc) delete w.players[id];

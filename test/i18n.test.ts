@@ -13,7 +13,7 @@ describe('translations', () => {
     expect(t('does.not.exist', 'Fallback')).toBe('Fallback');
   });
   it('every nav item has a translation key', () => {
-    for (const id of ['overview', 'empire', 'economy', 'resources', 'buildings', 'research', 'shipyard', 'defense', 'automation', 'contracts', 'fleet', 'galaxy', 'alliance', 'contacts', 'command', 'simulator', 'messages', 'chat', 'highscore', 'settings', 'guide', 'admin']) {
+    for (const id of ['overview', 'empire', 'economy', 'resources', 'buildings', 'research', 'shipyard', 'defense', 'automation', 'territory', 'contracts', 'fleet', 'galaxy', 'alliance', 'contacts', 'command', 'simulator', 'messages', 'chat', 'highscore', 'settings', 'guide', 'admin']) {
       expect(englishKeys(), id).toContain('nav.' + id);
     }
   });

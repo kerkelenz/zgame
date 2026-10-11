@@ -247,6 +247,8 @@ export interface World {
   messages: Message[];
   chat: ChatMsg[];
   reports?: PlayerReport[];
+  /** which alliance holds which system ("g:s") */
+  sectors?: Record<string, { allianceId: string; since: number }>;
   season?: import('./season').SeasonState;
   hallOfFame?: import('./season').HallEntry[];
   /** battle reports published with a public link */

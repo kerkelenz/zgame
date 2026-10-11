@@ -13,6 +13,7 @@ export function loadWorld(file: string, overrides: Partial<UniverseConfig> = {})
       w.wrecks ??= {};
       w.reports ??= [];
       w.shared ??= {};
+      w.sectors ??= {};
       for (const p of Object.values(w.players)) migratePlayer(p);
       return w;
     } catch (e) {

@@ -8,6 +8,7 @@ import { answerTribute, generateEmpires, npcTick, processTributes } from '../ser
 import { checkProgress } from '../server/progress';
 import { startRepair } from '../server/wrecks';
 import { runAutomation, setRules, startPlan } from '../server/automation';
+import { processSectors } from '../server/sectors';
 import { endVacation, startVacation } from '../server/vacation';
 import { processRaids } from '../server/npc';
 import { BUILDING_IDS, BUILD_ORDER_TEMPLATES, SHIP_IDS, TECH_IDS, DEFENSE_IDS } from '../shared/data';
@@ -17,6 +18,10 @@ import { makeRng } from '../shared/combat';
 const T0 = 1_700_000_000_000;
 
 function invariants(w: World) {
+  for (const [k, h] of Object.entries(w.sectors ?? {})) {
+    expect(w.alliances[h.allianceId], `sector ${k} held by a missing alliance`).toBeTruthy();
+    expect(k).toMatch(/^\d+:\d+$/);
+  }
   for (const [id, wr] of Object.entries(w.wrecks)) {
     expect(w.planets[id], `wreck ${id} has no planet`).toBeTruthy();
     expect(wr.planetId).toBe(id);
@@ -140,6 +145,7 @@ describe('soak', () => {
           processRaids(w, now);
           if (w.nextNpcTick && now >= w.nextNpcTick) npcTick(w, now);
           processTributes(w, now);
+          processSectors(w, now);
           for (const q of players) {
             checkProgress(w, q, now);
             const open = q.tributes.find((t) => !t.answered);

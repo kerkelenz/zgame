@@ -4,6 +4,7 @@ import type { Mission } from '../../../shared/types';
 import { get, post } from '../api';
 import { useGame } from '../game';
 import { Card, Page, coordStr, fmt } from '../ui';
+import { tint } from './Territory';
 
 export function Galaxy() {
   const { me, planet, setPage, openProfile, setTarget, now } = useGame();
@@ -56,6 +57,15 @@ export function Galaxy() {
           <label className="row"><input type="checkbox" checked={hideProtected} onChange={(e) => setHideProtected(e.target.checked)} /> hide protected</label>
         </div>
       </Card>
+      {data?.sector && (
+        <Card>
+          <div className="sector-banner small">
+            <span><b>Sector {g}:{s}</b> {data.sector.owner ? <>is held by <b style={{ color: tint(data.sector.owner.tag, data.sector.owner.mine) }}>[{data.sector.owner.tag}] {data.sector.owner.name}</b>{data.sector.owner.mine ? ' (your alliance)' : ''}.</> : 'is unclaimed.'}</span>
+            {data.sector.influence.length > 0 && <span className="muted">Influence: {data.sector.influence.map((i: any) => `[${i.tag}] ${fmt(i.value)}`).join(' · ')}{!data.sector.owner ? ` (a clear lead of at least ${data.sector.claimMin} claims it)` : ''}</span>}
+            <button className="link" onClick={() => setPage('territory')}>Territory map</button>
+          </div>
+        </Card>
+      )}
       {error && <div className="error">{error}</div>}
       <table className="galaxy">
         <thead><tr><th>#</th><th>Planet</th><th>Commander</th><th>Alliance</th><th>Debris</th><th>Actions</th></tr></thead>

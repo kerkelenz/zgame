@@ -6,6 +6,7 @@ import {
 import type { BuildingId, Requirement, Res, TechId, UnitId } from '../shared/types';
 import { bus } from './bus';
 import { notifyPlayer } from './messages';
+import { territoryBonus } from './sectors';
 import { crawlerMul, energyBoost, mineBoost, researchFactor, timeFactor, tradeFee } from './perks';
 import { assertActive } from './vacation';
 import { GameError, allianceOf, type Planet, type Player, type World } from './world';
@@ -17,6 +18,7 @@ export function allianceBonuses(w: World, player: Player): AllianceBonuses {
   const b = { production: 0, research: 0, logistics: 0, command: 0 };
   if (!a) return b;
   for (const k of Object.keys(b) as (keyof AllianceBonuses)[]) b[k] = (a.upgrades[k] || 0) * ALLIANCE_UPGRADES[k].perLevel;
+  b.production += territoryBonus(w, a.id); // every system the alliance holds adds a little
   return b;
 }
 

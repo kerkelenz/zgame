@@ -13,7 +13,7 @@ const TOPICS: Topic[] = [
         <p>You are a commander with one homeworld in a shared galaxy. You mine resources, research technology, build ships and defenses, expand to new planets, and trade blows - or favours - with other commanders and with computer-run empires. Everything keeps running while you are away, so the game is about planning: queue work, protect yourself, and check in.</p>
         <ul>
           <li><b>Overview</b> is your planet at a glance with the current <b>objective</b> that teaches the game step by step. <b>Empire</b> shows all your planets together. <b>Economy</b> explains your income.</li>
-          <li><b>Resources, Buildings, Research, Shipyard, Defense</b> run the selected planet (pick it in the top bar). <b>Automation</b> does routine work for you and <b>Contracts</b> pays you for the things you do anyway. <b>Fleet</b> and <b>Galaxy</b> are where ships move.</li>
+          <li><b>Resources, Buildings, Research, Shipyard, Defense</b> run the selected planet (pick it in the top bar). <b>Automation</b> does routine work for you and <b>Contracts</b> pays you for the things you do anyway. <b>Fleet</b> and <b>Galaxy</b> are where ships move; <b>Territory</b> shows which alliance holds which system.</li>
           <li><b>Alliance, Contacts, Messages, Chat, Standing</b> are the social side; <b>Command</b> holds your class, officers, factions and achievements; <b>Settings</b> holds your account, alerts and vacation mode.</li>
           <li>Click <b>any item name</b> (a building, technology, ship or defense, here or in a requirement list) to open its <b>details page</b>: what each level gives, what it costs, and what it unlocks. The <b>Simulator</b> predicts a battle before you fly it.</li>
         </ul>
@@ -194,6 +194,18 @@ const TOPICS: Topic[] = [
         <li><b>Bulletin board</b> for standing orders (pin the important ones) and <b>messages to everyone</b> from permitted members. The member list shows each member's rank and home coordinates; click a name for their profile.</li>
         <li><b>Diplomacy.</b> A <b>pact</b> needs both alliances to agree and stops either side attacking the other. A <b>war</b> is declared by one side and marks the enemy in the Galaxy. Either side can end a treaty at any time.</li>
         <li>Alliance chat is in <b>Chat</b>; the activity log on the Alliance page records who did what.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'territory', title: 'Territory: holding systems',
+    body: (
+      <ul>
+        <li>An alliance can <b>hold a system</b>. Every planet owned by an alliance member counts toward its <b>influence</b> in that system: a base of 100 for each planet plus the points of everything built, stationed and defending on it (moons count what is on them). Commanders without an alliance and computer empires do not count.</li>
+        <li><b>Claiming:</b> an alliance needs at least 300 influence in the system and a lead of 25% over the next alliance there. <b>Keeping:</b> the holder keeps it until its influence drops below 150 or a rival has 25% more than the holder (and at least 300). Control is recalculated every minute, and both sides are told when a system changes hands.</li>
+        <li>So territory is won and lost on the ground: build up your planets, station fleets and defenses on them, or break an enemy's defenses and fleets (and colonize next to them) to tip a contested system. A ⚔ on the map marks a system where two alliances are present.</li>
+        <li><b>Reward:</b> every system the alliance holds adds +0.5% mine output for <i>every</i> member, wherever they live, up to +10% (20 systems). It shows up in the Alliance and Economy figures. Alliances are also ranked by systems held on the Standing page.</li>
+        <li>The <b>Territory</b> page maps every system: solid colour is held (your alliance has a gold outline), a dashed outline means presence but no holder yet. Hover a system for each alliance's influence and click it to open it in the Galaxy, which also shows the sector's holder and influence at the top.</li>
       </ul>
     ),
   },

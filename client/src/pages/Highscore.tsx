@@ -118,8 +118,8 @@ export function Highscore() {
       <Card title="Alliances">
         {data.alliances.length === 0 ? <p className="muted">No alliances yet.</p> : (
           <table className="table">
-            <thead><tr><th>#</th><th>Tag</th><th>Name</th><th>Members</th><th>Total</th></tr></thead>
-            <tbody>{data.alliances.map((a: any) => <tr key={a.id}><td>{a.rank}</td><td>[{a.tag}]</td><td>{a.name}</td><td>{a.members}</td><td>{fmt(a.total)}</td></tr>)}</tbody>
+            <thead><tr><th>#</th><th>Tag</th><th>Name</th><th>Members</th><th>Systems held</th><th>Total</th></tr></thead>
+            <tbody>{data.alliances.map((a: any) => <tr key={a.id}><td>{a.rank}</td><td>[{a.tag}]</td><td>{a.name}</td><td>{a.members}</td><td>{a.sectors}</td><td>{fmt(a.total)}</td></tr>)}</tbody>
           </table>
         )}
       </Card>

@@ -205,3 +205,11 @@ label.check input { width: auto; }
 
 label.row { flex-direction: row; align-items: center; gap: 6px; color: var(--text); font-size: 14px; }
 @media (min-width: 761px) { .top .res { flex-wrap: nowrap; gap: 12px; white-space: nowrap; } .top select { max-width: 240px; } }
+
+/* territory map */
+.sectormap { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 4px; }
+.sector { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 40px; padding: 2px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--text); font-size: 12px; line-height: 1.1; }
+.sector i { font-style: normal; font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase; opacity: .9; }
+.sector.contested::after { content: '⚔'; position: absolute; top: -5px; right: -3px; font-size: 11px; }
+.sector.mine { box-shadow: 0 0 0 2px var(--accent); }
+.sector-banner { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }

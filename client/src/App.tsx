@@ -21,6 +21,7 @@ import { Profile } from './pages/Profile';
 import { Admin } from './pages/Admin';
 import { Contacts } from './pages/Contacts';
 import { WhatsNew } from './pages/WhatsNew';
+import { Territory } from './pages/Territory';
 import { Contracts } from './pages/Contracts';
 import { Automation } from './pages/Automation';
 import { Highscore } from './pages/Highscore';
@@ -31,7 +32,7 @@ import { Resources } from './pages/Resources';
 
 const NAV: [string, string][] = [
   ['overview', 'Overview'], ['empire', 'Empire'], ['economy', 'Economy'], ['resources', 'Resources'], ['buildings', 'Buildings'], ['research', 'Research'],
-  ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['automation', 'Automation'], ['fleet', 'Fleet'], ['galaxy', 'Galaxy'],
+  ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['automation', 'Automation'], ['fleet', 'Fleet'], ['galaxy', 'Galaxy'], ['territory', 'Territory'],
   ['alliance', 'Alliance'], ['contacts', 'Contacts'], ['contracts', 'Contracts'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['settings', 'Settings'], ['guide', 'Guide'],
 ];
 
@@ -72,6 +73,7 @@ export function App() {
       case 'admin': return <Admin />;
       case 'contacts': return <Contacts />;
       case 'news': return <WhatsNew />;
+      case 'territory': return <Territory />;
       case 'contracts': return <Contracts />;
       case 'automation': return <Automation />;
       case 'guide': return <Guide />;
