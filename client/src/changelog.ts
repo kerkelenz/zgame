@@ -52,6 +52,9 @@ export const CHANGELOG: Release[] = [
       'Seasons with a hall of fame and optional victory score.',
       'Account settings: change password, rename, recovery key, delete account.',
       'Optional sound cues, tab-title alerts, a welcome tour and four languages for the main menus.',
+      'Reorder queued buildings and research, a details page for every building, research, ship and defense, and an Economy overview page.',
+      'Production, research and building speeds were raised (5x) so progress is quicker; fleet speed is unchanged.',
+      'Optional SQLite storage and a production deployment kit (Docker, HTTPS, nightly backups) for server owners.',
     ],
   },
   {
@@ -64,6 +67,30 @@ export const CHANGELOG: Release[] = [
       'Orbit position bonuses and Crawlers.',
       'Highscore categories and public commander profiles.',
       'Queued buildings and research are paid for when queued.',
+    ],
+  },
+  {
+    id: '2026-10-0b', date: '2026-10-09', title: 'Computer empires, progress and a new look',
+    items: [
+      'Computer-controlled empires expand, wage wars on each other, hold grudges, demand tribute, raid players and make the news.',
+      'Command Credits, officers, achievements and guided objectives walk new commanders through the first hours.',
+      'Factions with reputation, and the trader who swaps resources at a rate.',
+      'Terraformer, Graviton technology and planet sizes; storage scales with game speed.',
+      'Command screen, battle simulator, standing charts, empire overview page and fleet presets.',
+      'A procedural art set and an amber theme; wide tables scroll inside themselves on phones.',
+      'An error screen instead of a blank page, and an offline banner when the connection drops.',
+    ],
+  },
+  {
+    id: '2026-10-0a', date: '2026-10-09', title: 'The multiplayer game',
+    items: [
+      'Stellar Frontier became a shared online universe: one server, many commanders, real-time updates.',
+      'Alliances with a shared bank and upgrades, and joint attacks where members strike together.',
+      'Build and research queues four deep, paid when each item starts.',
+      'Moons with a Lunar Base, Sensor Phalanx and Jump Gate; missile silos with interceptor and interplanetary missiles.',
+      'Planets can be abandoned; attacks are called off if the target becomes an ally, and stationed fleets go home when an alliance bond ends.',
+      'Rolling backups and quarantine of unreadable saves keep the universe safe; messages and joins are rate limited.',
+      'A built-in guide and a demo universe for trying things out.',
     ],
   },
 ];
