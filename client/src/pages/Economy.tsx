@@ -109,6 +109,8 @@ export function Economy() {
             { label: 'Free basic income', v: basic, cls: 'seg-basic' },
             { label: 'Mines', v: m.raw, cls: 'seg-mine' },
             { label: 'Plasma technology', v: m.plasma, cls: 'seg-plasma' },
+            { label: 'Planet position', v: m.placement, cls: 'seg-pos' },
+            { label: 'Crawlers', v: m.crawlers, cls: 'seg-crawl' },
             { label: 'Alliance, officers and faction', v: m.boosts, cls: 'seg-boost' },
             { label: 'Lost to energy shortage', v: m.lostToEnergy, cls: 'seg-lost' },
           ];

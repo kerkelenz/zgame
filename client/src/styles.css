@@ -145,7 +145,7 @@ table.dtable td.cur { background: #f0a93b22; font-weight: 600; }
 .stat .label { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; } .stat .big { font-family: var(--f-display); font-size: 24px; font-weight: 700; } .stat .big small { font-size: 12px; color: var(--muted); font-weight: 400; }
 .stack { display: flex; height: 16px; border-radius: 4px; overflow: hidden; background: var(--panel2); margin: 6px 0 4px; }
 .stack i { display: block; height: 100%; }
-.seg-basic { background: #7d879f; } .seg-mine { background: #4ea1ff; } .seg-plasma { background: #b46bff; } .seg-boost { background: #f0a93b; }
+.seg-basic { background: #7d879f; } .seg-mine { background: #4ea1ff; } .seg-plasma { background: #b46bff; } .seg-boost { background: #f0a93b; } .seg-pos { background: #3fc9a4; } .seg-crawl { background: #e8685d; }
 .seg-lost { background: repeating-linear-gradient(45deg, #ff6b5e, #ff6b5e 4px, #8a2f28 4px, #8a2f28 8px); }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; margin-bottom: 10px; }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }

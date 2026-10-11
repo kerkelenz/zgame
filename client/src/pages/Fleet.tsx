@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { SHIP_IDS, UNITS } from '../../../shared/data';
+import { SHIP_IDS, UNITS, isStationary } from '../../../shared/data';
 import { cargoCapacity } from '../../../shared/formulas';
 import type { Mission, ShipId } from '../../../shared/types';
 import { post } from '../api';
@@ -36,7 +36,7 @@ export function FleetPage() {
     if (target) { setTo(target.coords); if (target.mission) setMission(target.mission); setToMoon(!!target.toMoon); setTarget(null); }
   }, [target, setTarget]);
 
-  const available = SHIP_IDS.filter((id) => id !== 'solarSatellite' && (planet.fleet[id] || 0) > 0);
+  const available = SHIP_IDS.filter((id) => !isStationary(id) && (planet.fleet[id] || 0) > 0);
   const chosen: Partial<Record<ShipId, number>> = {};
   for (const [id, n] of Object.entries(ships)) if (n && n > 0) chosen[id as ShipId] = Math.min(n, planet.fleet[id] || 0);
   const count = Object.values(chosen).reduce((a, b) => a + (b || 0), 0);

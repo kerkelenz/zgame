@@ -16,6 +16,10 @@ export interface DetailCtx {
   maxTemp: number;
   satellites: number;
   isMoon: boolean;
+  /** orbit of a planet (0 on a moon), crawlers working there, and the class multiplier on them */
+  position?: number;
+  crawlers?: number;
+  crawlerMul?: number;
   settings?: ProductionInput['settings'];
   allianceProduction: number;
   allianceResearch: number;
@@ -39,6 +43,7 @@ export interface TableDetails { columns: Col[]; rows: Row[]; notes: string[] }
 export const prodInput = (ctx: DetailCtx, buildings = ctx.buildings, techs = ctx.techs): ProductionInput => ({
   buildings, techs, maxTemp: ctx.maxTemp, satellites: ctx.satellites, settings: ctx.settings,
   speed: ctx.speeds.production, allianceBonus: ctx.allianceProduction, noBasic: ctx.isMoon, boost: ctx.boost, energyBoost: ctx.energyBoost,
+  position: ctx.position, crawlers: ctx.crawlers, crawlerMul: ctx.crawlerMul,
 });
 const withB = (ctx: DetailCtx, id: BuildingId, level: number) => production(prodInput(ctx, { ...ctx.buildings, [id]: level }));
 const withT = (ctx: DetailCtx, id: TechId, level: number) => production(prodInput(ctx, ctx.buildings, { ...ctx.techs, [id]: level }));
@@ -322,13 +327,15 @@ export interface PlanetViewForDetails {
   buildings: Levels<BuildingId>;
   maxTemp: number;
   isMoon?: boolean;
-  fleet: { solarSatellite?: number };
+  coords?: { p: number };
+  fleet: { solarSatellite?: number; crawler?: number };
   settings: Record<string, number>;
-  detail: Pick<DetailCtx, 'allianceProduction' | 'allianceResearch' | 'boost' | 'energyBoost' | 'timeFactor' | 'researchFactor' | 'classSpeed' | 'speeds'>;
+  detail: Pick<DetailCtx, 'allianceProduction' | 'allianceResearch' | 'boost' | 'energyBoost' | 'timeFactor' | 'researchFactor' | 'classSpeed' | 'speeds'> & { crawlerMul?: number };
 }
 export function detailCtxFrom(planet: PlanetViewForDetails, techs: Levels<TechId>): DetailCtx {
   return {
     buildings: planet.buildings, techs, maxTemp: planet.maxTemp, satellites: planet.fleet.solarSatellite || 0, isMoon: !!planet.isMoon,
+    position: planet.isMoon ? 0 : planet.coords?.p ?? 0, crawlers: planet.fleet.crawler || 0,
     settings: planet.settings as ProductionInput['settings'], ...planet.detail,
   };
 }

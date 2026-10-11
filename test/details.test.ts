@@ -56,7 +56,7 @@ describe('the context mirrors the server', () => {
     expect(d.basic.crystal + d.mine.crystal.total).toBeCloseTo(p.crystal, 6);
     expect(d.mine.deuterium.total - p.fusionDeutUse).toBeCloseTo(p.deuterium, 6);
     for (const m of [d.mine.metal, d.mine.crystal, d.mine.deuterium]) {
-      expect(m.raw + m.plasma + m.boosts).toBeCloseTo(m.potential, 6);
+      expect(m.raw + m.plasma + m.placement + m.crawlers + m.boosts).toBeCloseTo(m.potential, 6);
       expect(m.potential - m.lostToEnergy).toBeCloseTo(m.total, 6);
       expect(m.plasma).toBeGreaterThan(0); // plasma 3
       expect(m.boosts).toBeGreaterThan(0); // officer + faction + alliance

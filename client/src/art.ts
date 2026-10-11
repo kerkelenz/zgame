@@ -118,6 +118,11 @@ function drawShipShape(g: Ctx, rng: Rng, hue: number, id: string) {
     g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.arc(14, -14, 10, 0, Math.PI * 2); g.fill();
     return;
   }
+  if (id === 'crawler') {
+    g.fillStyle = 'hsl(30 15% 28%)'; g.fillRect(-40, 14, 80, 16); g.fillStyle = 'hsl(35 70% 50%)'; g.fillRect(-28, -14, 56, 28);
+    g.fillStyle = 'hsl(35 30% 25%)'; g.fillRect(-4, -40, 8, 28); g.beginPath(); g.moveTo(-14, -40); g.lineTo(14, -40); g.lineTo(0, -52); g.fill();
+    return;
+  }
   if (id === 'solarSatellite') {
     g.fillStyle = 'hsl(215 70% 45%)'; g.fillRect(-48, -10, 36, 20); g.fillRect(12, -10, 36, 20);
     g.fillStyle = `hsl(${hue} 20% 70%)`; g.beginPath(); g.arc(0, 0, 12, 0, Math.PI * 2); g.fill();

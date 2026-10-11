@@ -6,7 +6,7 @@ import {
 import type { BuildingId, Requirement, Res, TechId, UnitId } from '../shared/types';
 import { bus } from './bus';
 import { notifyPlayer } from './messages';
-import { energyBoost, mineBoost, researchFactor, timeFactor, tradeFee } from './perks';
+import { crawlerMul, energyBoost, mineBoost, researchFactor, timeFactor, tradeFee } from './perks';
 import { assertActive } from './vacation';
 import { GameError, allianceOf, type Planet, type Player, type World } from './world';
 
@@ -33,6 +33,9 @@ export function planetProduction(w: World, planet: Planet) {
     noBasic: !!planet.isMoon,
     boost: mineBoost(owner),
     energyBoost: energyBoost(owner),
+    position: planet.isMoon ? 0 : planet.coords.p,
+    crawlers: planet.fleet.crawler || 0,
+    crawlerMul: crawlerMul(owner),
   });
 }
 
@@ -288,6 +291,7 @@ export function queueUnits(w: World, player: Player, planet: Planet, id: UnitId,
   if (lvl(planet.buildings, 'shipyard') < 1) throw new GameError('A shipyard is required');
   if (planet.buildQueue && (planet.buildQueue.id === 'shipyard' || planet.buildQueue.id === 'naniteFactory')) throw new GameError('The shipyard is being upgraded');
   if (!requirementsMet(planet, player, def.requires)) throw new GameError('Requirements not met');
+  if (id === 'crawler' && planet.isMoon) throw new GameError('Crawlers only work on planets');
   if (def.max) {
     const have = (planet.defenses as Record<string, number>)[id] || 0;
     const queued = planet.shipyardQueue.filter((j) => j.id === id).reduce((s, j) => s + j.remaining, 0);

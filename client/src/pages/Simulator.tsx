@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { makeRng, simulateCombat, type Combatant } from '../../../shared/combat';
-import { DEFENSE_IDS, SHIP_IDS, UNITS } from '../../../shared/data';
+import { DEFENSE_IDS, SHIP_IDS, UNITS, isStationary } from '../../../shared/data';
 import { totalRes } from '../../../shared/formulas';
 import type { UnitId } from '../../../shared/types';
 import { get } from '../api';
@@ -9,7 +9,7 @@ import { Card, Page, coordStr, fmt } from '../ui';
 
 type Units = Partial<Record<UnitId, number>>;
 type Tech = { weapons: number; shielding: number; armour: number };
-const FIGHTING = (SHIP_IDS as UnitId[]).filter((id) => UNITS[id].speed > 0 || id === 'solarSatellite');
+const FIGHTING = (SHIP_IDS as UnitId[]).filter((id) => UNITS[id].speed > 0 || isStationary(id));
 const DEF_SIDE: UnitId[] = [...SHIP_IDS, ...DEFENSE_IDS.filter((id) => !UNITS[id].missile)];
 const techOf = (t: Record<string, number | undefined> = {}): Tech => ({ weapons: t.weapons || 0, shielding: t.shielding || 0, armour: t.armour || 0 });
 

@@ -1,4 +1,4 @@
-import { UNITS, SHIP_IDS, DEFENSE_IDS, BUILDING_IDS, TECH_IDS, isShip } from '../shared/data';
+import { UNITS, SHIP_IDS, DEFENSE_IDS, BUILDING_IDS, TECH_IDS, isShip, isStationary } from '../shared/data';
 import {
   addRes, cargoCapacity, canAfford, distance, flightSeconds, fleetSpeed, fuelUse, lvl, sameCoords, subRes, totalRes, zeroRes,
 } from '../shared/formulas';
@@ -66,7 +66,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     ships[id] = c;
   }
   if (!fleetCount(ships)) throw new GameError('Select at least one ship');
-  if (ships.solarSatellite) throw new GameError('Solar satellites cannot leave orbit');
+  for (const id of Object.keys(ships)) if (isStationary(id)) throw new GameError(`${UNITS[id as ShipId].name}s cannot leave their planet`);
   const speedPct = Math.min(100, Math.max(10, Math.round((req.speedPct ?? 100) / 10) * 10));
   const mission = req.mission;
   const to = req.to;
@@ -369,7 +369,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   const level = probes + (diff >= 0 ? diff * diff : -(diff * diff)) + spyBonus(spy);
 
   let defShips = 0;
-  for (const [id, n] of Object.entries(target.fleet)) if (id !== 'solarSatellite') defShips += n || 0;
+  for (const [id, n] of Object.entries(target.fleet)) if (!isStationary(id)) defShips += n || 0;
   const chance = Math.min(0.9, ((defShips + 1) * Math.pow(2, -diff)) / (probes * 20 + 1) * 0.25) * spyEvasion(spy);
   const caught = Math.random() < chance;
 
@@ -475,7 +475,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   if (!target.isMoon && !defOwner.npc) {
     const shipsLost: Fleet = {};
     for (const id of SHIP_IDS) {
-      if (id === 'solarSatellite') continue;
+      if (isStationary(id)) continue;
       const n = (res.defenders[0].before[id] || 0) - (res.defenders[0].after[id] || 0);
       if (n > 0) shipsLost[id] = n;
     }
@@ -813,7 +813,7 @@ export function jumpGate(w: World, player: Player, fromId: string, toId: string,
   for (const [id, n] of Object.entries(ships || {})) {
     const c = Math.floor(Number(n));
     if (!c || c < 0) continue;
-    if (!isShip(id) || id === 'solarSatellite') throw new GameError('Invalid ship ' + id);
+    if (!isShip(id) || isStationary(id)) throw new GameError('Invalid ship ' + id);
     if (c > (a.fleet[id] || 0)) throw new GameError(`Not enough ${UNITS[id].name}`);
     moved[id] = c;
   }

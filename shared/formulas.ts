@@ -1,4 +1,4 @@
-import { BUILDINGS, TECHS, UNITS } from './data';
+import { BUILDINGS, POSITION_BONUS, TECHS, UNITS, crawlerBonus } from './data';
 import type { BuildingId, Coords, Fleet, Res, ShipId, TechId, UnitId } from './types';
 
 export type Levels<K extends string> = Partial<Record<K, number>>;
@@ -58,9 +58,14 @@ export interface ProductionInput {
   boost?: number;
   /** multiplies energy production (officers) */
   energyBoost?: number;
+  /** orbit 1-15 of a planet (0 or undefined: none, e.g. a moon) for the position bonus */
+  position?: number;
+  crawlers?: number;
+  /** class multiplier on crawler effectiveness */
+  crawlerMul?: number;
 }
-/** Where one resource's mine output comes from, per hour. potential = raw + plasma + boosts; total = potential - lostToEnergy. */
-export interface MineBreakdown { raw: number; plasma: number; boosts: number; potential: number; lostToEnergy: number; total: number }
+/** Where one resource's mine output comes from, per hour. potential = raw + plasma + placement + crawlers + boosts; total = potential - lostToEnergy. */
+export interface MineBreakdown { raw: number; plasma: number; placement: number; crawlers: number; boosts: number; potential: number; lostToEnergy: number; total: number }
 export interface ProductionDetail {
   /** free income that needs no mine (not on moons) */
   basic: { metal: number; crystal: number };
@@ -96,13 +101,15 @@ export function production(i: ProductionInput): Production {
   const rawM = 30 * m * Math.pow(1.1, m) * s('metalMine') * sp_;
   const rawC = 20 * c * Math.pow(1.1, c) * s('crystalMine') * sp_;
   const rawD = 10 * d * Math.pow(1.1, d) * (1.44 - 0.004 * i.maxTemp) * s('deuteriumSynthesizer') * sp_;
-  const mine = (raw: number, plasmaPct: number): MineBreakdown => {
-    const plasma = raw * plasmaPct;
-    const boosts = raw * (1 + plasmaPct) * (ab - 1);
-    const potential = raw + plasma + boosts;
-    return { raw, plasma, boosts, potential, lostToEnergy: potential * (1 - efficiency), total: potential * efficiency };
+  const pos = POSITION_BONUS[i.position ?? 0] ?? {};
+  const crawlPct = crawlerBonus(i.crawlers ?? 0, m + c + d, i.crawlerMul ?? 1);
+  const mine = (raw: number, plasmaPct: number, posPct = 0): MineBreakdown => {
+    const plasma = raw * plasmaPct, placement = raw * posPct, crawlers = raw * crawlPct;
+    const boosts = raw * (1 + plasmaPct + posPct + crawlPct) * (ab - 1);
+    const potential = raw + plasma + placement + crawlers + boosts;
+    return { raw, plasma, placement, crawlers, boosts, potential, lostToEnergy: potential * (1 - efficiency), total: potential * efficiency };
   };
-  const mM = mine(rawM, 0.01 * pl), mC = mine(rawC, 0.0066 * pl), mD = mine(rawD, 0.0033 * pl);
+  const mM = mine(rawM, 0.01 * pl, pos.metal), mC = mine(rawC, 0.0066 * pl, pos.crystal), mD = mine(rawD, 0.0033 * pl);
   const metal = basic * 30 * sp_ + mM.total;
   const crystal = basic * 15 * sp_ + mC.total;
   const deuterium = mD.total;

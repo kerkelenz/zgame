@@ -2,7 +2,7 @@ import { ALLIANCE_UPGRADES } from '../shared/data';
 import { allianceBonuses, maxFields, planetCapacity, planetProduction, updatePlanet, usedFields } from './economy';
 import { activeSlots } from './fleet';
 import { wreckView } from './wrecks';
-import { classSpeedBonus, energyBoost, mineBoost, researchFactor, timeFactor } from './perks';
+import { classSpeedBonus, crawlerMul, energyBoost, mineBoost, researchFactor, timeFactor } from './perks';
 import { colonyCount, maxPlanets, playerPoints } from './galaxy';
 import { sameCoords } from '../shared/formulas';
 import { upgradeCost } from './alliance';
@@ -28,7 +28,7 @@ export function planetView(w: World, planet: Planet, now: number) {
     detail: (() => {
       const owner = w.players[planet.ownerId], ab = allianceBonuses(w, owner), c = w.config;
       return {
-        allianceProduction: ab.production, allianceResearch: ab.research, boost: mineBoost(owner), energyBoost: energyBoost(owner), timeFactor: timeFactor(owner), researchFactor: researchFactor(owner), classSpeed: classSpeedBonus(owner),
+        allianceProduction: ab.production, allianceResearch: ab.research, boost: mineBoost(owner), energyBoost: energyBoost(owner), crawlerMul: crawlerMul(owner), timeFactor: timeFactor(owner), researchFactor: researchFactor(owner), classSpeed: classSpeedBonus(owner),
         speeds: {
           production: c.economySpeed * c.productionBoost, construction: c.economySpeed * c.constructionBoost, research: c.economySpeed * c.researchBoost,
           shipyard: c.economySpeed * c.shipyardBoost, storage: Math.max(1, c.economySpeed) * c.storageBoost, fleet: c.fleetSpeed,

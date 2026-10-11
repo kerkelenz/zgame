@@ -1,4 +1,4 @@
-import { BUILDINGS, SHIP_IDS, UNITS } from '../../../shared/data';
+import { BUILDINGS, SHIP_IDS, UNITS, isStationary } from '../../../shared/data';
 import { useGame } from '../game';
 import { Card, Countdown, Page, coordStr, fmt } from '../ui';
 
@@ -15,8 +15,8 @@ export function Empire() {
     total.mph += p.production.metal; total.cph += p.production.crystal; total.dph += p.production.deuterium;
   }
   const open = (id: string, page: string) => { selectPlanet(id); setPage(page); };
-  const shipCount = (p: any) => SHIP_IDS.reduce((n, id) => n + (id === 'solarSatellite' ? 0 : p.fleet[id] || 0), 0);
-  const topShips = (p: any) => SHIP_IDS.filter((id) => id !== 'solarSatellite' && p.fleet[id]).sort((a, b) => p.fleet[b] - p.fleet[a]).slice(0, 3).map((id) => `${fmt(p.fleet[id])} ${UNITS[id].name}`).join(', ');
+  const shipCount = (p: any) => SHIP_IDS.reduce((n, id) => n + (isStationary(id) ? 0 : p.fleet[id] || 0), 0);
+  const topShips = (p: any) => SHIP_IDS.filter((id) => !isStationary(id) && p.fleet[id]).sort((a, b) => p.fleet[b] - p.fleet[a]).slice(0, 3).map((id) => `${fmt(p.fleet[id])} ${UNITS[id].name}`).join(', ');
 
   return (
     <Page title="Empire">

@@ -24,6 +24,7 @@ export const debrisShare = (p: Player | null | undefined) => 0.3 + (p ? 0.05 * o
 export const expeditionYield = (p: Player) => (1 + 0.15 * officerRank(p, 'geologist')) * (isClass(p, 'discoverer') ? 1.5 : 1);
 /** Discoverers turn half of the pirate ambushes and black holes into quiet trips */
 export const dodgesBadLuck = (p: Player) => isClass(p, 'discoverer');
+export const crawlerMul = (p: Player) => (isClass(p, 'collector') ? 1.5 : 1);
 export const colonyFieldsMul = (p: Player) => (isClass(p, 'discoverer') ? 1.1 : 1);
 export const tradeFee = (p: Player | null | undefined) => (isClass(p, 'collector') ? TRADE_FEE_COLLECTOR : TRADE_FEE);
 export const fuelFactor = (p: Player) => (isClass(p, 'general') ? 0.75 : 1);

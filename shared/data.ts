@@ -47,7 +47,7 @@ type U = Omit<UnitDef, 'id' | 'kind' | 'name'>;
 const ship = (id: ShipId, name: string, u: U): UnitDef => ({ id, name, kind: 'ship', ...u });
 const def = (id: DefenseId, name: string, u: U): UnitDef => ({ id, name, kind: 'defense', ...u });
 const none = {};
-const PS = { espionageProbe: 5, solarSatellite: 5 } as const;
+const PS = { espionageProbe: 5, solarSatellite: 5, crawler: 5 } as const;
 
 export const UNITS: Record<UnitId, UnitDef> = {
   smallCargo: ship('smallCargo', 'Small Cargo', { desc: 'Nimble transport.', cost: r(2000, 2000), attack: 5, shield: 10, hull: 400, cargo: 5000, speed: 5000, fuel: 10, drive: 'combustionDrive', rapidFire: { ...PS }, requires: [{ id: 'shipyard', level: 2 }, { id: 'combustionDrive', level: 2 }] }),
@@ -59,10 +59,11 @@ export const UNITS: Record<UnitId, UnitDef> = {
   battlecruiser: ship('battlecruiser', 'Battlecruiser', { desc: 'Raider hunting transports and fighters.', cost: r(30000, 40000, 15000), attack: 700, shield: 400, hull: 7000, cargo: 750, speed: 10000, fuel: 250, drive: 'hyperspaceDrive', rapidFire: { smallCargo: 3, largeCargo: 3, heavyFighter: 4, cruiser: 4, battleship: 7, ...PS }, requires: [{ id: 'shipyard', level: 8 }, { id: 'hyperspace', level: 5 }, { id: 'laser', level: 12 }, { id: 'hyperspaceDrive', level: 5 }] }),
   bomber: ship('bomber', 'Bomber', { desc: 'Smashes planetary defenses.', cost: r(50000, 25000, 15000), attack: 1000, shield: 500, hull: 7500, cargo: 500, speed: 4000, fuel: 700, drive: 'impulseDrive', rapidFire: { rocketLauncher: 20, lightLaser: 20, heavyLaser: 10, ionCannon: 10, gaussCannon: 5, ...PS }, requires: [{ id: 'shipyard', level: 8 }, { id: 'impulseDrive', level: 6 }, { id: 'plasma', level: 5 }] }),
   destroyer: ship('destroyer', 'Destroyer', { desc: 'Heavy warship.', cost: r(60000, 50000, 15000), attack: 2000, shield: 500, hull: 11000, cargo: 2000, speed: 5000, fuel: 1000, drive: 'hyperspaceDrive', rapidFire: { lightLaser: 10, battlecruiser: 2, ...PS }, requires: [{ id: 'shipyard', level: 9 }, { id: 'hyperspace', level: 5 }, { id: 'hyperspaceDrive', level: 6 }] }),
-  deathstar: ship('deathstar', 'Deathstar', { desc: 'The ultimate weapon.', cost: r(5_000_000, 4_000_000, 1_000_000), attack: 200000, shield: 50000, hull: 900000, cargo: 1_000_000, speed: 100, fuel: 1, drive: 'hyperspaceDrive', rapidFire: { smallCargo: 250, largeCargo: 250, lightFighter: 200, heavyFighter: 100, cruiser: 33, battleship: 30, battlecruiser: 15, bomber: 25, destroyer: 5, recycler: 250, colonyShip: 250, rocketLauncher: 200, lightLaser: 200, heavyLaser: 100, gaussCannon: 50, ionCannon: 100, espionageProbe: 1250, solarSatellite: 1250 }, requires: [{ id: 'shipyard', level: 12 }, { id: 'hyperspaceDrive', level: 7 }, { id: 'hyperspace', level: 6 }, { id: 'graviton', level: 1 }] }),
+  deathstar: ship('deathstar', 'Deathstar', { desc: 'The ultimate weapon.', cost: r(5_000_000, 4_000_000, 1_000_000), attack: 200000, shield: 50000, hull: 900000, cargo: 1_000_000, speed: 100, fuel: 1, drive: 'hyperspaceDrive', rapidFire: { smallCargo: 250, largeCargo: 250, lightFighter: 200, heavyFighter: 100, cruiser: 33, battleship: 30, battlecruiser: 15, bomber: 25, destroyer: 5, recycler: 250, colonyShip: 250, rocketLauncher: 200, lightLaser: 200, heavyLaser: 100, gaussCannon: 50, ionCannon: 100, espionageProbe: 1250, solarSatellite: 1250, crawler: 1250 }, requires: [{ id: 'shipyard', level: 12 }, { id: 'hyperspaceDrive', level: 7 }, { id: 'hyperspace', level: 6 }, { id: 'graviton', level: 1 }] }),
   recycler: ship('recycler', 'Recycler', { desc: 'Collects debris fields.', cost: r(10000, 6000, 2000), attack: 1, shield: 10, hull: 1600, cargo: 20000, speed: 2000, fuel: 300, drive: 'combustionDrive', rapidFire: { ...PS }, requires: [{ id: 'shipyard', level: 4 }, { id: 'combustionDrive', level: 6 }, { id: 'shielding', level: 2 }] }),
   espionageProbe: ship('espionageProbe', 'Espionage Probe', { desc: 'Spies on other planets.', cost: r(0, 1000), attack: 0, shield: 0, hull: 100, cargo: 5, speed: 100_000_000, fuel: 1, drive: 'combustionDrive', rapidFire: none, requires: [{ id: 'shipyard', level: 3 }, { id: 'combustionDrive', level: 3 }, { id: 'espionage', level: 2 }] }),
   colonyShip: ship('colonyShip', 'Colony Ship', { desc: 'Founds new colonies.', cost: r(10000, 20000, 10000), attack: 50, shield: 100, hull: 3000, cargo: 7500, speed: 2500, fuel: 1000, drive: 'impulseDrive', rapidFire: none, requires: [{ id: 'shipyard', level: 4 }, { id: 'impulseDrive', level: 3 }] }),
+  crawler: ship('crawler', 'Crawler', { desc: 'Mining machine that boosts metal, crystal and deuterium output on its planet. Stays home; fragile.', cost: r(2000, 2000, 1000), attack: 1, shield: 1, hull: 500, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, requires: [{ id: 'shipyard', level: 5 }, { id: 'combustionDrive', level: 4 }] }),
   solarSatellite: ship('solarSatellite', 'Solar Satellite', { desc: 'Orbits the planet and generates energy.', cost: r(0, 2000, 500), attack: 1, shield: 1, hull: 200, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, requires: [{ id: 'shipyard', level: 1 }, { id: 'energy', level: 2 }] }),
 
   rocketLauncher: def('rocketLauncher', 'Rocket Launcher', { desc: 'Cheap basic defense.', cost: r(2000), attack: 80, shield: 20, hull: 200, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, requires: [{ id: 'shipyard', level: 1 }] }),
@@ -85,6 +86,19 @@ export const buildingAllowed = (id: BuildingId, moon: boolean) => (moon ? MOON_B
 export const wreckRepairShare = (level: number) => Math.min(0.9, 0.3 + 0.06 * Math.max(1, level));
 
 export const SHIP_IDS = (Object.keys(UNITS) as UnitId[]).filter((k) => UNITS[k].kind === 'ship') as ShipId[];
+/** ships that never leave their planet */
+export const STATIONARY_SHIPS: readonly ShipId[] = ['solarSatellite', 'crawler'];
+export const isStationary = (id: string) => (STATIONARY_SHIPS as readonly string[]).includes(id);
+
+/** Planet position bonuses: orbit decides which mine pays extra (as in the classic game) */
+export const POSITION_BONUS: Record<number, { metal?: number; crystal?: number }> = {
+  1: { crystal: 0.4 }, 2: { crystal: 0.3 }, 3: { crystal: 0.2 },
+  6: { metal: 0.17 }, 7: { metal: 0.23 }, 8: { metal: 0.35 }, 9: { metal: 0.23 }, 10: { metal: 0.17 },
+};
+/** Crawlers: +0.1% output of every mine each, at most 6 working per mine level (sum of the three), at most +50% in total. Collectors multiply both by 1.5. */
+export const CRAWLER = { perUnit: 0.001, perMineLevel: 6, cap: 0.5 };
+export const crawlerBonus = (count: number, mineLevels: number, mul = 1) => Math.min(Math.min(count, CRAWLER.perMineLevel * mineLevels) * CRAWLER.perUnit * mul, CRAWLER.cap * mul);
+
 export const DEFENSE_IDS = (Object.keys(UNITS) as UnitId[]).filter((k) => UNITS[k].kind === 'defense') as DefenseId[];
 export const BUILDING_IDS = Object.keys(BUILDINGS) as BuildingId[];
 export const TECH_IDS = Object.keys(TECHS) as TechId[];
@@ -122,7 +136,7 @@ export const OFFICER_MAX = 3;
 export interface CharClassDef { id: CharClass; name: string; tag: string; perks: string[] }
 /** Pick one: the first choice is free, changing later costs Command Credits. */
 export const CHAR_CLASSES: CharClassDef[] = [
-  { id: 'collector', name: 'Collector', tag: 'Economy: the empire builder.', perks: ['+15% output from every mine', '+10% energy production', '+25% cargo on Small and Large Cargo ships', 'The merchant keeps 8% instead of 12%'] },
+  { id: 'collector', name: 'Collector', tag: 'Economy: the empire builder.', perks: ['+15% output from every mine', '+10% energy production', '+25% cargo on Small and Large Cargo ships', 'The merchant keeps 8% instead of 12%', 'Crawlers are 50% more effective'] },
   { id: 'general', name: 'General', tag: 'War: the fleet commander.', perks: ['+2 fleet slots', '25% less fuel on every flight', '+25% flight speed for combat ships and recyclers', '+3% more debris from battles'] },
   { id: 'discoverer', name: 'Discoverer', tag: 'Exploration: the pathfinder.', perks: ['+1 expedition slot', '+50% resources and ships found on expeditions', 'Half as many pirate ambushes and black holes', '+10% research speed', 'New colonies are 10% bigger'] },
 ];
