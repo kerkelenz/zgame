@@ -83,7 +83,7 @@ export function Items({ kind }: { kind: Kind }) {
           const cost = buildingCost(id, level + 1);
           const secs = buildingTime(cost, robotics, nanite, cfg.economySpeed * cfg.constructionBoost, timeFactor);
           const missing = unmet(d.requires, planet.buildings, techs);
-          const ok = !missing.length && (buildQ ? bBacklog.length < MAXQ : canAfford(have, cost)) && planet.usedFields + bBacklog.length < planet.fields;
+          const ok = !missing.length && (!buildQ || bBacklog.length < MAXQ) && canAfford(have, cost) && planet.usedFields + bBacklog.length < planet.fields;
           return (
             <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{level}</span></>}>
               <div className="cardtop"><img className="icon" src={Art.icon('building', id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
@@ -103,7 +103,7 @@ export function Items({ kind }: { kind: Kind }) {
           const secs = researchTime(cost, lab, cfg.economySpeed * cfg.researchBoost, me.allianceBonuses.research, timeFactor * researchFactor);
           const missing = unmet(d.requires, planet.buildings, techs);
           const energyOk = !d.energyReq || planet.production.energyProduced >= d.energyReq * 3 ** level;
-          const ok = !missing.length && energyOk && (researchQ ? rBacklog.length < MAXQ : canAfford(have, cost));
+          const ok = !missing.length && energyOk && (!researchQ || rBacklog.length < MAXQ) && canAfford(have, cost);
           return (
             <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{level}</span></>}>
               <div className="cardtop"><img className="icon" src={Art.icon('tech', id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>

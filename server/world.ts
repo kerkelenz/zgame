@@ -22,7 +22,8 @@ export interface Player {
   techs: Levels<TechId>;
   research: ResearchJob | null;
   /** research waiting behind the active job; paid for when it starts */
-  researchBacklog: { id: TechId; planetId: string }[];
+  /** `paid` is reserved when queued and refunded if the entry is removed or cannot start */
+  researchBacklog: { id: TechId; planetId: string; paid?: Res }[];
   allianceId: string | null;
   planetIds: string[];
   /** expedition statistics etc. */
@@ -105,6 +106,8 @@ export interface Planet {
   buildQueue: BuildJob | null;
   /** buildings waiting behind the active job; paid for when they start */
   buildBacklog: BuildingId[];
+  /** resources already reserved for each buildBacklog entry (same index) */
+  buildPaid?: Res[];
   shipyardQueue: ShipyardJob[];
   fleet: Fleet;
   defenses: Defenses;

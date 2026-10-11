@@ -17,6 +17,7 @@ beforeEach(() => {
   w = createWorld({ economySpeed: 20, fleetSpeed: 10, protectionPoints: 0, raidIntervalMin: 0, npcDensity: 0 }, T0);
   a = register(w, 'alice', 'secret1', T0).player;
   p = w.planets[a.planetIds[0]];
+  p.coords = { ...p.coords, p: 4 }; // no orbit bonus unless a test asks for one
   p.buildings = { metalMine: 20, crystalMine: 18, deuteriumSynthesizer: 10, solarPlant: 40, shipyard: 6, roboticsFactory: 4 };
   p.resources = { metal: 1e9, crystal: 1e9, deuterium: 1e9 };
   a.techs = { combustionDrive: 5 };

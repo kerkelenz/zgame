@@ -113,7 +113,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     return planetView(w, w.planets[req.params.id], now());
   }));
   A.post('/research/unqueue', wrap((req) => {
-    unqueueResearch(req.player!, Number(req.body.index));
+    unqueueResearch(w, req.player!, Number(req.body.index));
     return { ok: true };
   }));
   A.post('/research/cancel', wrap((req) => {

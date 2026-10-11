@@ -89,11 +89,14 @@ export function updatePlanet(w: World, planet: Planet, now: number) {
 function startNextBuilding(w: World, planet: Planet, at: number) {
   const owner = w.players[planet.ownerId];
   const backlog = (planet.buildBacklog ||= []);
+  const paidList = (planet.buildPaid ||= []);
   while (backlog.length && !planet.buildQueue) {
     const id = backlog.shift()!;
-    try { beginBuilding(w, owner, planet, id, at); }
+    const paid = paidList.shift();
+    try { beginBuilding(w, owner, planet, id, at, paid); }
     catch (e) {
       if (!(e instanceof GameError)) throw e;
+      if (paid) planet.resources = addRes(planet.resources, paid);
       notifyPlayer(w, owner.id, 'system', 'Queued building dropped', `${BUILDINGS[id].name} on ${planet.name} could not start: ${e.message}.`);
     }
   }
@@ -151,9 +154,10 @@ function startNextResearch(w: World, player: Player, at: number) {
     const planet = w.planets[next.planetId] ?? w.planets[player.planetIds[0]];
     try {
       updatePlanet(w, planet, at);
-      beginResearch(w, player, planet, next.id, at);
+      beginResearch(w, player, planet, next.id, at, next.paid);
     } catch (e) {
       if (!(e instanceof GameError)) throw e;
+      if (next.paid) planet.resources = addRes(planet.resources, next.paid);
       notifyPlayer(w, player.id, 'system', 'Queued research dropped', `${TECHS[next.id].name} could not start: ${e.message}.`);
     }
   }
@@ -190,7 +194,7 @@ export function startBuilding(w: World, player: Player, planet: Planet, id: Buil
 
 export const MAX_BACKLOG = 4;
 
-/** Start now if idle, otherwise line up behind the active job (paid when it starts). */
+/** Start now if idle, otherwise line up behind the active job (paid when queued). */
 export function queueBuilding(w: World, player: Player, planet: Planet, id: BuildingId, now: number) {
   assertActive(player, 'build');
   updatePlanet(w, planet, now);
@@ -200,15 +204,23 @@ export function queueBuilding(w: World, player: Player, planet: Planet, id: Buil
   if (backlog.length >= MAX_BACKLOG) throw new GameError(`Queue is full (${MAX_BACKLOG})`);
   if (!buildingAllowed(id, !!planet.isMoon)) throw new GameError(planet.isMoon ? 'That cannot be built on a moon' : 'That can only be built on a moon');
   if (id !== 'terraformer' && usedFields(planet) + backlog.length >= maxFields(planet)) throw new GameError('No free fields left on this planet');
+  const level = lvl(planet.buildings, id) + 1 + (planet.buildQueue?.id === id ? 1 : 0) + backlog.filter((b) => b === id).length;
+  const cost = buildingCost(id, level);
+  pay(planet, cost); // reserved now, so a queued job can never fail for lack of resources later
+  const paid = (planet.buildPaid ||= []);
+  while (paid.length < backlog.length) paid.push({ metal: 0, crystal: 0, deuterium: 0 }); // legacy entries carry no reservation
   backlog.push(id);
+  paid.push(cost);
 }
 
 export function unqueueBuilding(planet: Planet, index: number) {
   if (!planet.buildBacklog?.[index]) throw new GameError('No such queue entry');
   planet.buildBacklog.splice(index, 1);
+  const [paid] = planet.buildPaid?.splice(index, 1) ?? [];
+  if (paid) planet.resources = addRes(planet.resources, paid);
 }
 
-function beginBuilding(w: World, player: Player, planet: Planet, id: BuildingId, now: number) {
+function beginBuilding(w: World, player: Player, planet: Planet, id: BuildingId, now: number, prepaid?: Res) {
   const def = BUILDINGS[id];
   if (!Object.hasOwn(BUILDINGS, id)) throw new GameError('Unknown building');
   if (planet.buildQueue) throw new GameError('Construction already in progress');
@@ -217,8 +229,8 @@ function beginBuilding(w: World, player: Player, planet: Planet, id: BuildingId,
   if (id !== 'terraformer' && usedFields(planet) >= maxFields(planet)) throw new GameError('No free fields left on this planet');
   if (id === 'researchLab' && player.research) throw new GameError('Cannot upgrade the lab while research is running');
   const level = lvl(planet.buildings, id) + 1;
-  const cost = buildingCost(id, level);
-  pay(planet, cost);
+  const cost = prepaid && (prepaid.metal || prepaid.crystal || prepaid.deuterium) ? prepaid : buildingCost(id, level);
+  if (cost !== prepaid) pay(planet, cost);
   const secs = buildingTime(cost, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.constructionBoost, timeFactor(player));
   planet.buildQueue = { id, level, start: now, end: now + secs * 1000, cost };
 }
@@ -238,7 +250,7 @@ export function startResearch(w: World, player: Player, planet: Planet, id: Tech
   beginResearch(w, player, planet, id, now);
 }
 
-/** Start now if idle, otherwise line up behind the active research (paid when it starts). */
+/** Start now if idle, otherwise line up behind the active research (paid when queued). */
 export function queueResearch(w: World, player: Player, planet: Planet, id: TechId, now: number) {
   assertActive(player, 'research');
   updatePlanet(w, planet, now);
@@ -246,15 +258,20 @@ export function queueResearch(w: World, player: Player, planet: Planet, id: Tech
   if (!player.research) return beginResearch(w, player, planet, id, now);
   const backlog = (player.researchBacklog ||= []);
   if (backlog.length >= MAX_BACKLOG) throw new GameError(`Queue is full (${MAX_BACKLOG})`);
-  backlog.push({ id, planetId: planet.id });
+  const cost = techCost(id, lvl(player.techs, id) + 1 + (player.research?.id === id ? 1 : 0) + backlog.filter((b) => b.id === id).length);
+  pay(planet, cost);
+  backlog.push({ id, planetId: planet.id, paid: cost });
 }
 
-export function unqueueResearch(player: Player, index: number) {
-  if (!player.researchBacklog?.[index]) throw new GameError('No such queue entry');
+export function unqueueResearch(w: World, player: Player, index: number) {
+  const entry = player.researchBacklog?.[index];
+  if (!entry) throw new GameError('No such queue entry');
   player.researchBacklog.splice(index, 1);
+  const p = w.planets[entry.planetId];
+  if (entry.paid && p) { p.resources = addRes(p.resources, entry.paid); }
 }
 
-function beginResearch(w: World, player: Player, planet: Planet, id: TechId, now: number) {
+function beginResearch(w: World, player: Player, planet: Planet, id: TechId, now: number, prepaid?: Res) {
   const def = TECHS[id];
   if (!Object.hasOwn(TECHS, id)) throw new GameError('Unknown technology');
   if (player.research) throw new GameError('Research already in progress');
@@ -265,8 +282,8 @@ function beginResearch(w: World, player: Player, planet: Planet, id: TechId, now
     const need = def.energyReq * Math.pow(3, level - 1);
     if (planetProduction(w, planet).energyProduced < need) throw new GameError(`Needs ${Math.round(need).toLocaleString('en-US')} energy production on this planet`);
   }
-  const cost = techCost(id, level);
-  pay(planet, cost);
+  const cost = prepaid ?? techCost(id, level);
+  if (!prepaid) pay(planet, cost);
   const secs = researchTime(cost, lvl(planet.buildings, 'researchLab'), w.config.economySpeed * w.config.researchBoost, allianceBonuses(w, player).research, timeFactor(player) * researchFactor(player));
   player.research = { id, level, start: now, end: now + secs * 1000, cost, planetId: planet.id };
 }

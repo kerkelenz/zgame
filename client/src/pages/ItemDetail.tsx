@@ -120,7 +120,7 @@ export function ItemDetail() {
     const legal = !isB || buildingAllowed(id as BuildingId, !!planet.isMoon);
     const energyOk = isB || !TECHS[id as TechId].energyReq || planet.production.energyProduced >= TECHS[id as TechId].energyReq! * 3 ** cur;
     const fieldsOk = !isB || id === 'terraformer' || planet.usedFields + (planet.buildBacklog?.length ?? 0) < planet.fields;
-    const ok = legal && !missing.length && energyOk && fieldsOk && (busy ? !queueFull : canAfford(have, next.cost));
+    const ok = legal && !missing.length && energyOk && fieldsOk && (!busy || !queueFull) && canAfford(have, next.cost);
     const run = () => void act(() => post(isB ? `/planets/${planet.id}/build` : `/planets/${planet.id}/research`, { id }), `${def.name}: ${busy ? 'queued' : 'started'}`);
 
     return (

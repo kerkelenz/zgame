@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
-import { abandonPlanet, queueBuilding, queueResearch, unqueueBuilding, cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
+import { abandonPlanet, queueBuilding, queueResearch, unqueueBuilding, unqueueResearch, cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
 import { launchMissiles, processMovements, recallFleet, sendFleet } from '../server/fleet';
 import { createPlanet, playerPoints } from '../server/galaxy';
 import { processRaids, spawnRaid } from '../server/npc';
@@ -561,8 +561,8 @@ describe('queues', () => {
     queueBuilding(w, alice, ap, 'metalMine', T0);
     queueBuilding(w, alice, ap, 'solarPlant', T0);
     expect(ap.buildBacklog).toEqual(['metalMine', 'solarPlant']);
-    const paidAtQueue = ap.resources.metal;
-    expect(paidAtQueue).toBe(100_000 - 60); // only the first was paid
+    // every entry is paid when it is queued: level 1 (60) + level 2 (90) + solar plant (75)
+    expect(ap.resources.metal).toBe(100_000 - 60 - 90 - 75);
     processPlayer(w, alice, T0 + 100 * HOUR);
     expect(ap.buildings.metalMine).toBe(2);
     expect(ap.buildings.solarPlant).toBe(1);
@@ -570,24 +570,43 @@ describe('queues', () => {
     expect(ap.buildBacklog).toEqual([]);
   });
 
-  it('drops queued items that became unaffordable and tells the player', () => {
+  it('refuses to queue what you cannot pay for, and keeps queued items safe from later spending', () => {
     ap.buildings = { roboticsFactory: 4 };
     ap.resources = { metal: 200, crystal: 100, deuterium: 0 };
     ap.settings = {};
     queueBuilding(w, alice, ap, 'metalMine', T0);
-    queueBuilding(w, alice, ap, 'naniteFactory', T0);
-    processPlayer(w, alice, T0 + HOUR);
-    expect(ap.buildings.naniteFactory).toBeUndefined();
-    expect(w.messages.some((m) => /dropped/.test(m.subject))).toBe(true);
+    expect(() => queueBuilding(w, alice, ap, 'naniteFactory', T0)).toThrow(/Not enough resources/);
+    expect(ap.buildBacklog).toEqual([]);
+    ap.resources = { metal: 1000, crystal: 1000, deuterium: 1000 };
+    queueBuilding(w, alice, ap, 'solarPlant', T0);
+    ap.resources = { metal: 0, crystal: 0, deuterium: 0 }; // spent elsewhere afterwards
+    processPlayer(w, alice, T0 + 100 * HOUR);
+    expect(ap.buildings.solarPlant).toBe(1);
+    expect(w.messages.some((m) => /dropped/.test(m.subject))).toBe(false);
+  });
+
+  it('prepaid research is reserved too, and refunded when removed', () => {
+    alice.techs = { energy: 8 };
+    ap.resources = { metal: 1e7, crystal: 1e7, deuterium: 1e7 };
+    queueResearch(w, alice, ap, 'energy', T0);
+    const before = ap.resources.crystal;
+    queueResearch(w, alice, ap, 'computer', T0);
+    expect(ap.resources.crystal).toBeLessThan(before);
+    unqueueResearch(w, alice, 0);
+    expect(ap.resources.crystal).toBe(before);
+    ap.resources = { metal: 0, crystal: 0, deuterium: 0 };
+    expect(() => queueResearch(w, alice, ap, 'computer', T0)).toThrow(/Not enough resources/);
   });
 
   it('enforces queue size and supports removal', () => {
-    ap.resources = { metal: 1e6, crystal: 1e6, deuterium: 1e6 };
+    ap.resources = { metal: 1e12, crystal: 1e12, deuterium: 1e12 };
     for (let i = 0; i < 5; i++) queueBuilding(w, alice, ap, 'solarPlant', T0);
     expect(ap.buildBacklog).toHaveLength(4);
     expect(() => queueBuilding(w, alice, ap, 'solarPlant', T0)).toThrow(/full/);
+    const before = ap.resources.metal;
     unqueueBuilding(ap, 0);
     expect(ap.buildBacklog).toHaveLength(3);
+    expect(ap.resources.metal).toBeGreaterThan(before); // the reservation comes back
     expect(() => unqueueBuilding(ap, 9)).toThrow();
   });
 
