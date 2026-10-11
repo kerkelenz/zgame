@@ -7,7 +7,7 @@ import { createMoon, createPlanet } from '../server/galaxy';
 import { checkProgress } from '../server/progress';
 import { endVacation, startVacation } from '../server/vacation';
 import { addWreck, repairSeconds, startRepair, wreckView } from '../server/wrecks';
-import { planetView } from '../server/views';
+import { fleetsView, planetView } from '../server/views';
 import { GameError, createWorld, planetAt, type Planet, type Player, type World } from '../server/world';
 import { wreckRepairShare } from '../shared/data';
 import { buildingTable, detailCtxFrom } from '../shared/effects';
@@ -70,6 +70,11 @@ describe('destroy mission rules', () => {
   it('shows up as a hostile fleet for the moon owner', () => {
     strike({ deathstar: 1 });
     expect(w.messages.some((m) => m.to === bob.id && /Hostile fleet detected/.test(m.subject))).toBe(true);
+    const note = w.messages.find((m) => m.to === bob.id && /Hostile fleet detected/.test(m.subject))!;
+    expect(note.body).toContain(ap.name);
+    expect(note.body).toContain(`${ap.coords.g}:${ap.coords.s}:${ap.coords.p}`);
+    const inc = fleetsView(w, bob).incoming[0];
+    expect(inc).toMatchObject({ fromName: ap.name, from: ap.coords, ownerName: 'alice' });
   });
 });
 

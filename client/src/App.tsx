@@ -89,7 +89,7 @@ export function App() {
       {me.pendingTributes > 0 && <div className="alertbar" onClick={() => setPage('command')}>⚠ A hostile empire is demanding tribute - open Command to answer before the deadline</div>}
       {fleets.incoming.length > 0 && (
         <div className="alertbar" onClick={() => setPage('fleet')}>
-          ⚠ {fleets.incoming.length} hostile fleet{fleets.incoming.length > 1 ? 's' : ''} inbound{fleets.incoming.some((f) => f.ally) ? ' (including on allies)' : ''} – click for details
+          ⚠ {fleets.incoming.length} hostile fleet{fleets.incoming.length > 1 ? 's' : ''} inbound{fleets.incoming.some((f) => f.ally) ? ' (including on allies)' : ''} – click for details{fleets.incoming.length === 1 ? ` (from ${fleets.incoming[0].ownerName} at ${coordStr(fleets.incoming[0].from)})` : ''}
         </div>
       )}
       <div className="body">

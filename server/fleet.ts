@@ -181,8 +181,8 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   w.movements[m.id] = m;
 
   if ((mission === 'attack' || mission === 'destroy') && targetOwner) {
-    notifyPlayer(w, targetOwner.id, 'system', 'Hostile fleet detected', `${player.username} is attacking ${target!.name} ${fmt(to)}. ETA ${new Date(m.arriveAt).toLocaleTimeString()}.`);
-    bus.push({ to: targetOwner.id, type: 'alert', data: `Hostile fleet inbound to ${target!.name}` });
+    notifyPlayer(w, targetOwner.id, 'system', 'Hostile fleet detected', `${player.username} is attacking ${target!.name} ${fmt(to)} with a fleet from ${w.planets[m.fromPlanetId ?? '']?.name ?? 'unknown'} ${fmt(m.from)}. ETA ${new Date(m.arriveAt).toLocaleTimeString()}.`);
+    bus.push({ to: targetOwner.id, type: 'alert', data: `Hostile fleet inbound to ${target!.name} from ${player.username} (${fmt(m.from)})` });
     for (const mem of targetOwner.allianceId ? w.alliances[targetOwner.allianceId]?.members ?? [] : []) {
       if (mem.playerId !== targetOwner.id) {
         bus.push({ to: mem.playerId, type: 'alert', data: `${targetOwner.username} is being attacked - consider sending help` });

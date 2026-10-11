@@ -110,7 +110,10 @@ export function commandView(w: World, p: Player) {
   };
 }
 
-const mv = (m: Movement, mine: boolean) => ({
+const mv = (m: Movement, mine: boolean, w?: World) => ({
+  fromName: (w && m.fromPlanetId ? w.planets[m.fromPlanetId]?.name : undefined) ?? undefined,
+  fromMoon: (w && m.fromPlanetId ? !!w.planets[m.fromPlanetId]?.isMoon : undefined),
+  ownerAlliance: (w && m.ownerId ? w.alliances[w.players[m.ownerId]?.allianceId ?? '']?.tag : undefined),
   id: m.id, mission: m.mission, phase: m.phase, from: m.from, to: m.to, ships: m.ships,
   cargo: mine ? m.cargo : undefined, arriveAt: m.arriveAt, returnAt: m.returnAt, holdUntil: m.holdUntil,
   acsId: m.acsId, toMoon: m.toMoon, missiles: m.missiles, ownerName: m.ownerName, ownerId: m.ownerId, speedPct: m.speedPct, flightMs: m.flightMs, departAt: m.departAt,
@@ -132,8 +135,8 @@ export function fleetsView(w: World, p: Player) {
     if ((m.mission === 'attack' || m.mission === 'missile' || m.mission === 'destroy') && m.phase === 'outbound' && m.ownerId !== p.id) {
       const hitMe = myCoords.some((c) => sameCoords(c, m.to));
       const hitAlly = allyCoords.find((a) => sameCoords(a.c, m.to));
-      if (hitMe) incoming.push({ ...mv(m, false), ships: {}, target: 'you', ally: false });
-      else if (hitAlly) incoming.push({ ...mv(m, false), ships: {}, target: `${hitAlly.owner} (${hitAlly.name})`, ally: true });
+      if (hitMe) incoming.push({ ...mv(m, false, w), ships: {}, target: 'you', ally: false });
+      else if (hitAlly) incoming.push({ ...mv(m, false, w), ships: {}, target: `${hitAlly.owner} (${hitAlly.name})`, ally: true });
     }
     if (m.mission === 'attack' && m.phase === 'outbound' && m.ownerId && !m.acsId && (m.ownerId === p.id || allyIds.has(m.ownerId))) {
       joinable.push({ ...mv(m, false), ships: {}, targetName: planetAt(w, m.to, !!m.toMoon)?.name ?? '?' });

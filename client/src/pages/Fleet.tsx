@@ -66,7 +66,7 @@ export function FleetPage() {
         <Card title="⚠ Hostile fleets inbound">
           {fleets.incoming.map((f) => (
             <div key={f.id} className="bad">
-              {f.ownerName} → {f.target} at {coordStr(f.to)} · arrives in <Countdown to={f.arriveAt} />
+              {f.ownerName}{f.ownerAlliance ? ` [${f.ownerAlliance}]` : ''} from {f.fromName ? `${f.fromMoon ? '🌙 ' : ''}${f.fromName} ` : ''}{coordStr(f.from)} → {f.target} at {coordStr(f.to)} · arrives in <Countdown to={f.arriveAt} />
               {f.ally && <span className="muted"> — send a "Defend ally" fleet to help!</span>}
             </div>
           ))}
