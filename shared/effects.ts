@@ -2,7 +2,7 @@
  * What an item does at each level, computed from the same formulas the server runs.
  * Pure functions: the client renders them as "details" pages, tests compare them to the engine.
  */
-import { BUILDINGS, GENERAL_FAST_SHIPS, TECHS, UNITS, isShip, wreckRepairShare } from './data';
+import { BUILDINGS, DRIVE_SWITCH, GENERAL_FAST_SHIPS, TECHS, UNITS, isShip, wreckRepairShare } from './data';
 import {
   buildingCost, buildingTime, production, researchTime, shipSpeed, storageCapacity, techCost, unitTime, lvl,
   type Levels, type ProductionInput,
@@ -36,7 +36,7 @@ export interface DetailCtx {
 }
 
 export type ColFmt = 'int' | 'dec' | 'pct' | 'dur' | 'mult';
-export interface Col { key: string; label: string; fmt: ColFmt; /** show the change from the previous level */ delta?: boolean; hint?: string }
+export interface Col { key: string; label: string; fmt: ColFmt; /** show the change from the previous level */ delta?: boolean; hint?: string; /** a cost or a delay: a rise is bad news (shown red) and a fall good news */ lowerIsBetter?: boolean }
 export interface Row { level: number; cost: Res; seconds: number; v: Record<string, number> }
 export interface TableDetails { columns: Col[]; rows: Row[]; notes: string[] }
 
@@ -64,7 +64,7 @@ const MINE = (res: 'metal' | 'crystal' | 'deuterium', used: 'usedMetal' | 'usedC
   columns: [
     { key: 'out', label: `${label} from this mine / h`, fmt: 'int', delta: true },
     { key: 'net', label: `Planet ${res} / h`, fmt: 'int', delta: true, hint: res === 'deuterium' ? 'after fusion reactors burn their share' : 'including the free basic income' },
-    { key: 'energy', label: 'Energy used', fmt: 'int', delta: true },
+    { key: 'energy', label: 'Energy used', fmt: 'int', delta: true, lowerIsBetter: true },
     { key: 'eff', label: 'Energy efficiency', fmt: 'pct', hint: 'drops below 100% when the planet cannot power every mine' },
   ],
   at: (L, ctx) => {
@@ -89,7 +89,7 @@ const EFFECTS: Partial<Record<BuildingId, Effect>> = {
   fusionReactor: {
     columns: [
       { key: 'fusion', label: 'Energy from fusion', fmt: 'int', delta: true },
-      { key: 'burn', label: 'Vespene Gas burned / h', fmt: 'int', delta: true },
+      { key: 'burn', label: 'Vespene Gas burned / h', fmt: 'int', delta: true, lowerIsBetter: true },
       { key: 'total', label: 'Planet energy', fmt: 'int', delta: true },
       { key: 'eff', label: 'Energy efficiency', fmt: 'pct' },
     ],
@@ -144,7 +144,7 @@ const EFFECTS: Partial<Record<BuildingId, Effect>> = {
     notes: ['Each scan costs 5,000 vespene gas from the moon.'],
   },
   jumpGate: {
-    columns: [{ key: 'cooldown', label: 'Recharge after a jump', fmt: 'dur', delta: true }],
+    columns: [{ key: 'cooldown', label: 'Recharge after a jump', fmt: 'dur', delta: true, lowerIsBetter: true }],
     at: (L, ctx) => ({ cooldown: jumpCooldownSeconds(L, ctx.speeds.fleet) }),
     notes: ['Both the sending and receiving gate must be ready.'],
   },
@@ -214,7 +214,7 @@ const TECH_EFFECTS: Partial<Record<TechId, Effect>> = {
   shielding: mulPct('Shield strength'),
   armour: mulPct('Hull strength'),
   graviton: {
-    columns: [{ key: 'energy', label: 'Energy production needed on the planet', fmt: 'int', delta: true }],
+    columns: [{ key: 'energy', label: 'Energy production needed on the planet', fmt: 'int', delta: true, lowerIsBetter: true }],
     at: (L) => ({ energy: (TECHS.graviton.energyReq ?? 0) * Math.pow(3, L - 1) }),
     notes: ['Costs no resources - the price is the energy output of a single planet.'],
   },
@@ -298,6 +298,8 @@ export interface UnitDetails {
   /** how each stat grows with its tech, level 0..max */
   techRows: { level: number; attack: number; shield: number; hull: number; speed: number }[];
   drive: string | null;
+  /** set for the ships that change engine at a high enough drive level (small cargo, bomber), with their speed at each level of that drive */
+  driveSwitch: { tech: TechId; level: number; speed: number; rows: { level: number; speed: number }[] } | null;
 }
 
 export function unitDetails(id: UnitId, ctx: DetailCtx, maxTech = 10): UnitDetails {
@@ -317,6 +319,7 @@ export function unitDetails(id: UnitId, ctx: DetailCtx, maxTech = 10): UnitDetai
       speed: u.drive ? speedAt({ ...ctx.techs, [u.drive]: L }) : 0,
     })),
     drive: u.drive,
+    driveSwitch: isShip(id) && DRIVE_SWITCH[id] ? { ...DRIVE_SWITCH[id]!, rows: range(0, 12).map((L) => ({ level: L, speed: speedAt({ ...ctx.techs, [DRIVE_SWITCH[id]!.tech]: L }) })) } : null,
   };
 }
 

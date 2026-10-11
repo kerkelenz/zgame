@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ResIcon } from '../ResIcon';
-import { BUILDINGS, TECHS, UNITS, buildingAllowed } from '../../../shared/data';
+import { BUILDINGS, DRIVE_SWITCH, TECHS, UNITS, buildingAllowed } from '../../../shared/data';
+import { HELP } from '../../../shared/help';
 import {
   buildingEffectsAt, buildingTable, detailCtxFrom, kindOf, requirementStatus, requirementsOf, techEffectsAt, techTable, unitDetails, unlocksOf,
   type Col, type DetailCtx, type TableDetails,
@@ -43,7 +44,7 @@ function LevelTable({ table, current, prevEffects, have, hasCost = true }: { tab
                 {table.columns.map((c) => (
                   <td key={c.key}>
                     {fmtCell(c.fmt, row.v[c.key])}
-                    {c.delta && prev[c.key] !== undefined && <span className={`delta ${row.v[c.key] - prev[c.key] < 0 ? 'neg' : ''}`}>{fmtDeltaCell(c, row.v[c.key] - prev[c.key])}</span>}
+                    {c.delta && prev[c.key] !== undefined && <span className={`delta ${(row.v[c.key] - prev[c.key] < 0) !== !!c.lowerIsBetter ? 'neg' : ''}`}>{fmtDeltaCell(c, row.v[c.key] - prev[c.key])}</span>}
                   </td>
                 ))}
               </tr>
@@ -67,6 +68,17 @@ function Requirements({ id, ctx }: { id: string; ctx: DetailCtx }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** what the item is for, in a couple of friendly sentences, with the things worth knowing */
+function Explain({ id, fallback }: { id: string; fallback: string }) {
+  const h = HELP[id];
+  return (
+    <div className="explain">
+      <p style={{ margin: 0 }}>{h?.does ?? fallback}</p>
+      {h?.tips && h.tips.length > 0 && <ul className="tips">{h.tips.map((t, i) => <li key={i}>{t}</li>)}</ul>}
+    </div>
   );
 }
 
@@ -137,7 +149,7 @@ export function ItemDetail() {
           <div className="cardtop">
             <img className="icon big" src={Art.icon(isB ? 'building' : 'tech', id, def.name)} alt="" />
             <div>
-              <p style={{ margin: 0 }}>{def.desc}</p>
+              <Explain id={id} fallback={def.desc} />
               <p className="muted">{isB ? `Level on ${planet.name}:` : 'Your level:'} <b className="energy">{cur}</b>{!isB && TECHS[id as TechId].energyReq ? ` · needs ${fmt(TECHS[id as TechId].energyReq! * 3 ** cur)} energy production for level ${cur + 1}` : ''}</p>
             </div>
           </div>
@@ -150,7 +162,9 @@ export function ItemDetail() {
               <tr><td>Time</td><td>{fmtDur(next.seconds * 1000)}</td></tr>
               {table.columns.map((c) => {
                 const nv = next.v[c.key], cv = (isB ? buildingEffectsAt(id as BuildingId, cur, ctx) : techEffectsAt(id as TechId, cur, ctx))[c.key];
-                return <tr key={c.key}><td title={c.hint}>{c.label}</td><td>{cur > 0 || c.delta ? <>{fmtCell(c.fmt, cv)} → <b>{fmtCell(c.fmt, nv)}</b></> : <b>{fmtCell(c.fmt, nv)}</b>}</td></tr>;
+                const change = c.delta && cv !== undefined && nv !== undefined ? nv - cv : 0;
+                const tone = !change ? '' : (change > 0) !== !!c.lowerIsBetter ? 'good' : 'bad';      // a bigger output is good, a bigger cost or delay is bad
+                return <tr key={c.key}><td title={c.hint}>{c.label}</td><td>{cur > 0 || c.delta ? <>{fmtCell(c.fmt, cv)} → <b>{fmtCell(c.fmt, nv)}</b></> : <b>{fmtCell(c.fmt, nv)}</b>}{tone && <span className={`chg ${tone}`}>{fmtDeltaCell(c, change)}</span>}</td></tr>;
               })}
             </tbody></table>
             <div className="row">
@@ -197,7 +211,7 @@ export function ItemDetail() {
         <div className="cardtop">
           <img className="icon big" src={Art.icon(kind === 'ship' ? 'ship' : 'defense', id, u.name)} alt="" />
           <div>
-            <p style={{ margin: 0 }}>{u.desc}</p>
+            <Explain id={id} fallback={u.desc} />
             <p className="muted">On {planet.name}: <b className="energy">{fmt(owned)}</b></p>
           </div>
         </div>
@@ -213,7 +227,7 @@ export function ItemDetail() {
             {u.speed > 0 && stat('Speed', d.base.speed, d.effective.speed)}
             {u.fuel > 0 && stat('Fuel use', d.base.fuel, d.base.fuel)}
           </tbody></table>
-          {u.drive && <p className="muted small">Uses the <ItemLink id={u.drive} /> engine.</p>}
+          {u.drive && <p className="muted small">Uses the <ItemLink id={u.drive} /> engine{d.driveSwitch ? <>, and switches to <ItemLink id={d.driveSwitch.tech} /> from level {d.driveSwitch.level}</> : null}.</p>}
         </Card>
         <Card title="Build">
           <table className="kv"><tbody>
@@ -229,6 +243,22 @@ export function ItemDetail() {
           </div>
         </Card>
       </div>
+
+      {(u.kind === 'ship' || d.rapidFireAgainst.length > 0 || d.driveSwitch) && (
+        <Card title="Special features">
+          <ul className="specials">
+            {d.driveSwitch && (() => {
+              const sw = d.driveSwitch, have = lvl(techs, sw.tech as TechId), on = have >= sw.level;
+              return <li className="warn"><b>Changes engine:</b> from <ItemLink id={sw.tech} /> level {sw.level} it flies on the {sw.tech === 'hyperspaceDrive' ? 'hyperspace' : 'impulse'} drive from a base speed of {fmt(sw.speed)}, and its speed then grows with that drive. You are at level {have}: {on ? <b className="good">switched, now {fmt(d.effective.speed)}</b> : <b className="muted">not yet ({sw.level - have} more level{sw.level - have === 1 ? '' : 's'})</b>}.</li>;
+            })()}
+            {d.rapidFireAgainst.slice(0, 4).map((r) => <li key={r.id} className="good"><b>Rapid fire ×{r.value}</b> against <ItemLink id={r.id} /></li>)}
+            {d.rapidFireAgainst.length > 4 && <li className="muted small">…and {d.rapidFireAgainst.length - 4} more, listed below.</li>}
+            {d.rapidFireFrom.slice(0, 4).map((r) => <li key={r.id} className="bad"><ItemLink id={r.id} /> has <b>rapid fire ×{r.value}</b> against it</li>)}
+            {u.cargo > 0 && u.kind === 'ship' && <li className="info"><b>Cargo {fmt(u.cargo)}</b>{id === 'recycler' ? ' (also its recycling capacity)' : ''}</li>}
+            {!d.driveSwitch && d.rapidFireAgainst.length === 0 && d.rapidFireFrom.length === 0 && u.cargo === 0 && <li className="muted">No special features.</li>}
+          </ul>
+        </Card>
+      )}
 
       {(d.rapidFireAgainst.length > 0 || d.rapidFireFrom.length > 0) && (
         <div className="grid2">
@@ -250,6 +280,14 @@ export function ItemDetail() {
                 {d.drive && <td className={r.level === lvl(techs, d.drive as TechId) ? 'cur' : ''}>{fmt(r.speed)}</td>}</tr>
             ))}</tbody>
           </table></div>
+          {d.driveSwitch && (
+            <>
+              <h4>Speed by <ItemLink id={d.driveSwitch.tech} /> level</h4>
+              <div className="dwrap"><table className="dtable compact"><thead><tr><th>Level</th>{d.driveSwitch.rows.map((r) => <th key={r.level} className={r.level === d.driveSwitch!.level ? 'cur' : ''}>{r.level}</th>)}</tr></thead>
+                <tbody><tr><td>Speed</td>{d.driveSwitch.rows.map((r) => <td key={r.level} className={r.level === lvl(techs, d.driveSwitch!.tech as TechId) ? 'cur' : r.level === d.driveSwitch!.level ? 'next' : ''}>{fmt(r.speed)}</td>)}</tr></tbody></table></div>
+              <p className="muted small">The jump at level {d.driveSwitch.level} is the engine change.</p>
+            </>
+          )}
           <p className="muted small">Each level of weapons, shielding and armour adds +10%. Drive levels add +10% / +20% / +30% speed for combustion / impulse / hyperspace ships.</p>
         </Card>
       )}

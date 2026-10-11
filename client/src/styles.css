@@ -333,3 +333,9 @@ ul.reqlist { list-style: none; padding: 0; margin: 6px 0; } ul.reqlist li { marg
 .modalback { position: fixed; inset: 0; z-index: 60; background: rgba(2, 5, 12, .72); display: flex; align-items: flex-start; justify-content: center; padding: 4vh 12px; overflow-y: auto; }
 .modal { background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 14px 18px; width: min(1000px, 100%); box-shadow: 0 20px 60px rgba(0,0,0,.6); }
 table.rounds { font-size: 12.5px; width: 100%; margin-bottom: 10px; } table.rounds th { white-space: normal; } table.rounds tr.total td { border-top: 2px solid var(--line); }
+
+.explain .tips { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; } .explain .tips li { margin: 2px 0; }
+.specials { list-style: none; margin: 0; padding: 0; } .specials li { margin: 4px 0; padding-left: 10px; border-left: 3px solid var(--line); }
+.specials li.good { border-left-color: #5fd28a; } .specials li.bad { border-left-color: #ff6b6b; } .specials li.warn { border-left-color: #f0b04a; } .specials li.info { border-left-color: #55b7ff; }
+.chg { margin-left: 8px; font-size: 12px; font-weight: 700; } .chg.good { color: #5fd28a; } .chg.bad { color: #ff7b7b; }
+table.compact td, table.compact th { padding: 3px 8px; text-align: center; } td.next { outline: 1px solid var(--accent); }

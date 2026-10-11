@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-k', date: '2026-10-12', title: 'Rules and tidy-ups',
     items: [
+      'Every building, research, ship and defense has a short explanation on its details page, the change at the next level is coloured (green good, red costs), and ships have a Special features box with rapid fire and engine changes such as the switch of the Bomber to hyperspace drive at level 8.',
       'Battle reports in your messages show the result only, with a Full battle report button that opens a window with every round: shots, damage, what the enemy shields absorbed, what reached hulls and what was destroyed. The shared link shows the same full report.',
       'Battle reports say whether a moon formed and what the chance was; if no moon formed it shows the chance the debris field gave.',
       'Standing: the 24 h and Place columns show the points each commander gained or lost and the places they climbed or fell since the daily snapshot, refreshed every 24 hours.',

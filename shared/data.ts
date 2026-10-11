@@ -191,5 +191,12 @@ export const ALLIANCE_UPGRADES: Record<string, AllianceUpgrade> = {
   logistics: { id: 'logistics', name: 'Allied Logistics', desc: '+3% fleet speed per level for every member.', base: { metal: 60_000, crystal: 30_000, deuterium: 30_000 }, factor: 2, perLevel: 0.03 },
 };
 
+/** Two ships change engine when the matching technology is high enough: from that level they fly on the better drive, from a better base speed, and their speed grows with that drive instead of the old one. */
+export const DRIVE_SWITCH: Partial<Record<ShipId, { tech: 'impulseDrive' | 'hyperspaceDrive'; level: number; speed: number }>> = {
+  smallCargo: { tech: 'impulseDrive', level: 5, speed: 10_000 },
+  bomber: { tech: 'hyperspaceDrive', level: 8, speed: 5_000 },
+};
+export const DRIVE_BONUS = { combustionDrive: 0.1, impulseDrive: 0.2, hyperspaceDrive: 0.3 } as const;
+
 /** how long an expedition may stay out (whole hours); the server clamps to this and the Fleet page offers exactly these */
 export const EXPEDITION_HOURS = { min: 1, max: 4 };

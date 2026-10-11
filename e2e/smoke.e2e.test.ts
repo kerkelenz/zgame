@@ -385,6 +385,26 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('the details page explains what an item does, colours what each level changes and shows engine changes', async () => {
+    await go('Buildings');
+    await page.locator('.items .card a.itemlink', { hasText: 'Fusion Reactor' }).first().click();
+    await page.getByRole('heading', { name: 'Fusion Reactor' }).first().waitFor();
+    expect(await page.locator('.explain').innerText()).toMatch(/Burns vespene gas to make a large amount of energy/);
+    expect(await page.locator('.explain .tips li').count()).toBeGreaterThanOrEqual(1);
+    expect(await page.locator('.chg.good').count()).toBeGreaterThanOrEqual(1);                  // more energy is good news
+    expect(await page.locator('.chg.bad').count()).toBeGreaterThanOrEqual(1);                   // more gas burned is bad news
+    await page.getByRole('button', { name: '← Back' }).click();
+    await go('Shipyard');
+    await page.locator('.items .card a.itemlink', { hasText: 'Bomber' }).first().click();
+    await page.getByRole('heading', { name: 'Bomber' }).first().waitFor();
+    expect(await page.locator('.specials').innerText()).toMatch(/Changes engine: from Hyperspace Drive level 8/);
+    expect(await page.locator('.specials').innerText()).toMatch(/5,000|5K|5000/);
+    expect(await page.locator('.specials li.good').count()).toBeGreaterThanOrEqual(1);          // rapid fire against defenses
+    expect(await page.locator('main').innerText()).toMatch(/Speed by Hyperspace Drive level/);
+    await page.getByRole('button', { name: '← Back' }).click();
+    noErrors();
+  });
+
   run('the message options in Settings are saved', async () => {
     await go('Settings');
     const quiet = page.getByLabel(/No messages when something finishes/);

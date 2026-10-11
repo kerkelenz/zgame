@@ -1,4 +1,4 @@
-import { BUILDINGS, CRAWLER, POSITION_BONUS, TECHS, UNITS, crawlerBonus } from './data';
+import { BUILDINGS, CRAWLER, DRIVE_BONUS, DRIVE_SWITCH, POSITION_BONUS, TECHS, UNITS, crawlerBonus } from './data';
 import type { BuildingId, Coords, Fleet, Res, ShipId, TechId, UnitId } from './types';
 
 export type Levels<K extends string> = Partial<Record<K, number>>;
@@ -146,12 +146,10 @@ export function distance(a: Coords, b: Coords): number {
 export function shipSpeed(id: ShipId, techs: Levels<TechId>, logisticsBonus = 0): number {
   const u = UNITS[id];
   if (!u.drive) return 0;
-  const per = u.drive === 'combustionDrive' ? 0.1 : u.drive === 'impulseDrive' ? 0.2 : 0.3;
-  let base = u.speed;
-  // OGame: small cargo upgrades to impulse at impulse 5, bomber to hyperspace at 8
-  if (id === 'smallCargo' && lvl(techs, 'impulseDrive') >= 5) return 10000 * (1 + 0.2 * lvl(techs, 'impulseDrive')) * (1 + logisticsBonus);
-  if (id === 'bomber' && lvl(techs, 'hyperspaceDrive') >= 8) return 5000 * (1 + 0.3 * lvl(techs, 'hyperspaceDrive')) * (1 + logisticsBonus);
-  return base * (1 + per * lvl(techs, u.drive)) * (1 + logisticsBonus);
+  // the small cargo and the bomber change engine at a high enough drive level (see DRIVE_SWITCH)
+  const sw = DRIVE_SWITCH[id];
+  if (sw && lvl(techs, sw.tech) >= sw.level) return sw.speed * (1 + DRIVE_BONUS[sw.tech] * lvl(techs, sw.tech)) * (1 + logisticsBonus);
+  return u.speed * (1 + DRIVE_BONUS[u.drive] * lvl(techs, u.drive)) * (1 + logisticsBonus);
 }
 
 export function fleetSpeed(fleet: Fleet, techs: Levels<TechId>, logisticsBonus = 0, extra?: (id: ShipId) => number): number {
