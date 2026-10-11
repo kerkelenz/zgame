@@ -131,7 +131,8 @@ describe('using the game', () => {
     expect(await page.locator('.treeinfo').innerText()).toMatch(/Vespene Extractor to level 5/);
     expect(await page.locator('.gcard.anc').count()).toBe(3);
     expect(await page.locator('.gcard.dim').count()).toBeGreaterThan(40);
-    expect(await page.locator('.edges g').count()).toBe(3);
+    expect(await page.locator('.bedge.back').count()).toBe(3);
+    expect(await page.locator('.bedge').count()).toBeGreaterThan(70);          // the whole map is drawn, not only the selection
     await page.getByRole('button', { name: 'Production and effects' }).click();
     expect(await page.locator('main').innerText()).toMatch(/Raised by/);
     noErrors();

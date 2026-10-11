@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ITEM_EDGES, TREE, columns, levelsShown, nodeOf, pathTo } from '../shared/techtree';
+import { ITEM_EDGES, VISIBLE_EDGES, TREE, columns, levelsShown, nodeOf, pathTo } from '../shared/techtree';
 
 describe('the tech tree layout', () => {
   it('puts every item in exactly one column, by step', () => {
@@ -27,5 +27,15 @@ describe('the tech tree layout', () => {
     expect(path).toContainEqual({ id: 'energy', level: 3 });
     expect(path.map((p) => p.id).indexOf('researchLab')).toBeLessThan(path.map((p) => p.id).indexOf('energy'));
     expect(pathTo('metalMine')).toEqual([]);
+  });
+
+  it('leaves out arrows another requirement already guarantees, and marks the busy hubs', () => {
+    const has = (a: string, b: string) => VISIBLE_EDGES.some((e) => e.from === a && e.to === b);
+    expect(VISIBLE_EDGES.length).toBeLessThan(ITEM_EDGES.length);
+    expect(has('researchLab', 'laser')).toBe(false);       // Energy 2 already needs the lab
+    expect(has('energy', 'laser')).toBe(true);
+    expect(has('deuteriumSynthesizer', 'fusionReactor')).toBe(true);
+    expect(VISIBLE_EDGES.find((e) => e.from === 'shipyard')!.hub).toBe(true);
+    expect(VISIBLE_EDGES.find((e) => e.from === 'laser' && e.to === 'plasma')!.hub).toBe(false);
   });
 });

@@ -158,6 +158,15 @@ export function levelsShown(id: string): number {
 export interface ItemEdge { from: string; to: string; level: number }
 export const ITEM_EDGES: ItemEdge[] = TREE.flatMap((n) => n.requires.map((r) => ({ from: r.id, to: n.id, level: r.level })));
 
+/** Arrows worth drawing: a requirement already guaranteed by another requirement of the same item (Laser needs Research Lab 1, but needs Energy 2, which needs Research Lab 1) is left out. `hub` marks arrows from items that feed many others (the Shipyard), drawn fainter so they do not bury the rest. */
+export const HUB_FANOUT = 5;
+export const VISIBLE_EDGES: (ItemEdge & { hub: boolean })[] = (() => {
+  const keep = ITEM_EDGES.filter((e) => !(nodeOf(e.to)?.requires ?? []).some((o) => o.id !== e.from && (ancestors(o.id).get(e.from) ?? 0) >= e.level));
+  const fan = new Map<string, number>();
+  for (const e of keep) fan.set(e.from, (fan.get(e.from) ?? 0) + 1);
+  return keep.map((e) => ({ ...e, hub: (fan.get(e.from) ?? 0) > HUB_FANOUT }));
+})();
+
 let cols: string[][] | null = null;
 /** One column per step, left to right. Items are ordered inside each column to keep the arrows between columns short and untangled. */
 export function columns(): string[][] {
@@ -166,7 +175,7 @@ export function columns(): string[][] {
   for (const n of [...TREE].sort((a, b) => a.name.localeCompare(b.name))) (out[n.tier] ||= []).push(n.id);
   const needs = new Map<string, string[]>(), feeds = new Map<string, string[]>();
   for (const n of TREE) { needs.set(n.id, []); feeds.set(n.id, []); }
-  for (const e of ITEM_EDGES) { needs.get(e.to)!.push(e.from); feeds.get(e.from)!.push(e.to); }
+  for (const e of VISIBLE_EDGES) { if (e.hub) continue; needs.get(e.to)!.push(e.from); feeds.get(e.from)!.push(e.to); }
   const index = () => new Map(out.flatMap((c) => c.map((id, i) => [id, i / Math.max(1, c.length - 1)] as const)));
   const sweep = (c: string[], links: Map<string, string[]>) => {
     const pos = index();

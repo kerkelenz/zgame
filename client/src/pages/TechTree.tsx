@@ -1,18 +1,19 @@
 import { useMemo, useRef, useState } from 'react';
 import { lvl } from '../../../shared/formulas';
 import { BUILDINGS } from '../../../shared/data';
-import { FLOWS, ITEM_EDGES, TREE, ancestors, columns, descendants, levelsShown, nodeOf, pathTo } from '../../../shared/techtree';
+import { FLOWS, ITEM_EDGES, TREE, VISIBLE_EDGES, ancestors, columns, descendants, levelsShown, nodeOf, pathTo } from '../../../shared/techtree';
 import type { BuildingId, TechId, UnitId } from '../../../shared/types';
 import { useGame } from '../game';
 import { Card, ItemLink, Page } from '../ui';
 
-const PIP = 16, CARD_H = 56, GAP_Y = 12, GAP_X = 96, PAD = 14, MIN_W = 140;
+const PIP = 16, CARD_H = 76, GAP_Y = 12, GAP_X = 96, PAD = 14, MIN_W = 140;
 const KIND_LABEL: Record<string, string> = { building: 'building', tech: 'research', ship: 'ship', defense: 'defense' };
 
 export function TechTree() {
   const { planet, me, openItem } = useGame();
   const [view, setView] = useState<'tree' | 'flows'>('tree');
   const [sel, setSel] = useState<string | null>(null);
+  const [hover, setHover] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const box = useRef<HTMLDivElement>(null);
 
@@ -38,10 +39,29 @@ export function TechTree() {
     return { pos, cols, width: x - GAP_X + PAD, height: PAD + 22 + Math.max(...cols.map((c) => c.length)) * (CARD_H + GAP_Y) };
   }, []);
 
-  const back = useMemo(() => (sel ? ancestors(sel) : new Map<string, number>()), [sel]);
-  const fwd = useMemo(() => (sel ? descendants(sel) : new Set<string>()), [sel]);
-  const lit = (id: string) => sel === id || back.has(id) || fwd.has(id);
-  const litEdges = useMemo(() => ITEM_EDGES.filter((e) => sel && lit(e.from) && lit(e.to)), [sel, back, fwd]); // eslint-disable-line react-hooks/exhaustive-deps
+  // where each arrow leaves and enters a card: spread along the edge so arrows from one card do not sit on top of each other
+  const anchors = useMemo(() => {
+    const out = new Map<string, number>(), inn = new Map<string, number>();
+    const centre = (id: string) => layout.pos.get(id)!.y + CARD_H / 2;
+    const spread = (list: typeof VISIBLE_EDGES, key: (e: (typeof VISIBLE_EDGES)[number]) => string, other: (e: (typeof VISIBLE_EDGES)[number]) => string, into: Map<string, number>) => {
+      const groups = new Map<string, typeof VISIBLE_EDGES>();
+      for (const e of list) (groups.get(key(e)) ?? groups.set(key(e), []).get(key(e))!).push(e);
+      for (const g of groups.values()) {
+        g.sort((a, b) => centre(other(a)) - centre(other(b)));
+        const step = Math.min(7, (CARD_H - 24) / Math.max(1, g.length - 1));
+        g.forEach((e, i) => into.set(e.from + '>' + e.to, (i - (g.length - 1) / 2) * step));
+      }
+    };
+    spread(VISIBLE_EDGES, (e) => e.from, (e) => e.to, out);
+    spread(VISIBLE_EDGES, (e) => e.to, (e) => e.from, inn);
+    return { out, inn };
+  }, [layout]);
+
+  const active = sel ?? hover;
+  const back = useMemo(() => (active ? ancestors(active) : new Map<string, number>()), [active]);
+  const fwd = useMemo(() => (active ? descendants(active) : new Set<string>()), [active]);
+  const lit = (id: string) => active === id || back.has(id) || fwd.has(id);
+  const litEdges = useMemo(() => ITEM_EDGES.filter((e) => active && lit(e.from) && lit(e.to)), [active, back, fwd]); // eslint-disable-line react-hooks/exhaustive-deps
   const needed = useMemo(() => {
     const m = new Map<string, Set<number>>();
     for (const e of litEdges) (m.get(e.from) ?? m.set(e.from, new Set()).get(e.from)!).add(e.level);
@@ -69,7 +89,7 @@ export function TechTree() {
       {view === 'tree' && (
         <>
           <p className="muted small">
-            Each card is a building, research, ship or defense, and its squares are its levels. Cards flow left to right: whatever a card needs is to its left. Click a card to draw its arrows: <span className="tlegend anc">what leads to it</span>, <span className="tlegend desc">what it opens</span>, with the level each arrow needs.
+            Each card is a building, research, ship or defense, and its squares are its levels. Cards flow left to right: whatever a card needs is to its left. Arrows join each card to what it needs; faint arrows come from items that feed many others, such as the Shipyard. Point at or click a card to light its whole chain: <span className="tlegend anc">what leads to it</span>, <span className="tlegend desc">what it opens</span>, with the level each arrow needs.
             Squares: <span className="tlegend done">have</span> <span className="tlegend next">next</span> <span className="tlegend locked">locked</span>
           </p>
           <div className="row wrap">
@@ -113,20 +133,19 @@ export function TechTree() {
                   return first ? <div key={t} className="colhead" style={{ left: first.x, top: PAD }}>{t === 0 ? 'Start' : `Step ${t}`}</div> : null;
                 })}
                 <svg width={layout.width} height={layout.height} className="edges" aria-hidden="true">
-                  <defs>
-                    <marker id="arrA" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#ffbe50" /></marker>
-                    <marker id="arrD" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#6ec8ff" /></marker>
-                  </defs>
-                  {litEdges.map((e) => {
-                    const a = layout.pos.get(e.from)!, b = layout.pos.get(e.to)!;
-                    const x1 = a.x + a.w, y1 = a.y + CARD_H / 2, x2 = b.x, y2 = b.y + CARD_H / 2;
-                    const dx = Math.max(30, (x2 - x1) / 2);
-                    const forward = e.from === sel || fwd.has(e.from);
-                    const lx = x2 - 22, ly = y2 + (y1 > y2 ? 12 : -4);
+                  {VISIBLE_EDGES.map((e) => {
+                    const A = layout.pos.get(e.from)!, B = layout.pos.get(e.to)!;
+                    const k = e.from + '>' + e.to;
+                    const x1 = A.x + A.w, y1 = A.y + CARD_H / 2 + (anchors.out.get(k) ?? 0), x2 = B.x, y2 = B.y + CARD_H / 2 + (anchors.inn.get(k) ?? 0);
+                    const dx = Math.max(36, (x2 - x1) / 2);
+                    const onPath = !!active && lit(e.from) && lit(e.to);
+                    const forward = e.from === active || fwd.has(e.from);
+                    const cls = `bedge ${nodeOf(e.from)!.kind} ${e.hub ? 'hub' : ''} ${active ? (onPath ? (forward ? 'fwd' : 'back') : 'off') : ''}`;
                     return (
-                      <g key={e.from + e.to} className={forward ? 'edgeD' : 'edgeA'}>
-                        <path d={`M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`} markerEnd={forward ? 'url(#arrD)' : 'url(#arrA)'} />
-                        <text x={lx} y={ly}>{e.level}</text>
+                      <g key={k} className={cls}>
+                        <path d={`M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`} />
+                        <circle cx={x2} cy={y2} r={2.6} />
+                        {onPath && <text x={x2 - 20} y={y2 - 5}>{e.level}</text>}
                       </g>
                     );
                   })}
@@ -135,10 +154,11 @@ export function TechTree() {
                   const p = layout.pos.get(n.id)!;
                   const total = levelsShown(n.id), h = have(n.id), isUnit = n.kind === 'ship' || n.kind === 'defense';
                   const need = needed.get(n.id);
-                  const cls = ['gcard', n.kind, sel === n.id ? 'sel' : '', back.has(n.id) ? 'anc' : '', fwd.has(n.id) ? 'desc' : '', sel && !lit(n.id) ? 'dim' : ''].filter(Boolean).join(' ');
+                  const cls = ['gcard', n.kind, sel === n.id ? 'sel' : '', back.has(n.id) ? 'anc' : '', fwd.has(n.id) ? 'desc' : '', sel && !lit(n.id) ? 'dim' : '', !sel && active && lit(n.id) ? 'peek' : ''].filter(Boolean).join(' ');
                   return (
-                    <div key={n.id} className={cls} style={{ left: p.x, top: p.y, width: p.w, height: CARD_H }} onClick={() => pick(n.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(n.id); } }}>
+                    <div key={n.id} className={cls} style={{ left: p.x, top: p.y, width: p.w, height: CARD_H }} onClick={() => pick(n.id)} onMouseEnter={() => setHover(n.id)} onMouseLeave={() => setHover(null)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(n.id); } }}>
                       <div className="gname" title={n.name}>{n.name}{n.moonOnly ? ' 🌙' : ''}{isUnit && h > 0 ? <span className="lvl"> ×{h}</span> : null}</div>
+                      <div className="needs" title={n.requires.map((r) => `${nodeOf(r.id)!.name} ${r.level}`).join(', ')}>{n.requires.length ? `Needs ${n.requires.map((r) => `${nodeOf(r.id)!.name.replace(' Technology', '')} ${r.level}`).join(', ')}` : 'No requirements'}</div>
                       <div className="pips">
                         {Array.from({ length: total }, (_, i) => i + 1).map((l) => {
                           const st = isUnit ? (h > 0 ? 'done' : ready(n.id) ? 'next' : 'locked') : l <= h ? 'done' : l === h + 1 && ready(n.id) ? 'next' : 'locked';
