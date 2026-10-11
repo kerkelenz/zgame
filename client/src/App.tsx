@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ResIcon } from './ResIcon';
 import { drawStarfield } from './art';
 import { useGame } from './game';
 import { Countdown, fmt, coordStr } from './ui';
@@ -86,9 +87,9 @@ export function App() {
           {planets.map((p) => <option key={p.id} value={p.id}>{p.isMoon ? '🌙 ' : ''}{p.name} {coordStr(p.coords)}</option>)}
         </select>
         <div className="res">
-          <span className="metal" title="Metal">M {fmt(live.metal)}<small>/{fmt(planet.capacity.metal)}</small></span>
-          <span className="crystal" title="Crystal">C {fmt(live.crystal)}<small>/{fmt(planet.capacity.crystal)}</small></span>
-          <span className="deut" title="Vespene Gas">D {fmt(live.deuterium)}<small>/{fmt(planet.capacity.deuterium)}</small></span>
+          <span className="metal" title="Metal"><ResIcon k="metal" /> {fmt(live.metal)}<small>/{fmt(planet.capacity.metal)}</small></span>
+          <span className="crystal" title="Crystal"><ResIcon k="crystal" /> {fmt(live.crystal)}<small>/{fmt(planet.capacity.crystal)}</small></span>
+          <span className="deut" title="Vespene Gas"><ResIcon k="deuterium" /> {fmt(live.deuterium)}<small>/{fmt(planet.capacity.deuterium)}</small></span>
           <span className={energy < 0 ? 'bad' : 'energy'} title="Energy balance">⚡ {fmt(energy)}</span>
         </div>
         <div className="who">

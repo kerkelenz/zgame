@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ResIcon } from '../ResIcon';
 import { BUILDINGS } from '../../../shared/data';
 import {
   KEYS, bestUpgrade, empireTotals, planetEconomy, projectStock, upgradeOptions, type ResKey,
@@ -81,7 +82,7 @@ export function Economy() {
 
       <Card title="Planet by planet">
         <div className="dwrap"><table className="table">
-          <thead><tr><th>Planet</th><th className="metal">Metal / h</th><th className="crystal">Crystal / h</th><th className="deut">Deut / h</th><th>Energy</th><th>Store fills</th><th>Best next upgrade</th></tr></thead>
+          <thead><tr><th>Planet</th><th className="metal"><ResIcon k="metal" /> Metal / h</th><th className="crystal"><ResIcon k="crystal" /> Crystal / h</th><th className="deut"><ResIcon k="deuterium" /> Vespene / h</th><th>Energy</th><th>Store fills</th><th>Best next upgrade</th></tr></thead>
           <tbody>
             {rows.map((r) => {
               const soonest = KEYS.map((k) => ({ k, s: r.economy.fullIn[k] })).filter((x) => x.s != null).sort((a, b) => a.s! - b.s!)[0];
@@ -183,7 +184,7 @@ export function Economy() {
         <div className="chips"><button className={sort === 'payback' ? 'active' : ''} onClick={() => setSort('payback')}>fastest payback</button><button className={sort === 'cost' ? 'active' : ''} onClick={() => setSort('cost')}>cheapest</button></div>}>
         {best && <p>Best next step on {sel.p.name}: <b><ItemLink id={best.id} /> {best.level}</b> pays for itself in about <b>{hours(best.paybackHours)}</b>.</p>}
         <div className="dwrap"><table className="table">
-          <thead><tr><th>Upgrade</th><th>Cost</th><th>Time</th><th className="metal">Metal</th><th className="crystal">Crystal</th><th className="deut">Deut</th><th>Energy</th><th>Payback</th><th>Can afford in</th><th></th></tr></thead>
+          <thead><tr><th>Upgrade</th><th>Cost</th><th>Time</th><th className="metal"><ResIcon k="metal" /> Metal</th><th className="crystal"><ResIcon k="crystal" /> Crystal</th><th className="deut"><ResIcon k="deuterium" /> Vespene Gas</th><th>Energy</th><th>Payback</th><th>Can afford in</th><th></th></tr></thead>
           <tbody>
             {planner.map((o) => (
               <tr key={o.id} className={o.id === best?.id ? 'next' : ''}>

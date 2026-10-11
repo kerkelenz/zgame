@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { ResIcon } from '../ResIcon';
 import { get, post } from '../api';
 import { useGame } from '../game';
 import { Card, Countdown, Page, fmt, when } from '../ui';
@@ -29,7 +30,7 @@ export function Command() {
           {d.tributes.map((t: any) => (
             <div key={t.id} className="tribute">
               <p><b>{t.npc}</b> will keep its fleets away for a while in exchange for{' '}
-                <span className="metal">{fmt(t.want.metal)} M</span> <span className="crystal">{fmt(t.want.crystal)} C</span> <span className="deut">{fmt(t.want.deuterium)} D</span>.
+                <span className="metal"><ResIcon k="metal" /> {fmt(t.want.metal)}</span> <span className="crystal"><ResIcon k="crystal" /> {fmt(t.want.crystal)}</span> <span className="deut"><ResIcon k="deuterium" /> {fmt(t.want.deuterium)}</span>.
                 Silence counts as a refusal - answer within <Countdown to={t.deadline} />.</p>
               <div className="row">
                 <button className="primary" onClick={() => void run(() => post(`/tribute/${t.id}`, { answer: 'pay' }), 'Tribute paid')}>Pay the tribute</button>

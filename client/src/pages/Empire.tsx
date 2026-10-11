@@ -1,4 +1,5 @@
 import { BUILDINGS, SHIP_IDS, UNITS, isStationary } from '../../../shared/data';
+import { ResIcon } from '../ResIcon';
 import { useGame } from '../game';
 import { Card, Countdown, Page, coordStr, fmt } from '../ui';
 
@@ -22,9 +23,9 @@ export function Empire() {
     <Page title="Empire">
       <Card title="Totals">
         <div className="bankline">
-          <span className="metal">{fmt(total.metal)} M <small className="muted">+{fmt(total.mph)}/h</small></span>
-          <span className="crystal">{fmt(total.crystal)} C <small className="muted">+{fmt(total.cph)}/h</small></span>
-          <span className="deut">{fmt(total.deuterium)} D <small className="muted">+{fmt(total.dph)}/h</small></span>
+          <span className="metal"><ResIcon k="metal" size={18} /> {fmt(total.metal)} <small className="muted">+{fmt(total.mph)}/h</small></span>
+          <span className="crystal"><ResIcon k="crystal" size={18} /> {fmt(total.crystal)} <small className="muted">+{fmt(total.cph)}/h</small></span>
+          <span className="deut"><ResIcon k="deuterium" size={18} /> {fmt(total.deuterium)} <small className="muted">+{fmt(total.dph)}/h</small></span>
         </div>
         {me.player.research && <p className="muted">Research: {me.player.research.id} → level {me.player.research.level} · <Countdown to={me.player.research.end} /></p>}
       </Card>

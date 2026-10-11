@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { ResIcon } from '../ResIcon';
 import { resName } from '../../../shared/data';
 import { get, post } from '../api';
 import { post as post_ } from '../api';
@@ -80,7 +81,7 @@ function Mine({ a, run, planetId, me, setPage }: { a: any; run: (f: () => Promis
         </Card>
 
         <Card title="Alliance bank">
-          <div className="bankline"><span className="metal">{fmt(a.bank.metal)} M</span><span className="crystal">{fmt(a.bank.crystal)} C</span><span className="deut">{fmt(a.bank.deuterium)} D</span></div>
+          <div className="bankline"><span className="metal"><ResIcon k="metal" size={18} /> {fmt(a.bank.metal)}</span><span className="crystal"><ResIcon k="crystal" size={18} /> {fmt(a.bank.crystal)}</span><span className="deut"><ResIcon k="deuterium" size={18} /> {fmt(a.bank.deuterium)}</span></div>
           <h4>Donate from current planet</h4>
           <div className="row wrap">
             {(['metal', 'crystal', 'deuterium'] as const).map((k) => <input key={k} type="number" min={0} className="md" placeholder={resName(k)} value={don[k] || ''} onChange={(e) => setDon({ ...don, [k]: Number(e.target.value) })} />)}

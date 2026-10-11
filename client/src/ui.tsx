@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ResIcon } from './ResIcon';
 import { nameOf } from '../../shared/effects';
 import { lvl } from '../../shared/formulas';
 import { BUILDINGS } from '../../shared/data';
@@ -26,9 +27,9 @@ export function Cost({ cost, have }: { cost: Res; have?: Res }) {
   const bad = (k: keyof Res) => have && have[k] < cost[k];
   return (
     <span className="cost">
-      {cost.metal > 0 && <span className={bad('metal') ? 'bad' : 'metal'}>{fmt(cost.metal)} M</span>}
-      {cost.crystal > 0 && <span className={bad('crystal') ? 'bad' : 'crystal'}>{fmt(cost.crystal)} C</span>}
-      {cost.deuterium > 0 && <span className={bad('deuterium') ? 'bad' : 'deut'}>{fmt(cost.deuterium)} D</span>}
+      {cost.metal > 0 && <span className={bad('metal') ? 'bad' : 'metal'}><ResIcon k="metal" size={14} />{fmt(cost.metal)}</span>}
+      {cost.crystal > 0 && <span className={bad('crystal') ? 'bad' : 'crystal'}><ResIcon k="crystal" size={14} />{fmt(cost.crystal)}</span>}
+      {cost.deuterium > 0 && <span className={bad('deuterium') ? 'bad' : 'deut'}><ResIcon k="deuterium" size={14} />{fmt(cost.deuterium)}</span>}
     </span>
   );
 }

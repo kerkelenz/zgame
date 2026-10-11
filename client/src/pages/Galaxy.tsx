@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ResIcon } from '../ResIcon';
 import type { Mission } from '../../../shared/types';
 import { get, post } from '../api';
 import { useGame } from '../game';
@@ -74,7 +75,7 @@ export function Galaxy() {
                 <td>{pl ? pl.name : <span className="muted">empty</span>}{note && <span title={note}> 📝</span>}{sl.moon && <span title={sl.moon.name}> 🌙</span>}</td>
                 <td>{pl ? <><a className="plink" onClick={() => openProfile(pl.ownerId)}>{pl.owner}</a>{pl.npc && <span className={`tag ${pl.npc}`}>{pl.npc}</span>}{pl.status?.vacation && <span className="tag vac" title="On vacation: cannot be attacked or spied on">v</span>}{pl.status?.activity === 'online' && <span className="online" title="Online now"> ●</span>}{pl.status?.activity === 'inactive' && <span className="tag inact" title="Inactive for a week or more">i</span>}{pl.status?.activity === 'longInactive' && <span className="tag inact" title="Inactive for a month or more">I</span>}{pl.status?.protection === 'weak' && <span className="tag" title="Newbie protection: too weak to attack">n</span>}{pl.status?.protection === 'strong' && <span className="tag" title="Too strong: protected from you">s</span>}</> : ''}</td>
                 <td>{pl?.relation && <span className={`tag ${pl.relation === 'war' ? 'bad' : 'you'}`} title={pl.relation === 'war' ? 'Your alliances are at war' : pl.relation === 'pact' ? 'Pact partner: cannot be attacked' : 'Alliance member'}>{pl.relation}</span>} {pl?.alliance ? `[${pl.alliance}]` : pl?.faction ? <span className="muted small">{pl.faction}</span> : ''}</td>
-                <td>{sl.debris ? <a onClick={() => go(sl.p, 'recycle')} className="crystal">{fmt(sl.debris.metal)} M / {fmt(sl.debris.crystal)} C</a> : ''}</td>
+                <td>{sl.debris ? <a onClick={() => go(sl.p, 'recycle')} className="crystal"><ResIcon k="metal" size={14} />{fmt(sl.debris.metal)} <ResIcon k="crystal" size={14} />{fmt(sl.debris.crystal)}</a> : ''}</td>
                 <td className="actions">
                   {!pl && <button onClick={() => go(sl.p, 'colonize')}>Colonize</button>}
                   {pl && !pl.mine && <>

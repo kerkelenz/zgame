@@ -10,6 +10,7 @@ export const CHANGELOG: Release[] = [
       'Round-by-round battle reports with public share links.',
       'Expeditions last 1-4 hours; recyclers and probes now matter; ancient data caches speed up research.',
       'The merchant has a daily cheap deal, and Gather pulls resources from all planets in one click.',
+      'Pictures for metal, crystal and Vespene Gas in the top bar, costs and resource pages.',
       'Command Credit supply depot, Pathfinder expedition ship, Joint Command alliance upgrade (+fleet slots) and fleet presets that follow you between devices.',
       'Seasons with a hall of fame and optional victory score.',
       'Account settings: change password, rename, recovery key, delete account.',

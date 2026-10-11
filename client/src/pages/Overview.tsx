@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ResIcon } from '../ResIcon';
 import { BUILDINGS, POSITION_BONUS, TECHS, UNITS, crawlerBonus } from '../../../shared/data';
 import { post } from '../api';
 import { Art } from '../art';
@@ -25,7 +26,7 @@ export function Overview() {
               <tr><td>Position</td><td>{coordStr(planet.coords)}</td></tr>
               {!planet.isMoon && POSITION_BONUS[planet.coords.p] && <tr><td>Orbit bonus</td><td>{Object.entries(POSITION_BONUS[planet.coords.p]).map(([k, v]) => `+${Math.round((v as number) * 100)}% ${k}`).join(', ')}</td></tr>}
               {!planet.isMoon && (planet.fleet.crawler || 0) > 0 && <tr><td>Crawlers</td><td>{fmt(planet.fleet.crawler)} (+{(crawlerBonus(planet.fleet.crawler || 0, (planet.buildings.metalMine || 0) + (planet.buildings.crystalMine || 0) + (planet.buildings.deuteriumSynthesizer || 0), planet.detail.crawlerMul ?? 1) * 100).toFixed(1)}% mine output)</td></tr>}
-              <tr><td>Production / h</td><td><span className="metal">{fmt(planet.production.metal)}</span> · <span className="crystal">{fmt(planet.production.crystal)}</span> · <span className="deut">{fmt(planet.production.deuterium)}</span></td></tr>
+              <tr><td>Production / h</td><td><span className="metal"><ResIcon k="metal" size={14} />{fmt(planet.production.metal)}</span> · <span className="crystal"><ResIcon k="crystal" size={14} />{fmt(planet.production.crystal)}</span> · <span className="deut"><ResIcon k="deuterium" size={14} />{fmt(planet.production.deuterium)}</span></td></tr>
               <tr><td>Energy</td><td>{fmt(planet.production.energyProduced)} / {fmt(planet.production.energyUsed)} ({Math.round(planet.production.efficiency * 100)}%)</td></tr>
             </tbody>
           </table>
