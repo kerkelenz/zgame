@@ -30,6 +30,8 @@ export interface Player {
   muted?: { until: number | null; reason: string };
   recovery?: { salt: string; hash: string };
   renamedAt?: number;
+  /** saved fleet compositions, shared across devices */
+  presets?: { id: string; name: string; ships: Fleet }[];
   /** how much of today's merchant deal allowance has been used */
   dealUsed?: { day: number; amount: number };
   /** social tools (all optional so old saves load unchanged) */

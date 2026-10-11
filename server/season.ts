@@ -76,7 +76,7 @@ export function resetSeason(w: World, now: number) {
   }
   for (const a of Object.values(w.alliances)) {
     a.bank = { metal: 0, crystal: 0, deuterium: 0 };
-    a.upgrades = { production: 0, research: 0, logistics: 0 };
+    a.upgrades = { production: 0, research: 0, logistics: 0, command: 0 };
     a.diplomacy = {}; a.proposals = [];
     a.log.push({ at: now, text: `Season ${s.number + 1} began.` });
   }

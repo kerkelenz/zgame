@@ -58,7 +58,7 @@ export function createAlliance(w: World, p: Player, tag: string, name: string): 
     id: uid(), tag, name, description: '', open: true, founderId: p.id,
     members: [{ playerId: p.id, role: 'founder', joinedAt: Date.now() }],
     applications: [], bank: { metal: 0, crystal: 0, deuterium: 0 },
-    upgrades: { production: 0, research: 0, logistics: 0 }, log: [], createdAt: Date.now(),
+    upgrades: { production: 0, research: 0, logistics: 0, command: 0 }, log: [], createdAt: Date.now(),
   };
   log(a, `${p.username} founded the alliance.`);
   w.alliances[a.id] = a;

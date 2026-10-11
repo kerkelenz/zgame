@@ -29,6 +29,7 @@ export function Guide() {
           <li>Send a <b>Defend ally (hold)</b> fleet to an ally's planet - your ships fight next to theirs. When raiders are crushed, everyone who defended shares a bounty.</li>
           <li>Attack another player together: dispatch an <b>Attack</b>, then allies pick <i>Joint attack</i> in the Fleet page to arrive at the same moment. Loot is split by cargo space.</li>
           <li>Use <b>Chat</b> (global and alliance) to coordinate. The alliance <b>bulletin board</b> holds standing orders, and a leader can message every member at once.</li>
+          <li>The <b>Joint Command</b> alliance upgrade gives every member +1 fleet slot per two levels.</li>
           <li>Founders can create <b>ranks</b> that grant individual permissions (applications, kicking, bank grants, upgrades, description, messages, bulletin, diplomacy).</li>
           <li><b>Diplomacy:</b> a <i>pact</i> (both alliances must agree) stops either side attacking the other. A <i>war</i> is declared by one side and flags the enemy in the Galaxy. Either side can end a treaty.</li>
         </ul>
@@ -53,6 +54,7 @@ export function Guide() {
         <ul>
           <li>Buildings and research can queue four deep behind the running job. Each entry is <b>paid and reserved when you queue it</b> and refunded if you remove it; use the arrows to reorder.</li>
           <li>The <b>travelling merchant</b> swaps resources at 3 : 2 : 1 with a 12% cut (8% for Collectors). Each day he does one pair at only 2% up to a daily allowance - the Resources page shows today's deal.</li>
+          <li>The <b>Supply depot</b> in Command spends Command Credits on production crates and on halving the time left on your current build or research.</li>
           <li><b>Gather</b> (Resources page) sends loaded cargo ships from all your other planets to the one you are viewing.</li>
           <li>Orbit matters: positions 1-3 give extra crystal, 6-10 extra metal (up to +35% at position 8). <b>Crawlers</b> (planet-only, fragile) add +0.1% to every mine each, up to +50%.</li>
         </ul>
@@ -66,6 +68,7 @@ export function Guide() {
       <Card title="Expeditions">
         <ul>
           <li>Deep space (the last slot of a system) needs Astrophysics. You choose how long to stay out, <b>1-4 hours</b>: each extra hour finds about 30% more but widens the black-hole risk.</li>
+          <li><b>Pathfinders</b> (a ship) add 10% to finds each (up to five) and have a 20% chance each to steer the fleet clear of a black hole.</li>
           <li><b>Recyclers</b> add 25% to resource finds and can salvage wreckage; <b>probes</b> scout, making pirate fleets 25% smaller. Ancient data caches can speed up your running research. Discoverers get extra slots and find more.</li>
         </ul>
       </Card>

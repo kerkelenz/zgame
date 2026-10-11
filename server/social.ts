@@ -1,3 +1,4 @@
+import { isShip, isStationary } from '../shared/data';
 import type { Coords } from '../shared/types';
 import { playerPoints } from './galaxy';
 import { activityOf } from './vacation';
@@ -94,6 +95,25 @@ export function resolveReport(w: World, id: string) {
   r.resolved = true;
 }
 
+// ------------------------------------------------------------------ fleet presets
+export function savePreset(p: Player, name: string, ships: Record<string, unknown>) {
+  name = (name || '').trim().slice(0, 24);
+  if (!name) throw new GameError('Give the preset a name');
+  const clean: Record<string, number> = {};
+  for (const [id, n] of Object.entries(ships || {})) {
+    const c = Math.floor(Number(n));
+    if (!isShip(id) || isStationary(id) || !(c > 0)) continue;
+    clean[id] = Math.min(c, 1e9);
+  }
+  if (!Object.keys(clean).length) throw new GameError('Select at least one ship');
+  const list = (p.presets ||= []);
+  const same = list.find((x) => x.name.toLowerCase() === name.toLowerCase());
+  if (same) { same.name = name; same.ships = clean; return; }
+  if (list.length >= 12) throw new GameError('At most 12 presets');
+  list.push({ id: uid(3), name, ships: clean });
+}
+export function removePreset(p: Player, id: string) { p.presets = p.presets?.filter((x) => x.id !== id); }
+
 // ------------------------------------------------------------------ views
 export function socialView(w: World, p: Player, now: number) {
   const named = (id: string) => w.players[id] && !w.players[id].npc ? { id, username: w.players[id].username } : null;
@@ -110,6 +130,7 @@ export function socialView(w: World, p: Player, now: number) {
     notes: p.notes ?? {},
     bookmarks: p.bookmarks ?? [],
     recent: p.recent ?? [],
+    presets: p.presets ?? [],
   };
 }
 

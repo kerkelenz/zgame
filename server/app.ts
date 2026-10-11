@@ -21,6 +21,7 @@ import * as ACC from './account';
 import * as SOC from './social';
 import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
+import { buyItem, shopView } from './shop';
 import { recoverAccount } from './account';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
@@ -141,6 +142,22 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.post('/social/note', wrap((req) => { SOC.setNote(req.player!, str(req.body.key, 60), str(req.body.text, 500)); return SOC.socialView(w, req.player!, now()); }));
   A.post('/social/bookmark', wrap((req) => { SOC.addBookmark(w, req.player!, str(req.body.name, 30), req.body.coords); return SOC.socialView(w, req.player!, now()); }));
   A.post('/social/bookmark/remove', wrap((req) => { SOC.removeBookmark(req.player!, str(req.body.id)); return SOC.socialView(w, req.player!, now()); }));
+  A.post('/presets', wrap((req) => { SOC.savePreset(req.player!, str(req.body.name, 24), req.body.ships || {}); return SOC.socialView(w, req.player!, now()); }));
+  A.post('/presets/remove', wrap((req) => { SOC.removePreset(req.player!, str(req.body.id)); return SOC.socialView(w, req.player!, now()); }));
+  A.get('/shop', wrap((req) => shopView(req.player!)));
+  A.post('/shop/buy', wrap((req) => {
+    const p = req.player!;
+    const result = buyItem(w, p, ownedPlanet(w, p.id, str(req.body.planetId)), str(req.body.id), now());
+    return { result, credits: Math.floor(p.credits) };
+  }));
+  A.get('/admin/player/:id', wrap((req) => {
+    ACC.requireAdmin(req.player!);
+    const t = w.players[req.params.id];
+    if (!t) throw new GameError('No such player', 404);
+    const { salt, hash, recovery, ...safe } = t as unknown as Record<string, unknown>;
+    void salt; void hash; void recovery;
+    return { player: safe, planets: t.planetIds.map((id) => w.planets[id]), movements: Object.values(w.movements).filter((m) => m.ownerId === t.id) };
+  }));
   A.get('/spy-archive', wrap((req) => SOC.spyArchiveView(w, req.player!)));
   A.post('/report', wrap((req) => { SOC.reportPlayer(w, req.player!, str(req.body.id), str(req.body.reason, 300), now()); return { ok: true }; }));
 

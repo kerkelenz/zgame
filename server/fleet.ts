@@ -38,7 +38,7 @@ export function activeSlots(w: World, player: Player) {
   const mine = Object.values(w.movements).filter((m) => m.ownerId === player.id);
   return {
     used: mine.filter((m) => m.mission !== 'expedition' && m.mission !== 'missile').length,
-    max: 1 + lvl(player.techs, 'computer') + extraFleetSlots(player),
+    max: 1 + lvl(player.techs, 'computer') + extraFleetSlots(player) + Math.floor(allianceBonuses(w, player).command),
     expUsed: mine.filter((m) => m.mission === 'expedition').length,
     expMax: maxExpeditions(player),
   };
@@ -618,8 +618,11 @@ function resolveExpedition(w: World, m: Movement, at: number) {
   const hours = m.holdHours ?? 1;
   const salvagers = (m.ships.recycler || 0) > 0;
   const scouts = (m.ships.espionageProbe || 0) > 0;
-  const yieldMul = expeditionYield(owner) * (1 + 0.3 * (hours - 1)); // Geologist / Discoverer: scales everything you find
+  const pathfinders = m.ships.pathfinder || 0;
+  const yieldMul = expeditionYield(owner) * (1 + 0.3 * (hours - 1)) * (1 + 0.1 * Math.min(5, pathfinders)); // Geologist / Discoverer / Pathfinders: scales everything you find
   let r = Math.random();
+  // pathfinders steer clear of black holes (20% per ship, at most 60%)
+  if (pathfinders && r >= 0.9 && r < 0.95 + 0.01 * (hours - 1) && Math.random() < Math.min(0.6, 0.2 * pathfinders)) r = 0.1;
   // Discoverers dodge half of the nasty surprises (pirates, black holes)
   if (dodgesBadLuck(owner) && ((r >= 0.68 && r < 0.77) || (r >= 0.9 && r < 0.95)) && Math.random() < 0.5) r = 0.1;
   const free = Math.max(0, cargoFor(owner, m.ships) - totalRes(m.cargo));

@@ -10,6 +10,7 @@ export function Admin() {
   const [gift, setGift] = useState({ metal: 0, crystal: 0, deuterium: 0 });
   const [sel, setSel] = useState('');
   const [reports, setReports] = useState<any[]>([]);
+  const [inspect, setInspect] = useState<any>(null);
   const load = useCallback(async () => { setD(await get('/admin/overview')); setReports(await get('/admin/reports')); }, []);
   useEffect(() => { void load(); }, [load]);
   if (!me.player.admin) return <Page title="Admin"><p className="muted">Admins only.</p></Page>;
@@ -54,6 +55,7 @@ export function Admin() {
                     : <button onClick={() => { const r = reason(); const h = hours(); void run(() => post('/admin/ban', { id: p.id, hours: h, reason: r }), 'Banned'); }}>Ban</button>}
                   {p.muted ? <button onClick={() => void run(() => post('/admin/unmute', { id: p.id }), 'Unmuted')}>Unmute</button>
                     : <button onClick={() => { const r = reason(); const h = hours(); void run(() => post('/admin/mute', { id: p.id, hours: h, reason: r }), 'Muted'); }}>Mute</button>}
+                  <button onClick={async () => setInspect(await get(`/admin/player/${p.id}`))}>Inspect</button>
                   <button onClick={() => void run(() => post('/admin/raid', { id: p.id }), 'Raid sent')}>Raid</button>
                   <button className="danger" onClick={() => { if (confirm(`Permanently remove ${p.username} and everything they own?`)) void run(() => post('/admin/delete', { id: p.id }), 'Removed'); }}>Remove</button>
                 </>}</td>
@@ -62,6 +64,11 @@ export function Admin() {
           </tbody>
         </table>
       </Card>
+      {inspect && (
+        <Card title={`Inspect ${inspect.player.username}`} right={<button onClick={() => setInspect(null)}>Close</button>}>
+          <pre className="inspect">{JSON.stringify(inspect, null, 1)}</pre>
+        </Card>
+      )}
       {sel && (
         <Card title={`Gift resources to ${d.players.find((p: any) => p.id === sel)?.username ?? ''}`}>
           <div className="row wrap">

@@ -4,9 +4,10 @@ import { useGame } from '../game';
 import { Card, Countdown, Page, fmt, when } from '../ui';
 
 export function Command() {
-  const { act, refresh } = useGame();
+  const { act, refresh, planet, toast } = useGame();
   const [d, setD] = useState<any | null>(null);
-  const load = useCallback(async () => setD(await get('/command')), []);
+  const [shop, setShop] = useState<any>(null);
+  const load = useCallback(async () => { setD(await get('/command')); setShop(await get('/shop')); }, []);
   useEffect(() => { void load(); }, [load]);
 
   const run = async (fn: () => Promise<any>, ok?: string) => {
@@ -60,6 +61,19 @@ export function Command() {
         </div>
       </Card>
 
+      {shop && (
+        <Card title="Supply depot" right={<span className="muted small">spend Command Credits on shortcuts</span>}>
+          <div className="items">
+            {shop.items.map((it: any) => (
+              <section key={it.id} className="card">
+                <h3>{it.name}</h3>
+                <p className="muted small">{it.desc}</p>
+                <button className="primary" disabled={d.credits < it.price} onClick={async () => { const r = await act(() => post('/shop/buy', { planetId: planet.id, id: it.id })); if (r) { toast(r.result); await load(); } }}>{it.price} credits · on {planet.name}</button>
+              </section>
+            ))}
+          </div>
+        </Card>
+      )}
       <Card title="Objectives">
         <ol className="objectives">
           {d.objectives.map((o: any) => (

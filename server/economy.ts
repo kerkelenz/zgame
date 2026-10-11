@@ -10,11 +10,11 @@ import { crawlerMul, energyBoost, mineBoost, researchFactor, timeFactor, tradeFe
 import { assertActive } from './vacation';
 import { GameError, allianceOf, type Planet, type Player, type World } from './world';
 
-export interface AllianceBonuses { production: number; research: number; logistics: number }
+export interface AllianceBonuses { production: number; research: number; logistics: number; command: number }
 
 export function allianceBonuses(w: World, player: Player): AllianceBonuses {
   const a = allianceOf(w, player);
-  const b = { production: 0, research: 0, logistics: 0 };
+  const b = { production: 0, research: 0, logistics: 0, command: 0 };
   if (!a) return b;
   for (const k of Object.keys(b) as (keyof AllianceBonuses)[]) b[k] = (a.upgrades[k] || 0) * ALLIANCE_UPGRADES[k].perLevel;
   return b;
