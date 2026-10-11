@@ -11,7 +11,8 @@ export const CHANGELOG: Release[] = [
       'Contracts: three daily and two weekly jobs that pay Command Credits, with a daily streak and an all-dailies bonus.',
       'Automation page: build orders that raise buildings and research in sequence on a planet (with automatic prerequisites), plus rules that keep energy up, avoid full storage and build defenses when a fleet is heading for you.',
     ],
-  },  {
+  },
+  {
     id: '2026-10-c', date: '2026-10-10', title: 'Vespene Gas, pictures and fixes',
     items: [
       'The Guide is now a full player manual organised by topic; release notes live on this page (also under Settings).',
