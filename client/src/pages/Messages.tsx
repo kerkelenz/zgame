@@ -46,18 +46,45 @@ function SpyDetails({ d }: { d: any }) {
   );
 }
 
-export function Rounds({ log }: { log?: { a: Record<string, number>; d: Record<string, number> }[] }) {
+/** a round-by-round table: for each side what it fired, what the enemy shields took, what reached hulls, what it destroyed and what is left */
+export function Rounds({ log, stats }: { log?: { a: Record<string, number>; d: Record<string, number> }[]; stats?: { attackers: any; defenders: any }[] }) {
   if (!log || log.length < 2) return null;
   const line = (bag: Record<string, number>) => Object.entries(bag).filter(([, n]) => n).map(([k, n]) => `${fmt(n)} ${name(k)}`).join(', ') || 'wiped out';
+  const sum = (key: 'attackers' | 'defenders', f: string) => (stats ?? []).reduce((a, r) => a + (r[key]?.[f] ?? 0), 0);
   return (
-    <table className="table rounds">
-      <thead><tr><th>Round</th><th>Attackers left</th><th>Defenders left</th></tr></thead>
-      <tbody>{log.map((r, i) => <tr key={i}><td>{i === 0 ? 'Start' : i}</td><td>{line(r.a)}</td><td>{line(r.d)}</td></tr>)}</tbody>
-    </table>
+    <div className="dwrap">
+      <table className="table rounds">
+        <thead>
+          <tr><th rowSpan={2}>Round</th><th colSpan={5}>Attackers fire</th><th colSpan={5}>Defenders fire</th></tr>
+          <tr>{['Shots', 'Damage', 'Absorbed by shields', 'To hulls', 'Destroyed'].map((h) => <th key={'a' + h}>{h}</th>)}{['Shots', 'Damage', 'Absorbed by shields', 'To hulls', 'Destroyed'].map((h) => <th key={'d' + h}>{h}</th>)}</tr>
+        </thead>
+        <tbody>
+          {(stats ?? []).map((r, i) => (
+            <tr key={i}>
+              <td><b>{i + 1}</b></td>
+              {(['attackers', 'defenders'] as const).flatMap((side) => (['shots', 'damage', 'absorbed', 'hullDamage', 'destroyed'] as const).map((f) => <td key={side + f} className={f === 'absorbed' ? 'crystal' : f === 'hullDamage' ? 'bad' : ''}>{fmt(r[side]?.[f] ?? 0)}</td>))}
+            </tr>
+          ))}
+          {stats && stats.length > 1 && (
+            <tr className="total">
+              <td><b>All</b></td>
+              {(['attackers', 'defenders'] as const).flatMap((side) => (['shots', 'damage', 'absorbed', 'hullDamage', 'destroyed'] as const).map((f) => <td key={side + f}><b>{fmt(sum(side, f))}</b></td>))}
+            </tr>
+          )}
+        </tbody>
+      </table>
+      <table className="table rounds">
+        <thead><tr><th>After round</th><th>Attackers left</th><th>Defenders left</th></tr></thead>
+        <tbody>{log.map((r, i) => <tr key={i}><td>{i === 0 ? 'Start' : i}</td><td>{line(r.a)}</td><td>{line(r.d)}</td></tr>)}</tbody>
+      </table>
+    </div>
   );
 }
 
-export function BattleReport({ d }: { d: any }) {
+const moonLine = (m: any) => (m ? (m.formed ? `A moon formed above this planet (the chance was ${Math.round(m.chance * 100)}%).` : `No moon formed. The chance from the ${fmt(m.field)} of debris above this planet was ${Math.round(m.chance * 100)}%.`) : null);
+
+/** the result of a battle at a glance: who won, the losses on each side, loot, debris and the moon; the round-by-round detail is behind a link */
+export function BattleReport({ d, full, onOpen }: { d: any; /** show the round-by-round detail here too (the public page) */ full?: boolean; onOpen?: () => void }) {
   const side = (title: string, list: any[]) => (
     <div>
       <h4>{title}</h4>
@@ -69,15 +96,35 @@ export function BattleReport({ d }: { d: any }) {
       ))}
     </div>
   );
+  const moon = moonLine(d.moon);
   return (
     <>
       <p>{d.winner === 'attacker' ? 'Attacker won' : d.winner === 'defender' ? 'Defender won' : 'Draw'} after {d.rounds} rounds at {coordStr(d.coords)}.</p>
       <div className="grid2">{side('Attackers', d.attackers)}{side('Defenders', d.defenders)}</div>
-      <Rounds log={d.roundLog} />
       {(d.loot?.metal || d.loot?.crystal || d.loot?.deuterium) ? <p>Loot: {fmt(d.loot.metal)} M, {fmt(d.loot.crystal)} C, {fmt(d.loot.deuterium)} D</p> : null}
       {(d.debris?.metal || d.debris?.crystal) ? <p>Debris: {fmt(d.debris.metal)} M, {fmt(d.debris.crystal)} C</p> : null}
+      {moon && <p className={d.moon.formed ? 'good' : 'muted'}>{d.moon.formed ? '🌙 ' : ''}{moon}</p>}
       {d.bounty ? <p className="metal">Raider bounty: {fmt(d.bounty)}</p> : null}
+      {!full && onOpen && d.roundStats && <button className="primary" onClick={onOpen}>Full battle report</button>}
+      {full && <><h4>Round by round</h4><Rounds log={d.roundLog} stats={d.roundStats} /></>}
     </>
+  );
+}
+
+/** the full report in a popup window; Escape or a click outside closes it */
+export function BattlePopup({ d, subject, onClose }: { d: any; subject: string; onClose: () => void }) {
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  }, [onClose]);
+  return (
+    <div className="modalback" onClick={onClose} role="presentation">
+      <div className="modal" role="dialog" aria-label="Full battle report" onClick={(e) => e.stopPropagation()}>
+        <div className="row between"><h3>{subject}</h3><button onClick={onClose} aria-label="Close">✕</button></div>
+        <BattleReport d={d} full />
+      </div>
+    </div>
   );
 }
 
@@ -86,6 +133,7 @@ export function Messages() {
   const [msgs, setMsgs] = useState<any[]>([]);
   const [kind, setKind] = useState('all');
   const [open, setOpen] = useState<string | null>(null);
+  const [popup, setPopup] = useState<{ d: any; subject: string } | null>(null);
   const [to, setTo] = useState('');
   const [text, setText] = useState('');
 
@@ -126,7 +174,7 @@ export function Messages() {
             {open === m.id && (
               <div className="msgbody">
                 {m.kind === 'espionage' && m.data?.resources ? <SpyReport d={m.data} /> : null}
-                {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers ? <BattleReport d={m.data} /> : <p style={{ whiteSpace: 'pre-wrap' }}>{m.body}</p>}
+                {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers ? <BattleReport d={m.data} onOpen={() => setPopup({ d: m.data, subject: m.subject })} /> : <p style={{ whiteSpace: 'pre-wrap' }}>{m.body}</p>}
                 {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers && (
                   <button onClick={async () => {
                     const r = await act(() => post(`/messages/${m.id}/share`));
@@ -142,6 +190,7 @@ export function Messages() {
           </div>
         ))}
       </Card>
+      {popup && <BattlePopup d={popup.d} subject={popup.subject} onClose={() => setPopup(null)} />}
     </Page>
   );
 }

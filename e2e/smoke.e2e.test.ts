@@ -352,6 +352,39 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('a battle message shows the result only; the full report with every round opens in a popup', async () => {
+    const side = (name: string, before: object, after: object) => ({ name, before, after, lost: {} });
+    const data = {
+      coords: { g: 1, s: 4, p: 7 }, planet: 'Target', rounds: 3, winner: 'attacker', debris: { metal: 90000, crystal: 40000 }, loot: { metal: 1000, crystal: 500, deuterium: 0 }, bounty: 0,
+      moon: { chance: 0.13, formed: false, field: 130000 },
+      attackers: [side('Raider', { cruiser: 10 }, { cruiser: 8 })], defenders: [side('Victim', { lightFighter: 20 }, { lightFighter: 0 })],
+      roundLog: [{ a: { cruiser: 10 }, d: { lightFighter: 20 } }, { a: { cruiser: 9 }, d: { lightFighter: 9 } }, { a: { cruiser: 9 }, d: { lightFighter: 2 } }, { a: { cruiser: 8 }, d: {} }],
+      roundStats: [1, 2, 3].map((n) => ({ attackers: { shots: 10 * n, damage: 5000 * n, absorbed: 1200 * n, hullDamage: 3800 * n, destroyed: n }, defenders: { shots: 20, damage: 800, absorbed: 100, hullDamage: 700, destroyed: 1 } })),
+    };
+    await page.route('**/api/messages', async (route) => {
+      if (route.request().method() !== 'GET') return route.continue();
+      await route.fulfill({ json: [{ id: 'bt1', to: 'x', from: null, kind: 'combat', subject: 'Battle at Target [1:4:7]: Attacker victory', body: 'x', at: Date.now(), read: true, data }] });
+    });
+    await go('Messages');
+    await page.locator('.msghead').first().click();
+    const body = page.locator('.msgbody');
+    await body.waitFor();
+    expect(await body.innerText()).toMatch(/Attacker won/);
+    expect(await body.innerText()).toMatch(/No moon formed\. The chance from the 130,000 of debris above this planet was 13%/);
+    expect(await body.locator('table.rounds').count()).toBe(0);                     // no round table in the message itself
+    await body.getByRole('button', { name: 'Full battle report' }).click();
+    const modal = page.locator('.modal');
+    await modal.waitFor();
+    expect(await modal.locator('table.rounds').count()).toBe(2);
+    expect(await modal.innerText()).toMatch(/Absorbed by shields/);
+    expect(await modal.innerText()).toMatch(/To hulls/);
+    expect(await modal.locator('tbody tr').count()).toBeGreaterThanOrEqual(8);       // three rounds, the total, and the units left each round
+    await page.keyboard.press('Escape');
+    await modal.waitFor({ state: 'detached' });
+    await page.unroute('**/api/messages');
+    noErrors();
+  });
+
   run('the message options in Settings are saved', async () => {
     await go('Settings');
     const quiet = page.getByLabel(/No messages when something finishes/);

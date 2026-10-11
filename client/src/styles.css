@@ -329,3 +329,7 @@ ul.reqlist { list-style: none; padding: 0; margin: 6px 0; } ul.reqlist li { marg
 .spyhead { justify-content: space-between; margin-bottom: 8px; }
 
 .qtotal { margin: 6px 0 0; }
+
+.modalback { position: fixed; inset: 0; z-index: 60; background: rgba(2, 5, 12, .72); display: flex; align-items: flex-start; justify-content: center; padding: 4vh 12px; overflow-y: auto; }
+.modal { background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 14px 18px; width: min(1000px, 100%); box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+table.rounds { font-size: 12.5px; width: 100%; margin-bottom: 10px; } table.rounds th { white-space: normal; } table.rounds tr.total td { border-top: 2px solid var(--line); }

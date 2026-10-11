@@ -499,7 +499,11 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   });
   group.forEach((m, i) => { m.ships = onlyShips(res.attackers[i].after); });
   addDebris(w, lead.to, res.debris.metal, res.debris.crystal);
-  const newMoon = maybeCreateMoon(w, target, w.debris[ck(lead.to)] ?? res.debris, at);
+  // the moon roll counts the whole field above the planet; the report says what the odds were and whether it happened
+  const field = w.debris[ck(lead.to)] ?? res.debris;
+  const moonPossible = !target.isMoon && !Object.values(w.planets).some((p) => p.parentId === target.id);
+  const moonOdds = moonPossible ? moonChance(field) : null;
+  const newMoon = maybeCreateMoon(w, target, field, at);
   const leadPlayer = attackerOf(lead);
 
   // wreck field: a share of the defender's destroyed ships can be rebuilt by a Space Dock
@@ -568,8 +572,10 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   const lost = (before: Record<string, number | undefined>, after: Record<string, number | undefined>, rebuilt: Record<string, number | undefined> = {}) =>
     summarize(Object.fromEntries(Object.entries(before).map(([k, v]) => [k, (v || 0) - (after[k] || 0) + (rebuilt[k] || 0)])));
   const names = group.map((m) => m.ownerName).join(' + ');
+  const roundSide = (s: { shots: number; damage: number; absorbed: number; hullDamage: number; destroyed: number }) => ({ shots: s.shots, damage: Math.round(s.damage), absorbed: Math.round(s.absorbed), hullDamage: Math.round(s.hullDamage), destroyed: s.destroyed });
   const report = {
-    coords: lead.to, planet: target.name, rounds: res.rounds, winner: res.winner, debris: res.debris, loot, bounty, roundLog: res.roundLog,
+    coords: lead.to, planet: target.name, rounds: res.rounds, winner: res.winner, debris: res.debris, loot, bounty, roundLog: res.roundLog, roundStats: res.roundStats.map((r) => ({ attackers: roundSide(r.attackers), defenders: roundSide(r.defenders) })),
+    moon: moonOdds === null ? null : { chance: moonOdds, formed: !!newMoon, field: Math.round(field.metal + field.crystal) },
     attackers: res.attackers.map((a) => ({ name: a.name, before: a.before, after: a.after, lost: a.lost })),
     defenders: res.defenders.map((d) => ({ name: d.name, before: d.before, after: d.after, lost: d.lost, rebuilt: d.rebuilt })),
   };
@@ -581,7 +587,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
     (totalRes(loot) ? `Loot: ${num(loot.metal)} metal, ${num(loot.crystal)} crystal, ${num(loot.deuterium)} vespene gas.\n` : '') +
     (res.debris.metal || res.debris.crystal ? `Debris field: ${num(res.debris.metal)} metal, ${num(res.debris.crystal)} crystal.\n` : '') +
     (bounty ? `Raider bounty: ${num(bounty)} resources shared among defenders.\n` : '') +
-    (newMoon ? 'The debris condensed into a moon!\n' : '') +
+    (moonOdds === null ? '' : newMoon ? `The debris condensed into a moon! (chance ${Math.round(moonOdds * 100)}%)\n` : `No moon formed (chance ${Math.round(moonOdds * 100)}% from a debris field of ${num(field.metal + field.crystal)}).\n`) +
     (wreckFormed ? `A wreck field formed (${num(wreckFormed)} resources of ships) - a Space Dock can rebuild part of it.\n` : '') +
     moonVerdict;
 

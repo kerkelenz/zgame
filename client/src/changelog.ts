@@ -5,6 +5,8 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-k', date: '2026-10-12', title: 'Rules and tidy-ups',
     items: [
+      'Battle reports in your messages show the result only, with a Full battle report button that opens a window with every round: shots, damage, what the enemy shields absorbed, what reached hulls and what was destroyed. The shared link shows the same full report.',
+      'Battle reports say whether a moon formed and what the chance was; if no moon formed it shows the chance the debris field gave.',
       'Standing: the 24 h and Place columns show the points each commander gained or lost and the places they climbed or fell since the daily snapshot, refreshed every 24 hours.',
       'Queues show the time of every job and of the whole queue (buildings, research) and of every shipyard row and all rows together.',
       'Settings: an option to stop the in-game messages when a building, research or production run finishes.',

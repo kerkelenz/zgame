@@ -17,7 +17,7 @@ export function SharedReport({ id }: { id: string }) {
         {r && <>
           <h3>{r.subject}</h3>
           <p className="muted small">Shared {when(r.at)}</p>
-          <BattleReport d={r.report} />
+          <BattleReport d={r.report} full />
         </>}
         <p><a href={location.pathname}>Open the game</a></p>
       </div>

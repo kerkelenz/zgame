@@ -75,6 +75,37 @@ describe('moon creation', () => {
     expect(planetView(w, ap, T0).parentId).toBeNull();
   });
 
+  it('the battle report tells the odds, and whether the moon formed or not', () => {
+    const attack = (roll: number, planet: Planet) => {
+      const spy = vi.spyOn(Math, 'random').mockReturnValue(roll);
+      ap.fleet = { cruiser: 30 };
+      const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: planet.coords, ships: { cruiser: 30 }, mission: 'attack' }, T0);
+      processMovements(w, m.arriveAt);
+      spy.mockRestore();
+      return w.messages.filter((x) => x.to === alice.id && x.kind === 'combat').at(-1)!;
+    };
+    const p1 = createPlanet(w, bob, { g: 1, s: 8, p: 3 }, { now: T0 });
+    p1.fleet = { lightFighter: 2 };
+    w.debris['1:8:3'] = { metal: 600_000, crystal: 0 };
+    const none = attack(0.95, p1);                                       // 95 > 20: no moon
+    expect((none.data as any).moon).toMatchObject({ formed: false });
+    expect((none.data as any).moon.chance).toBeCloseTo(0.2);
+    expect(none.body).toMatch(/No moon formed \(chance 20%/);
+    const p2 = createPlanet(w, bob, { g: 1, s: 8, p: 4 }, { now: T0 });
+    p2.fleet = { lightFighter: 2 };
+    w.debris['1:8:4'] = { metal: 600_000, crystal: 0 };
+    const yes = attack(0.1, p2);
+    expect((yes.data as any).moon).toMatchObject({ formed: true });
+    expect(yes.body).toMatch(/condensed into a moon! \(chance 20%\)/);
+    expect(w.messages.some((x) => x.to === bob.id && x.subject === 'A moon formed!')).toBe(true);     // the planet's owner is told separately too
+    const again = attack(0.1, p2);                                        // it has a moon now: nothing to roll for
+    expect((again.data as any).moon).toBeNull();
+    expect(again.body).not.toMatch(/moon formed|condensed/i);
+    // the report carries the round-by-round numbers
+    expect((yes.data as any).roundStats.length).toBeGreaterThan(0);
+    expect((yes.data as any).roundStats[0].attackers).toMatchObject({ shots: expect.any(Number), damage: expect.any(Number), absorbed: expect.any(Number), hullDamage: expect.any(Number) });
+  });
+
   it('moons do not count as colonies and are found by planetAt only when asked', () => {
     expect(colonyCount(w, alice)).toBe(1);
     expect(planetAt(w, ap.coords)?.id).toBe(ap.id);

@@ -40,12 +40,17 @@ export interface CombatantResult {
   rebuilt: Defenses;
 }
 
+/** one side's output in one round: it is the side that fires, so `absorbed` is what the other side's shields took */
+export interface SideRound { shots: number; damage: number; absorbed: number; hullDamage: number; destroyed: number }
+
 export interface CombatResult {
   rounds: number;
   winner: 'attacker' | 'defender' | 'draw';
   attackers: CombatantResult[];
   defenders: CombatantResult[];
   debris: { metal: number; crystal: number };
+  /** what each side did in every round (index 0 is round 1): shots fired, damage dealt, how much of it the enemy shields absorbed, how much reached hulls, units destroyed */
+  roundStats: { attackers: SideRound; defenders: SideRound }[];
   /** unit counts alive on each side at the start and after every round, for round-by-round replays */
   roundLog: { a: Partial<Record<UnitId, number>>; d: Partial<Record<UnitId, number>> }[];
 }
@@ -97,11 +102,14 @@ export function simulateCombat(attackers: Combatant[], defenders: Combatant[], r
     return { a, d };
   };
   const roundLog = [census()];
+  const roundStats: CombatResult['roundStats'] = [];
   let rounds = 0;
   for (let round = 0; round < 6; round++) {
     const a = alive(0), d = alive(1);
     if (!a.length || !d.length) break;
     rounds++;
+    const blank = (): SideRound => ({ shots: 0, damage: 0, absorbed: 0, hullDamage: 0, destroyed: 0 });
+    const stat = [blank(), blank()];
     const targets: Unit[][] = [d, a];
     for (const shooter of units) {
       const pool = targets[shooter.side];
@@ -115,16 +123,21 @@ export function simulateCombat(attackers: Combatant[], defenders: Combatant[], r
         for (let k = 0; k < 4 && t.dead; k++) t = pool[Math.floor(rng() * pool.length)];
         if (t.dead) break;
         const dmg = shooter.att;
+        const s = stat[shooter.side];
+        s.shots++; s.damage += dmg;
         if (dmg >= t.shieldMax * 0.01) {
-          if (t.shield >= dmg) t.shield -= dmg;
+          if (t.shield >= dmg) { t.shield -= dmg; s.absorbed += dmg; }
           else {
             const rem = dmg - t.shield;
+            s.absorbed += t.shield;
             t.shield = 0;
             t.hull -= rem;
+            s.hullDamage += rem;
           }
-        }
+        } else s.absorbed += dmg;                                                // too weak to scratch the shield: bounces off
         if (t.hull <= 0) t.dead = true;
         else if (t.hull < t.hullMax * 0.7 && rng() < 1 - t.hull / t.hullMax) t.dead = true;
+        if (t.dead) s.destroyed++;
         const rf = UNITS[shooter.id].rapidFire[t.id];
         if (rf && rf > 1 && rng() < 1 - 1 / rf) again = true;
       }
@@ -132,6 +145,7 @@ export function simulateCombat(attackers: Combatant[], defenders: Combatant[], r
     units = units.filter((u) => !u.dead);
     for (const u of units) u.shield = u.shieldMax;
     roundLog.push(census());
+    roundStats.push({ attackers: stat[0], defenders: stat[1] });
   }
 
   const remA = units.filter((u) => u.side === 0).length;
@@ -174,6 +188,7 @@ export function simulateCombat(attackers: Combatant[], defenders: Combatant[], r
     attackers: build(0),
     defenders: build(1),
     debris: { metal: Math.floor(debrisM), crystal: Math.floor(debrisC) },
+    roundStats,
     roundLog,
   };
 }
