@@ -210,3 +210,8 @@ export function planetFields(planetFieldsBase: number, buildings: Levels<Buildin
 }
 
 export function techBonus(level: number) { return 1 + 0.1 * level; }
+
+/** A moon over a planet forms with a 20% chance after a battle once the debris field above it (including what earlier battles left) holds 100,000 resources; smaller fields give a proportionally smaller chance. */
+export const MOON = { fullAt: 100_000, chance: 0.2 };
+export const moonChance = (field: { metal: number; crystal: number }): number => Math.min(MOON.chance, ((field.metal + field.crystal) / MOON.fullAt) * MOON.chance);
+

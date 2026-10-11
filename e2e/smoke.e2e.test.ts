@@ -32,7 +32,7 @@ const noErrors = () => { expect(errors, errors.join('\n')).toEqual([]); };
 const heading = () => page.locator('main h1, main h2').first();
 const go = async (label: string) => {
   // open whichever group holds the page, then click it
-  const item = page.locator('nav .navitem', { hasText: new RegExp(`^${label}\\b`) }).first();
+  const item = page.locator('nav .navitem', { hasText: new RegExp(`^${label}(?![A-Za-z])`) }).first();
   if (!(await item.isVisible())) {
     const closed = page.locator('nav .navgroup.closed .navhead');
     for (let i = 0; i < (await closed.count()); i++) { await closed.first().click(); if (await item.isVisible()) break; }
@@ -192,6 +192,53 @@ describe('using the game', () => {
     expect(await page.locator('.icard').count()).toBe(59);
     await page.getByRole('button', { name: 'Production and effects' }).click();
     expect(await page.locator('main').innerText()).toMatch(/Raised by/);
+    noErrors();
+  });
+
+  run('events show the fleet and the cargo only when you point at them', async () => {
+    const place = (n: string, p: number) => ({ name: n, coords: { g: 1, s: 5, p }, moon: false });
+    await page.route('**/api/fleets', async (route) => {
+      const r = await route.fetch(); const j = await r.json();
+      j.events = [{ id: 't', at: Date.now() + 900_000, kind: 'own', step: 'arrive', projected: false, mission: 'transport', owner: { id: 'x', name: 'me', alliance: null }, from: place('Home', 3), to: place('Colony', 6), targetOwner: null, ships: 12, fleet: { smallCargo: 10, cruiser: 2 }, shipTypes: ['smallCargo', 'cruiser'], intel: 'exact', cargo: { metal: 123456, crystal: 7890, deuterium: 0 }, speedPct: 100 }];
+      await route.fulfill({ response: r, json: j });
+    });
+    await page.reload();
+    await page.waitForSelector('header.top');
+    await go('Overview');
+    const row = page.locator('.event.ev-own').first();
+    await row.waitFor();
+    expect(await row.innerText()).not.toMatch(/123,456|7,890|Small Cargo/);                       // nothing inline
+    const tips = row.locator('.hovertip');
+    expect(await tips.count()).toBe(2);
+    await tips.nth(0).hover();
+    await row.locator('.tip').nth(0).waitFor({ state: 'visible' });
+    expect(await row.locator('.tip').nth(0).innerText()).toMatch(/Small Cargo\s*10/);
+    expect(await row.locator('.tip').nth(0).innerText()).toMatch(/Cruiser\s*2/);
+    await tips.nth(1).hover();
+    await row.locator('.tip').nth(1).waitFor({ state: 'visible' });
+    expect(await row.locator('.tip').nth(1).innerText()).toMatch(/123\.5K|123,456|123K/);
+    expect(await row.locator('.tip').nth(1).innerText()).toMatch(/In all/);
+    await page.mouse.move(5, 5);
+    await row.locator('.tip').nth(1).waitFor({ state: 'hidden' });
+    await page.unroute('**/api/fleets');
+    await page.reload();
+    await page.waitForSelector('header.top');
+    noErrors();
+  });
+
+  run('a spy report has clickable coordinates and buttons that start a mission against the planet', async () => {
+    await page.route('**/api/messages', async (route) => {
+      if (route.request().method() !== 'GET') return route.continue();
+      const data = { coords: { g: 1, s: 9, p: 4 }, moon: false, planet: 'Target Prime', owner: 'Victim', level: 2, resources: { metal: 5000, crystal: 3000, deuterium: 100 }, fleet: { cruiser: 4 } };
+      await route.fulfill({ json: [{ id: 'sp1', to: 'x', from: null, kind: 'espionage', subject: 'Spy report Target Prime [1:9:4]', body: 'x', at: Date.now(), read: true, data }] });
+    });
+    await go('Messages');
+    await page.locator('.msghead').first().click();
+    await page.locator('.spyhead').waitFor();
+    expect(await page.locator('.spyhead .plink').textContent()).toBe('[1:9:4]');
+    await page.getByRole('button', { name: 'Attack' }).first().click();
+    await page.getByRole('heading', { name: 'Fleet' }).first().waitFor();
+    await page.unroute('**/api/messages');
     noErrors();
   });
 

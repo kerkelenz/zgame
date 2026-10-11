@@ -5,6 +5,9 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-k', date: '2026-10-12', title: 'Rules and tidy-ups',
     items: [
+      'Events: point at the word fleet to see what the fleet is made of, and point at transporting resources to see how much of each is on board (nothing is shown inline any more).',
+      'Spy reports have clickable coordinates and Attack, Spy again and Transport buttons that open the Fleet page with the planet as target.',
+      'The Simulator shows the chance of a moon, and you can add debris that is already above the planet.',
       'The Space Dock rebuilds 3.5% of a wreck field per level, at most 35% at level 10 (it used to reach 90%).',
       'Moons can no longer build storage buildings: nothing is mined there.',
       'The Moon Forge is no longer offered on a planet that already has a moon.',

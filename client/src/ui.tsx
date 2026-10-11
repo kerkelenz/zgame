@@ -69,3 +69,13 @@ export function CoordLink({ c, children }: { c: { g: number; s: number; p: numbe
   const { showInGalaxy } = useGame();
   return <a className="plink" title="Show in the galaxy" onClick={(e) => { e.preventDefault(); showInGalaxy(c); }}>{children ?? coordStr(c)}</a>;
 }
+
+/** A word that shows more when you point at it (no click needed): `label` is always visible, `children` appear on hover or keyboard focus. */
+export function Tip({ label, children }: { label: ReactNode; children: ReactNode }) {
+  return (
+    <span className="hovertip" tabIndex={0}>
+      {label}
+      <span className="tip" role="tooltip">{children}</span>
+    </span>
+  );
+}

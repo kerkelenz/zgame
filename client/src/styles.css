@@ -320,3 +320,10 @@ ul.reqlist { list-style: none; padding: 0; margin: 6px 0; } ul.reqlist li { marg
 
 .maxlink { display: block; font-size: 11px; cursor: pointer; text-decoration: underline dotted; color: var(--accent); text-align: right; }
 .capline { margin: 6px 0; }
+
+.hovertip { position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted currentColor; outline: none; }
+.hovertip .tip { display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 40; min-width: 160px; max-width: 320px; padding: 8px 10px; background: #0e1526; color: var(--text); border: 1px solid var(--accent); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.55); font-style: normal; font-size: 12.5px; line-height: 1.45; white-space: normal; text-align: left; }
+.hovertip:hover .tip, .hovertip:focus .tip { display: block; }
+.tip .row2 { display: flex; justify-content: space-between; gap: 14px; }
+
+.spyhead { justify-content: space-between; margin-bottom: 8px; }

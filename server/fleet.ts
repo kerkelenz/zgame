@@ -3,6 +3,7 @@ import {
   addRes, cargoCapacity, canAfford, distance, flightSeconds, fleetSpeed, fuelUse, lvl, sameCoords, subRes, totalRes, zeroRes,
 } from '../shared/formulas';
 import { recordBattle } from './wars';
+import { MOON, moonChance } from '../shared/formulas';
 import { computeLoot, fleetCount, makeRng, simulateCombat, type Combatant, type CombatResult } from '../shared/combat';
 import type { Coords, DefenseId, Defenses, Fleet, Mission, Res, ShipId } from '../shared/types';
 import { bus } from './bus';
@@ -416,7 +417,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   if (level >= 5) lines.buildings = { ...target.buildings };
   if (level >= 7) lines.techs = { ...def.techs };
   const report = {
-    coords: m.to, planet: target.name, owner: def.username, level, ...lines,
+    coords: m.to, moon: !!target.isMoon, planet: target.name, owner: def.username, level, ...lines,
   };
   const r = target.resources;
   notifyPlayer(w, spy.id, 'espionage', `Spy report ${target.name} ${fmt(m.to)}`,
@@ -822,9 +823,7 @@ function resolveMissiles(w: World, m: Movement, at: number) {
 
 // ---------------------------------------------------------------- moons
 
-/** A moon over a planet forms with a 20% chance after a battle once the debris field above it (including what earlier battles left) holds 100,000 resources; smaller fields give a proportionally smaller chance. */
-export const MOON = { fullAt: 100_000, chance: 0.2 };
-export const moonChance = (field: { metal: number; crystal: number }) => Math.min(MOON.chance, ((field.metal + field.crystal) / MOON.fullAt) * MOON.chance);
+export { MOON, moonChance };
 
 /** Only planets that have no moon yet. `field` is the whole debris field above the planet after the battle, old debris included. */
 export function maybeCreateMoon(w: World, target: Planet, field: { metal: number; crystal: number }, at: number): Planet | null {

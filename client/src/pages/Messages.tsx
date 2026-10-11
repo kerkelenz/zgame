@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { BUILDINGS, TECHS, UNITS } from '../../../shared/data';
 import { del, get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Page, coordStr, fmt, when } from '../ui';
+import type { Mission } from '../../../shared/types';
+import { Card, CoordLink, Page, coordStr, fmt, when } from '../ui';
 
 const KINDS = ['all', 'combat', 'espionage', 'raid', 'news', 'expedition', 'transport', 'alliance', 'player', 'system'];
 
@@ -13,6 +14,27 @@ const List = ({ data }: { data?: Record<string, number> }) => {
 };
 
 function SpyReport({ d }: { d: any }) {
+  const { setTarget, setPage } = useGame();
+  // start a mission against the spied planet straight from the report: the Fleet page opens with the target and mission filled in
+  const send = (mission: Mission) => { setTarget({ coords: d.coords, mission, toMoon: !!d.moon }); setPage('fleet'); };
+  return (
+    <>
+      {d.coords && (
+        <div className="row wrap spyhead">
+          <span>{d.moon ? '🌙 ' : ''}<b>{d.planet}</b> <CoordLink c={d.coords} />{d.owner ? <span className="muted"> · {d.owner}</span> : null}</span>
+          <span className="row">
+            <button onClick={() => send('attack')}>Attack</button>
+            <button onClick={() => send('espionage')}>Spy again</button>
+            <button onClick={() => send('transport')}>Transport</button>
+          </span>
+        </div>
+      )}
+      <SpyDetails d={d} />
+    </>
+  );
+}
+
+function SpyDetails({ d }: { d: any }) {
   return (
     <div className="grid2">
       <div><h4>Resources</h4><List data={d.resources} /></div>
