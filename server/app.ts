@@ -365,6 +365,12 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     startRepair(w, p, ownedPlanet(w, p.id, req.params.id), now());
     return planetView(w, w.planets[req.params.id], now());
   }));
+  A.post('/prefs', wrap((req) => {
+    const p = req.player!;
+    p.prefs = { ...p.prefs };
+    for (const k of ['quietCompletions', 'worldNews'] as const) if (typeof req.body[k] === 'boolean') p.prefs[k] = req.body[k];
+    return { quietCompletions: !!p.prefs.quietCompletions, worldNews: !!p.prefs.worldNews };
+  }));
   A.post('/planets/:id/forge/start', wrap((req) => {
     const p = req.player!;
     startForge(w, p, ownedPlanet(w, p.id, req.params.id), now());

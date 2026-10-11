@@ -245,16 +245,18 @@ export function npcWars(w: World, now: number) {
   }
 }
 
-function reportNews(w: World, npc: Player, defOwner: Player, target: Planet, winner: string, debris: number, loot: number, moon: boolean): boolean {
+export function reportNews(w: World, npc: Player, defOwner: Player, target: Planet, winner: string, debris: number, loot: number, moon: boolean): boolean {
   const big = debris > 300_000;
   const near = humans(w).filter((p) => p.planetIds.some((id) => { const q = w.planets[id]; return q.coords.g === target.coords.g && Math.abs(q.coords.s - target.coords.s) <= 8; }));
-  if (!(near.length || big) || Math.random() > 0.4) return false;
+  // who hears of it: members of the defender's alliance, and anyone who switched world news on
+  const audience = (big ? humans(w) : near).filter((p) => p.prefs?.worldNews || (!!defOwner.allianceId && !defOwner.npc && p.allianceId === defOwner.allianceId));
+  if (!audience.length || Math.random() > 0.4) return false;
   const c = target.coords;
   const verb = winner === 'attacker' ? 'overran' : winner === 'draw' ? 'traded blows with' : 'was beaten back at';
   const body = `${npc.username} ${verb} ${defOwner.username}'s ${target.name} [${c.g}:${c.s}:${c.p}].` +
     (debris > 0 ? ` Debris left in orbit: ${Math.round(debris).toLocaleString('en-US')} - free for any recycler that gets there first.` : '') +
     (loot > 0 ? ` Plunder taken: ${Math.round(loot).toLocaleString('en-US')} resources.` : '') + (moon ? ' The wreckage condensed into a new moon.' : '');
-  for (const p of big ? humans(w) : near) notifyPlayer(w, p.id, 'news', `${npc.username} raided ${defOwner.username} [${c.g}:${c.s}:${c.p}]`, body);
+  for (const p of audience) notifyPlayer(w, p.id, 'news', `${npc.username} raided ${defOwner.username} [${c.g}:${c.s}:${c.p}]`, body);
   return true;
 }
 

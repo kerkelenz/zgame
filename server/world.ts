@@ -30,6 +30,8 @@ export interface Player {
   muted?: { until: number | null; reason: string };
   recovery?: { salt: string; hash: string };
   renamedAt?: number;
+  /** message preferences (optional so old saves load unchanged) */
+  prefs?: PlayerPrefs;
   /** devices that receive push notifications */
   pushSubs?: import('./push').PushSub[];
   /** today's and this week's contracts, and the claim streak */
@@ -383,4 +385,11 @@ export function sameAlliance(w: World, aId: string | null, bId: string | null): 
   if (!aId || !bId || aId === bId) return false;
   const a = w.players[aId], b = w.players[bId];
   return !!a?.allianceId && a.allianceId === b?.allianceId;
+}
+
+export interface PlayerPrefs {
+  /** no in-game message when a building, research or production run finishes (alerts outside the game are separate) */
+  quietCompletions?: boolean;
+  /** also hear about raids between computer empires and commanders you have nothing to do with; off by default, so you only hear about members of your own alliance */
+  worldNews?: boolean;
 }

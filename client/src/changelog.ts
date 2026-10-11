@@ -5,6 +5,9 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-k', date: '2026-10-12', title: 'Rules and tidy-ups',
     items: [
+      'Queues show the time of every job and of the whole queue (buildings, research) and of every shipyard row and all rows together.',
+      'Settings: an option to stop the in-game messages when a building, research or production run finishes.',
+      'News about raids on people you do not know is now off by default; you hear about members of your own alliance, or switch the news on in Settings.',
       'Events: point at the word fleet to see what the fleet is made of, and point at transporting resources to see how much of each is on board (nothing is shown inline any more).',
       'Spy reports have clickable coordinates and Attack, Spy again and Transport buttons that open the Fleet page with the planet as target.',
       'The Simulator shows the chance of a moon, and you can add debris that is already above the planet.',

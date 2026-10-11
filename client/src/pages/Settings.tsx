@@ -162,6 +162,8 @@ function Interface() {
   const [sound, setS] = useState(soundOn());
   const showAll = useShowAllPages();
   const [probes, setProbesState] = useState(getProbes());
+  const { me, act, refresh } = useGame();
+  const savePref = async (k: 'quietCompletions' | 'worldNews', v: boolean) => { await act(() => post('/prefs', { [k]: v })); await refresh(); };
   return (
     <Card title="Interface">
       <div className="settings-section">
@@ -172,6 +174,8 @@ function Interface() {
         <label className="check"><input type="checkbox" checked={sound} onChange={(e) => { setSound(e.target.checked); setS(e.target.checked); if (e.target.checked) playCue('done', true); }} /> <b>{t('common.sound', 'Sound cues')}</b> <span className="muted small">- a short tone for messages, finished jobs and attack alerts</span></label>
         {sound && <div className="row"><button onClick={() => playCue('alert', true)}>Test alert</button><button onClick={() => playCue('message', true)}>Test message</button></div>}
         <label className="check"><input type="checkbox" checked={showAll} onChange={(e) => setShowAllPages(e.target.checked)} /> <b>Show every page in the menu</b> <span className="muted small">- Automation, Territory, Invasion and the Simulator normally appear once they are useful to you</span></label>
+        <label className="check"><input type="checkbox" checked={!!me.prefs?.quietCompletions} onChange={(e) => void savePref('quietCompletions', e.target.checked)} /> <b>No messages when something finishes</b> <span className="muted small">- skip the in-game message when a building, research or production run completes (alerts outside the game are set up separately)</span></label>
+        <label className="check"><input type="checkbox" checked={!!me.prefs?.worldNews} onChange={(e) => void savePref('worldNews', e.target.checked)} /> <b>News about other commanders&apos; battles</b> <span className="muted small">- also hear when computer empires raid people you do not know. Off by default: you only hear about attacks on members of your own alliance.</span></label>
         <label className="row"><b>Spy probes to send</b> <NumInput className="sm" max={1000} value={probes} onChange={(n) => { setProbesState(n); setProbes(n); }} /> <span className="muted small">- how many Espionage Probes the Fleet page prepares when you press Spy in the galaxy (0 prepares none). Kept in this browser.</span></label>
         <button className="link" onClick={() => setPage('news')}>See what's new</button>
         <button className="link" onClick={() => { try { localStorage.removeItem('zg.tourDone'); } catch { /* ignore */ } location.reload(); }}>Replay the welcome tour</button>

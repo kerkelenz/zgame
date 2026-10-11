@@ -34,6 +34,26 @@ export function Items({ kind }: { kind: Kind }) {
   const rBacklog: { id: string }[] = me.player.researchBacklog ?? [];
   const MAXQ = 4;
 
+  // how long the whole queue takes: the running job's time left plus every queued job, worked out at today's levels (a queued Robotics Factory or Lab
+  // would shorten the ones behind it, so the total is an estimate)
+  const seenB: Record<string, number> = buildQ ? { [buildQ.id]: 1 } : {};
+  const bTimes = bBacklog.map((id) => {
+    const level = lvl(planet.buildings, id as BuildingId) + (seenB[id] ?? 0) + 1;
+    seenB[id] = (seenB[id] ?? 0) + 1;
+    return buildingTime(buildingCost(id as BuildingId, level), robotics, nanite, cfg.economySpeed * cfg.constructionBoost, timeFactor) * 1000;
+  });
+  const bTotal = (buildQ ? Math.max(0, buildQ.end - now) : 0) + bTimes.reduce((a, b) => a + b, 0);
+  const seenR: Record<string, number> = researchQ ? { [researchQ.id]: 1 } : {};
+  const rTimes = rBacklog.map((q) => {
+    const level = lvl(techs, q.id as TechId) + (seenR[q.id] ?? 0) + 1;
+    seenR[q.id] = (seenR[q.id] ?? 0) + 1;
+    return researchTime(techCost(q.id as TechId, level), lab, cfg.economySpeed * cfg.researchBoost, me.allianceBonuses.research, timeFactor * researchFactor) * 1000;
+  });
+  const rTotal = (researchQ ? Math.max(0, researchQ.end - now) : 0) + rTimes.reduce((a, b) => a + b, 0);
+  // the shipyard: a row finishes after its running unit plus the rest; the whole queue is every row one after the other
+  const rowTimes: number[] = planet.shipyardQueue.map((j: any, i: number) => (i === 0 ? Math.max(0, j.start + j.unitMs - now) + Math.max(0, j.remaining - 1) * j.unitMs : j.remaining * j.unitMs));
+  const yardTotal = rowTimes.reduce((a, b) => a + b, 0);
+
   return (
     <Page title={TITLES[kind]}>
       {kind === 'building' && buildQ && (
@@ -45,7 +65,7 @@ export function Items({ kind }: { kind: Kind }) {
         <Card title={`Queue (${bBacklog.length}/${MAXQ})`}>
           {bBacklog.map((id, i) => (
             <div className="row between" key={i}>
-              <span>{i + 1}. {BUILDINGS[id as BuildingId].name}</span>
+              <span>{i + 1}. {BUILDINGS[id as BuildingId].name} <span className="muted small">· {fmtDur(bTimes[i])}</span></span>
               <span className="row">
                 <button disabled={i === 0} title="Earlier" onClick={() => void act(() => post(`/planets/${planet.id}/build/move`, { index: i, dir: -1 }))}>↑</button>
                 <button disabled={i === bBacklog.length - 1} title="Later" onClick={() => void act(() => post(`/planets/${planet.id}/build/move`, { index: i, dir: 1 }))}>↓</button>
@@ -53,13 +73,14 @@ export function Items({ kind }: { kind: Kind }) {
               </span>
             </div>
           ))}
+          <p className="muted small qtotal">Whole queue, including the running job: about <b>{fmtDur(bTotal)}</b></p>
         </Card>
       )}
       {kind === 'tech' && rBacklog.length > 0 && (
         <Card title={`Queue (${rBacklog.length}/${MAXQ})`}>
           {rBacklog.map((q, i) => (
             <div className="row between" key={i}>
-              <span>{i + 1}. {TECHS[q.id as TechId].name}</span>
+              <span>{i + 1}. {TECHS[q.id as TechId].name} <span className="muted small">· {fmtDur(rTimes[i])}</span></span>
               <span className="row">
                 <button disabled={i === 0} title="Earlier" onClick={() => void act(() => post('/research/move', { index: i, dir: -1 }))}>↑</button>
                 <button disabled={i === rBacklog.length - 1} title="Later" onClick={() => void act(() => post('/research/move', { index: i, dir: 1 }))}>↓</button>
@@ -67,6 +88,7 @@ export function Items({ kind }: { kind: Kind }) {
               </span>
             </div>
           ))}
+          <p className="muted small qtotal">Whole queue, including the running research: about <b>{fmtDur(rTotal)}</b></p>
         </Card>
       )}
       {kind === 'tech' && researchQ && (
@@ -78,10 +100,11 @@ export function Items({ kind }: { kind: Kind }) {
         <Card title="Production queue">
           {planet.shipyardQueue.map((j: any, i: number) => (
             <div className="row between" key={i}>
-              <span>{j.remaining} / {j.total}× {UNITS[j.id as UnitId].name} {i === 0 && <span className="muted">· next unit in <Countdown to={j.start + j.unitMs} /></span>}</span>
+              <span>{j.remaining} / {j.total}× {UNITS[j.id as UnitId].name} {i === 0 && <span className="muted">· next unit in <Countdown to={j.start + j.unitMs} /></span>} <span className="muted small">· row done in {fmtDur(rowTimes[i])}</span></span>
               <button onClick={() => void act(() => post(`/planets/${planet.id}/produce/cancel`, { index: i }), 'Cancelled')}>Cancel</button>
             </div>
           ))}
+          <p className="muted small qtotal">All rows together: <b>{fmtDur(yardTotal)}</b></p>
         </Card>
       )}
 

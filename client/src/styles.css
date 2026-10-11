@@ -327,3 +327,5 @@ ul.reqlist { list-style: none; padding: 0; margin: 6px 0; } ul.reqlist li { marg
 .tip .row2 { display: flex; justify-content: space-between; gap: 14px; }
 
 .spyhead { justify-content: space-between; margin-bottom: 8px; }
+
+.qtotal { margin: 6px 0 0; }

@@ -321,6 +321,50 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('queue pages show the time of every job and of the whole queue', async () => {
+    // a running job and two queued ones, set up through the planet answer (the test world builds too fast to catch a real queue)
+    await page.route('**/api/planets', async (route) => {
+      const r = await route.fetch(); const j = await r.json();
+      j[0].buildQueue = { id: 'metalMine', level: 2, start: Date.now(), end: Date.now() + 600_000, cost: { metal: 0, crystal: 0, deuterium: 0 } };
+      j[0].buildBacklog = ['crystalMine', 'solarPlant'];
+      await route.fulfill({ response: r, json: j });
+    });
+    await page.reload();
+    await page.waitForSelector('header.top');
+    await go('Buildings');
+    await page.getByText(/Whole queue, including the running job: about/).waitFor({ timeout: 10_000 });
+    expect(await page.locator('main').innerText()).toMatch(/1\. Crystal Mine\s*·\s*\d/);
+    expect(await page.locator('main').innerText()).toMatch(/2\. Solar Plant\s*·\s*\d/);
+    const total = await page.locator('.qtotal b').first().innerText();
+    expect(total).toMatch(/\d/);
+    expect(total).toMatch(/m|h|s/);
+    await page.unroute('**/api/planets');
+    await page.reload();
+    await page.waitForSelector('header.top');
+    noErrors();
+  });
+
+  run('the message options in Settings are saved', async () => {
+    await go('Settings');
+    const quiet = page.getByLabel(/No messages when something finishes/);
+    const news = page.getByLabel(/News about other commanders/);
+    expect(await quiet.isChecked()).toBe(false);
+    expect(await news.isChecked()).toBe(false);                                   // off by default
+    await quiet.click();
+    await expect.poll(() => quiet.isChecked()).toBe(true);                       // saved on the server, then the page refreshes
+    await news.click();
+    await expect.poll(() => news.isChecked()).toBe(true);
+    await page.reload();
+    await page.waitForSelector('header.top');
+    await go('Settings');
+    expect(await page.getByLabel(/No messages when something finishes/).isChecked()).toBe(true);
+    expect(await page.getByLabel(/News about other commanders/).isChecked()).toBe(true);
+    await page.getByLabel(/No messages when something finishes/).click();
+    await page.getByLabel(/News about other commanders/).click();
+    await expect.poll(() => page.getByLabel(/News about other commanders/).isChecked()).toBe(false);
+    noErrors();
+  });
+
   run('runs a ready-made build order from the Automation page', async () => {
     await go('Automation');
     await page.locator('.row', { hasText: 'Colony starter' }).getByRole('button', { name: 'Run here' }).click();

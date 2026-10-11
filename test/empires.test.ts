@@ -229,6 +229,7 @@ describe('the 20-minute tick', () => {
     x.pl.fleet = { cruiser: 400, battleship: 200 };
     y.pl.fleet = { lightFighter: 50 };
     y.pl.defenses = { rocketLauncher: 100 };
+    alice.prefs = { worldNews: true };                       // news about battles between others is opt-in
     const rnd = vi.spyOn(Math, 'random').mockReturnValue(0.1);
     npcWars(w, T0);
     rnd.mockRestore();

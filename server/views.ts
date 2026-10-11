@@ -107,6 +107,7 @@ export function meView(w: World, p: Player, now: number) {
     colonies: colonyCount(w, p),
     unread: w.messages.filter((m) => m.to === p.id && !m.read).length,
     credits: Math.floor(p.credits),
+    prefs: { quietCompletions: !!p.prefs?.quietCompletions, worldNews: !!p.prefs?.worldNews },
     vacation: p.vacation,
     faction: p.faction,
     pendingTributes: p.tributes.filter((t) => !t.answered).length,
