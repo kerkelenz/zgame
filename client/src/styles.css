@@ -306,3 +306,6 @@ ol.steps { margin: 4px 0; padding-left: 20px; } ol.steps li { margin: 2px 0; }
 .intel { color: #ffb0b0; }
 
 ul.reqlist { list-style: none; padding: 0; margin: 6px 0; } ul.reqlist li { margin: 2px 0; }
+
+.navtools { display: flex; gap: 4px; margin-bottom: 2px; } .navtools button { flex: 1; font-size: 11px; padding: 3px 4px; white-space: nowrap; border-color: var(--line); color: var(--muted); }
+@media (max-width: 760px) { .navtools { display: none; } }

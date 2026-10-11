@@ -5,7 +5,7 @@ import * as AL from '../server/alliance';
 import { featuresOf } from '../server/features';
 import { announceInvasion, finish } from '../server/invasion';
 import { createWorld, type Planet, type Player, type World } from '../server/world';
-import { NAV_GROUPS, groupOfPage, isOpen, visibleNav, type Features } from '../client/src/nav';
+import { NAV_GROUPS, groupOfPage, isOpen, setAllGroups, visibleNav, type Features } from '../client/src/nav';
 
 const none: Features = { automation: false, territory: false, invasion: false, simulator: false };
 const ids = (f: Features | undefined, showAll = false, admin = false, current?: string) => visibleNav(f, showAll, admin, current).flatMap((g) => g.items.map((i) => i.id));
@@ -65,6 +65,24 @@ describe('open and closed groups', () => {
     expect(isOpen('planet', { planet: true }, 'overview')).toBe(true);      // the page you are on keeps its group open even if you "collapsed" it
     expect(isOpen('planet', { planet: true }, 'fleet')).toBe(false);        // but once you leave, the choice applies
     expect(isOpen('social', {}, 'profile')).toBe(true);
+  });
+});
+
+describe('collapse all and expand all', () => {
+  it('opens every group, whatever was saved before', () => {
+    const all = setAllGroups(true);
+    for (const g of NAV_GROUPS) expect(isOpen(g.id, all, 'overview'), g.id).toBe(true);
+  });
+
+  it('closes every group except the one holding the current page', () => {
+    const none = setAllGroups(false);
+    for (const g of NAV_GROUPS) expect(isOpen(g.id, none, 'overview'), g.id).toBe(g.id === 'planet');
+    expect(isOpen('social', none, 'alliance')).toBe(true);
+    expect(isOpen('planet', none, 'alliance')).toBe(false);
+  });
+
+  it('covers every group', () => {
+    expect(Object.keys(setAllGroups(true)).sort()).toEqual(NAV_GROUPS.map((g) => g.id).sort());
   });
 });
 

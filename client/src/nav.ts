@@ -53,6 +53,9 @@ export function setShowAllPages(on: boolean) {
 /** re-render when the "show every page" switch changes */
 export const useShowAllPages = () => useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => all);
 
+/** the saved choices for opening or closing every group at once (the group holding the current page stays open regardless, see isOpen) */
+export const setAllGroups = (open: boolean): Record<string, boolean> => Object.fromEntries(NAV_GROUPS.map((g) => [g.id, !open]));
+
 /** a group is open if the player left it open, or it holds the current page; by default only the Planet group starts open */
 export function isOpen(groupId: string, collapsed: Record<string, boolean>, page: string): boolean {
   if (groupOfPage(page) === groupId) return true;

@@ -71,6 +71,20 @@ describe('first visit', () => {
 describe('every page', () => {
   const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Empire', 'Economy', 'Contracts', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
 
+  run('collapse all and expand all work on the side menu', async () => {
+    await go('Overview');
+    await page.getByRole('button', { name: 'Collapse all' }).click();
+    expect(await page.locator('nav .navgroup.closed').count()).toBe(await page.locator('nav .navgroup').count() - 1);    // the group you are in stays open
+    await page.getByRole('button', { name: 'Expand all' }).click();
+    expect(await page.locator('nav .navgroup.closed').count()).toBe(0);
+    await page.reload();
+    await page.waitForSelector('header.top');
+    expect(await page.locator('nav .navgroup.closed').count()).toBe(0);                                                  // remembered
+    await page.getByRole('button', { name: 'Collapse all' }).click();
+    await page.getByRole('button', { name: 'Expand all' }).click();
+    noErrors();
+  });
+
   run('opens without errors on a desktop', async () => {
     for (const label of PAGES) {
       await go(label);
