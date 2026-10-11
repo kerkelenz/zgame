@@ -3,7 +3,7 @@ import { useGame } from '../game';
 import { UNITS, resName } from '../../../shared/data';
 import type { UnitId } from '../../../shared/types';
 import { ResIcon } from '../ResIcon';
-import { Card, Countdown, Tip, coordStr, fmt } from '../ui';
+import { Card, CoordLink, Countdown, Tip, coordStr, fmt } from '../ui';
 
 const MISSION: Record<string, string> = {
   attack: 'Attack', transport: 'Transport', deploy: 'Deploy', espionage: 'Espionage', colonize: 'Colonize', recycle: 'Recycle debris',
@@ -44,7 +44,7 @@ export function FleetEvents() {
   );
   const Owner = ({ e }: { e: any }) => (e.owner.id ? <a className="plink" onClick={() => openProfile(e.owner.id)}>{e.owner.name}</a> : <>{e.owner.name}</>);
   const who = (e: any) => <><Owner e={e} />{e.owner.alliance ? ` [${e.owner.alliance}]` : ''}</>;
-  const target = (e: any) => (e.mission === 'expedition' ? <>deep space {coordStr(e.to.coords)}</> : e.mission === 'recycle' ? <>the debris field at <Place p={e.to} /></> : e.mission === 'colonize' ? <>the position <Place p={e.to} /></> : <Place p={e.to} />);
+  const target = (e: any) => (e.mission === 'expedition' ? <>deep space <CoordLink c={e.to.coords} /></> : e.mission === 'recycle' ? <>the debris field at <Place p={e.to} /></> : e.mission === 'colonize' ? <>the position <Place p={e.to} /></> : <Place p={e.to} />);
 
   /** the resources a fleet carries appear when you point at the word, not in the line itself */
   const carry = (e: any) => {

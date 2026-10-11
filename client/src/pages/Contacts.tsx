@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Page, coordStr, fmt, when } from '../ui';
+import { Card, CoordLink, Page, PlanetLink, PlayerLink, coordStr, fmt, when } from '../ui';
 
 const ACT: Record<string, string> = { online: 'online', active: 'active', inactive: 'inactive 7d+', longInactive: 'inactive 28d+' };
 
@@ -35,7 +35,7 @@ export function Contacts() {
         {d.bookmarks.length === 0 && <p className="muted">Bookmark a system from the Galaxy page.</p>}
         {d.bookmarks.map((b: any) => (
           <div key={b.id} className="row between">
-            <span><b>{b.name}</b> <span className="muted">{coordStr(b.coords)}</span></span>
+            <span><b>{b.name}</b> <span className="muted"><CoordLink c={b.coords} /></span></span>
             <span className="row">
               <button onClick={() => showInGalaxy(b.coords)}>Galaxy</button>
               <button onClick={() => { setTarget({ coords: b.coords }); setPage('fleet'); }}>Fleet</button>
@@ -49,7 +49,7 @@ export function Contacts() {
         {noteTargets.length === 0 && <p className="muted">Add notes on a profile or from the Galaxy page (the 📝 button).</p>}
         {noteTargets.map(([key, text]) => (
           <div key={key} className="row between">
-            <span><b>{key.startsWith('p:') ? 'Commander' : key.slice(2).replace(/:/g, ':')}</b> {text}</span>
+            <span><b>{key.startsWith('p:') ? <PlayerLink id={key.slice(2)} name="Commander" /> : (() => { const [g, s, p] = key.slice(2).split(':').map(Number); return <CoordLink c={{ g, s, p }} />; })()}</b> {text}</span>
             <span className="row">
               {key.startsWith('p:') ? <button onClick={() => openProfile(key.slice(2))}>Profile</button> : <button onClick={() => { const [g, s, p] = key.slice(2).split(':').map(Number); showInGalaxy({ g, s, p } as never); }}>Galaxy</button>}
               <button onClick={() => void run(() => post('/social/note', { key, text: '' }))}>Delete</button>
@@ -65,7 +65,7 @@ export function Contacts() {
           return (
             <div key={e.planetId} className="spyentry">
               <div className="row between">
-                <span><b>{r.planet}{r.moon ? ' 🌙' : ''}</b> <span className="muted">{r.owner} · {coordStr(r.coords)} · {when(e.at)}</span></span>
+                <span><b><PlanetLink name={r.planet} coords={r.coords} moon={r.moon} /></b> <span className="muted">{r.ownerId ? <PlayerLink id={r.ownerId} name={r.owner} /> : r.owner} · <CoordLink c={r.coords} /> · {when(e.at)}</span></span>
                 <span className="row"><span className="small"><span className="metal">{fmt(r.resources.metal)}</span> · <span className="crystal">{fmt(r.resources.crystal)}</span> · <span className="deut">{fmt(r.resources.deuterium)}</span></span>
                   <button onClick={() => setOpen(open === e.planetId ? '' : e.planetId)}>{open === e.planetId ? 'Hide' : 'Details'}</button>
                   <button onClick={() => { setTarget({ coords: r.coords, mission: 'attack', toMoon: !!r.moon }); setPage('fleet'); }}>Attack</button></span>
@@ -87,7 +87,7 @@ export function Contacts() {
       <Card title={`Blocked (${d.blocked.length})`}>
         {d.blocked.length === 0 && <p className="muted">Blocked commanders cannot message you and their chat lines are hidden.</p>}
         {d.blocked.map((b: any) => (
-          <div key={b.id} className="row between"><span>{b.username}</span><button onClick={() => void run(() => post('/social/unblock', { id: b.id }))}>Unblock</button></div>
+          <div key={b.id} className="row between"><span><PlayerLink id={b.id} name={b.username} /></span><button onClick={() => void run(() => post('/social/unblock', { id: b.id }))}>Unblock</button></div>
         ))}
       </Card>
     </Page>

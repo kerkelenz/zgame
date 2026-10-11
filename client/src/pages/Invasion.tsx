@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { UNITS } from '../../../shared/data';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Countdown, Page, coordStr, fmt, when } from '../ui';
+import { Card, CoordLink, coordStr, Countdown, fmt, Page, PlayerLink, when } from '../ui';
 
 const fleetText = (f: Record<string, number>) => Object.entries(f).filter(([, n]) => n).map(([id, n]) => `${fmt(n)} ${(UNITS as any)[id]?.name ?? id}`).join(', ') || 'none';
 const pct = (x: number) => `${Math.round(x * 1000) / 10}%`;
@@ -29,7 +29,7 @@ export function Invasion() {
       {inv && (
         <>
           <Card title={`Wave ${inv.number}: ${inv.phase === 'announced' ? 'the rift opens soon' : 'the rift is open'}`} right={inv.phase === 'active' ? <button className="primary" onClick={send}>Send a fleet to the front</button> : undefined}>
-            <p>The rift is at <b>{coordStr(inv.rift)}</b> (deep space). {inv.phase === 'announced'
+            <p>The rift is at <b><CoordLink c={inv.rift} /></b> (deep space). {inv.phase === 'announced'
               ? <>It opens in <b><Countdown to={inv.startsAt} /></b>: build, gather your alliance and agree when to arrive.</>
               : <>Next engagement in <b><Countdown to={inv.nextEngageAt} /></b>; the Armada retreats in <Countdown to={inv.endsAt} />. Fleets that arrive before an engagement join it.</>}</p>
             <div className="bar" title="Armada strength left"><div style={{ width: `${Math.min(100, (inv.boss.value / Math.max(1, inv.boss.startValue)) * 100)}%`, background: 'var(--bad, #e8685d)' }} /></div>
@@ -64,7 +64,7 @@ export function Invasion() {
           <div className="grid2">
             <Card title="Top commanders">
               {inv.players.length === 0 && <p className="muted small">Nobody has fought yet.</p>}
-              <table className="table"><tbody>{inv.players.map((p: any) => <tr key={p.id} className={p.you ? 'mine' : ''}><td>{p.rank}</td><td>{p.name}{p.you && ' (you)'}</td><td>{fmt(p.damage)}</td><td className="muted">{pct(p.share)}</td></tr>)}</tbody></table>
+              <table className="table"><tbody>{inv.players.map((p: any) => <tr key={p.id} className={p.you ? 'mine' : ''}><td>{p.rank}</td><td><PlayerLink id={p.id} name={p.name} />{p.you && ' (you)'}</td><td>{fmt(p.damage)}</td><td className="muted">{pct(p.share)}</td></tr>)}</tbody></table>
             </Card>
             <Card title="Top alliances">
               {inv.alliances.length === 0 && <p className="muted small">No alliance has fought yet.</p>}

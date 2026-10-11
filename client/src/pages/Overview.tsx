@@ -4,7 +4,7 @@ import { BUILDINGS, POSITION_BONUS, TECHS, UNITS, crawlerBonus } from '../../../
 import { post } from '../api';
 import { Art } from '../art';
 import { useGame } from '../game';
-import { Card, Cost, Countdown, Page, Progress, coordStr, fmt } from '../ui';
+import { Card, CoordLink, coordStr, Cost, Countdown, fmt, Page, Progress } from '../ui';
 import { FleetEvents } from './FleetEvents';
 
 export function Overview() {
@@ -37,7 +37,7 @@ export function Overview() {
               {planet.diameter && <tr><td>Diameter</td><td>{fmt(planet.diameter)} km</td></tr>}
               <tr><td>Fields</td><td>{planet.usedFields} / {planet.fields}</td></tr>
               <tr><td>Max temperature</td><td>{planet.maxTemp} °C</td></tr>
-              <tr><td>Position</td><td>{coordStr(planet.coords)}</td></tr>
+              <tr><td>Position</td><td><CoordLink c={planet.coords} /></td></tr>
               {!planet.isMoon && POSITION_BONUS[planet.coords.p] && <tr><td>Orbit bonus</td><td>{Object.entries(POSITION_BONUS[planet.coords.p]).map(([k, v]) => `+${Math.round((v as number) * 100)}% ${k}`).join(', ')}</td></tr>}
               {!planet.isMoon && (planet.fleet.crawler || 0) > 0 && <tr><td>Crawlers</td><td>{fmt(planet.fleet.crawler)} (+{(crawlerBonus(planet.fleet.crawler || 0, (planet.buildings.metalMine || 0) + (planet.buildings.crystalMine || 0) + (planet.buildings.deuteriumSynthesizer || 0), planet.detail.crawlerMul ?? 1) * 100).toFixed(1)}% mine output)</td></tr>}
               <tr><td>Production / h</td><td><span className="metal"><ResIcon k="metal" size={14} />{fmt(planet.production.metal)}</span> · <span className="crystal"><ResIcon k="crystal" size={14} />{fmt(planet.production.crystal)}</span> · <span className="deut"><ResIcon k="deuterium" size={14} />{fmt(planet.production.deuterium)}</span></td></tr>

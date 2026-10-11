@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ResIcon } from './ResIcon';
 import { drawStarfield } from './art';
 import { useGame } from './game';
-import { Countdown, fmt, coordStr } from './ui';
+import { CoordLink, coordStr, Countdown, fmt, Linkify, PlayerLink } from './ui';
 import { t, useLang } from './i18n';
 import { PlayerSearch } from './PlayerSearch';
 import { isOpen, loadCollapsed, saveCollapsed, setAllGroups, useShowAllPages, visibleNav } from './nav';
@@ -106,20 +106,20 @@ export function App() {
         <PlayerSearch />
         <div className="who">
           <span className="energy" title="Command Credits" onClick={() => setPage('command')} style={{ cursor: 'pointer' }}>★ {fmt(me.credits)}</span>
-          {me.alliance && <span className="tag">[{me.alliance.tag}]</span>} {me.player.username}
+          {me.alliance && <span className="tag">[{me.alliance.tag}]</span>} <PlayerLink id={me.player.id} name={me.player.username} />
           <button className="link" onClick={g.logout}>{t('common.logout', 'Log out')}</button>
         </div>
       </header>
       {me.season?.ended && <div className="alertbar newsbar" onClick={() => setPage('highscore')}>🏆 Season {me.season.number} is over - champion {me.season.ended.winnerName ?? 'nobody'}.{me.season.ended.resetAt ? <> The universe resets in <Countdown to={me.season.ended.resetAt} />.</> : ' Waiting for an admin to reset.'}</div>}
       {!me.season?.ended && me.season?.endsAt && me.season.endsAt - Date.now() < 7 * 86_400_000 && <div className="alertbar newsbar" onClick={() => setPage('highscore')}>🏁 Season {me.season.number} ends in <Countdown to={me.season.endsAt} /></div>}
-      {me.invasion && <div className="alertbar invbar" onClick={() => setPage('invasion')}>{me.invasion.phase === 'announced' ? <>☄ Void invasion: the rift at {coordStr(me.invasion.rift)} opens in <Countdown to={me.invasion.startsAt} /> - click to prepare</> : <>☄ The Void Armada is at {coordStr(me.invasion.rift)} - the front needs every fleet it can get. Retreats in <Countdown to={me.invasion.endsAt} /></>}</div>}
+      {me.invasion && <div className="alertbar invbar" onClick={() => setPage('invasion')}>{me.invasion.phase === 'announced' ? <>☄ Void invasion: the rift at <CoordLink c={me.invasion.rift} /> opens in <Countdown to={me.invasion.startsAt} /> - click to prepare</> : <>☄ The Void Armada is at {coordStr(me.invasion.rift)} - the front needs every fleet it can get. Retreats in <Countdown to={me.invasion.endsAt} /></>}</div>}
       {whatsNew && <div className="alertbar newsbar" onClick={() => { markChangelogSeen(); setWhatsNew(false); setPage('news'); }}>✨ New: {CHANGELOG[0].title} - click to see what changed</div>}
       {offline && <div className="alertbar" style={{ background: '#4a3a1c', cursor: 'default' }}>Connection to the server lost - retrying…</div>}
       {me.vacation && <div className="alertbar vacbar" onClick={() => setPage('settings')}>🏖 Vacation mode: your empire is frozen and protected. You can leave after {new Date(me.vacation.minUntil).toLocaleString()} - open Settings.</div>}
       {me.pendingTributes > 0 && <div className="alertbar" onClick={() => setPage('command')}>⚠ A hostile empire is demanding tribute - open Command to answer before the deadline</div>}
       {fleets.incoming.length > 0 && (
         <div className="alertbar" onClick={() => setPage('fleet')}>
-          ⚠ {fleets.incoming.length} hostile fleet{fleets.incoming.length > 1 ? 's' : ''} inbound{fleets.incoming.some((f) => f.ally) ? ' (including on allies)' : ''} – click for details{fleets.incoming.length === 1 ? ` (from ${fleets.incoming[0].ownerName} at ${coordStr(fleets.incoming[0].from)})` : ''}
+          ⚠ {fleets.incoming.length} hostile fleet{fleets.incoming.length > 1 ? 's' : ''} inbound{fleets.incoming.some((f) => f.ally) ? ' (including on allies)' : ''} – click for details{fleets.incoming.length === 1 ? <> (from <PlayerLink id={fleets.incoming[0].ownerId} name={fleets.incoming[0].ownerName} /> at <CoordLink c={fleets.incoming[0].from} />)</> : ''}
         </div>
       )}
       <div className="body">
@@ -149,7 +149,7 @@ export function App() {
         <main>{page_}</main>
       </div>
       <div className="toasts">
-        {toasts.map((t) => <div key={t.id} className={`toast ${t.kind}`}>{t.text}</div>)}
+        {toasts.map((t) => <div key={t.id} className={`toast ${t.kind}`}><Linkify text={t.text} /></div>)}
       </div>
     </div>
   );

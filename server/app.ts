@@ -11,7 +11,7 @@ import { flightPlan, jumpGate, launchMissiles, phalanxScan, recallFleet, sendFle
 import { colonyCount, galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
 import { cancelForge, startForge } from './forge';
-import { searchPlayers } from './search';
+import { playerNames, searchPlayers } from './search';
 import { refreshStandingDay, standingChange } from './standing';
 import { allianceView, commandView, fleetsView, meView, planetView } from './views';
 import { checkProgress, chooseClass, hireOfficer, joinFaction, leaveFaction } from './progress';
@@ -436,6 +436,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     if (limited('psearch:' + req.player!.id, 90, 60_000)) throw new GameError('Searching too fast, wait a moment', 429);
     return searchPlayers(w, typeof req.query.q === 'string' ? req.query.q.slice(0, 40) : '');
   }));
+  A.get('/players/names', wrap(() => playerNames(w)));
   A.get('/players/:id', wrap((req) => profileView(w, req.params.id, now())));
   A.get('/highscore', wrap((req) => {
     const category = typeof req.query.cat === 'string' ? req.query.cat : 'total';

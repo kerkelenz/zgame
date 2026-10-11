@@ -1,7 +1,7 @@
 import { BUILDINGS, SHIP_IDS, UNITS, isStationary } from '../../../shared/data';
 import { ResIcon } from '../ResIcon';
 import { useGame } from '../game';
-import { Card, Countdown, Page, coordStr, fmt } from '../ui';
+import { Card, CoordLink, coordStr, Countdown, fmt, Page } from '../ui';
 
 export function Empire() {
   const { planets, me, now, selectPlanet, setPage } = useGame();
@@ -39,7 +39,7 @@ export function Empire() {
               const q = p.buildQueue;
               return (
                 <tr key={p.id}>
-                  <td><a onClick={() => open(p.id, 'overview')}>{p.isMoon ? '🌙 ' : ''}{p.name}</a><div className="muted small">{coordStr(p.coords)} · {p.usedFields}/{p.fields} fields</div></td>
+                  <td><a onClick={() => open(p.id, 'overview')}>{p.isMoon ? '🌙 ' : ''}{p.name}</a><div className="muted small"><CoordLink c={p.coords} /> · {p.usedFields}/{p.fields} fields</div></td>
                   <td>
                     <span className="metal">{fmt(live(p, 'metal'))}</span> · <span className="crystal">{fmt(live(p, 'crystal'))}</span> · <span className="deut">{fmt(live(p, 'deuterium'))}</span>
                     {full && <span className="bad" title="A storage is (nearly) full"> ⚠ full</span>}

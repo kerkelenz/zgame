@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Page, coordStr, fmt, when } from '../ui';
+import { Card, CoordLink, coordStr, fmt, Page, PlanetLink, when } from '../ui';
 import { LineChart } from './Highscore';
 
 const ACTIVITY: Record<string, string> = { online: 'online now', active: 'active', inactive: 'inactive for a week or more', longInactive: 'inactive for a month or more' };
@@ -55,7 +55,7 @@ export function Profile() {
         <Card title={`Planets (${p.locations.length})`}>
           {p.locations.map((l: any, i: number) => (
             <div key={i} className="row between">
-              <span>{l.moon ? '🌙 ' : ''}<b>{l.name}</b> <span className="muted">{coordStr(l.coords)}</span></span>
+              <span><PlanetLink name={l.name} coords={l.coords} moon={l.moon}><b>{l.name}</b></PlanetLink> <span className="muted"><CoordLink c={l.coords} /></span></span>
               <button onClick={() => showInGalaxy(l.coords)}>Galaxy</button>
             </div>
           ))}

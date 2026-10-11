@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
-import { SEARCH, searchPlayers } from '../server/search';
+import { SEARCH, playerNames, searchPlayers } from '../server/search';
 import { createWorld, type Player, type World } from '../server/world';
 
 const T0 = 1_700_000_000_000;
@@ -58,5 +58,20 @@ describe('player search', () => {
     expect(searchPlayers(w, 'zog')[0]).toMatchObject({ username: 'Emperor_Zog', npc: 'active' });
     npc.planetIds = [];
     expect(searchPlayers(w, 'zog')).toEqual([]);
+  });
+});
+
+describe('the name list behind the links in messages', () => {
+  it('lists every commander and computer empire that has a profile, by name, without banned accounts', () => {
+    names.Dusty.banned = { until: null, reason: 'test' };
+    const npc = register(w, 'Emperor_Zog', 'secret1', T0).player;
+    npc.npc = { status: 'active', seedPoints: 1, faction: null };
+    const list = playerNames(w);
+    expect(list.map((x) => x.name)).toEqual([...list.map((x) => x.name)].sort((a, b) => a.localeCompare(b)));
+    expect(list.find((x) => x.name === 'Zealoteer')).toEqual({ id: names.Zealoteer.id, name: 'Zealoteer' });
+    expect(list.some((x) => x.name === 'Emperor_Zog')).toBe(true);
+    expect(list.some((x) => x.name === 'Dusty')).toBe(false);
+    npc.planetIds = [];
+    expect(playerNames(w).some((x) => x.name === 'Emperor_Zog')).toBe(false);
   });
 });

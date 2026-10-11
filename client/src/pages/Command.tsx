@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ResIcon } from '../ResIcon';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Countdown, Page, fmt, when } from '../ui';
+import { Card, Countdown, fmt, Linkify, Page, when } from '../ui';
 
 export function Command() {
   const { act, refresh, planet, toast } = useGame();
@@ -29,7 +29,7 @@ export function Command() {
         <Card title="⚠ Tribute demands">
           {d.tributes.map((t: any) => (
             <div key={t.id} className="tribute">
-              <p><b>{t.npc}</b> will keep its fleets away for a while in exchange for{' '}
+              <p><b><Linkify text={t.npc} /></b> will keep its fleets away for a while in exchange for{' '}
                 <span className="metal"><ResIcon k="metal" /> {fmt(t.want.metal)}</span> <span className="crystal"><ResIcon k="crystal" /> {fmt(t.want.crystal)}</span> <span className="deut"><ResIcon k="deuterium" /> {fmt(t.want.deuterium)}</span>.
                 Silence counts as a refusal - answer within <Countdown to={t.deadline} />.</p>
               <div className="row">

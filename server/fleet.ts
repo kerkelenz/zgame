@@ -417,7 +417,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   if (level >= 5) lines.buildings = { ...target.buildings };
   if (level >= 7) lines.techs = { ...def.techs };
   const report = {
-    coords: m.to, moon: !!target.isMoon, planet: target.name, owner: def.username, level, ...lines,
+    coords: m.to, moon: !!target.isMoon, planet: target.name, owner: def.username, ownerId: def.id, level, ...lines,
   };
   const r = target.resources;
   notifyPlayer(w, spy.id, 'espionage', `Spy report ${target.name} ${fmt(m.to)}`,
@@ -576,8 +576,9 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   const report = {
     coords: lead.to, planet: target.name, rounds: res.rounds, winner: res.winner, debris: res.debris, loot, bounty, roundLog: res.roundLog, roundStats: res.roundStats.map((r) => ({ attackers: roundSide(r.attackers), defenders: roundSide(r.defenders) })),
     moon: moonOdds === null ? null : { chance: moonOdds, formed: !!newMoon, field: Math.round(field.metal + field.crystal) },
-    attackers: res.attackers.map((a) => ({ name: a.name, before: a.before, after: a.after, lost: a.lost })),
-    defenders: res.defenders.map((d) => ({ name: d.name, before: d.before, after: d.after, lost: d.lost, rebuilt: d.rebuilt })),
+    attackers: res.attackers.map((a) => ({ name: a.name, owner: a.owner, before: a.before, after: a.after, lost: a.lost })),
+    defenders: res.defenders.map((d) => ({ name: d.name, owner: d.owner, before: d.before, after: d.after, lost: d.lost, rebuilt: d.rebuilt })),
+    targetOwner: defOwner.id,
   };
   const headline = res.winner === 'attacker' ? 'Attacker victory' : res.winner === 'defender' ? 'Defender victory' : 'Draw';
   const body =
@@ -860,9 +861,9 @@ export function phalanxScan(w: World, player: Player, moonId: string, to: Coords
   moon.resources.deuterium -= PHALANX_COST;
   const moves = Object.values(w.movements).filter((m) => m.mission !== 'missile' && m.ownerId !== player.id && (sameCoords(m.from, to) || sameCoords(m.to, to)));
   return {
-    planet: target.name, owner: w.players[target.ownerId].username, coords: to,
+    planet: target.name, owner: w.players[target.ownerId].username, ownerId: target.ownerId, coords: to,
     movements: moves.map((m) => ({
-      mission: m.mission, phase: m.phase, ownerName: m.ownerName, from: m.from, to: m.to, ships: fleetCount(m.ships),
+      mission: m.mission, phase: m.phase, ownerName: m.ownerName, ownerId: m.ownerId, from: m.from, to: m.to, ships: fleetCount(m.ships),
       at: m.phase === 'outbound' ? m.arriveAt : m.phase === 'holding' ? m.holdUntil ?? m.arriveAt : m.returnAt ?? m.arriveAt,
     })).sort((a, b) => a.at - b.at),
   };

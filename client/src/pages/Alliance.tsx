@@ -4,7 +4,7 @@ import { resName } from '../../../shared/data';
 import { get, post } from '../api';
 import { post as post_ } from '../api';
 import { useGame } from '../game';
-import { Card, Cost, Page, coordStr, fmt, when } from '../ui';
+import { Card, Cost, Linkify, Page, PlayerLink, coordStr, fmt, when } from '../ui';
 import { NumInput } from '../NumInput';
 
 export function Alliance() {
@@ -122,7 +122,7 @@ function Mine({ a: raw, run, planetId, me, setPage, openProfile, showInGalaxy }:
         <Card title="Applications">
           {a.applications.map((x: any) => (
             <div className="row between" key={x.playerId}>
-              <span><b>{x.username}</b> <span className="muted">{x.text}</span></span>
+              <span><b><PlayerLink id={x.playerId} name={x.username} /></b> <span className="muted"><Linkify text={x.text} /></span></span>
               <span className="row"><button className="primary" onClick={() => void run(() => post('/alliance/review', { playerId: x.playerId, accept: true }), 'Accepted')}>Accept</button><button onClick={() => void run(() => post('/alliance/review', { playerId: x.playerId, accept: false }))}>Decline</button></span>
             </div>
           ))}
@@ -159,7 +159,7 @@ function Mine({ a: raw, run, planetId, me, setPage, openProfile, showInGalaxy }:
         {a.bulletin.length === 0 && <p className="muted">Nothing posted yet.</p>}
         {a.bulletin.map((b: any) => (
           <div key={b.id} className="row between bulletin">
-            <div>{b.pinned && <span className="tag you">pinned</span>} <b>{b.author}</b> <span className="muted small">{when(b.at)}</span><div>{b.text}</div></div>
+            <div>{b.pinned && <span className="tag you">pinned</span>} <b><PlayerLink id={b.authorId} name={b.author} /></b> <span className="muted small">{when(b.at)}</span><div><Linkify text={b.text} /></div></div>
             <span className="row">
               {has('bulletin') && <button onClick={() => void run(() => post('/alliance/bulletin/pin', { id: b.id, pinned: !b.pinned }))}>{b.pinned ? 'Unpin' : 'Pin'}</button>}
               {(has('bulletin') || b.authorId === me.player.id || b.author === me.player.username) && <button onClick={() => void run(() => post('/alliance/bulletin/remove', { id: b.id }))}>Delete</button>}
@@ -227,7 +227,7 @@ function Mine({ a: raw, run, planetId, me, setPage, openProfile, showInGalaxy }:
       )}
 
       <Card title="Activity log">
-        {a.log.map((l: any, i: number) => <div key={i} className="muted small">{when(l.at)} – {l.text}</div>)}
+        {a.log.map((l: any, i: number) => <div key={i} className="muted small">{when(l.at)} – <Linkify text={l.text} /></div>)}
       </Card>
     </Page>
   );
@@ -255,7 +255,7 @@ function WarCard({ war, has, run }: { war: any; has: (p: string) => boolean; run
           <div className="row between wrap"><b>[{c.us.tag}] against [{c.them.tag}]</b><span className="muted small">ends {when(c.endsAt)}</span></div>
           <div className="warboard"><Side s={c.us} mine /><span className="muted">vs</span><Side s={c.them} /></div>
           <p className="muted small">Points come from the value of enemy units destroyed ({war.rules.valuePerPoint.toLocaleString('en-US')} resources = 1 point) and from systems held ({war.rules.heldPerHour} points per system per hour).</p>
-          {c.top.length > 0 && <p className="small">Top fighters: {c.top.map((t: any) => `${t.username} ${t.points}`).join(', ')}</p>}
+          {c.top.length > 0 && <p className="small">Top fighters: {c.top.map((t: any, i: number) => <span key={t.id}>{i ? ', ' : ''}<PlayerLink id={t.id} name={t.username} /> {t.points}</span>)}</p>}
           {has('diplomacy') && <button className="danger" onClick={() => confirm(`Concede the war? [${c.them.tag}] wins at once.`) && void run(() => post('/alliance/treaty/end', { id: c.them.id }), 'War conceded')}>Concede</button>}
         </>
       )}

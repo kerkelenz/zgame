@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Page } from '../ui';
+import { Card, Linkify, Page } from '../ui';
 
 export function Chat() {
   const { me, chatEvents, act } = useGame();
@@ -30,7 +30,7 @@ export function Chat() {
       </div>}>
         <div className="chatbox" ref={box}>
           {all.length === 0 && <p className="muted">No messages yet. Say hi!</p>}
-          {all.map((m) => <div key={m.id}><span className="muted">{new Date(m.at).toLocaleTimeString()}</span> <b className={m.from === me.player.username ? 'me' : ''}>{m.from}</b>: {m.text}</div>)}
+          {all.map((m) => <div key={m.id}><span className="muted">{new Date(m.at).toLocaleTimeString()}</span> <b className={m.from === me.player.username ? 'me' : ''}><Linkify text={m.from} /></b>: <Linkify text={m.text} /></div>)}
         </div>
         <form className="row" onSubmit={send}>
           <input value={text} onChange={(e) => setText(e.target.value)} maxLength={300} placeholder={`Message ${channel}…`} />

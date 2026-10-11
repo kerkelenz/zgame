@@ -3,7 +3,7 @@ import { BUILDINGS, TECHS, UNITS } from '../../../shared/data';
 import { del, get, post } from '../api';
 import { useGame } from '../game';
 import type { Mission } from '../../../shared/types';
-import { Card, CoordLink, Page, coordStr, fmt, when } from '../ui';
+import { Card, CoordLink, Linkify, PlanetLink, Page, PlayerLink, fmt, when } from '../ui';
 
 const KINDS = ['all', 'combat', 'espionage', 'raid', 'news', 'expedition', 'transport', 'alliance', 'player', 'system'];
 
@@ -21,7 +21,7 @@ function SpyReport({ d }: { d: any }) {
     <>
       {d.coords && (
         <div className="row wrap spyhead">
-          <span>{d.moon ? '🌙 ' : ''}<b>{d.planet}</b> <CoordLink c={d.coords} />{d.owner ? <span className="muted"> · {d.owner}</span> : null}</span>
+          <span><PlanetLink name={d.planet} coords={d.coords} moon={d.moon}><b>{d.planet}</b></PlanetLink> <CoordLink c={d.coords} />{d.owner ? <span className="muted"> · <PlayerLink id={d.ownerId} name={d.owner} /></span> : null}</span>
           <span className="row">
             <button onClick={() => send('attack')}>Attack</button>
             <button onClick={() => send('espionage')}>Spy again</button>
@@ -90,7 +90,7 @@ export function BattleReport({ d, full, onOpen }: { d: any; /** show the round-b
       <h4>{title}</h4>
       {list.map((s, i) => (
         <div key={i} className="muted">
-          <b>{s.name}</b>
+          <b><PlayerLink id={s.owner} name={s.name} /></b>
           {Object.keys(s.before || {}).map((k) => <div key={k}>{name(k)}: {fmt(s.before[k])} → {fmt(s.after?.[k] ?? 0)}</div>)}
         </div>
       ))}
@@ -99,7 +99,7 @@ export function BattleReport({ d, full, onOpen }: { d: any; /** show the round-b
   const moon = moonLine(d.moon);
   return (
     <>
-      <p>{d.winner === 'attacker' ? 'Attacker won' : d.winner === 'defender' ? 'Defender won' : 'Draw'} after {d.rounds} rounds at {coordStr(d.coords)}.</p>
+      <p>{d.winner === 'attacker' ? 'Attacker won' : d.winner === 'defender' ? 'Defender won' : 'Draw'} after {d.rounds} rounds at {d.planet ? <><PlanetLink name={d.planet} coords={d.coords} /> </> : null}<CoordLink c={d.coords} />.</p>
       <div className="grid2">{side('Attackers', d.attackers)}{side('Defenders', d.defenders)}</div>
       {(d.loot?.metal || d.loot?.crystal || d.loot?.deuterium) ? <p>Loot: {fmt(d.loot.metal)} M, {fmt(d.loot.crystal)} C, {fmt(d.loot.deuterium)} D</p> : null}
       {(d.debris?.metal || d.debris?.crystal) ? <p>Debris: {fmt(d.debris.metal)} M, {fmt(d.debris.crystal)} C</p> : null}
@@ -168,13 +168,13 @@ export function Messages() {
         {list.map((m) => (
           <div key={m.id} className={`msg ${m.read ? '' : 'unread'}`}>
             <div className="msghead" onClick={() => show(m)}>
-              <span className={`kind ${m.kind}`}>{m.kind}</span> <b>{m.subject}</b>{m.from && <span className="muted"> from {m.from}</span>}
+              <span className={`kind ${m.kind}`}>{m.kind}</span> <b><Linkify text={m.subject} /></b>{m.from && <span className="muted"> from <Linkify text={m.from} /></span>}
               <span className="muted right">{when(m.at)}</span>
             </div>
             {open === m.id && (
               <div className="msgbody">
                 {m.kind === 'espionage' && m.data?.resources ? <SpyReport d={m.data} /> : null}
-                {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers ? <BattleReport d={m.data} onOpen={() => setPopup({ d: m.data, subject: m.subject })} /> : <p style={{ whiteSpace: 'pre-wrap' }}>{m.body}</p>}
+                {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers ? <BattleReport d={m.data} onOpen={() => setPopup({ d: m.data, subject: m.subject })} /> : <p style={{ whiteSpace: 'pre-wrap' }}><Linkify text={m.body} /></p>}
                 {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers && (
                   <button onClick={async () => {
                     const r = await act(() => post(`/messages/${m.id}/share`));

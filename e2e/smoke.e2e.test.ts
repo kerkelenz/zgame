@@ -235,7 +235,8 @@ describe('using the game', () => {
     await go('Messages');
     await page.locator('.msghead').first().click();
     await page.locator('.spyhead').waitFor();
-    expect(await page.locator('.spyhead .plink').textContent()).toBe('[1:9:4]');
+    expect(await page.locator('.spyhead .plink', { hasText: '[1:9:4]' }).textContent()).toBe('[1:9:4]');
+    expect(await page.locator('.spyhead .plink', { hasText: 'Target Prime' }).count()).toBe(1);                // the planet name is a link too
     await page.getByRole('button', { name: 'Attack' }).first().click();
     await page.getByRole('heading', { name: 'Fleet' }).first().waitFor();
     await page.unroute('**/api/messages');
@@ -405,6 +406,47 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('coordinates, player names and planet names in messages and reports are working links', async () => {
+    const me = await page.evaluate(async () => { const t = localStorage.getItem('zg.token'); return (await (await fetch('/api/me', { headers: { authorization: `Bearer ${t}` } })).json()); });
+    const id = me.player.id as string, name = me.player.username as string;
+    const side = (owner: string | null, n: string) => ({ name: n, owner, before: { cruiser: 2 }, after: { cruiser: 1 }, lost: {} });
+    const battle = { coords: { g: 1, s: 4, p: 7 }, planet: 'Target Prime', rounds: 2, winner: 'attacker', debris: { metal: 0, crystal: 0 }, loot: { metal: 0, crystal: 0, deuterium: 0 }, bounty: 0, moon: null, attackers: [side(id, name)], defenders: [side(null, 'Raiders')], roundLog: [], roundStats: [] };
+    await page.route('**/api/messages', async (route) => {
+      if (route.request().method() !== 'GET') return route.continue();
+      await route.fulfill({ json: [
+        { id: 'm1', to: id, from: null, kind: 'system', subject: `${name} found something at [2:9:3]`, body: `Report: ${name} left [1:4:7] and reached [2:9:3].`, at: Date.now(), read: true },
+        { id: 'm2', to: id, from: null, kind: 'combat', subject: 'Battle at Target Prime [1:4:7]', body: 'x', at: Date.now(), read: true, data: battle },
+      ] });
+    });
+    await go('Messages');
+    // the subject line: a name and a coordinate, both links; clicking the coordinate opens the galaxy at that system
+    const first = page.locator('.msg').first();
+    expect(await first.locator('.msghead a.plink').count()).toBe(2);
+    expect(await first.locator('.msghead a.plink', { hasText: '[2:9:3]' }).count()).toBe(1);
+    await first.locator('.msghead a.plink', { hasText: '[2:9:3]' }).click();
+    await page.locator('table.galaxy').waitFor();
+    expect(await page.locator('main').innerText()).toMatch(/Galaxy 2/);                              // the galaxy of that coordinate
+    expect(await page.locator('main input[type="number"]').first().inputValue()).toBe('9');                 // and its system
+    // the body of a message: every name and coordinate in the text is a link, and a name opens the profile
+    await go('Messages');
+    await page.locator('.msg').first().locator('.msghead').click();
+    const links = page.locator('.msg').first().locator('.msgbody a.plink');
+    expect(await links.count()).toBe(3);                                                // the name and two coordinates
+    await links.first().click();
+    await page.getByText('← Back').waitFor();
+    expect(await page.locator('main h1, main h2').first().textContent()).toBe(name);
+    // the battle report: the planet, its coordinates and the commanders on each side are links
+    await page.getByRole('button', { name: '← Back' }).click();
+    await go('Messages');
+    await page.locator('.msg').nth(1).locator('.msghead').click();
+    const report = page.locator('.msg').nth(1).locator('.msgbody');
+    expect(await report.locator('a.plink', { hasText: 'Target Prime' }).count()).toBe(1);
+    expect(await report.locator('a.plink', { hasText: '[1:4:7]' }).count()).toBe(1);
+    expect(await report.locator('a.plink', { hasText: name }).count()).toBeGreaterThanOrEqual(1);
+    await page.unroute('**/api/messages');
+    noErrors();
+  });
+
   run('the message options in Settings are saved', async () => {
     await go('Settings');
     const quiet = page.getByLabel(/No messages when something finishes/);
@@ -510,7 +552,7 @@ describe('using the game', () => {
   run('the galaxy lists the commander\'s own planet and opens its profile', async () => {
     await go('Galaxy');
     await page.locator('table.galaxy').waitFor();
-    await page.locator('table.galaxy a.plink', { hasText: 'pilot_one' }).click();
+    await page.locator('table.galaxy a.plink', { hasText: /^pilot_one$/ }).click();
     await page.getByText('← Back').waitFor();
     expect(await heading().textContent()).toBe('pilot_one');
     await page.getByRole('button', { name: '← Back' }).click();

@@ -7,7 +7,7 @@ import { useGame } from '../game';
 import { NumInput } from '../NumInput';
 import { getProbes } from '../prefs';
 import { IntelText } from './FleetEvents';
-import { Card, CoordLink, Countdown, Page, coordStr, fmt, fmtDur } from '../ui';
+import { Card, CoordLink, coordStr, Countdown, fmt, fmtDur, Page, PlanetLink, PlayerLink } from '../ui';
 
 const MISSIONS: [Mission, string][] = [
   ['attack', 'Attack'], ['invade', 'Join the invasion front (Void Armada)'], ['destroy', 'Destroy moon (Deathstars)'], ['transport', 'Transport'], ['deploy', 'Deploy'], ['hold', 'Defend ally (hold)'],
@@ -108,7 +108,7 @@ export function FleetPage() {
 
       {fleets.stationed.length > 0 && (
         <Card title="Allied fleets defending your planets">
-          {fleets.stationed.map((m) => <div key={m.id}>{m.ownerName}: {shipList(m.ships)} at <CoordLink c={m.to} /> · leaves in <Countdown to={m.holdUntil} /></div>)}
+          {fleets.stationed.map((m) => <div key={m.id}><PlayerLink id={m.ownerId} name={m.ownerName} />: {shipList(m.ships)} at <CoordLink c={m.to} /> · leaves in <Countdown to={m.holdUntil} /></div>)}
         </Card>
       )}
 
@@ -122,9 +122,9 @@ export function FleetPage() {
           </div>
           {scan && (
             <div>
-              <p className="muted">{scan.planet} ({scan.owner}) {coordStr(scan.coords)}</p>
+              <p className="muted"><PlanetLink name={scan.planet} coords={scan.coords} /> (<PlayerLink id={scan.ownerId} name={scan.owner} />) <CoordLink c={scan.coords} /></p>
               {scan.movements.length === 0 && <p className="muted">No fleet movements.</p>}
-              {scan.movements.map((m: any, i: number) => <div key={i}>{m.ownerName}: {m.mission} {coordStr(m.from)} → {coordStr(m.to)} · {fmt(m.ships)} ships · <Countdown to={m.at} /></div>)}
+              {scan.movements.map((m: any, i: number) => <div key={i}><PlayerLink id={m.ownerId} name={m.ownerName} />: {m.mission} <CoordLink c={m.from} /> → <CoordLink c={m.to} /> · {fmt(m.ships)} ships · <Countdown to={m.at} /></div>)}
             </div>
           )}
         </Card>

@@ -26,3 +26,14 @@ export function searchPlayers(w: World, query: string, limit = SEARCH.limit): Pl
     id: p.id, username: p.username, alliance: p.allianceId ? w.alliances[p.allianceId]?.tag ?? null : null, points: pts, npc: p.npc?.status ?? null,
   }));
 }
+
+const namesCache = new WeakMap<World, { at: number; list: { id: string; name: string }[] }>();
+
+/** Every name that has a profile, for turning names in text into links. Kept for a minute: the list can be long and changes slowly. */
+export function playerNames(w: World, now = Date.now()): { id: string; name: string }[] {
+  const hit = namesCache.get(w);
+  if (hit && now - hit.at < (process.env.VITEST ? 0 : 60_000)) return hit.list;
+  const list = Object.values(w.players).filter((p) => p.planetIds.length && !p.banned).map((p) => ({ id: p.id, name: p.username })).sort((a, b) => a.name.localeCompare(b.name));
+  namesCache.set(w, { at: now, list });
+  return list;
+}

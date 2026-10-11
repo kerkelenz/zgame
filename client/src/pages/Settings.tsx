@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { get, post } from '../api';
 import { BROWSER_NOTIFY_KEY, useGame } from '../game';
-import { Card, Countdown, Page, when } from '../ui';
+import { Card, Countdown, Page, PlayerLink, when } from '../ui';
 import { LANGS, getLang, setLang, t, useLang } from '../i18n';
 import { playCue, setSound, soundOn } from '../sound';
 import { setShowAllPages, useShowAllPages } from '../nav';
@@ -199,7 +199,7 @@ function Account() {
           <button disabled={!cur || next.length < 6} onClick={async () => { if (await act(() => post('/account/password', { current: cur, next }), 'Password changed; other devices were signed out')) { setCur(''); setNext(''); } }}>Change</button></div>
 
         <h4>Rename commander</h4>
-        <p className="small muted">You are <b>{me.player.username}</b>. Names can change once every 7 days; your homeworld is renamed too.</p>
+        <p className="small muted">You are <b><PlayerLink id={me.player.id} name={me.player.username} /></b>. Names can change once every 7 days; your homeworld is renamed too.</p>
         <div className="row wrap"><input placeholder="New name" value={name} onChange={(e) => setName(e.target.value)} />
           <input type="password" placeholder="Password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="current-password" />
           <button disabled={!name || !pw2} onClick={async () => { if (await act(() => post('/account/rename', { name, password: pw2 }), 'Renamed')) { setName(''); setPw2(''); } }}>Rename</button></div>

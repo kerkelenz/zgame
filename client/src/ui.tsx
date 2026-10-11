@@ -1,10 +1,12 @@
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { ResIcon } from './ResIcon';
 import { nameOf } from '../../shared/effects';
 import { lvl } from '../../shared/formulas';
 import { BUILDINGS } from '../../shared/data';
 import type { Requirement, Res } from '../../shared/types';
+import { usePlayerDirectory } from './directory';
 import { useGame } from './game';
+import { tokenize } from './linkify';
 
 import { fmt, fmtDur } from '../../shared/format';
 export { fmt, fmtDur };
@@ -67,7 +69,7 @@ export function Page({ title, children }: { title: string; children: ReactNode }
 /** Coordinates that open the galaxy at that system when clicked. */
 export function CoordLink({ c, children }: { c: { g: number; s: number; p: number }; children?: ReactNode }) {
   const { showInGalaxy } = useGame();
-  return <a className="plink" title="Show in the galaxy" onClick={(e) => { e.preventDefault(); showInGalaxy(c); }}>{children ?? coordStr(c)}</a>;
+  return <a className="plink" title="Show in the galaxy" onClick={(e) => { e.preventDefault(); e.stopPropagation(); showInGalaxy(c); }}>{children ?? coordStr(c)}</a>;
 }
 
 /** A word that shows more when you point at it (no click needed): `label` is always visible, `children` appear on hover or keyboard focus. */
@@ -77,5 +79,35 @@ export function Tip({ label, children }: { label: ReactNode; children: ReactNode
       {label}
       <span className="tip" role="tooltip">{children}</span>
     </span>
+  );
+}
+
+/** A commander's name that opens their profile. */
+export function PlayerLink({ id, name, children }: { id: string | null | undefined; name: string; children?: ReactNode }) {
+  const { openProfile } = useGame();
+  if (!id) return <>{children ?? name}</>;
+  return <a className="plink" title="Open the profile" onClick={(e) => { e.preventDefault(); e.stopPropagation(); openProfile(id); }}>{children ?? name}</a>;
+}
+
+/** A planet or moon name that shows it in the galaxy. */
+export function PlanetLink({ name, coords, moon, children }: { name: string; coords: { g: number; s: number; p: number }; moon?: boolean; children?: ReactNode }) {
+  const { showInGalaxy } = useGame();
+  return <a className="plink" title="Show in the galaxy" onClick={(e) => { e.preventDefault(); e.stopPropagation(); showInGalaxy(coords); }}>{moon ? '🌙 ' : ''}{children ?? name}</a>;
+}
+
+/** Plain text with its bracketed coordinates, commander names and your own planet names turned into working links. */
+export function Linkify({ text }: { text: string }) {
+  const { planets, showInGalaxy, openProfile } = useGame();
+  const players = usePlayerDirectory();
+  const dir = useMemo(() => ({ players, planets: planets.map((p: any) => ({ name: p.name, g: p.coords.g, s: p.coords.s, p: p.coords.p })) }), [players, planets]);
+  return (
+    <>
+      {tokenize(text, dir).map((t, i) => {
+        if (t.type === 'text') return t.text;
+        const click = (e: { preventDefault: () => void; stopPropagation: () => void }, go: () => void) => { e.preventDefault(); e.stopPropagation(); go(); };
+        if (t.type === 'player') return <a key={i} className="plink" onClick={(e) => click(e, () => openProfile(t.id))}>{t.text}</a>;
+        return <a key={i} className="plink" onClick={(e) => click(e, () => showInGalaxy({ g: t.g, s: t.s }))}>{t.text}</a>;
+      })}
+    </>
   );
 }

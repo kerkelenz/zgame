@@ -9,7 +9,7 @@ import type { BuildingId, Res } from '../../../shared/types';
 import { post } from '../api';
 import { useGame } from '../game';
 import { fmtDurShort } from '../../../shared/format';
-import { Card, ItemLink, Page, coordStr, fmt, fmtDur } from '../ui';
+import { Card, CoordLink, coordStr, fmt, fmtDur, ItemLink, Page } from '../ui';
 
 const LABEL: Record<ResKey, string> = { metal: 'Metal', crystal: 'Crystal', deuterium: 'Vespene Gas' };
 const CLS: Record<ResKey, string> = { metal: 'metal', crystal: 'crystal', deuterium: 'deut' };
@@ -88,7 +88,7 @@ export function Economy() {
               const soonest = KEYS.map((k) => ({ k, s: r.economy.fullIn[k] })).filter((x) => x.s != null).sort((a, b) => a.s! - b.s!)[0];
               return (
                 <tr key={r.p.id} className={r.p.id === sel.p.id ? 'mine' : ''}>
-                  <td><a onClick={() => selectPlanet(r.p.id)}>{r.p.name}</a><div className="muted small">{coordStr(r.p.coords)}</div></td>
+                  <td><a onClick={() => selectPlanet(r.p.id)}>{r.p.name}</a><div className="muted small"><CoordLink c={r.p.coords} /></div></td>
                   <td>{signed(r.economy.rates.metal)}</td><td>{signed(r.economy.rates.crystal)}</td><td>{signed(r.economy.rates.deuterium)}</td>
                   <td className={r.economy.energy.balance < 0 ? 'bad' : ''}>{signed(r.economy.energy.balance)}<div className="muted small">{Math.round(r.economy.energy.efficiency * 100)}% efficient</div></td>
                   <td className={soonest && soonest.s! < 7200 ? 'bad' : ''}>{soonest ? <>{LABEL[soonest.k]} {secs(soonest.s)}</> : '–'}</td>

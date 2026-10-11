@@ -5,7 +5,7 @@ import { moonChance, totalRes } from '../../../shared/formulas';
 import type { UnitId } from '../../../shared/types';
 import { get } from '../api';
 import { useGame } from '../game';
-import { Card, Page, coordStr, fmt } from '../ui';
+import { Card, coordStr, fmt, Linkify, Page } from '../ui';
 import { NumInput } from '../NumInput';
 
 type Units = Partial<Record<UnitId, number>>;
@@ -97,7 +97,7 @@ export function Simulator() {
             <div className="chips">{reports.map((m) => <button key={m.id} onClick={() => loadSpy(m)}>{m.data.planet} {coordStr(m.data.coords)}</button>)}</div>
           </>
         ) : <p className="muted small">Spy a planet with enough probes (3+ detail) and its report can fill the defender for you.</p>}
-        {label && <p className="muted small">Defender: {label}</p>}
+        {label && <p className="muted small">Defender: <Linkify text={label} /></p>}
       </Card>
       <div className="grid2">
         <Card title="Attacker">{techIn(attTech, setAttTech)}{table('att', FIGHTING, att)}</Card>

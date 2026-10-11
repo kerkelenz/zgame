@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { resName } from '../../../shared/data';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Page, fmt, when } from '../ui';
+import { Card, fmt, Page, PlayerLink, when } from '../ui';
 import { NumInput } from '../NumInput';
 
 export function Admin() {
@@ -57,7 +57,7 @@ export function Admin() {
           <tbody>
             {d.players.map((p: any) => (
               <tr key={p.id} className={sel === p.id ? 'mine' : ''} onClick={() => setSel(p.id)}>
-                <td>{p.username}{p.admin && <span className="tag you">admin</span>}</td><td>{p.alliance ? `[${p.alliance}]` : ''}</td><td>{p.planets}</td><td>{fmt(p.points)}</td><td>{when(p.lastSeen)}</td>
+                <td><PlayerLink id={p.id} name={p.username} />{p.admin && <span className="tag you">admin</span>}</td><td>{p.alliance ? `[${p.alliance}]` : ''}</td><td>{p.planets}</td><td>{fmt(p.points)}</td><td>{when(p.lastSeen)}</td>
                 <td>{p.banned && <span className="tag bad" title={p.banned.reason}>banned</span>}{p.muted && <span className="tag" title={p.muted.reason}>muted</span>}{p.vacation && <span className="tag vac">vacation</span>}</td>
                 <td className="actions">{!p.admin && <>
                   {p.banned ? <button onClick={() => void run(() => post('/admin/unban', { id: p.id }), 'Unbanned')}>Unban</button>
