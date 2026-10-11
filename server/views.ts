@@ -61,7 +61,7 @@ export function allianceView(w: World, a: Alliance, viewer: Player) {
     offered: Object.values(w.alliances).filter((o) => o.proposals?.some((x) => x.fromId === a.id)).map((o) => o.id),
     members: a.members.map((m) => {
       const p = w.players[m.playerId];
-      return { id: p.id, username: p.username, role: m.role, rankId: m.rankId ?? null, rank: m.rankId ? a.ranks?.find((r) => r.id === m.rankId)?.name ?? null : null, points: playerPoints(w, p).total, lastSeen: p.lastSeen, joinedAt: m.joinedAt };
+      return { id: p.id, username: p.username, home: w.planets[p.planetIds[0]]?.coords ?? null, role: m.role, rankId: m.rankId ?? null, rank: m.rankId ? a.ranks?.find((r) => r.id === m.rankId)?.name ?? null : null, points: playerPoints(w, p).total, lastSeen: p.lastSeen, joinedAt: m.joinedAt };
     }),
     applications: officer ? a.applications.map((x) => ({ playerId: x.playerId, username: w.players[x.playerId]?.username, text: x.text, at: x.at })) : [],
     log: a.log.slice(-40).reverse(),

@@ -4,10 +4,10 @@ import { resName } from '../../../shared/data';
 import { get, post } from '../api';
 import { post as post_ } from '../api';
 import { useGame } from '../game';
-import { Card, Cost, Page, fmt, when } from '../ui';
+import { Card, Cost, Page, coordStr, fmt, when } from '../ui';
 
 export function Alliance() {
-  const { me, act, planet, setPage } = useGame();
+  const { me, act, planet, setPage, openProfile, showInGalaxy } = useGame();
   const [a, setA] = useState<any | null | undefined>(undefined);
   const [list, setList] = useState<any[]>([]);
 
@@ -21,7 +21,7 @@ export function Alliance() {
   const run = async (fn: () => Promise<any>, ok?: string) => { const r = await act(fn, ok); await load(); return r; };
 
   if (a === undefined) return <Page title="Alliance"><p className="muted">Loading…</p></Page>;
-  return a ? <Mine a={a} run={run} planetId={planet.id} me={me} setPage={setPage} /> : <Browse list={list} run={run} />;
+  return a ? <Mine a={a} run={run} planetId={planet.id} me={me} setPage={setPage} openProfile={openProfile} showInGalaxy={showInGalaxy} /> : <Browse list={list} run={run} />;
 }
 
 function Browse({ list, run }: { list: any[]; run: (f: () => Promise<any>, ok?: string) => Promise<any> }) {
@@ -50,7 +50,7 @@ function Browse({ list, run }: { list: any[]; run: (f: () => Promise<any>, ok?: 
   );
 }
 
-function Mine({ a, run, planetId, me, setPage }: { a: any; run: (f: () => Promise<any>, ok?: string) => Promise<any>; planetId: string; me: any; setPage: (p: string) => void }) {
+function Mine({ a, run, planetId, me, setPage, openProfile, showInGalaxy }: { a: any; run: (f: () => Promise<any>, ok?: string) => Promise<any>; planetId: string; me: any; setPage: (p: string) => void; openProfile: (id: string) => void; showInGalaxy: (c: { g: number; s: number }) => void }) {
   const has = (perm: string) => (a.myPerms as string[]).includes(perm);
   const officer = has('edit');
   const founder = a.myRole === 'founder';
@@ -128,11 +128,11 @@ function Mine({ a, run, planetId, me, setPage }: { a: any; run: (f: () => Promis
 
       <Card title={`Members (${a.members.length})`}>
         <table className="table">
-          <thead><tr><th>Commander</th><th>Rank</th><th>Points</th><th>Last seen</th><th></th></tr></thead>
+          <thead><tr><th>Commander</th><th>Rank</th><th>Home</th><th>Points</th><th>Last seen</th><th></th></tr></thead>
           <tbody>
             {a.members.map((m: any) => (
               <tr key={m.id}>
-                <td>{m.username}{m.id === me.player.id && ' (you)'}</td><td>{m.rank ?? m.role}</td><td>{fmt(m.points)}</td>
+                <td><a className="plink" onClick={() => openProfile(m.id)}>{m.username}</a>{m.id === me.player.id && ' (you)'}</td><td>{m.rank ?? m.role}</td><td>{m.home ? <a className="plink" title="Show in the galaxy" onClick={() => showInGalaxy(m.home)}>{coordStr(m.home)}</a> : '-'}</td><td>{fmt(m.points)}</td>
                 <td className="muted">{Date.now() - m.lastSeen < 120000 ? 'online' : when(m.lastSeen)}</td>
                 <td className="actions">
                   {founder && m.id !== me.player.id && a.ranks.length > 0 && m.role !== 'founder' && (

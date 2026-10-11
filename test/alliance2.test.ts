@@ -173,3 +173,10 @@ describe('diplomacy', () => {
     expect(A().proposals ?? []).toEqual([]);
   });
 });
+
+describe('member list', () => {
+  it('shows where each member lives', () => {
+    const v = allianceView(w, A(), a);
+    for (const m of v.members) expect(m.home).toEqual(w.planets[w.players[m.id].planetIds[0]].coords);
+  });
+});

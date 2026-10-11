@@ -35,6 +35,8 @@ interface GameCtx {
   detailId: string | null;
   openItem: (id: string) => void;
   profileId: string | null;
+  /** the page a profile was opened from, so Back returns there */
+  profileFrom: string;
   /** one-shot: where the Galaxy page should open */
   galaxyAt: { g: number; s: number } | null;
   showInGalaxy: (c: { g: number; s: number }) => void;
@@ -65,6 +67,7 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
   const [target, setTarget] = useState<Target | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [profileFrom, setProfileFrom] = useState('highscore');
   const [galaxyAt, setGalaxyAt] = useState<{ g: number; s: number } | null>(null);
   useEffect(() => { if (page !== 'galaxy') setGalaxyAt(null); }, [page]);
   const showInGalaxy = useCallback((c: { g: number; s: number }) => { setGalaxyAt({ g: c.g, s: c.s }); setPage('galaxy'); }, []);
@@ -171,11 +174,11 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
     setPage('detail');
     window.scrollTo({ top: 0 });
   }, [page]);
-  const openProfile = useCallback((id: string) => { setProfileId(id); setPage('profile'); window.scrollTo({ top: 0 }); }, []);
+  const openProfile = useCallback((id: string) => { setProfileFrom((from) => (page === 'profile' ? from : page)); setProfileId(id); setPage('profile'); window.scrollTo({ top: 0 }); }, [page]);
   const closeItem = useCallback(() => setPage(detailFrom), [detailFrom]);
 
   const logout = useCallback(() => { setToken(''); onLogout(); }, [onLogout]);
 
-  const value: GameCtx = { me, planets, planet, fleets, selectPlanet, refresh, now, act, toasts, toast, page, setPage, detailId, openItem, profileId, openProfile, galaxyAt, showInGalaxy, closeItem, target, setTarget, logout, offline, chatEvents, live };
+  const value: GameCtx = { me, planets, planet, fleets, selectPlanet, refresh, now, act, toasts, toast, page, setPage, detailId, openItem, profileId, profileFrom, openProfile, galaxyAt, showInGalaxy, closeItem, target, setTarget, logout, offline, chatEvents, live };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
