@@ -50,7 +50,9 @@ function Browse({ list, run }: { list: any[]; run: (f: () => Promise<any>, ok?: 
   );
 }
 
-function Mine({ a, run, planetId, me, setPage, openProfile, showInGalaxy }: { a: any; run: (f: () => Promise<any>, ok?: string) => Promise<any>; planetId: string; me: any; setPage: (p: string) => void; openProfile: (id: string) => void; showInGalaxy: (c: { g: number; s: number }) => void }) {
+function Mine({ a: raw, run, planetId, me, setPage, openProfile, showInGalaxy }: { a: any; run: (f: () => Promise<any>, ok?: string) => Promise<any>; planetId: string; me: any; setPage: (p: string) => void; openProfile: (id: string) => void; showInGalaxy: (c: { g: number; s: number }) => void }) {
+  // a server that has not been restarted since wars were added sends no war data; show the page without it rather than crash
+  const a = raw.war ? raw : { ...raw, war: { current: null, history: [], rules: { hours: 48, valuePerPoint: 1000, heldPerHour: 15 } } };
   const has = (perm: string) => (a.myPerms as string[]).includes(perm);
   const officer = has('edit');
   const founder = a.myRole === 'founder';
