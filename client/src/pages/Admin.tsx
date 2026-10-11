@@ -9,7 +9,8 @@ export function Admin() {
   const [text, setText] = useState('');
   const [gift, setGift] = useState({ metal: 0, crystal: 0, deuterium: 0 });
   const [sel, setSel] = useState('');
-  const load = useCallback(async () => setD(await get('/admin/overview')), []);
+  const [reports, setReports] = useState<any[]>([]);
+  const load = useCallback(async () => { setD(await get('/admin/overview')); setReports(await get('/admin/reports')); }, []);
   useEffect(() => { void load(); }, [load]);
   if (!me.player.admin) return <Page title="Admin"><p className="muted">Admins only.</p></Page>;
   if (!d) return <Page title="Admin"><p className="muted">Loading…</p></Page>;
@@ -25,6 +26,14 @@ export function Admin() {
         <div className="row"><input className="grow" value={text} maxLength={500} placeholder="Message to every commander" onChange={(e) => setText(e.target.value)} />
           <button className="primary" disabled={!text.trim()} onClick={() => void run(() => post('/admin/announce', { text }), 'Announcement sent').then(() => setText(''))}>Send</button></div>
       </Card>
+      {reports.length > 0 && (
+        <Card title={`Player reports (${reports.length})`}>
+          {reports.map((r) => (
+            <div key={r.id} className="row between"><span><b>{r.byName}</b> reported <b>{r.targetName}</b> <span className="muted small">{when(r.at)}</span><div>{r.reason}</div></span>
+              <button onClick={() => void run(() => post('/admin/reports/resolve', { id: r.id }), 'Resolved')}>Resolve</button></div>
+          ))}
+        </Card>
+      )}
       <Card title="Commanders">
         <table className="table">
           <thead><tr><th>Name</th><th>Alliance</th><th>Planets</th><th>Points</th><th>Last seen</th><th>State</th><th /></tr></thead>

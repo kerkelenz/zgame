@@ -12,6 +12,7 @@ import { adjustRep } from './progress';
 import { externalNotify } from './external';
 import { assertActive, onVacation } from './vacation';
 import { addWreck } from './wrecks';
+import { archiveSpy, rememberTarget } from './social';
 import { cargoFor, classSpeedFor, colonyFieldsMul, debrisShare, dodgesBadLuck, expeditionYield, extraFleetSlots, fuelFactor, lootShare, shieldMul, spyBonus, spyEvasion, weaponMul } from './perks';
 import { buildNpcFleet, fleetValue } from './npc';
 import { GameError, ck, friendly, planetAt, sameAlliance, uid, type Movement, type Planet, type Player, type World } from './world';
@@ -179,6 +180,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     if (joinLead.ownerId && joinLead.ownerId !== player.id) notifyPlayer(w, joinLead.ownerId, 'alliance', 'Ally joined your attack', `${player.username} joined your attack on ${fmt(to)} with ${fleetCount(ships)} ships.`);
   }
   w.movements[m.id] = m;
+  if (mission !== 'expedition' && mission !== 'deploy') rememberTarget(player, to);
 
   if ((mission === 'attack' || mission === 'destroy') && targetOwner) {
     notifyPlayer(w, targetOwner.id, 'system', 'Hostile fleet detected', `${player.username} is attacking ${target!.name} ${fmt(to)} with a fleet from ${w.planets[m.fromPlanetId ?? '']?.name ?? 'unknown'} ${fmt(m.from)}. ETA ${new Date(m.arriveAt).toLocaleTimeString()}.`);
@@ -392,6 +394,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   const r = target.resources;
   notifyPlayer(w, spy.id, 'espionage', `Spy report ${target.name} ${fmt(m.to)}`,
     `${def.username}: metal ${num(r.metal)}, crystal ${num(r.crystal)}, deuterium ${num(r.deuterium)}.`, report);
+  archiveSpy(spy, target.id, { ...report, moon: !!target.isMoon }, at);
   sendHome(m, at);
 }
 

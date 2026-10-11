@@ -11,6 +11,7 @@ export function loadWorld(file: string, overrides: Partial<UniverseConfig> = {})
       // new config keys added since the save get defaults; explicit overrides win
       w.config = { ...DEFAULT_CONFIG, ...w.config, ...overrides };
       w.wrecks ??= {};
+      w.reports ??= [];
       for (const p of Object.values(w.players)) migratePlayer(p);
       return w;
     } catch (e) {

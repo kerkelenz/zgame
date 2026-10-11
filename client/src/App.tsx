@@ -15,6 +15,7 @@ import { FleetPage } from './pages/Fleet';
 import { Galaxy } from './pages/Galaxy';
 import { Profile } from './pages/Profile';
 import { Admin } from './pages/Admin';
+import { Contacts } from './pages/Contacts';
 import { Highscore } from './pages/Highscore';
 import { Messages } from './pages/Messages';
 import { Overview } from './pages/Overview';
@@ -24,7 +25,7 @@ import { Resources } from './pages/Resources';
 const NAV: [string, string][] = [
   ['overview', 'Overview'], ['empire', 'Empire'], ['economy', 'Economy'], ['resources', 'Resources'], ['buildings', 'Buildings'], ['research', 'Research'],
   ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['fleet', 'Fleet'], ['galaxy', 'Galaxy'],
-  ['alliance', 'Alliance'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['settings', 'Settings'], ['guide', 'Guide'],
+  ['alliance', 'Alliance'], ['contacts', 'Contacts'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['settings', 'Settings'], ['guide', 'Guide'],
 ];
 
 export function App() {
@@ -57,6 +58,7 @@ export function App() {
       case 'highscore': return <Highscore />;
       case 'profile': return <Profile />;
       case 'admin': return <Admin />;
+      case 'contacts': return <Contacts />;
       case 'guide': return <Guide />;
       case 'settings': return <Settings />;
       case 'command': return <Command />;

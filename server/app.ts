@@ -18,6 +18,7 @@ import { profileView } from './profile';
 import { endVacation, startVacation } from './vacation';
 import { startRepair } from './wrecks';
 import * as ACC from './account';
+import * as SOC from './social';
 import { recoverAccount } from './account';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
@@ -123,7 +124,21 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     return { ok: true };
   }));
 
+  // ---------------------------------------------------------------- social
+  A.get('/social', wrap((req) => SOC.socialView(w, req.player!, now())));
+  A.post('/social/block', wrap((req) => { SOC.block(w, req.player!, str(req.body.id)); return SOC.socialView(w, req.player!, now()); }));
+  A.post('/social/unblock', wrap((req) => { SOC.unblock(req.player!, str(req.body.id)); return SOC.socialView(w, req.player!, now()); }));
+  A.post('/social/buddy', wrap((req) => { SOC.addBuddy(w, req.player!, str(req.body.id)); return SOC.socialView(w, req.player!, now()); }));
+  A.post('/social/buddy/remove', wrap((req) => { SOC.removeBuddy(req.player!, str(req.body.id)); return SOC.socialView(w, req.player!, now()); }));
+  A.post('/social/note', wrap((req) => { SOC.setNote(req.player!, str(req.body.key, 60), str(req.body.text, 500)); return SOC.socialView(w, req.player!, now()); }));
+  A.post('/social/bookmark', wrap((req) => { SOC.addBookmark(w, req.player!, str(req.body.name, 30), req.body.coords); return SOC.socialView(w, req.player!, now()); }));
+  A.post('/social/bookmark/remove', wrap((req) => { SOC.removeBookmark(req.player!, str(req.body.id)); return SOC.socialView(w, req.player!, now()); }));
+  A.get('/spy-archive', wrap((req) => SOC.spyArchiveView(w, req.player!)));
+  A.post('/report', wrap((req) => { SOC.reportPlayer(w, req.player!, str(req.body.id), str(req.body.reason, 300), now()); return { ok: true }; }));
+
   // ---------------------------------------------------------------- admin
+  A.get('/admin/reports', wrap((req) => { ACC.requireAdmin(req.player!); return (w.reports ?? []).filter((r) => !r.resolved).sort((x, y) => y.at - x.at); }));
+  A.post('/admin/reports/resolve', wrap((req) => { ACC.requireAdmin(req.player!); SOC.resolveReport(w, str(req.body.id)); return { ok: true }; }));
   const admin = (req: Request) => ACC.requireAdmin(req.player!);
   A.get('/admin/overview', wrap((req) => { admin(req); return ACC.adminOverview(w, now(), (p) => playerPoints(w, p).total); }));
   A.post('/admin/ban', wrap((req) => { admin(req); ACC.ban(w, str(req.body.id), req.body.hours ? Number(req.body.hours) : null, str(req.body.reason), now()); return { ok: true }; }));
@@ -335,13 +350,14 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     if (!to) throw new GameError('No such player', 404);
     const text = str(req.body.text, 1000).trim();
     if (!text) throw new GameError('Empty message');
-    notifyPlayer(w, to.id, 'player', str(req.body.subject, 60).trim() || `Message from ${p.username}`, text, undefined, p.username);
+    if (!SOC.blockedBy(w, p.id, to.id)) notifyPlayer(w, to.id, 'player', str(req.body.subject, 60).trim() || `Message from ${p.username}`, text, undefined, p.username);
     return { ok: true };
   }));
   A.get('/chat', wrap((req) => {
     const p = req.player!;
     const ch = req.query.channel === 'alliance' ? 'alliance' : 'global';
-    return w.chat.filter((c) => c.channel === ch && (ch === 'global' || c.allianceId === p.allianceId)).slice(-100);
+    const muted = new Set((p.blocked ?? []).map((id) => w.players[id]?.username));
+    return w.chat.filter((c) => c.channel === ch && (ch === 'global' || c.allianceId === p.allianceId) && !muted.has(c.from)).slice(-100);
   }));
   A.post('/chat', wrap((req) => {
     const p = req.player!;

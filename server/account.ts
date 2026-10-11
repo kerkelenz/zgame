@@ -85,6 +85,7 @@ export function removePlayer(w: World, p: Player) {
   for (const [t, id] of Object.entries(w.sessions)) if (id === p.id) delete w.sessions[t];
   w.messages = w.messages.filter((m) => m.to !== p.id);
   delete w.players[p.id];
+  for (const o of Object.values(w.players)) { o.blocked = o.blocked?.filter((x) => x !== p.id); o.buddies = o.buddies?.filter((x) => x !== p.id); delete o.notes?.[`p:${p.id}`]; }
   bus.push({ to: '*', type: 'refresh' });
 }
 

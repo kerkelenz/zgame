@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { SHIP_IDS, UNITS, isStationary } from '../../../shared/data';
 import { cargoCapacity } from '../../../shared/formulas';
 import type { Mission, ShipId } from '../../../shared/types';
-import { post } from '../api';
+import { get, post } from '../api';
 import { useGame } from '../game';
 import { Card, Countdown, Page, coordStr, fmt, fmtDur } from '../ui';
 
@@ -31,6 +31,8 @@ export function FleetPage() {
   const [mTo, setMTo] = useState({ g: planet.coords.g, s: planet.coords.s, p: 1 });
   const [mCount, setMCount] = useState(1);
   const [plan, setPlan] = useState<{ dist: number; secs: number; fuel: number } | null>(null);
+  const [quick, setQuick] = useState<{ bookmarks: any[]; recent: any[] }>({ bookmarks: [], recent: [] });
+  useEffect(() => { void get('/social').then((s) => setQuick({ bookmarks: s.bookmarks, recent: s.recent })).catch(() => undefined); }, []);
 
   useEffect(() => {
     if (target) { setTo(target.coords); if (target.mission) setMission(target.mission); setToMoon(!!target.toMoon); setTarget(null); }
@@ -165,6 +167,12 @@ export function FleetPage() {
                 </span>
               ))}
             </div>
+            {(quick.bookmarks.length > 0 || quick.recent.length > 0) && (
+              <div className="chips">
+                {quick.bookmarks.map((b: any) => <button key={b.id} title="Bookmark" onClick={() => setTo(b.coords)}>★ {b.name}</button>)}
+                {quick.recent.map((c: any, i: number) => <button key={i} className="muted" title="Recent target" onClick={() => setTo(c)}>⟲ {coordStr(c)}</button>)}
+              </div>
+            )}
             <div className="row wrap">
               <label>Target
                 <span className="row">

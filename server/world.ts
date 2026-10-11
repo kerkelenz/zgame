@@ -30,6 +30,15 @@ export interface Player {
   muted?: { until: number | null; reason: string };
   recovery?: { salt: string; hash: string };
   renamedAt?: number;
+  /** social tools (all optional so old saves load unchanged) */
+  blocked?: string[];
+  buddies?: string[];
+  /** private notes keyed by `p:<playerId>` or `c:<g>:<s>:<p>` */
+  notes?: Record<string, string>;
+  bookmarks?: { id: string; name: string; coords: Coords }[];
+  recent?: Coords[];
+  /** latest spy report per planet */
+  spyArchive?: Record<string, { at: number; report: unknown }>;
   planetIds: string[];
   /** expedition statistics etc. */
   stats: PlayerStats;
@@ -192,6 +201,8 @@ export interface Message {
   read: boolean;
 }
 
+export interface PlayerReport { id: string; by: string; byName: string; target: string; targetName: string; reason: string; at: number; resolved: boolean }
+
 export interface ChatMsg { id: string; channel: 'global' | 'alliance'; allianceId?: string; from: string; text: string; at: number }
 
 export interface Debris { metal: number; crystal: number }
@@ -215,6 +226,7 @@ export interface World {
   alliances: Record<string, Alliance>;
   messages: Message[];
   chat: ChatMsg[];
+  reports?: PlayerReport[];
   sessions: Record<string, string>;
   nextRaidAt: number;
   /** next computer-empire economy / war tick */

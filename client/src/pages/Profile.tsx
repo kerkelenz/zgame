@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { get } from '../api';
+import { get, post } from '../api';
 import { useGame } from '../game';
 import { Card, Page, coordStr, fmt, when } from '../ui';
 import { LineChart } from './Highscore';
@@ -7,22 +7,35 @@ import { LineChart } from './Highscore';
 const ACTIVITY: Record<string, string> = { online: 'online now', active: 'active', inactive: 'inactive for a week or more', longInactive: 'inactive for a month or more' };
 
 export function Profile() {
-  const { profileId, setPage, me, showInGalaxy } = useGame();
+  const { profileId, setPage, me, showInGalaxy, act } = useGame();
   const [p, setP] = useState<any>(null);
+  const [soc, setSoc] = useState<any>(null);
+  const [note, setNote] = useState('');
   const [err, setErr] = useState('');
   useEffect(() => {
     if (!profileId) return;
     setP(null); setErr('');
     get(`/players/${profileId}`).then(setP).catch((e) => setErr(String(e.message || e)));
+    get('/social').then((s) => { setSoc(s); setNote(s.notes[`p:${profileId}`] ?? ''); }).catch(() => undefined);
   }, [profileId]);
   const back = <button onClick={() => setPage('highscore')}>← Standing</button>;
   if (err) return <Page title="Commander"><div className="row">{back}</div><div className="error">{err}</div></Page>;
   if (!p) return <Page title="Commander"><p className="muted">Loading…</p></Page>;
   const mine = p.id === me.player.id;
   const s = p.stats;
+  const isBuddy = !!soc?.buddies.some((b: any) => b.id === p.id);
+  const isBlocked = !!soc?.blocked.some((b: any) => b.id === p.id);
+  const social = async (path: string, body: unknown, ok: string) => { const r = await act(() => post(path, body), ok); if (r) setSoc(r); };
   return (
     <Page title={p.username}>
       <div className="row">{back}{p.home && !mine && <button onClick={() => showInGalaxy(p.home)}>Find in galaxy {coordStr(p.home)}</button>}</div>
+      {!mine && !p.npc && soc && (
+        <div className="row wrap">
+          {isBuddy ? <button onClick={() => void social('/social/buddy/remove', { id: p.id }, 'Removed from buddies')}>Remove buddy</button> : <button onClick={() => void social('/social/buddy', { id: p.id }, 'Added to buddies')} disabled={isBlocked}>Add buddy</button>}
+          {isBlocked ? <button onClick={() => void social('/social/unblock', { id: p.id }, 'Unblocked')}>Unblock</button> : <button onClick={() => confirm(`Block ${p.username}? They can no longer message you.`) && void social('/social/block', { id: p.id }, 'Blocked')}>Block</button>}
+          <button onClick={() => { const reason = prompt(`Report ${p.username} to the admins. What happened?`); if (reason) void act(() => post('/report', { id: p.id, reason }), 'Report sent'); }}>Report</button>
+        </div>
+      )}
       <p className="muted">
         {p.npc ? `Computer empire (${p.npc})` : 'Commander'}
         {p.alliance && <> · [{p.alliance.tag}] {p.alliance.name}</>}
@@ -32,6 +45,12 @@ export function Profile() {
         {p.activity && <> · {ACTIVITY[p.activity]}</>}{p.vacation && <> · on vacation</>}
         {' · '}joined {when(p.joinedAt)}
       </p>
+      {!mine && soc && (
+        <Card title="Your private note">
+          <div className="row"><input className="grow" maxLength={500} placeholder="Only you can see this" value={note} onChange={(e) => setNote(e.target.value)} />
+            <button onClick={() => void social('/social/note', { key: `p:${p.id}`, text: note }, note.trim() ? 'Note saved' : 'Note removed')}>Save</button></div>
+        </Card>
+      )}
       <Card title="Standing">
         <div className="rank-grid">
           {p.ranks.map((r: any) => (
