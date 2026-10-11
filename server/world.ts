@@ -230,6 +230,8 @@ export interface Alliance {
   createdAt: number;
 }
 
+export interface ForgeJob { planetId: string; ownerId: string; start: number; end: number; /** the debris field it consumed */ debris: { metal: number; crystal: number }; cost: Res; /** size of the moon it will make, km */ diameter: number }
+
 export interface WarSide { kills: number; held: number; /** points by commander */ by: Record<string, number> }
 export interface War {
   id: string;
@@ -293,6 +295,8 @@ export interface World {
   invasionCount?: number;
   nextInvasionAt?: number;
   invasionHistory?: InvasionRecord[];
+  /** Moon Forges running, by the planet they work above */
+  forges?: Record<string, ForgeJob>;
   /** scored alliance wars: the running one and recent history, newest first */
   wars?: War[];
   /** which alliance holds which system ("g:s") */

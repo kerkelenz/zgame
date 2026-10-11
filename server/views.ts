@@ -17,6 +17,7 @@ import { contractsView } from './contracts';
 import { featuresOf } from './features';
 import { warsView } from './wars';
 import { fleetEvents, intelFields } from './events';
+import { forgeView } from './forge';
 const intelView = (w: World, p: Player, m: Movement) => { const { count, ...rest } = intelFields(w, p, m); return { ...rest, shipCount: count }; };
 import { ALLIANCE_PERMS } from './world';
 import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
@@ -29,6 +30,7 @@ export function planetView(w: World, planet: Planet, now: number) {
   return {
     id: planet.id, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon, parentId: planet.parentId ?? null,
     jumpReadyAt: planet.jumpReadyAt ?? 0,
+    forge: forgeView(w, planet, w.players[planet.ownerId]),
     maxTemp: planet.maxTemp, isHome: planet.isHome, buildings: planet.buildings, resources: planet.resources,
     capacity: planetCapacity(w, planet),
     diameter: planet.diameter ?? null,

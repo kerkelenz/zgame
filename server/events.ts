@@ -16,10 +16,12 @@ export interface FleetEvent {
   at: number;
   kind: 'own' | 'hostile' | 'friendly';
   /** 'arrive' = reaches its target, 'end' = leaves after holding there, 'return' = reaches home again */
-  step: 'arrive' | 'end' | 'return';
+  step: 'arrive' | 'end' | 'return' | 'forge';
   /** a later step worked out from the flight time, not yet under way */
   projected: boolean;
-  mission: Mission;
+  mission: Mission | 'forge';
+  /** a Moon Forge finishing: the size of the moon it will make */
+  moonKm?: number;
   owner: { id: string | null; name: string; alliance: string | null };
   /** where the fleet is coming from and going to (for a return, the sides are already swapped) */
   from: Place;
@@ -100,6 +102,13 @@ export function fleetEvents(w: World, viewer: Player): FleetEvent[] {
     } else if ((m.mission === 'transport' || m.mission === 'hold' || m.mission === 'deploy') && towardMe && m.ownerId && (sameAlliance(w, viewer.id, m.ownerId) || friendly(w, viewer.id, m.ownerId))) {
       out.push({ ...base(m, 'friendly'), id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, ships: fleetCount(m.ships), fleet: { ...m.ships }, shipTypes: Object.keys(m.ships), cargo: load(m) });
     }
+  }
+  for (const job of Object.values(w.forges ?? {})) {
+    if (job.ownerId !== viewer.id) continue;
+    const planet = w.planets[job.planetId];
+    if (!planet) continue;
+    const here = place(planet.coords, planet.id);
+    out.push({ id: `forge:${planet.id}`, at: job.end, kind: 'own', step: 'forge', projected: false, mission: 'forge', moonKm: job.diameter, owner: { id: viewer.id, name: viewer.username, alliance: null }, from: here, to: here, targetOwner: null, ships: null, intel: 'exact', shipTypes: null, fleet: null, cargo: null, speedPct: null });
   }
   return out.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
 }

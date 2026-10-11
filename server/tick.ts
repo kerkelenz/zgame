@@ -4,6 +4,7 @@ import { NPC_TICK_MS, npcTick, processTributes } from './empires';
 import { processPlayer } from './economy';
 import { processMovements } from './fleet';
 import { processInvasion } from './invasion';
+import { processForges } from './forge';
 import { processRaids } from './npc';
 import { checkProgress } from './progress';
 import { SECTOR, processSectors } from './sectors';
@@ -30,6 +31,7 @@ export function createTicker(world: World) {
     processTributes(world, now);
     processSeason(world, now);
     processInvasion(world, now); lap('seasons, tribute, invasion');
+    processForges(world, now);
     if (now - lastSectors >= SECTOR.everyMs) { lastSectors = now; processSectors(world, now); }
     processWars(world, now);
     lap('territory');

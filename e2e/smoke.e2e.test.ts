@@ -193,6 +193,24 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('the overview shows the Moon Forge card with its requirements once there is a debris field to use', async () => {
+    await page.route('**/api/planets', async (route) => {
+      const r = await route.fetch(); const j = await r.json();
+      j[0].forge = { hours: 12, requirements: [{ label: 'Graviton Technology 1', ok: false }, { label: 'Shipyard 12 on this planet', ok: false }, { label: 'A debris field of 1,000,000 above it (now 1,200,000)', ok: true }, { label: 'No moon over this planet yet', ok: true }], debris: { metal: 800000, crystal: 400000 }, cost: { metal: 300000, crystal: 300000, deuterium: 1200000 }, diameter: 3500, running: null, hasMoon: false, relevant: true };
+      await route.fulfill({ response: r, json: j });
+    });
+    await page.reload();
+    await page.waitForSelector('header.top');
+    await go('Overview');
+    await page.getByRole('heading', { name: 'Moon Forge' }).waitFor({ timeout: 10_000 });
+    expect(await page.locator('.reqlist li').count()).toBe(4);
+    expect(await page.locator('.reqlist li.bad').count()).toBe(2);
+    expect(await page.getByRole('button', { name: 'Forge a moon' }).isDisabled()).toBe(true);        // requirements are not met
+    expect(await page.locator('main').innerText()).toMatch(/3,500 km|3\.5K km|3500 km/);
+    await page.unroute('**/api/planets');
+    noErrors();
+  });
+
   run('runs a ready-made build order from the Automation page', async () => {
     await go('Automation');
     await page.locator('.row', { hasText: 'Colony starter' }).getByRole('button', { name: 'Run here' }).click();

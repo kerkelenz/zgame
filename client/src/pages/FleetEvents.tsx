@@ -58,6 +58,7 @@ export function FleetEvents() {
 
   const text = (e: any) => {
     const mission = <span className="evmission">Mission: {MISSION[e.mission] ?? e.mission}</span>;
+    if (e.step === 'forge') return <>Your Moon Forge above <Place p={e.to} /> collapses the debris into a moon ({(e.moonKm ?? 0).toLocaleString('en-US')} km). <span className="evmission">Mission: Moon Forge</span></>;
     const n = e.ships != null ? ` (${e.ships} ship${e.ships === 1 ? '' : 's'})` : '';
     if (e.kind === 'own') {
       if (e.step === 'arrive') return <>Your fleet{n} from <Place p={e.from} /> reaches {target(e)}{carry(e)}. {mission}</>;

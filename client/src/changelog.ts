@@ -3,6 +3,13 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-h', date: '2026-10-11', title: 'Moon Forge',
+    items: [
+      'The Moon Forge turns the debris field above one of your planets into a moon for certain. It needs Graviton Technology 1, a level 12 Shipyard on that planet and at least 1,000,000 resources of debris, costs vespene gas (as much as the debris) plus a quarter each of metal and crystal, and takes 12 hours. A bigger field makes a bigger moon, from 3,000 to 8,000 km.',
+      'The forge appears as a card on the Overview and as an entry in the Events list while it runs; cancelling gives back the price but not the debris.',
+    ],
+  },
+  {
     id: '2026-10-g', date: '2026-10-11', title: 'Events, moons and the tech tree',
     items: [
       'The welcome tour has a Tech tree step and mentions the Events list on the Overview.',

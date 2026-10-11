@@ -9,6 +9,7 @@ import { abandonPlanet, tradeResources, cancelBuilding, cancelResearch, cancelSh
 import { flightPlan, jumpGate, launchMissiles, phalanxScan, recallFleet, sendFleet } from './fleet';
 import { colonyCount, galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
+import { cancelForge, startForge } from './forge';
 import { allianceView, commandView, fleetsView, meView, planetView } from './views';
 import { checkProgress, chooseClass, hireOfficer, joinFaction, leaveFaction } from './progress';
 import { answerTribute } from './empires';
@@ -360,6 +361,16 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.post('/planets/:id/wreck/repair', wrap((req) => {
     const p = req.player!;
     startRepair(w, p, ownedPlanet(w, p.id, req.params.id), now());
+    return planetView(w, w.planets[req.params.id], now());
+  }));
+  A.post('/planets/:id/forge/start', wrap((req) => {
+    const p = req.player!;
+    startForge(w, p, ownedPlanet(w, p.id, req.params.id), now());
+    return planetView(w, w.planets[req.params.id], now());
+  }));
+  A.post('/planets/:id/forge/cancel', wrap((req) => {
+    const p = req.player!;
+    cancelForge(w, p, ownedPlanet(w, p.id, req.params.id));
     return planetView(w, w.planets[req.params.id], now());
   }));
   A.post('/planets/:id/rename', wrap((req) => {

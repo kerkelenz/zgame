@@ -73,11 +73,11 @@ export function colonyCount(w: World, player: Player): number {
   return player.planetIds.filter((id) => !w.planets[id]?.isMoon).length;
 }
 
-export function createMoon(w: World, parent: Planet, now: number, chance = 0.05): Planet {
+export function createMoon(w: World, parent: Planet, now: number, chance = 0.05, diameter?: number): Planet {
   const owner = w.players[parent.ownerId];
   const moon: Planet = {
     id: uid(), ownerId: owner.id, name: `${parent.name} Moon`, coords: { ...parent.coords }, fields: 1,
-    diameter: Math.round(1000 + chance * 30000 + Math.random() * 3000),
+    diameter: diameter ?? Math.round(1000 + chance * 30000 + Math.random() * 3000),
     maxTemp: parent.maxTemp - 20, isHome: false, isMoon: true, parentId: parent.id, buildings: {},
     resources: { metal: 0, crystal: 0, deuterium: 0 }, updatedAt: now, buildQueue: null, buildBacklog: [], shipyardQueue: [],
     fleet: {}, defenses: {}, settings: {},

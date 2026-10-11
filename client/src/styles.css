@@ -303,3 +303,5 @@ ol.steps { margin: 4px 0; padding-left: 20px; } ol.steps li { margin: 2px 0; }
 .celestial:hover { border-color: var(--line); } .celestial.on { border-color: var(--accent); background: rgba(255, 190, 80, .07); }
 
 .intel { color: #ffb0b0; }
+
+ul.reqlist { list-style: none; padding: 0; margin: 6px 0; } ul.reqlist li { margin: 2px 0; }

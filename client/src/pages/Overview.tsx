@@ -4,7 +4,7 @@ import { BUILDINGS, POSITION_BONUS, TECHS, UNITS, crawlerBonus } from '../../../
 import { post } from '../api';
 import { Art } from '../art';
 import { useGame } from '../game';
-import { Card, Countdown, Page, Progress, coordStr, fmt } from '../ui';
+import { Card, Cost, Countdown, Page, Progress, coordStr, fmt } from '../ui';
 import { FleetEvents } from './FleetEvents';
 
 export function Overview() {
@@ -81,6 +81,33 @@ export function Overview() {
           <p>{me.contractsClaimable} finished contract{me.contractsClaimable > 1 ? 's are' : ' is'} waiting for you to claim the reward.</p>
         </Card>
       )}
+      {planet.forge?.relevant && !planet.isMoon && (
+        <Card title="Moon Forge">
+          {planet.forge.running ? (
+            <>
+              <div className="job">
+                <div>Collapsing {fmt(planet.forge.running.debris.metal + planet.forge.running.debris.crystal)} of debris into a moon of {fmt(planet.forge.running.diameter)} km · <Countdown to={planet.forge.running.end} /></div>
+                <Progress from={planet.forge.running.start} to={planet.forge.running.end} />
+              </div>
+              <p className="muted small">The debris is already used up. Cancelling gives back the resources you paid but not the debris.</p>
+              <button className="danger" onClick={() => confirm('Cancel the forge? You get your resources back, but the debris is lost.') && void act(() => post(`/planets/${planet.id}/forge/cancel`), 'Forge cancelled')}>Cancel</button>
+            </>
+          ) : (
+            <>
+              <p className="muted small">Turn the debris field above this planet into a moon for certain. The field is used up, the forge takes {planet.forge.hours} hours, and a bigger field makes a bigger moon.</p>
+              <ul className="reqlist">
+                {planet.forge.requirements.map((r: { label: string; ok: boolean }) => <li key={r.label} className={r.ok ? 'good' : 'bad'}>{r.ok ? '✓' : '✗'} {r.label}</li>)}
+              </ul>
+              {planet.forge.cost && (
+                <p>Price: <Cost cost={planet.forge.cost} have={planet.resources} /> · makes a moon of about <b>{fmt(planet.forge.diameter)} km</b></p>
+              )}
+              <button className="primary" disabled={planet.forge.requirements.some((r: { ok: boolean }) => !r.ok) || !planet.forge.cost || planet.resources.metal < planet.forge.cost.metal || planet.resources.crystal < planet.forge.cost.crystal || planet.resources.deuterium < planet.forge.cost.deuterium}
+                onClick={() => void act(() => post(`/planets/${planet.id}/forge/start`), 'Moon Forge started')}>Forge a moon</button>
+            </>
+          )}
+        </Card>
+      )}
+
       <Card title="In progress">
         {!b && !r && !q && <p className="muted">Nothing is being built. Head to Buildings or Research.</p>}
         {b && <div className="job"><div>Building: <b>{BUILDINGS[b.id as keyof typeof BUILDINGS].name}</b> → level {b.level} <Countdown to={b.end} /></div><Progress from={b.start} to={b.end} /></div>}
