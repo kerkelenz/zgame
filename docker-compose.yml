@@ -1,4 +1,4 @@
-# Stellar Frontier behind Caddy, which gets and renews an HTTPS certificate automatically.
+# Zgame behind Caddy, which gets and renews an HTTPS certificate automatically.
 #   1. point a DNS name at this machine and open ports 80 and 443
 #   2. put your settings in .env (see docs/DEPLOY.md), at least  DOMAIN=play.example.com  and  OGAME_ADMINS=yourname
 #   3. docker compose up -d

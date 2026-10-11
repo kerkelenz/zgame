@@ -1,4 +1,4 @@
-# Running Stellar Frontier for other people
+# Running Zgame for other people
 
 Two ways: a small server with Docker (recommended), or plain Node on any machine.
 

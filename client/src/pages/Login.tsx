@@ -32,7 +32,7 @@ export function Login({ onDone }: { onDone: () => void }) {
   return (
     <div className="login">
       <form onSubmit={submit} className="card">
-        <h1>Stellar Frontier</h1>
+        <h1>Zgame</h1>
         <p className="muted">{t('login.tagline', 'Build an empire. Defend your allies. Conquer the galaxy together.')}</p>
         <label>{t('login.name', 'Commander name')}<input value={username} onChange={(e) => setUsername(e.target.value)} autoFocus autoComplete="username" /></label>
         {mode === 'recover' && <label>Recovery key<input value={key} onChange={(e) => setKey(e.target.value)} placeholder="xxxxx-xxxxx-xxxxx-xxxxx" autoComplete="off" /></label>}

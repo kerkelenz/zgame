@@ -1,4 +1,4 @@
-# Stellar Frontier
+# Zgame
 
 A co-op multiplayer, OGame-style space strategy game. Everyone shares one persistent universe; alliances pool resources, buy shared bonuses and defend each other against NPC raiders and hostile players.
 

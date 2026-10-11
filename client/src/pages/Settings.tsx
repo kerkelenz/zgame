@@ -75,7 +75,7 @@ function Alerts() {
     if (perm !== 'granted') return toast('Notifications were not allowed - change it in your browser settings', 'error');
     try { localStorage.setItem(BROWSER_NOTIFY_KEY, '1'); } catch { /* ignore */ }
     setBrowser(true);
-    new Notification('Stellar Frontier', { body: 'Browser alerts are on.' });
+    new Notification('Zgame', { body: 'Browser alerts are on.' });
   };
 
   return (
@@ -126,7 +126,7 @@ function AppAndPush() {
   return (
     <Card title="Install the app and push notifications">
       <div className="settings-section">
-        <p className="small muted">Add Stellar Frontier to your home screen or desktop like an app, and get a notification on that device when you are attacked, an ally needs help, tribute is demanded or something finishes - even with the game closed. The categories and the "only when I am away" option under <b>Alerts</b> apply here too.</p>
+        <p className="small muted">Add Zgame to your home screen or desktop like an app, and get a notification on that device when you are attacked, an ally needs help, tribute is demanded or something finishes - even with the game closed. The categories and the "only when I am away" option under <b>Alerts</b> apply here too.</p>
         {isStandalone() ? <p className="good small">You are using the installed app.</p>
           : installable ? <div className="row"><button className="primary" onClick={() => void installApp()}>Install the app</button></div>
           : isIos() ? <p className="small">On iPhone or iPad: open the Share menu in Safari and choose <b>Add to Home Screen</b>, then open the game from the new icon - iOS only allows push notifications for installed apps.</p>

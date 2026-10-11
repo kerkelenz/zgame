@@ -244,7 +244,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const p = req.player!;
     if (limited('pushtest:' + p.id, 5, 60_000)) throw new GameError('Slow down', 429);
     if (!p.pushSubs?.length) throw new GameError('No device is subscribed yet');
-    return pushToPlayer(w, p, { title: 'Stellar Frontier', body: 'Push notifications work on this device.', tag: 'test' });
+    return pushToPlayer(w, p, { title: 'Zgame', body: 'Push notifications work on this device.', tag: 'test' });
   }));
   A.get('/spy-archive', wrap((req) => SOC.spyArchiveView(w, req.player!)));
   A.post('/report', wrap((req) => { SOC.reportPlayer(w, req.player!, str(req.body.id), str(req.body.reason, 300), now()); return { ok: true }; }));

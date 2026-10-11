@@ -50,7 +50,7 @@ export function App() {
   const { me, planet, planets, page, setPage, live, toasts, fleets, offline } = g;
   // unread messages and hostile fleets show in the browser tab title
   const unread = me?.unread ?? 0, hostile = fleets.incoming.length;
-  useEffect(() => { document.title = `${hostile ? '⚠ ' : ''}${unread ? `(${unread}) ` : ''}Stellar Frontier`; }, [unread, hostile]);
+  useEffect(() => { document.title = `${hostile ? '⚠ ' : ''}${unread ? `(${unread}) ` : ''}Zgame`; }, [unread, hostile]);
   if (!me || !planet) return <div className="loading">Loading universe…</div>;
 
   const page_ = (() => {
@@ -92,7 +92,7 @@ export function App() {
       <canvas id="stars" ref={stars} aria-hidden="true" />
       <Tour />
       <header className="top">
-        <div className="brand">Stellar Frontier</div>
+        <div className="brand">Zgame</div>
         <select value={planet.id} onChange={(e) => g.selectPlanet(e.target.value)}>
           {planets.map((p) => <option key={p.id} value={p.id}>{p.isMoon ? '🌙 ' : ''}{p.name} {coordStr(p.coords)}</option>)}
         </select>

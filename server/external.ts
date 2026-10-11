@@ -73,7 +73,7 @@ const TAGS: Record<Category, string> = { attacks: 'rotating_light', allies: 'han
 
 function deliver(channel: 'discord' | 'ntfy', url: string, category: Category, title: string, body: string): Promise<{ ok: boolean; status: number }> {
   if (channel === 'discord') {
-    return sender(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'Stellar Frontier', content: `**${title}**\n${body}`.slice(0, 1900), allowed_mentions: { parse: [] } }) });
+    return sender(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'Zgame', content: `**${title}**\n${body}`.slice(0, 1900), allowed_mentions: { parse: [] } }) });
   }
   return sender(url, { method: 'POST', headers: { Title: title.slice(0, 120), Priority: category === 'attacks' ? 'urgent' : 'default', Tags: TAGS[category], 'content-type': 'text/plain; charset=utf-8' }, body: body.slice(0, 1900) });
 }
@@ -110,7 +110,7 @@ export async function sendTest(w: World, p: Player): Promise<{ channel: 'discord
   for (const channel of ['discord', 'ntfy'] as const) {
     const url = p.notify[channel];
     if (!url) continue;
-    const r = await deliver(channel, url, 'attacks', 'Stellar Frontier test', `Hello ${p.username}! Alerts are working. You will get messages like this when a fleet is heading for you.`);
+    const r = await deliver(channel, url, 'attacks', 'Zgame test', `Hello ${p.username}! Alerts are working. You will get messages like this when a fleet is heading for you.`);
     out.push({ channel, ok: r.ok, status: r.status });
   }
   if (!out.length) throw new GameError('Add a Discord webhook or ntfy topic first');

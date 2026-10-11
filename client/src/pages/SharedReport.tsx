@@ -11,7 +11,7 @@ export function SharedReport({ id }: { id: string }) {
   return (
     <div className="login">
       <div className="card" style={{ maxWidth: 760 }}>
-        <h1>Stellar Frontier</h1>
+        <h1>Zgame</h1>
         {err && <div className="error">{err}</div>}
         {!r && !err && <p className="muted">Loading…</p>}
         {r && <>

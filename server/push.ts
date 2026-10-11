@@ -55,7 +55,7 @@ export interface PushMessage { title: string; body: string; tag?: string; url?: 
 export async function pushToPlayer(w: World, p: Player, msg: PushMessage): Promise<{ sent: number; dropped: number; failed: number }> {
   const subs = [...(p.pushSubs ?? [])];
   const v = ensureVapid(w);
-  const payload = JSON.stringify({ title: msg.title.slice(0, 80), body: msg.body.slice(0, 240), tag: msg.tag ?? 'stellar-frontier', url: msg.url ?? '/' });
+  const payload = JSON.stringify({ title: msg.title.slice(0, 80), body: msg.body.slice(0, 240), tag: msg.tag ?? 'zgame', url: msg.url ?? '/' });
   let sent = 0, dropped = 0, failed = 0;
   await Promise.all(subs.map(async (s) => {
     const r = await sender({ endpoint: s.endpoint, keys: s.keys }, payload, { ...v, subject: subject() });

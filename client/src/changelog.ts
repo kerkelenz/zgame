@@ -85,7 +85,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-0a', date: '2026-10-09', title: 'The multiplayer game',
     items: [
-      'Stellar Frontier became a shared online universe: one server, many commanders, real-time updates.',
+      'Zgame became a shared online universe: one server, many commanders, real-time updates.',
       'Alliances with a shared bank and upgrades, and joint attacks where members strike together.',
       'Build and research queues four deep, paid when each item starts.',
       'Moons with a Lunar Base, Sensor Phalanx and Jump Gate; missile silos with interceptor and interplanetary missiles.',

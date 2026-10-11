@@ -1,4 +1,4 @@
-/* Stellar Frontier service worker: push notifications, a clickable notification, and an offline shell.
+/* Zgame service worker: push notifications, a clickable notification, and an offline shell.
    It never touches /api or /ws, so game data is always live. */
 const CACHE = 'sf-shell-v1';
 
@@ -33,11 +33,11 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('push', (event) => {
   let data = {};
-  try { data = event.data ? event.data.json() : {}; } catch { data = { title: 'Stellar Frontier', body: event.data ? event.data.text() : '' }; }
-  const title = data.title || 'Stellar Frontier';
+  try { data = event.data ? event.data.json() : {}; } catch { data = { title: 'Zgame', body: event.data ? event.data.text() : '' }; }
+  const title = data.title || 'Zgame';
   event.waitUntil(self.registration.showNotification(title, {
     body: data.body || '',
-    tag: data.tag || 'stellar-frontier',   // alerts of one kind replace each other instead of piling up
+    tag: data.tag || 'zgame',   // alerts of one kind replace each other instead of piling up
     renotify: true,
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',

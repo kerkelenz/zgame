@@ -160,7 +160,7 @@ describe('api', () => {
     const test = await call('POST', '/api/push/test', reg.token);
     expect(test.status).toBe(200);
     expect(test.json).toEqual({ sent: 1, dropped: 0, failed: 0 });
-    expect(calls.at(-1)!.payload.title).toBe('Stellar Frontier');
+    expect(calls.at(-1)!.payload.title).toBe('Zgame');
     const gone = await call('POST', '/api/push/unsubscribe', reg.token, { endpoint: sub(7).endpoint });
     expect(gone.json.devices).toHaveLength(0);
   });
