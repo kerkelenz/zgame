@@ -28,7 +28,9 @@ export function Guide() {
           <li><b>Raiders</b> (NPCs) periodically attack players. You get at least 10 minutes warning, and allies are warned too.</li>
           <li>Send a <b>Defend ally (hold)</b> fleet to an ally's planet - your ships fight next to theirs. When raiders are crushed, everyone who defended shares a bounty.</li>
           <li>Attack another player together: dispatch an <b>Attack</b>, then allies pick <i>Joint attack</i> in the Fleet page to arrive at the same moment. Loot is split by cargo space.</li>
-          <li>Use <b>Chat</b> (global and alliance) to coordinate.</li>
+          <li>Use <b>Chat</b> (global and alliance) to coordinate. The alliance <b>bulletin board</b> holds standing orders, and a leader can message every member at once.</li>
+          <li>Founders can create <b>ranks</b> that grant individual permissions (applications, kicking, bank grants, upgrades, description, messages, bulletin, diplomacy).</li>
+          <li><b>Diplomacy:</b> a <i>pact</i> (both alliances must agree) stops either side attacking the other. A <i>war</i> is declared by one side and flags the enemy in the Galaxy. Either side can end a treaty.</li>
         </ul>
       </Card>
       <Card title="Understanding your economy">
@@ -47,12 +49,49 @@ export function Guide() {
           <li>The <b>Battle Simulator</b> predicts a fight before you fly it - load a defender straight from a spy report.</li>
         </ul>
       </Card>
+      <Card title="Queues and the merchant">
+        <ul>
+          <li>Buildings and research can queue four deep behind the running job. Each entry is <b>paid and reserved when you queue it</b> and refunded if you remove it; use the arrows to reorder.</li>
+          <li>The <b>travelling merchant</b> swaps resources at 3 : 2 : 1 with a 12% cut (8% for Collectors). Each day he does one pair at only 2% up to a daily allowance - the Resources page shows today's deal.</li>
+          <li><b>Gather</b> (Resources page) sends loaded cargo ships from all your other planets to the one you are viewing.</li>
+          <li>Orbit matters: positions 1-3 give extra crystal, 6-10 extra metal (up to +35% at position 8). <b>Crawlers</b> (planet-only, fragile) add +0.1% to every mine each, up to +50%.</li>
+        </ul>
+      </Card>
+      <Card title="Moons, wreck fields and the Space Dock">
+        <ul>
+          <li>A big enough debris field can condense into a <b>moon</b> (Lunar Base, Sensor Phalanx, Jump Gate). Send Deathstars on a <b>Destroy moon</b> mission to try to destroy one: the odds improve with more Deathstars and smaller moons, but the shock wave can destroy your Deathstars.</li>
+          <li>When a battle destroys enough of a defender's ships a <b>wreck field</b> forms. A <b>Space Dock</b> rebuilds a share of it for free (30% + 6% per level, up to 90%) before it drifts away after 72 hours. See the Overview.</li>
+        </ul>
+      </Card>
+      <Card title="Expeditions">
+        <ul>
+          <li>Deep space (the last slot of a system) needs Astrophysics. You choose how long to stay out, <b>1-4 hours</b>: each extra hour finds about 30% more but widens the black-hole risk.</li>
+          <li><b>Recyclers</b> add 25% to resource finds and can salvage wreckage; <b>probes</b> scout, making pirate fleets 25% smaller. Ancient data caches can speed up your running research. Discoverers get extra slots and find more.</li>
+        </ul>
+      </Card>
+      <Card title="Classes, vacation and alerts">
+        <ul>
+          <li>Pick a <b>class</b> in Command: Collector (mines, energy, cargo, merchant, crawlers), General (fleet slots, fuel, speed, debris) or Discoverer (expeditions, research, colonies). The first choice is free.</li>
+          <li><b>Vacation mode</b> (Settings) freezes your empire and protects it, but needs a quiet empire and lasts at least 48 hours.</li>
+          <li>Get <b>alerts outside the game</b> through a Discord webhook or the ntfy phone app (Settings), plus optional sound cues and browser notifications. The tab title shows unread messages and hostile fleets.</li>
+        </ul>
+      </Card>
+      <Card title="People, standing and seasons">
+        <ul>
+          <li>Click any commander's name for their <b>profile</b>: rank in every category, record, class, alliance and achievements. <b>Standing</b> switches between total, economy, research, fleet, defense and activity rankings.</li>
+          <li><b>Contacts</b> keeps buddies, blocked commanders, private notes, bookmarks and your latest <b>spy report</b> for each planet. Use Report on a profile if someone breaks the rules.</li>
+          <li>Battle reports have a round-by-round table; <b>Share link</b> makes a public page you can paste into chat.</li>
+          <li>Some universes run in <b>seasons</b>: at the end the top players enter the hall of fame and the universe resets. You keep your account, credits, officers, class and achievements.</li>
+          <li>Account settings (password, rename, recovery key, delete) are in Settings. Keep a <b>recovery key</b> - there is no email reset.</li>
+        </ul>
+      </Card>
       <Card title="Fleet tips">
         <ul>
           <li>Flights cost deuterium. Slower speed % uses less fuel. Recall at any time - the fleet returns after the time already travelled.</li>
           <li><b>Espionage</b> probes reveal resources, fleet, defenses, buildings and research depending on probe count and tech difference. Check before attacking.</li>
           <li>Destroyed ships leave a <b>debris field</b>; Recyclers collect it. Defenses rebuild ~70% of the time after a battle.</li>
-          <li>Players with low points are under <b>newbie protection</b> and can neither attack nor be attacked.</li>
+          <li>Players with low points are under <b>newbie protection</b> and can neither attack nor be attacked. The Galaxy flags them: <b>n</b> too weak, <b>s</b> too strong, <b>v</b> vacation, <b>i / I</b> inactive 7 / 28 days, ● online.</li>
+          <li>An incoming attack shows who sends it and <b>where it launched from</b> (planet and coordinates) in Fleet, the alert bar and your messages.</li>
           <li>Battles last up to 6 rounds. Rapid fire lets some ships shoot repeatedly at certain targets - check the unit cards.</li>
         </ul>
       </Card>
