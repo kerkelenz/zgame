@@ -228,6 +228,26 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('the galaxy has a Recycle button where there is debris, which opens the Fleet page', async () => {
+    // put a debris field on one position and on the commander's own planet by editing the galaxy answer
+    await page.route('**/api/galaxy/*/*', async (route) => {
+      const r = await route.fetch(); const j = await r.json();
+      const mineSlot = j.slots.find((x: any) => x.planet?.mine), empty = j.slots.find((x: any) => !x.planet);
+      for (const sl of [mineSlot, empty]) if (sl) sl.debris = { metal: 40_000, crystal: 12_000 };
+      await route.fulfill({ response: r, json: j });
+    });
+    await go('Galaxy');
+    await page.locator('table.galaxy').waitFor();
+    const row = page.locator('table.galaxy tbody tr.mine');
+    await row.getByRole('button', { name: 'Recycle' }).waitFor();
+    expect(await page.getByRole('button', { name: 'Recycle' }).count()).toBeGreaterThanOrEqual(2);     // on your own planet's field and on an empty position
+    await row.getByRole('button', { name: 'Recycle' }).click();
+    await page.getByRole('heading', { name: 'Fleet' }).first().waitFor();
+    expect(await page.locator('main').innerText()).toMatch(/Send fleet from/);                         // the button leads to the Fleet page
+    await page.unroute('**/api/galaxy/*/*');
+    noErrors();
+  });
+
   run('the galaxy lists the commander\'s own planet and opens its profile', async () => {
     await go('Galaxy');
     await page.locator('table.galaxy').waitFor();

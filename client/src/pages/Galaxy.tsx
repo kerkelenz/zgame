@@ -79,6 +79,7 @@ export function Galaxy() {
           }).map((sl: any) => {
             const pl = sl.planet;
             const note = soc?.notes[`c:${g}:${s}:${sl.p}`] ?? (pl && soc?.notes[`p:${pl.ownerId}`]);
+            const recycle = sl.debris ? <button onClick={() => go(sl.p, 'recycle')} title={`Collect the debris field: ${fmt(sl.debris.metal)} metal, ${fmt(sl.debris.crystal)} crystal (needs Recyclers)`}>Recycle</button> : null;
             return (
               <tr key={sl.p} className={pl?.mine ? 'mine' : ''}>
                 <td>{sl.p}</td>
@@ -93,11 +94,13 @@ export function Galaxy() {
                     <button disabled={pl.protectedFor} title={pl.protectedFor ? 'Protected' : ''} onClick={() => go(sl.p, 'attack')}>Attack</button>
                     <button onClick={() => go(sl.p, 'transport')}>Transport</button>
                     <button disabled={pl.status?.vacation} title={pl.status?.vacation ? 'On vacation' : ''} onClick={() => go(sl.p, 'hold')}>Defend</button>
+                    {recycle}
                     {sl.moon && <button disabled={pl.protectedFor} onClick={() => go(sl.p, 'attack', true)} title="Target the moon">🌙 Attack</button>}
                     {sl.moon && <button className="danger" disabled={pl.protectedFor || pl.status?.vacation} onClick={() => go(sl.p, 'destroy', true)} title="Needs Deathstars. Bigger fleets raise the odds; the shock wave can destroy them.">🌙 Destroy</button>}
                   </>}
                   <button className="link" title={note ? `Note: ${note}` : 'Add a note on this position'} onClick={async () => { const t = prompt('Note for this position (blank removes it)', soc?.notes[`c:${g}:${s}:${sl.p}`] ?? ''); if (t === null) return; const r = await act(() => post('/social/note', { key: `c:${g}:${s}:${sl.p}`, text: t })); if (r) setSoc(r); }}>📝</button>
                   {pl?.mine && <button onClick={() => go(sl.p, 'deploy')}>Deploy</button>}
+                  {(!pl || pl.mine) && recycle}
                   {pl?.mine && sl.moon && <button onClick={() => go(sl.p, 'deploy', true)}>🌙 Deploy</button>}
                 </td>
               </tr>

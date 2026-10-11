@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-f', date: '2026-10-11', title: 'Alliance wars',
     items: [
+      'The Galaxy has a Recycle button next to Spy, Attack, Transport and Defend on every position with a debris field, including your own planets and empty positions.',
       'Recyclers take metal and crystal together in the proportion they lie in the debris field, so a full load is a mix of both instead of all metal first.',
       'Hostile fleets in the Events list and on the Fleet page show what they attack with, as far as your Espionage Technology compared with theirs lets you tell: nothing, the ship count, the types, or the exact fleet.',
       'The Overview Events list now shows how many resources fleets carry (a delivery on its way out, loot and salvage on the way home, a delivery from an ally), per resource and in total.',
