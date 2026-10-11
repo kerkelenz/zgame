@@ -121,6 +121,7 @@ describe('what triggers an alert', () => {
     const carol = register(w, 'carol', 'secret3', T0).player;
     const cp = w.planets[carol.planetIds[0]], bp = w.planets[bob.planetIds[0]];
     cp.coords = { g: 1, s: 5, p: 4 }; bp.coords = { g: 1, s: 6, p: 8 };
+    w.planets[alice.planetIds[0]].coords = { g: 2, s: 30, p: 2 };         // out of the way: a random home could land on one of the spots above
     cp.buildings = { shipyard: 4, roboticsFactory: 3 }; cp.fleet = { cruiser: 10 };
     cp.resources = { metal: 1e6, crystal: 1e6, deuterium: 1e6 };
     carol.techs = { impulseDrive: 4, combustionDrive: 4 };
