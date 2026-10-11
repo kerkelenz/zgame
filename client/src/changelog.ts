@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-g', date: '2026-10-11', title: 'Events, moons and the tech tree',
     items: [
+      'The welcome tour has a Tech tree step and mentions the Events list on the Overview.',
       'The game is now called Zgame.',
       'The Galaxy has a Recycle button next to Spy, Attack, Transport and Defend on every position with a debris field, including your own planets and empty positions.',
       'Recyclers take metal and crystal together in the proportion they lie in the debris field, so a full load is a mix of both instead of all metal first.',
