@@ -5,10 +5,11 @@ import { useGame } from '../game';
 import { Card, Page, fmt } from '../ui';
 
 export function Galaxy() {
-  const { me, planet, setPage, setTarget, now } = useGame();
+  const { me, planet, setPage, openProfile, setTarget, now } = useGame();
   const cfg = me.config;
-  const [g, setG] = useState(planet.coords.g);
-  const [s, setS] = useState(planet.coords.s);
+  const { galaxyAt } = useGame();
+  const [g, setG] = useState(galaxyAt?.g ?? planet.coords.g);
+  const [s, setS] = useState(galaxyAt?.s ?? planet.coords.s);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
 
@@ -45,7 +46,7 @@ export function Galaxy() {
               <tr key={sl.p} className={pl?.mine ? 'mine' : ''}>
                 <td>{sl.p}</td>
                 <td>{pl ? pl.name : <span className="muted">empty</span>}{sl.moon && <span title={sl.moon.name}> 🌙</span>}</td>
-                <td>{pl ? <>{pl.owner}{pl.npc && <span className={`tag ${pl.npc}`}>{pl.npc}</span>}{pl.status?.vacation && <span className="tag vac" title="On vacation: cannot be attacked or spied on">v</span>}{pl.status?.activity === 'online' && <span className="online" title="Online now"> ●</span>}{pl.status?.activity === 'inactive' && <span className="tag inact" title="Inactive for a week or more">i</span>}{pl.status?.activity === 'longInactive' && <span className="tag inact" title="Inactive for a month or more">I</span>}{pl.status?.protection === 'weak' && <span className="tag" title="Newbie protection: too weak to attack">n</span>}{pl.status?.protection === 'strong' && <span className="tag" title="Too strong: protected from you">s</span>}</> : ''}</td>
+                <td>{pl ? <><a className="plink" onClick={() => openProfile(pl.ownerId)}>{pl.owner}</a>{pl.npc && <span className={`tag ${pl.npc}`}>{pl.npc}</span>}{pl.status?.vacation && <span className="tag vac" title="On vacation: cannot be attacked or spied on">v</span>}{pl.status?.activity === 'online' && <span className="online" title="Online now"> ●</span>}{pl.status?.activity === 'inactive' && <span className="tag inact" title="Inactive for a week or more">i</span>}{pl.status?.activity === 'longInactive' && <span className="tag inact" title="Inactive for a month or more">I</span>}{pl.status?.protection === 'weak' && <span className="tag" title="Newbie protection: too weak to attack">n</span>}{pl.status?.protection === 'strong' && <span className="tag" title="Too strong: protected from you">s</span>}</> : ''}</td>
                 <td>{pl?.alliance ? `[${pl.alliance}]` : pl?.faction ? <span className="muted small">{pl.faction}</span> : ''}</td>
                 <td>{sl.debris ? <a onClick={() => go(sl.p, 'recycle')} className="crystal">{fmt(sl.debris.metal)} M / {fmt(sl.debris.crystal)} C</a> : ''}</td>
                 <td className="actions">

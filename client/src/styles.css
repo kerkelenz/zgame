@@ -160,3 +160,9 @@ td .bar { margin: 0 0 3px; }
 
 label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14px; color: var(--text); padding: 3px 0; }
 label.check input { width: auto; }
+
+.plink { cursor: pointer; text-decoration: underline dotted; }
+.plink:hover { color: var(--accent); }
+.rank-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.rank-tile { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--line, #2a3350); border-radius: 6px; }
+.rank-tile b { font-size: 1.3em; }

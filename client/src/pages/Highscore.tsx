@@ -6,7 +6,7 @@ import { Card, Page, fmt, when } from '../ui';
 interface Pt { t: number; v: number }
 
 /** One measure per chart. The SVG holds only geometry (stretched, constant stroke); every label is HTML so text stays crisp. */
-function LineChart({ series, label, color, rank }: { series: Pt[]; label: string; color: string; rank?: boolean }) {
+export function LineChart({ series, label, color, rank }: { series: Pt[]; label: string; color: string; rank?: boolean }) {
   const pts = series.filter((p) => Number.isFinite(p.v));
   if (pts.length < 2) return <p className="muted small">{label}: not enough history yet - a snapshot is taken every 20 minutes of play.</p>;
   const t0 = pts[0].t, t1 = pts[pts.length - 1].t;
@@ -41,10 +41,12 @@ function LineChart({ series, label, color, rank }: { series: Pt[]; label: string
 }
 
 export function Highscore() {
-  const { me } = useGame();
+  const { me, openProfile } = useGame();
+  const [cat, setCat] = useState('total');
   const [data, setData] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
-  useEffect(() => { void get('/highscore').then(setData); void get('/history').then(setHistory); }, []);
+  useEffect(() => { void get('/history').then(setHistory); }, []);
+  useEffect(() => { void get(`/highscore?cat=${cat}`).then(setData); }, [cat]);
   if (!data) return <Page title="Standing"><p className="muted">Loading…</p></Page>;
 
   const rows: any[] = data.players;
@@ -75,8 +77,9 @@ export function Highscore() {
         </tbody></table>
       </Card>
       <Card title="Commanders and empires">
+        <div className="chips" role="tablist">{data.categories.map((c: any) => <button key={c.id} role="tab" aria-selected={c.id === cat} className={c.id === cat ? 'active' : ''} onClick={() => setCat(c.id)}>{c.label}</button>)}</div>
         <table className="table">
-          <thead><tr><th>#</th><th>Name</th><th>Alliance</th><th>Planets</th><th>Buildings</th><th>Research</th><th>Fleet</th><th>Defense</th><th>Total</th></tr></thead>
+          <thead><tr><th>#</th><th>Name</th><th>Alliance</th><th>Planets</th><th>Buildings</th><th>Research</th><th>Fleet</th><th>Defense</th><th>{cat === 'total' ? 'Total' : data.categories.find((c: any) => c.id === cat)?.label}</th></tr></thead>
           <tbody>
             {show.map((p) => {
               const gap = last !== -1 && p.rank - last > 1 ? <tr className="gap" key={'gap' + p.rank}><td colSpan={9}>…</td></tr> : null;
@@ -84,9 +87,9 @@ export function Highscore() {
               return [gap, (
                 <tr key={p.id} className={p.id === me.player.id ? 'mine' : ''}>
                   <td>{p.rank}</td>
-                  <td>{p.username} {p.npc ? <span className={`tag ${p.npc}`}>{p.npc}</span> : p.id === me.player.id ? <span className="tag you">you</span> : null}</td>
+                  <td><a className="plink" onClick={() => openProfile(p.id)}>{p.username}</a> {p.npc ? <span className={`tag ${p.npc}`}>{p.npc}</span> : p.id === me.player.id ? <span className="tag you">you</span> : null}</td>
                   <td>{p.alliance ? `[${p.alliance}]` : p.faction ? <span className="muted small">{p.faction}</span> : ''}</td>
-                  <td>{p.planets}</td><td>{fmt(p.buildings)}</td><td>{fmt(p.research)}</td><td>{fmt(p.fleet)}</td><td>{fmt(p.defense)}</td><td><b>{fmt(p.total)}</b></td>
+                  <td>{p.planets}</td><td>{fmt(p.buildings)}</td><td>{fmt(p.research)}</td><td>{fmt(p.fleet)}</td><td>{fmt(p.defense)}</td><td><b>{fmt(p.value)}</b></td>
                 </tr>
               )];
             })}

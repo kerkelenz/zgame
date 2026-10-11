@@ -13,7 +13,8 @@ import { allianceView, commandView, fleetsView, meView, planetView } from './vie
 import { checkProgress, chooseClass, hireOfficer, joinFaction, leaveFaction } from './progress';
 import { answerTribute } from './empires';
 import { spawnRaid } from './npc';
-import { rankings } from './rankings';
+import { SCORE_CATEGORIES, categoryRows } from './rankings';
+import { profileView } from './profile';
 import { endVacation, startVacation } from './vacation';
 import { startRepair } from './wrecks';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
@@ -201,13 +202,15 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     if (!inBounds(w, { g, s, p: 1 })) throw new GameError('Out of bounds');
     return { g, s, slots: galaxyView(w, req.player!, g, s, now()) };
   }));
-  A.get('/highscore', wrap(() => {
-    const players = rankings(w, true);
+  A.get('/players/:id', wrap((req) => profileView(w, req.params.id, now())));
+  A.get('/highscore', wrap((req) => {
+    const category = typeof req.query.cat === 'string' ? req.query.cat : 'total';
+    const players = categoryRows(w, category, true);
     const alliances = Object.values(w.alliances).map((a) => ({
       id: a.id, tag: a.tag, name: a.name, members: a.members.length,
       total: a.members.reduce((s, m) => s + playerPoints(w, w.players[m.playerId]).total, 0),
     })).sort((a, b) => b.total - a.total).map((a, i) => ({ rank: i + 1, ...a }));
-    return { players, alliances };
+    return { players, alliances, category, categories: SCORE_CATEGORIES.map((c) => ({ id: c.id, label: c.label, unit: c.unit })) };
   }));
   A.get('/command', wrap((req) => commandView(w, req.player!)));
   A.post('/officers/hire', wrap((req) => { hireOfficer(w, req.player!, str(req.body.id)); return commandView(w, req.player!); }));
