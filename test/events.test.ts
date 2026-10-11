@@ -50,7 +50,9 @@ describe('the fleet event list', () => {
     AL.createAlliance(w, alice, 'AAA', 'Alpha'); AL.joinAlliance(w, cara, alice.allianceId!);
     const hit = sendFleet(w, bob, { fromPlanetId: bp.id, to: ap.coords, ships: { cruiser: 5 }, mission: 'attack' }, T0);
     const hitAlly = sendFleet(w, bob, { fromPlanetId: bp.id, to: cp.coords, ships: { cruiser: 3 }, mission: 'attack' }, T0 + 10);
-    const ev = fleetEvents(w, alice).filter((e) => e.kind === 'hostile');
+    const ev = fleetEvents(w, alice).filter((e) => e.kind === 'hostile' || e.kind === 'allyAttack');
+    expect(ev.find((e) => e.id === `${hit.id}:arrive`)!.kind).toBe('hostile');          // an attack on you
+    expect(ev.find((e) => e.id === `${hitAlly.id}:arrive`)!.kind).toBe('allyAttack');   // an attack on an ally is not shown as one on you
     expect(ev.map((e) => e.id)).toEqual([`${hit.id}:arrive`, `${hitAlly.id}:arrive`].sort((a, b) => ev.findIndex((x) => x.id === a) - ev.findIndex((x) => x.id === b)));
     for (const e of ev) { expect(e.ships).toBeNull(); expect(e.owner.name).toBe('bobby'); expect(e.from.name).toBe(bp.name); }
     expect(ev.find((e) => e.id === `${hit.id}:arrive`)!.targetOwner).toBeNull();                 // you

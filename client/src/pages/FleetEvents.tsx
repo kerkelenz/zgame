@@ -65,7 +65,7 @@ export function FleetEvents() {
       if (e.step === 'end') return <>Your fleet{n} leaves <Place p={e.to} /> after holding there and heads home. {mission}</>;
       return <>Your fleet{n} returns from <Place p={e.from} fallback="deep space" /> to <Place p={e.to} />{carry(e)}. {mission}</>;
     }
-    if (e.kind === 'hostile') return <>Hostile fleet of {who(e)} from <Place p={e.from} fallback="deep space" /> reaches {e.targetOwner ? <><a className="plink" onClick={() => openProfile(e.targetOwner.id)}>{e.targetOwner.name}</a>&apos;s planet </> : 'your planet '}<Place p={e.to} /><IntelText intel={e.intel} count={e.ships} types={e.shipTypes} fleet={e.fleet} />. {mission}</>;
+    if (e.kind === 'hostile' || e.kind === 'allyAttack') return <>{e.kind === 'allyAttack' ? 'Attack on an ally by' : 'Hostile fleet of'} {who(e)} from <Place p={e.from} fallback="deep space" /> reaches {e.targetOwner ? <><a className="plink" onClick={() => openProfile(e.targetOwner.id)}>{e.targetOwner.name}</a>&apos;s planet </> : 'your planet '}<Place p={e.to} /><IntelText intel={e.intel} count={e.ships} types={e.shipTypes} fleet={e.fleet} />. {mission}</>;
     return <>Fleet of {who(e)}{n} from <Place p={e.from} /> reaches <Place p={e.to} />{carry(e)}. {mission}</>;
   };
 

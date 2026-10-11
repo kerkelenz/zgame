@@ -195,6 +195,30 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('attacks on you are red in the events, attacks on allies are amber', async () => {
+    const place = (n: string, p: number) => ({ name: n, coords: { g: 1, s: 5, p }, moon: false });
+    const ev = (id: string, kind: string, at: number) => ({ id, at, kind, step: 'arrive', projected: false, mission: 'attack', owner: { id: 'q', name: 'Raider', alliance: null }, from: place('Base', 3), to: place('Target', 6), targetOwner: kind === 'allyAttack' ? { id: 'z', name: 'Friend' } : null, ships: 4, intel: 'count', shipTypes: null, fleet: null, cargo: null, speedPct: 100 });
+    await page.route('**/api/fleets', async (route) => {
+      const r = await route.fetch(); const j = await r.json();
+      j.events = [ev('h', 'hostile', Date.now() + 600_000), ev('a', 'allyAttack', Date.now() + 700_000)];
+      await route.fulfill({ response: r, json: j });
+    });
+    await page.reload();
+    await page.waitForSelector('header.top');
+    await go('Overview');
+    const colour = (sel: string) => page.locator(`${sel} .evtext`).evaluate((el) => getComputedStyle(el).color);
+    await page.locator('.event.ev-hostile').waitFor();
+    await page.locator('.event.ev-allyAttack').waitFor();
+    const red = await colour('.event.ev-hostile'), amber = await colour('.event.ev-allyAttack');
+    expect(red).not.toBe(amber);
+    expect(red).toBe('rgb(255, 123, 123)');
+    expect(await page.locator('.event.ev-allyAttack').innerText()).toMatch(/Attack on an ally/);
+    await page.unroute('**/api/fleets');
+    await page.reload();                                                                    // back to the real events for the tests that follow
+    await page.waitForSelector('header.top');
+    noErrors();
+  });
+
   run('the overview lists fleet events and the list can be hidden', async () => {
     await go('Overview');
     await page.getByRole('heading', { name: /^Events/ }).waitFor();

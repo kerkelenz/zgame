@@ -6,6 +6,7 @@ export const CHANGELOG: Release[] = [
     id: '2026-10-i', date: '2026-10-11', title: 'Player search and a tidier menu',
     items: [
       'Search players: a box in the top bar finds commanders by name (and alliance members by tag) and opens their profile.',
+      'In the Events list only attacks on you are red; attacks on your allies are amber.',
       'The side menu has Expand all and Collapse all buttons at the top.',
       'The side menu is a little wider and has no visible scroll bar (it still scrolls with the wheel or a swipe when it is taller than the window), and it never scrolls sideways.',
     ],

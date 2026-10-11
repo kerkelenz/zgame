@@ -14,7 +14,8 @@ export interface FleetEvent {
   /** unique per movement and step */
   id: string;
   at: number;
-  kind: 'own' | 'hostile' | 'friendly';
+  /** 'hostile' = an attack on you; 'allyAttack' = an attack on one of your allies (worth knowing, but not an attack on you) */
+  kind: 'own' | 'hostile' | 'allyAttack' | 'friendly';
   /** 'arrive' = reaches its target, 'end' = leaves after holding there, 'return' = reaches home again */
   step: 'arrive' | 'end' | 'return' | 'forge';
   /** a later step worked out from the flight time, not yet under way */
@@ -98,7 +99,7 @@ export function fleetEvents(w: World, viewer: Player): FleetEvent[] {
     if (m.phase !== 'outbound') continue;
     const towardMe = isMine(m.to), towardAlly = allyAt(m.to);
     if ((m.mission === 'attack' || m.mission === 'missile' || m.mission === 'destroy') && (towardMe || towardAlly)) {
-      out.push({ ...base(m, 'hostile'), id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, ...(({ count, ...rest }) => ({ ...rest, ships: count }))(intelFields(w, viewer, m)) });
+      out.push({ ...base(m, towardMe ? 'hostile' : 'allyAttack'), id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, ...(({ count, ...rest }) => ({ ...rest, ships: count }))(intelFields(w, viewer, m)) });
     } else if ((m.mission === 'transport' || m.mission === 'hold' || m.mission === 'deploy') && towardMe && m.ownerId && (sameAlliance(w, viewer.id, m.ownerId) || friendly(w, viewer.id, m.ownerId))) {
       out.push({ ...base(m, 'friendly'), id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, ships: fleetCount(m.ships), fleet: { ...m.ships }, shipTypes: Object.keys(m.ships), cargo: load(m) });
     }
