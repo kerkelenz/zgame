@@ -297,6 +297,8 @@ export interface World {
   invasionCount?: number;
   nextInvasionAt?: number;
   invasionHistory?: InvasionRecord[];
+  /** the standing as it was at the last daily snapshot, to show who gained or lost since */
+  standingDay?: import('./standing').StandingDay;
   /** Moon Forges running, by the planet they work above */
   forges?: Record<string, ForgeJob>;
   /** scored alliance wars: the running one and recent history, newest first */

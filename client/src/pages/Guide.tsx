@@ -244,7 +244,7 @@ const TOPICS: Topic[] = [
     id: 'standing', title: 'Standing and seasons',
     body: (
       <ul>
-        <li><b>Points</b> come from what you have invested: 1 point per 1,000 resources spent on buildings, research, ships and defenses. <b>Standing</b> ranks everyone by total points and by economy, research, fleet, defense, battles won, resources destroyed, plundered, recycled, expeditions, raids repelled and moons destroyed. Alliances are ranked by the sum of their members. The rankings refresh every fifteen seconds or so. Charts show your points and rank over time.</li>
+        <li><b>Points</b> come from what you have invested: 1 point per 1,000 resources spent on buildings, research, ships and defenses. <b>Standing</b> ranks everyone by total points and by economy, research, fleet, defense, battles won, resources destroyed, plundered, recycled, expeditions, raids repelled and moons destroyed. Alliances are ranked by the sum of their members. The rankings refresh every fifteen seconds or so. Once every 24 hours the standing is written down, and the <b>24 h</b> and <b>Place</b> columns show how many points each commander has gained or lost since then and how many places they climbed (▲) or fell (▼); someone who joined after the snapshot shows <i>new</i>. Charts show your points and rank over time.</li>
         <li>Some universes run in <b>seasons</b>. Standing shows the time left and any victory score. When a season ends the champion earns Command Credits and an achievement, the top players enter the <b>hall of fame</b>, and after a short grace period the universe resets: everyone starts on a fresh homeworld. You keep your account, credits, officers, class, achievements, alliance and contacts.</li>
       </ul>
     ),

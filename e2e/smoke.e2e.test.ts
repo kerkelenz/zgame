@@ -344,6 +344,14 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('the standing shows the change in points and places since the daily snapshot', async () => {
+    await go('Standing');
+    await page.getByRole('columnheader', { name: '24 h' }).waitFor({ timeout: 10_000 });
+    await page.getByRole('columnheader', { name: 'Place' }).waitFor();
+    expect(await page.locator('main').innerText()).toMatch(/refreshed once every 24 hours/);
+    noErrors();
+  });
+
   run('the message options in Settings are saved', async () => {
     await go('Settings');
     const quiet = page.getByLabel(/No messages when something finishes/);

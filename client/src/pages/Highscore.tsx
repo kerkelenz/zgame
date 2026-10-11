@@ -98,10 +98,10 @@ export function Highscore() {
       <Card title="Commanders and empires">
         <div className="chips" role="tablist">{data.categories.map((c: any) => <button key={c.id} role="tab" aria-selected={c.id === cat} className={c.id === cat ? 'active' : ''} onClick={() => setCat(c.id)}>{c.label}</button>)}</div>
         <table className="table">
-          <thead><tr><th>#</th><th>Name</th><th>Alliance</th><th>Planets</th><th>Buildings</th><th>Research</th><th>Fleet</th><th>Defense</th><th>{cat === 'total' ? 'Total' : data.categories.find((c: any) => c.id === cat)?.label}</th></tr></thead>
+          <thead><tr><th>#</th><th>Name</th><th>Alliance</th><th>Planets</th><th>Buildings</th><th>Research</th><th>Fleet</th><th>Defense</th><th>{cat === 'total' ? 'Total' : data.categories.find((c: any) => c.id === cat)?.label}</th><th title="Change since the daily snapshot">24 h</th><th title="Places gained or lost since the daily snapshot">Place</th></tr></thead>
           <tbody>
             {show.map((p) => {
-              const gap = last !== -1 && p.rank - last > 1 ? <tr className="gap" key={'gap' + p.rank}><td colSpan={9}>…</td></tr> : null;
+              const gap = last !== -1 && p.rank - last > 1 ? <tr className="gap" key={'gap' + p.rank}><td colSpan={11}>…</td></tr> : null;
               last = p.rank;
               return [gap, (
                 <tr key={p.id} className={p.id === me.player.id ? 'mine' : ''}>
@@ -109,11 +109,14 @@ export function Highscore() {
                   <td><a className="plink" onClick={() => openProfile(p.id)}>{p.username}</a> {p.npc ? <span className={`tag ${p.npc}`}>{p.npc}</span> : p.id === me.player.id ? <span className="tag you">you</span> : null}</td>
                   <td>{p.alliance ? `[${p.alliance}]` : p.faction ? <span className="muted small">{p.faction}</span> : ''}</td>
                   <td>{p.planets}</td><td>{fmt(p.buildings)}</td><td>{fmt(p.research)}</td><td>{fmt(p.fleet)}</td><td>{fmt(p.defense)}</td><td><b>{fmt(p.value)}</b></td>
+                  <td className={!p.change ? 'muted' : p.change.points > 0 ? 'good' : p.change.points < 0 ? 'bad' : 'muted'}>{!p.change ? 'new' : p.change.points === 0 ? '±0' : `${p.change.points > 0 ? '+' : '−'}${fmt(Math.abs(p.change.points))}`}</td>
+                  <td className={!p.change ? 'muted' : p.change.places > 0 ? 'good' : p.change.places < 0 ? 'bad' : 'muted'}>{!p.change || p.change.places === 0 ? '–' : p.change.places > 0 ? `▲ ${p.change.places}` : `▼ ${-p.change.places}`}</td>
                 </tr>
               )];
             })}
           </tbody>
         </table>
+        {data.since && <p className="muted small">The 24 h and Place columns compare with the standing written down at {when(data.since)}; it is refreshed once every 24 hours.</p>}
       </Card>
       <Card title="Alliances">
         {data.alliances.length === 0 ? <p className="muted">No alliances yet.</p> : (

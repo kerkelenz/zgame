@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-k', date: '2026-10-12', title: 'Rules and tidy-ups',
     items: [
+      'Standing: the 24 h and Place columns show the points each commander gained or lost and the places they climbed or fell since the daily snapshot, refreshed every 24 hours.',
       'Queues show the time of every job and of the whole queue (buildings, research) and of every shipyard row and all rows together.',
       'Settings: an option to stop the in-game messages when a building, research or production run finishes.',
       'News about raids on people you do not know is now off by default; you hear about members of your own alliance, or switch the news on in Settings.',
