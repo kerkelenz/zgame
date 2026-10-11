@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { levelGraph } from '../shared/techtree';
-import { PHYSICS, createSim, settle } from '../client/src/physics';
+import { PHYSICS, createSim, edgeStats, settle } from '../client/src/physics';
 
 const W = 116, H = 26;
 const build = () => {
@@ -58,5 +58,28 @@ describe('the tech tree physics', () => {
     settle(sim);
     expect(sim.settled()).toBe(true);
     expect(PHYSICS.alphaMin).toBeGreaterThan(0);
+  });
+
+  it('optimises arrow length: much shorter and more even than the tidy grid it starts from', () => {
+    const g = levelGraph();
+    const edges = g.edges.map((e) => ({ from: e.from, to: e.to, kind: e.kind }));
+    const sim = build();
+    const before = edgeStats(sim, edges);
+    settle(sim);
+    const after = edgeStats(sim, edges);
+    expect(after.mean).toBeLessThan(before.mean * 0.5);
+    expect(after.total).toBeLessThan(before.total * 0.5);
+    expect(after.sd).toBeLessThan(before.sd * 0.4);
+    expect(after.max).toBeLessThan(before.max * 0.4);
+  });
+
+  it('pushes nodes apart: no two nodes end up closer than their boxes allow', () => {
+    const sim = build();
+    settle(sim);
+    for (let i = 0; i < sim.bodies.length; i++) for (let j = i + 1; j < sim.bodies.length; j++) {
+      const a = sim.bodies[i], b = sim.bodies[j];
+      const gapX = Math.abs(a.x - b.x) - (a.w + b.w) / 2, gapY = Math.abs(a.y - b.y) - (a.h + b.h) / 2;
+      expect(Math.max(gapX, gapY), `${a.key} / ${b.key}`).toBeGreaterThan(-H / 2);
+    }
   });
 });

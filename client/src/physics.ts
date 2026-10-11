@@ -7,17 +7,31 @@ export interface SimEdge { from: string; to: string; kind: 'level' | 'needs' }
 export interface Body { key: string; x: number; y: number; vx: number; vy: number; w: number; h: number; homeX: number; homeY: number; pinned: boolean }
 
 export const PHYSICS = {
-  /** the horizontal distance an arrow wants between the left edges of its two nodes */
-  restLevel: 128, restNeeds: 176,
-  /** spring strength along and across an arrow */
-  kxLevel: 0.08, kyLevel: 0.14, kxNeeds: 0.03, kyNeeds: 0.012,
-  /** short-range push when boxes overlap, and a soft long-range push so clusters spread out */
-  overlap: 0.35, gapX: 10, gapY: 6, repel: 900, repelRange: 220,
-  /** a faint pull toward where the tidy layout would put a node, so the picture never drifts away */
-  home: 0.02,
-  damping: 0.82, maxSpeed: 14,
-  alphaDecay: 0.985, alphaMin: 0.015,
+  /** the length an arrow wants (end of the source node to start of the target), by kind: short and even is the goal */
+  restLevel: 14, restNeeds: 60,
+  /** spring strength along an arrow (it pulls both ends toward the rest length) */
+  kLevel: 0.16, kNeeds: 0.12,
+  /** an arrow never runs backwards: when the target is less than this far to the right of the source it is pushed right */
+  minForward: 8, kForward: 0.25,
+  /** every node pushes every other away, falling off with distance, within this range; boxes that touch are separated hard */
+  repel: 2600, repelRange: 420,
+  overlap: 0.4, gapX: 12, gapY: 8,
+  /** a faint pull toward where the tidy layout would put a node, so the picture keeps its overall order and never drifts away */
+  home: 0.0005,
+  damping: 0.8, maxSpeed: 16,
+  alphaDecay: 0.988, alphaMin: 0.012,
 };
+
+/** length of an arrow from the right edge of its source to the left edge of its target */
+export const edgeLength = (a: Body, b: Body) => Math.hypot(b.x - (a.x + a.w), b.y + b.h / 2 - (a.y + a.h / 2));
+
+/** how long and how even the arrows are: the quantities the layout tries to keep small */
+export function edgeStats(sim: Sim, edges: SimEdge[]) {
+  const lens = edges.map((e) => edgeLength(sim.byKey.get(e.from)!, sim.byKey.get(e.to)!));
+  const mean = lens.reduce((s, x) => s + x, 0) / Math.max(1, lens.length);
+  const sd = Math.sqrt(lens.reduce((s, x) => s + (x - mean) ** 2, 0) / Math.max(1, lens.length));
+  return { mean, sd, max: Math.max(0, ...lens), total: lens.reduce((s, x) => s + x, 0) };
+}
 
 export interface Sim {
   bodies: Body[];
@@ -45,14 +59,16 @@ export function createSim(nodes: SimNode[], edges: SimEdge[], seed = 7): Sim {
     settled() { return sim.alpha < P.alphaMin; },
     step() {
       const a = sim.alpha;
-      // arrows: pull the target to the right of the source and level with it
+      // arrows: springs toward a short rest length, and never backwards
       for (const l of links) {
         const level = l.kind === 'level';
         const rest = level ? P.restLevel : P.restNeeds;
-        const ex = l.b.x - l.a.x - rest, ey = l.b.y - l.a.y;
-        // a 'needs' arrow may be longer than its rest length (it costs little) but never shorter
-        const fx = (level ? P.kxLevel : ex < 0 ? P.kxNeeds * 2 : P.kxNeeds * 0.25) * ex * a;
-        const fy = (level ? P.kyLevel : P.kyNeeds) * ey * a;
+        const sx = l.a.x + l.a.w, sy = l.a.y + l.a.h / 2, tx = l.b.x, ty = l.b.y + l.b.h / 2;
+        const dx = tx - sx, dy = ty - sy;
+        const d = Math.hypot(dx, dy) || 1;
+        const f = (level ? P.kLevel : P.kNeeds) * (d - rest) * a;
+        let fx = (dx / d) * f, fy = (dy / d) * f;
+        if (dx < P.minForward) fx += (dx - P.minForward) * P.kForward * a;
         l.b.vx -= fx; l.b.vy -= fy; l.a.vx += fx; l.a.vy += fy;
       }
       // nodes push each other apart: hard when boxes touch, softly at a distance
@@ -68,9 +84,8 @@ export function createSim(nodes: SimNode[], edges: SimEdge[], seed = 7): Sim {
             // overlapping: separate along the axis that needs the smaller move (boxes are wide, so mostly up and down)
             if (oy < ox) fy = Math.sign(dy || (i % 2 ? 1 : -1)) * oy * P.overlap * 0.5; else fx = Math.sign(dx || 1) * ox * P.overlap * 0.5;
           } else {
-            const d2 = dx * dx + dy * dy + 40;
-            const f = (P.repel / d2) * a;
-            const d = Math.sqrt(d2);
+            const d = Math.sqrt(dx * dx + dy * dy) + 8;
+            const f = (P.repel / d / d) * a * Math.max(0, 1 - d / (P.repelRange * 1.5));
             fx = (dx / d) * f; fy = (dy / d) * f;
           }
           q.vx += fx; q.vy += fy; p.vx -= fx; p.vy -= fy;
@@ -91,6 +106,6 @@ export function createSim(nodes: SimNode[], edges: SimEdge[], seed = 7): Sim {
 }
 
 /** run the simulation until it settles (used to open the page already relaxed) */
-export function settle(sim: Sim, maxSteps = 400) {
+export function settle(sim: Sim, maxSteps = 700) {
   for (let i = 0; i < maxSteps && !sim.settled(); i++) sim.step();
 }
