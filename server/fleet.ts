@@ -81,7 +81,8 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     if (!inv || inv.phase !== 'active') throw new GameError('There is no invasion to fight right now');
     if (!sameCoords(to, inv.rift)) throw new GameError(`The Void rift is at ${fmt(inv.rift)}`);
   } else if (expedition !== (to.p === w.config.positions + 1)) throw new GameError(expedition ? 'Expeditions must target deep space (position ' + (w.config.positions + 1) + ')' : 'Invalid destination');
-  if (sameCoords(to, planet.coords) && toMoon === !!planet.isMoon) throw new GameError('You are already there');
+  // recycling is the one mission that may target the sender's own position: the debris field floats above it
+  if (mission !== 'recycle' && sameCoords(to, planet.coords) && toMoon === !!planet.isMoon) throw new GameError('You are already there');
 
   const slots = activeSlots(w, player);
   if (expedition) {

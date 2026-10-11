@@ -137,6 +137,28 @@ describe('missions to moons', () => {
     expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: ap.coords, ships: { cruiser: 1 }, mission: 'deploy' }, T0)).toThrow(/already there/);
   });
 
+  it('recyclers can collect the debris field above their own planet or moon', () => {
+    w.debris['1:5:6'] = { metal: 30_000, crystal: 10_000 };
+    ap.fleet = { recycler: 3 };
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: ap.coords, ships: { recycler: 3 }, mission: 'recycle' }, T0);
+    processMovements(w, m.arriveAt);
+    expect(w.debris['1:5:6']).toBeUndefined();
+    expect(alice.stats.harvested).toBe(40_000);
+    // the same from the moon, which shares the coordinates
+    w.debris['1:5:6'] = { metal: 5_000, crystal: 0 };
+    am.fleet = { recycler: 1 };
+    am.resources = { metal: 1e6, crystal: 1e6, deuterium: 1e6 };
+    const m2 = sendFleet(w, alice, { fromPlanetId: am.id, to: ap.coords, ships: { recycler: 1 }, mission: 'recycle' }, T0 + 1000);
+    processMovements(w, m2.arriveAt);
+    expect(w.debris['1:5:6']).toBeUndefined();
+  });
+
+  it('still refuses to send anything else to the position it already stands on', () => {
+    ap.fleet = { cruiser: 2, recycler: 1 };
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: ap.coords, ships: { cruiser: 1 }, mission: 'transport' }, T0)).toThrow(/already there/);
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: ap.coords, ships: { recycler: 1 }, mission: 'recycle' }, T0)).toThrow(/no debris/);
+  });
+
   it('allies can station fleets on a moon separately from the planet', () => {
     AL.createAlliance(w, alice, 'TEAM', 'The Team');
     AL.joinAlliance(w, bob, alice.allianceId!);
