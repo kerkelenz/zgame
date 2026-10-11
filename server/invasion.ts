@@ -1,28 +1,43 @@
 import { makeRng, simulateCombat } from '../shared/combat';
-import { UNITS } from '../shared/data';
+import { UNITS, isStationary } from '../shared/data';
 import type { Fleet, ShipId } from '../shared/types';
 import { bus } from './bus';
 import { combatant, onlyShips } from './fleet';
-import { playerPoints } from './galaxy';
+import { movementsByOwner } from './galaxy';
 import { notifyPlayer } from './messages';
 import { fleetValue } from './npc';
-import { GameError, type Invasion, type World } from './world';
+import { GameError, type Invasion, type Movement, type World } from './world';
 
 const HOUR = 3_600_000, MIN = 60_000;
 /** what the Armada is made of, by share of its value */
 const MIX: [ShipId, number][] = [['lightFighter', 0.15], ['heavyFighter', 0.10], ['cruiser', 0.25], ['battleship', 0.20], ['battlecruiser', 0.15], ['destroyer', 0.15]];
 const REGEN = 0.05;             // share of its starting fleet the Armada rebuilds before every engagement
-const MIN_BUDGET = 1_000_000, MAX_BUDGET = 200_000_000;
+const MIN_BUDGET = 1_000_000, MAX_BUDGET = 2_000_000_000;
 
 export const REWARD = { base: 600, perParticipant: 100, cap: 3000, floor: 25, lossDivisor: 3, minShare: 0.005 };
 
 const shipValue = (id: ShipId) => UNITS[id].cost.metal + UNITS[id].cost.crystal;
 
-/** The Armada's size follows the strength of the whole server, so it is a real fight at any scale. */
+/** the combat ships a commander owns right now, at home or in the air */
+function combatFleetValue(w: World, playerId: string, flights: Map<string, Movement[]>): number {
+  const p = w.players[playerId];
+  let v = 0;
+  const count = (f: Fleet) => { for (const [id, n] of Object.entries(f)) if (n && UNITS[id as ShipId].attack > 1 && !isStationary(id)) v += n * (UNITS[id as ShipId].cost.metal + UNITS[id as ShipId].cost.crystal); };
+  for (const pid of p.planetIds) { const pl = w.planets[pid]; if (pl) count(pl.fleet); }
+  for (const m of flights.get(playerId) ?? []) count(m.ships);
+  return v;
+}
+
+/**
+ * The Armada is a share (invasionStrength) of the combat fleets the whole server owns when it is announced, so it can be beaten
+ * by a good part of the server working together but never by one fleet, at any scale. Fleets built after the announcement are extra.
+ * Fleets, not points: most points sit in buildings and research, which cannot fight.
+ */
 export function bossBudget(w: World): number {
-  let pts = 0;
-  for (const p of Object.values(w.players)) if (!p.npc && p.planetIds.length) pts += playerPoints(w, p).total;
-  return Math.min(MAX_BUDGET, Math.max(MIN_BUDGET, pts * 1000 * w.config.invasionStrength));
+  const flights = movementsByOwner(w);
+  let ships = 0;
+  for (const p of Object.values(w.players)) if (!p.npc && p.planetIds.length) ships += combatFleetValue(w, p.id, flights);
+  return Math.min(MAX_BUDGET, Math.max(MIN_BUDGET, ships * w.config.invasionStrength));
 }
 
 export function buildBoss(budget: number): Fleet {

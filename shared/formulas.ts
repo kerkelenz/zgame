@@ -187,15 +187,20 @@ export function cargoCapacity(fleet: Fleet): number {
 export function unitPoints(id: UnitId, count: number): number {
   return (totalRes(UNITS[id].cost) * count) / 1000;
 }
+/** running totals of what levels 1..n cost, per item: points are summed for every commander every few seconds, so this is looked up, not recomputed */
+const cumulative = new Map<string, number[]>();
+function costUpTo(kind: 'b' | 't', id: string, level: number, cost: (id: never, level: number) => Res): number {
+  const key = kind + id;
+  let arr = cumulative.get(key);
+  if (!arr) { arr = [0]; cumulative.set(key, arr); }
+  while (arr.length <= level) arr.push(arr[arr.length - 1] + totalRes(cost(id as never, arr.length)));  // same additions in the same order as a plain loop
+  return arr[level > 0 ? level : 0];
+}
 export function buildingPoints(id: BuildingId, level: number): number {
-  let t = 0;
-  for (let l = 1; l <= level; l++) t += totalRes(buildingCost(id, l));
-  return t / 1000;
+  return costUpTo('b', id, level, buildingCost as never) / 1000;
 }
 export function techPoints(id: TechId, level: number): number {
-  let t = 0;
-  for (let l = 1; l <= level; l++) t += totalRes(techCost(id, l));
-  return t / 1000;
+  return costUpTo('t', id, level, techCost as never) / 1000;
 }
 
 export function planetFields(planetFieldsBase: number, buildings: Levels<BuildingId>): { used: number; max: number } {

@@ -49,7 +49,7 @@ export interface UniverseConfig {
   invasionDurationHours: number;
   /** minutes between engagements at the front */
   invasionEngageMinutes: number;
-  /** boss strength as a share of every commander's combined points (as resource value) */
+  /** the Armada's size as a share of all commanders' combat fleets (by resource value) when it is announced */
   invasionStrength: number;
   /** no invasions until this many commanders have started playing */
   invasionMinPlayers: number;
@@ -80,7 +80,7 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   invasionAnnounceHours: 12,
   invasionDurationHours: 24,
   invasionEngageMinutes: 30,
-  invasionStrength: 0.15,
+  invasionStrength: 0.35,
   invasionMinPlayers: 2,
   seasonDays: 0,
   seasonResetHours: 24,

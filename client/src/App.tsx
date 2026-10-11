@@ -4,6 +4,7 @@ import { drawStarfield } from './art';
 import { useGame } from './game';
 import { Countdown, fmt, coordStr } from './ui';
 import { t, useLang } from './i18n';
+import { isOpen, loadCollapsed, saveCollapsed, useShowAllPages, visibleNav } from './nav';
 import { Tour } from './Tour';
 import { CHANGELOG, markChangelogSeen, unseenRelease } from './changelog';
 import { Alliance } from './pages/Alliance';
@@ -31,15 +32,12 @@ import { Overview } from './pages/Overview';
 import { Items } from './pages/Items';
 import { Resources } from './pages/Resources';
 
-const NAV: [string, string][] = [
-  ['overview', 'Overview'], ['empire', 'Empire'], ['economy', 'Economy'], ['resources', 'Resources'], ['buildings', 'Buildings'], ['research', 'Research'],
-  ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['automation', 'Automation'], ['fleet', 'Fleet'], ['invasion', 'Invasion'], ['galaxy', 'Galaxy'], ['territory', 'Territory'],
-  ['alliance', 'Alliance'], ['contacts', 'Contacts'], ['contracts', 'Contracts'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['settings', 'Settings'], ['guide', 'Guide'],
-];
 
 export function App() {
   useLang();
   const [whatsNew, setWhatsNew] = useState(unseenRelease());
+  const [collapsed, setCollapsed] = useState(loadCollapsed);
+  const showAll = useShowAllPages();
   const g = useGame();
   const stars = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -122,11 +120,23 @@ export function App() {
       )}
       <div className="body">
         <nav>
-          {(me.player.admin ? [...NAV, ['admin', 'Admin'] as [string, string]] : NAV).map(([id, label]) => (
-            <button key={id} className={page === id ? 'active' : ''} onClick={() => setPage(id)}>
-              {t(`nav.${id}`, label)}{id === 'messages' && me.unread > 0 && <b className="badge">{me.unread}</b>}{id === 'contracts' && me.contractsClaimable > 0 && <b className="badge">{me.contractsClaimable}</b>}
-            </button>
-          ))}
+          {visibleNav(me.features, showAll, !!me.player.admin, page).map((grp) => {
+            const open = isOpen(grp.id, collapsed, page);
+            const badge = (id: string) => (id === 'messages' ? me.unread : id === 'contracts' ? me.contractsClaimable : id === 'invasion' && me.invasion ? '!' : 0) || 0;
+            const closedBadge = grp.items.reduce((sum, it) => sum + (badge(it.id) === '!' ? 1 : Number(badge(it.id))), 0);
+            return (
+              <div key={grp.id} className={`navgroup${open ? '' : ' closed'}`}>
+                <button className="navhead" aria-expanded={open} onClick={() => { const next = { ...collapsed, [grp.id]: open }; setCollapsed(next); saveCollapsed(next); }}>
+                  <span>{open ? '▾' : '▸'} {t(`nav.group.${grp.id}`, grp.label)}</span>{!open && closedBadge > 0 && <b className="badge">{closedBadge}</b>}
+                </button>
+                {grp.items.map((it) => (
+                  <button key={it.id} className={`navitem${page === it.id ? ' active' : ''}`} onClick={() => setPage(it.id)}>
+                    {t(`nav.${it.id}`, it.label)}{badge(it.id) !== 0 && <b className="badge">{badge(it.id)}</b>}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
         </nav>
         <main>{page_}</main>
       </div>

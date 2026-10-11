@@ -1,4 +1,4 @@
-import { colonyCount, playerPoints, type Points } from './galaxy';
+import { colonyCount, movementsByOwner, playerPoints, type Points } from './galaxy';
 import { GameError, type NpcStatus, type World } from './world';
 
 export interface RankRow extends Points {
@@ -14,17 +14,18 @@ export interface RankRow extends Points {
 }
 
 const cache = new WeakMap<World, { at: number; rows: RankRow[] }>();
-const TTL = 15_000;
+const TTL = process.env.VITEST ? 0 : 15_000; // tests want fresh numbers every call
 
 /** Everyone (commanders and computer empires) by points. Cached for 15 s unless forced. */
 export function rankings(w: World, force = false): RankRow[] {
   const hit = cache.get(w);
   if (!force && hit && Date.now() - hit.at < TTL) return hit.rows;
+  const flights = movementsByOwner(w);
   const rows = Object.values(w.players)
     .filter((p) => p.planetIds.length > 0)
     .map((p) => ({
       id: p.id, username: p.username, alliance: p.allianceId ? w.alliances[p.allianceId]?.tag ?? null : null,
-      faction: p.npc ? p.npc.faction : p.faction, planets: colonyCount(w, p), npc: p.npc?.status ?? null, vacation: !!p.vacation, ...playerPoints(w, p),
+      faction: p.npc ? p.npc.faction : p.faction, planets: colonyCount(w, p), npc: p.npc?.status ?? null, vacation: !!p.vacation, ...playerPoints(w, p, flights),
     }))
     .sort((a, b) => b.total - a.total)
     .map((r, i) => ({ rank: i + 1, ...r }));

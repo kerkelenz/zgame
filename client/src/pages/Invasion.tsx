@@ -37,7 +37,7 @@ export function Invasion() {
             {inv.phase === 'active' && (
               <p className="small">
                 <b>At the front now:</b> {inv.combined.fleets} fleet{inv.combined.fleets === 1 ? '' : 's'} from {inv.combined.commanders} commander{inv.combined.commanders === 1 ? '' : 's'}, worth {fmt(inv.combined.value)}.{' '}
-                {inv.combined.value < inv.boss.value ? <span className="bad">That is less than the Armada: the next engagement will cost them dearly. Bring more, together.</span> : <span className="good">That is enough to hurt it.</span>}
+                {inv.combined.value >= inv.boss.value * 1.2 ? <span className="good">That is enough to destroy it in one engagement.</span> : inv.combined.value >= inv.boss.value * 0.5 ? <span className="bad">That will hurt it but not finish it (about 1.2 times its strength is needed). The damage stays, so more fleets arriving after can complete the job.</span> : <span className="bad">That is far less than the Armada: those fleets will be lost for modest damage. Bring more, together.</span>}
                 <br /><span className="muted">The Armada also rebuilds 5% of its starting fleet before every engagement, so a trickle of damage cannot win.</span>
               </p>
             )}

@@ -41,7 +41,7 @@ const elevated = (a: Alliance, id: string) => roleOf(a, id) === 'founder' || rol
 /** Remove an alliance and every treaty or offer that mentions it. */
 export function dropAlliance(w: World, a: Alliance) {
   delete w.alliances[a.id];
-  for (const [k, h] of Object.entries(w.sectors ?? {})) if (h.allianceId === a.id) delete w.sectors![k];
+  for (const [k, h] of Object.entries(w.sectors ?? {})) if (h.allianceId === a.id) delete w.sectors![k]; // the alliance itself is gone, so no count to refresh
   for (const o of Object.values(w.alliances)) {
     if (o.diplomacy) delete o.diplomacy[a.id];
     if (o.proposals) o.proposals = o.proposals.filter((x) => x.fromId !== a.id);

@@ -35,7 +35,7 @@ export function Admin() {
         <div className="row wrap">
           <button className="danger" onClick={() => { const m = prompt('Open the rift in how many minutes?', '10'); if (m !== null) void run(() => post('/admin/invasion/start', { delayMinutes: Number(m) }), 'Invasion announced'); }}>Start an invasion</button>
           <button onClick={() => confirm('End the current invasion now? The Armada withdraws and consolation rewards are paid.') && void run(() => post('/admin/invasion/end'), 'Invasion ended')}>End the current invasion</button>
-          <span className="muted small">Automatic timing: OGAME_INVASION_INTERVAL_HOURS (0 turns them off), OGAME_INVASION_ANNOUNCE_HOURS, OGAME_INVASION_DURATION_HOURS, OGAME_INVASION_STRENGTH.</span>
+          <span className="muted small">Automatic timing: OGAME_INVASION_INTERVAL_HOURS (0 turns them off), OGAME_INVASION_ANNOUNCE_HOURS, OGAME_INVASION_DURATION_HOURS, OGAME_INVASION_STRENGTH (share of the server's combat fleets).</span>
         </div>
       </Card>
       <Card title="Announcement">

@@ -3,7 +3,7 @@ import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
 import { allianceBonuses, planetProduction } from '../server/economy';
 import { createPlanet } from '../server/galaxy';
-import { SECTOR, influenceMap, planetWeight, processSectors, sectorKey, sectorOf, sectorsView, territoryBonus, territoryCount } from '../server/sectors';
+import { SECTOR, recountTerritory, influenceMap, planetWeight, processSectors, sectorKey, sectorOf, sectorsView, territoryBonus, territoryCount } from '../server/sectors';
 import { createWorld, type Planet, type Player, type World } from '../server/world';
 import { removePlayer } from '../server/account';
 
@@ -130,15 +130,18 @@ describe('what territory gives', () => {
     expect(territoryBonus(w, A)).toBe(0);
     const base = allianceBonuses(w, a2).production;
     w.sectors = { '1:1': { allianceId: A, since: T0 }, '1:2': { allianceId: A, since: T0 } };
+    recountTerritory(w);
     expect(territoryBonus(w, A)).toBeCloseTo(0.01, 9);
     expect(allianceBonuses(w, a2).production).toBeCloseTo(base + 0.01, 9);
     expect(allianceBonuses(w, b1).production).toBe(0);              // the rival gets nothing
     for (let i = 0; i < 40; i++) w.sectors[`2:${i + 1}`] = { allianceId: A, since: T0 };
+    recountTerritory(w);
     expect(territoryBonus(w, A)).toBe(SECTOR.bonusCap);
     const home = w.planets[a2.planetIds[0]];
     home.buildings = { metalMine: 10, solarPlant: 20 };
     const boosted = planetProduction(w, home).metal;
     w.sectors = {};
+    recountTerritory(w);
     expect(planetProduction(w, home).metal).toBeLessThan(boosted);
   });
 

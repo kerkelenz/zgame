@@ -14,6 +14,7 @@ import { permsOf } from './alliance';
 import { seasonBanner } from './season';
 import { invasionBanner } from './invasion';
 import { contractsView } from './contracts';
+import { featuresOf } from './features';
 import { ALLIANCE_PERMS } from './world';
 import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
 import { OFFICERS, OFFICER_MAX, FACTIONS, JOIN_REP, FACTION_BY_ID, CHAR_CLASSES, CLASS_CHANGE_COST } from '../shared/data';
@@ -83,6 +84,7 @@ export function meView(w: World, p: Player, now: number) {
     season: seasonBanner(w, now),
     invasion: invasionBanner(w),
     contractsClaimable: contractsView(w, p, now).claimable,
+    features: featuresOf(w, p),
     player: {
       id: p.id, username: p.username, techs: p.techs, research: p.research, researchBacklog: p.researchBacklog ?? [], officers: p.officers, charClass: p.charClass, allianceId: p.allianceId,
       points: playerPoints(w, p), stats: p.stats, deal: merchantDeal(w, p, now), admin: isAdmin(p), muted: isMuted(p, now) ? p.muted : null,

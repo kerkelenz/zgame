@@ -3,7 +3,7 @@ import { BUILDING_IDS, DEFENSE_IDS, SHIP_IDS, TECH_IDS, POS_DIAMETER, fieldsFrom
 import { extraExpeditionSlots } from './perks';
 import { activityOf, type Activity } from './vacation';
 import type { Coords, UnitId } from '../shared/types';
-import { GameError, atWar, ck, friendly, planetAt, sameAlliance, uid, type Planet, type Player, type World } from './world';
+import { GameError, atWar, ck, friendly, planetAt, sameAlliance, uid, type Movement, type Planet, type Player, type World } from './world';
 
 const rnd = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
 
@@ -96,7 +96,14 @@ export function maxExpeditions(player: Player): number {
 
 export interface Points { buildings: number; research: number; fleet: number; defense: number; total: number }
 
-export function playerPoints(w: World, p: Player): Points {
+/** fleets in flight grouped by owner, so a pass over every commander does not rescan all movements for each one */
+export function movementsByOwner(w: World): Map<string, Movement[]> {
+  const out = new Map<string, Movement[]>();
+  for (const m of Object.values(w.movements)) if (m.ownerId) { const l = out.get(m.ownerId); if (l) l.push(m); else out.set(m.ownerId, [m]); }
+  return out;
+}
+
+export function playerPoints(w: World, p: Player, flights?: Map<string, Movement[]>): Points {
   let buildings = 0, research = 0, fleet = 0, defense = 0;
   for (const id of p.planetIds) {
     const pl = w.planets[id];
@@ -106,8 +113,7 @@ export function playerPoints(w: World, p: Player): Points {
     for (const d of DEFENSE_IDS) defense += unitPoints(d, pl.defenses[d] || 0);
   }
   for (const t of TECH_IDS) research += techPoints(t, lvl(p.techs, t));
-  for (const m of Object.values(w.movements)) {
-    if (m.ownerId !== p.id) continue;
+  for (const m of flights ? flights.get(p.id) ?? [] : Object.values(w.movements).filter((x) => x.ownerId === p.id)) {
     for (const [id, n] of Object.entries(m.ships)) fleet += unitPoints(id as UnitId, n || 0);
   }
   const r = (x: number) => Math.floor(x);

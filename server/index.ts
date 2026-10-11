@@ -5,19 +5,12 @@ import { DEFAULT_CONFIG, type UniverseConfig } from '../shared/config';
 import { authenticate, pruneSessions } from './accounts';
 import { createApp } from './app';
 import { bus, type PushEvent } from './bus';
-import { processPlayer } from './economy';
-import { processMovements } from './fleet';
-import { processRaids } from './npc';
-import { checkProgress } from './progress';
-import { processSeason } from './season';
-import { runAutomation } from './automation';
-import { SECTOR, processSectors } from './sectors';
-import { processInvasion } from './invasion';
+import { createTicker } from './tick';
 import { existsSync } from 'node:fs';
 import { SqlStore } from './sqlstore';
 import { createWorld, type World } from './world';
 import { loadWorld, saveWorld } from './store';
-import { NPC_TICK_MS, generateEmpires, hasEmpires, npcTick, processTributes } from './empires';
+import { NPC_TICK_MS, generateEmpires, hasEmpires } from './empires';
 
 const num = (k: string, d: number) => (process.env[k] !== undefined ? Number(process.env[k]) : d);
 const overrides: Partial<UniverseConfig> = {};
@@ -78,20 +71,10 @@ bus.on('push', (e: PushEvent) => {
 });
 
 let dirty = true;
-let lastProgress = 0;
-let lastSectors = 0;
+const runTick = createTicker(world);
 function tick() {
-  const now = Date.now();
   try {
-    processMovements(world, now);
-    processRaids(world, now);
-    if (world.nextNpcTick && now >= world.nextNpcTick) npcTick(world, now);
-    processTributes(world, now);
-    processSeason(world, now);
-    processInvasion(world, now);
-    if (now - lastSectors >= SECTOR.everyMs) { lastSectors = now; processSectors(world, now); }
-    for (const p of Object.values(world.players)) { processPlayer(world, p, now); runAutomation(world, p, now); }
-    if (now - lastProgress > 5000) { lastProgress = now; for (const p of Object.values(world.players)) checkProgress(world, p, now); }
+    runTick(Date.now());
     dirty = true;
   } catch (e) {
     console.error('tick failed', e);

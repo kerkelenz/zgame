@@ -1,10 +1,10 @@
 import { BUILDINGS, BUILD_ORDER_TEMPLATES, TECHS, UNITS, resName } from '../shared/data';
-import { lvl } from '../shared/formulas';
+import { buildingCost, canAfford, lvl, techCost } from '../shared/formulas';
 import type { BuildingId, Requirement, TechId, UnitId } from '../shared/types';
 import { planetCapacity, planetProduction, queueUnits, requirementsMet, startBuilding, startResearch } from './economy';
 import { notifyPlayer } from './messages';
 import { onVacation } from './vacation';
-import { GameError, uid, type AutoRules, type BuildOrder, type BuildStep, type Planet, type Player, type World } from './world';
+import { GameError, uid, type AutoRules, type BuildOrder, type BuildStep, type Movement, type Planet, type Player, type World } from './world';
 
 const MAX_STEPS = 80;
 const MAX_ORDERS = 12;
@@ -84,6 +84,7 @@ const unmetReq = (planet: Planet, p: Player, reqs: Requirement[]) => reqs.find((
 function runPlan(w: World, p: Player, planet: Planet, now: number) {
   const plan = planet.plan;
   if (!plan) return;
+  if (plan.retryAt && now < plan.retryAt) return;
   const pending = plan.steps.filter((s) => levelOf(planet, p, s) < s.level);
   if (!pending.length) {
     notifyPlayer(w, p.id, 'system', 'Build order complete', `"${plan.name}" is finished on ${planet.name}.`);
@@ -102,6 +103,9 @@ function runPlan(w: World, p: Player, planet: Planet, now: number) {
       notes.push(running?.id === step.id ? `${nameOf(step)} → ${running.level}` : `waiting for the queue before ${nameOf(step)} ${next}`);
       return;
     }
+    // waiting for resources is the everyday case: check first instead of letting the purchase throw every second
+    const cost = kind === 'building' ? buildingCost(step.id as BuildingId, next) : techCost(step.id as TechId, next);
+    if (!canAfford(planet.resources, cost)) { notes.push(`waiting for resources: ${nameOf(step)} ${next}`); return; }
     try {
       if (kind === 'building') startBuilding(w, p, planet, step.id as BuildingId, now);
       else startResearch(w, p, planet, step.id as TechId, now);
@@ -122,6 +126,7 @@ function runPlan(w: World, p: Player, planet: Planet, now: number) {
         }
       }
       notes.push(`blocked at ${nameOf(step)} ${next}: ${e.message}`);
+      plan.retryAt = now + RETRY_MS;
     }
   };
   lane('building');
@@ -148,60 +153,103 @@ export function setRules(p: Player, patch: { energy?: boolean; storage?: boolean
   return r;
 }
 
+/** how long a rule or plan that could not act waits before trying again (a failing attempt is expensive and its answer changes slowly) */
+export const RETRY_MS = 30_000;
+
 function runRules(w: World, p: Player, planet: Planet, now: number) {
   const rules = p.autoRules;
   if (!rules) return;
+  if (planet.rulesRetryAt && now < planet.rulesRetryAt) return;
   const queueFree = !planet.buildQueue && !planet.buildBacklog?.length;
   if (rules.energy && queueFree && !planet.isMoon) {
     const prod = planetProduction(w, planet);
     if (prod.energyProduced < prod.energyUsed) {
-      try { startBuilding(w, p, planet, 'solarPlant', now); log(p, `Energy was short on ${planet.name}: building a Solar Plant.`, now); return; } catch (e) { if (!(e instanceof GameError)) throw e; }
+      try { startBuilding(w, p, planet, 'solarPlant', now); log(p, `Energy was short on ${planet.name}: building a Solar Plant.`, now); return; } catch (e) { if (!(e instanceof GameError)) throw e; planet.rulesRetryAt = now + RETRY_MS; }
     }
   }
   if (rules.storage && !planet.isMoon && !planet.buildQueue && !planet.buildBacklog?.length) {
     const cap = planetCapacity(w, planet);
     for (const k of ['metal', 'crystal', 'deuterium'] as const) {
       if (cap[k] > 0 && planet.resources[k] >= cap[k] * 0.9) {
-        try { startBuilding(w, p, planet, STORAGE_OF[k], now); log(p, `${resName(k)} was nearly full on ${planet.name}: upgrading its storage.`, now); return; } catch (e) { if (!(e instanceof GameError)) throw e; }
+        try { startBuilding(w, p, planet, STORAGE_OF[k], now); log(p, `${resName(k)} was nearly full on ${planet.name}: upgrading its storage.`, now); return; } catch (e) { if (!(e instanceof GameError)) throw e; planet.rulesRetryAt = now + RETRY_MS; }
       }
     }
   }
 }
 
-/** Reaction to incoming attacks: build defenses, once per incoming fleet and only within the spending limit. */
-function runDefenseRule(w: World, p: Player, now: number) {
-  const d = p.autoRules?.defense;
-  if (!d?.on) return;
+/** fleets that are on their way to hit someone */
+const HOSTILE = new Set(['attack', 'destroy', 'missile']);
+const hostileFleets = (w: World) => Object.values(w.movements).filter((m) => m.phase === 'outbound' && HOSTILE.has(m.mission));
+const coordKey = (c: { g: number; s: number; p: number }, moon: boolean) => `${c.g}:${c.s}:${c.p}:${moon ? 1 : 0}`;
+
+/** Reaction to one incoming fleet: build defenses, once per fleet and only within the spending limit. */
+function react(w: World, p: Player, planet: Planet, m: Movement, now: number) {
+  const d = p.autoRules!.defense;
   const seen = (p.autoSeen ||= {});
-  const mine = new Map(p.planetIds.map((id) => [id, w.planets[id]] as const).filter(([, pl]) => !!pl));
-  for (const m of Object.values(w.movements)) {
-    if (m.ownerId === p.id || m.phase !== 'outbound' || !['attack', 'destroy', 'missile'].includes(m.mission) || seen[m.id]) continue;
-    const planet = [...mine.values()].find((pl) => !!pl.isMoon === !!m.toMoon && pl.coords.g === m.to.g && pl.coords.s === m.to.s && pl.coords.p === m.to.p);
-    if (!planet) continue;
-    seen[m.id] = now;
-    const cost = UNITS[d.unit as UnitId].cost;
-    const share = d.maxSharePct / 100;
-    const n = Math.min(d.count, ...(['metal', 'crystal', 'deuterium'] as const).map((k) => (cost[k] > 0 ? Math.floor((planet.resources[k] * share) / cost[k]) : Infinity)));
-    if (!(n >= 1)) { log(p, `A fleet is heading for ${planet.name}, but your limit allows no ${UNITS[d.unit as UnitId].name}.`, now); continue; }
-    try {
-      queueUnits(w, p, planet, d.unit as UnitId, n, now);
-      log(p, `Hostile fleet inbound to ${planet.name}: queued ${fmtN(n)} ${UNITS[d.unit as UnitId].name}.`, now);
-      notifyPlayer(w, p.id, 'system', 'Automation built defenses', `A fleet from ${m.ownerName} is heading for ${planet.name}; your rule queued ${fmtN(n)} ${UNITS[d.unit as UnitId].name}.`);
-    } catch (e) { if (!(e instanceof GameError)) throw e; log(p, `Could not build defenses on ${planet.name}: ${e.message}`, now); }
-  }
-  for (const id of Object.keys(seen)) if (!w.movements[id] && now - seen[id] > 3_600_000) delete seen[id];
+  if (seen[m.id]) return;
+  seen[m.id] = now;
+  const cost = UNITS[d.unit as UnitId].cost;
+  const share = d.maxSharePct / 100;
+  const n = Math.min(d.count, ...(['metal', 'crystal', 'deuterium'] as const).map((k) => (cost[k] > 0 ? Math.floor((planet.resources[k] * share) / cost[k]) : Infinity)));
+  if (!(n >= 1)) { log(p, `A fleet is heading for ${planet.name}, but your limit allows no ${UNITS[d.unit as UnitId].name}.`, now); return; }
+  try {
+    queueUnits(w, p, planet, d.unit as UnitId, n, now);
+    log(p, `Hostile fleet inbound to ${planet.name}: queued ${fmtN(n)} ${UNITS[d.unit as UnitId].name}.`, now);
+    notifyPlayer(w, p.id, 'system', 'Automation built defenses', `A fleet from ${m.ownerName} is heading for ${planet.name}; your rule queued ${fmtN(n)} ${UNITS[d.unit as UnitId].name}.`);
+  } catch (e) { if (!(e instanceof GameError)) throw e; log(p, `Could not build defenses on ${planet.name}: ${e.message}`, now); }
 }
 
-/** Called every server tick (and by tests): runs the build orders and rules of one player. */
-export function runAutomation(w: World, p: Player, now: number) {
-  if (p.npc || p.vacation) return;
+function pruneSeen(w: World, p: Player, now: number) {
+  const seen = p.autoSeen;
+  if (!seen) return;
+  for (const id of Object.keys(seen)) if (!w.movements[id] && now - seen[id] > 3_600_000) delete seen[id];
+  if (!Object.keys(seen).length) p.autoSeen = undefined;
+}
+
+/** one commander's planets: rules first (they keep the economy alive), then the running build orders */
+function runPlanets(w: World, p: Player, now: number) {
   for (const pid of p.planetIds) {
     const planet = w.planets[pid];
     if (!planet) continue;
-    runRules(w, p, planet, now);       // energy and storage first: they keep the economy alive
+    runRules(w, p, planet, now);
     if (planet.plan) runPlan(w, p, planet, now);
   }
-  runDefenseRule(w, p, now);
+}
+
+/** One player (used by tests and tools): rules, plans, and the defense rule for fleets heading their way. */
+export function runAutomation(w: World, p: Player, now: number) {
+  if (p.npc || p.vacation) return;
+  runPlanets(w, p, now);
+  if (p.autoRules?.defense.on) {
+    const mine = new Map(p.planetIds.map((id) => w.planets[id]).filter(Boolean).map((pl) => [coordKey(pl.coords, !!pl.isMoon), pl] as const));
+    for (const m of hostileFleets(w)) {
+      if (m.ownerId === p.id) continue;
+      const planet = mine.get(coordKey(m.to, !!m.toMoon));
+      if (planet) react(w, p, planet, m, now);
+    }
+  }
+  pruneSeen(w, p, now);
+}
+
+/**
+ * Every player, every tick. The hostile fleets are looked up once and matched to their targets through one coordinate index,
+ * so the cost does not grow with players x fleets; with nothing inbound the defense rule costs nothing at all.
+ */
+export function runAutomationAll(w: World, now: number) {
+  const players = Object.values(w.players).filter((p) => !p.npc && !p.vacation);
+  for (const p of players) runPlanets(w, p, now);
+  const hostile = hostileFleets(w);
+  if (hostile.length) {
+    const index = new Map<string, Planet>();
+    for (const pl of Object.values(w.planets)) index.set(coordKey(pl.coords, !!pl.isMoon), pl);
+    for (const m of hostile) {
+      const planet = index.get(coordKey(m.to, !!m.toMoon));
+      const owner = planet ? w.players[planet.ownerId] : undefined;
+      if (!planet || !owner || owner.npc || owner.vacation || owner.id === m.ownerId || !owner.autoRules?.defense.on) continue;
+      react(w, owner, planet, m, now);
+    }
+  }
+  for (const p of players) if (p.autoSeen) pruneSeen(w, p, now);
 }
 
 // ------------------------------------------------------------------ view

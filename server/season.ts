@@ -1,4 +1,5 @@
 import { bus } from './bus';
+import { recountTerritory } from './sectors';
 import { generateEmpires, NPC_TICK_MS } from './empires';
 import { createPlanet, findHomeSlot, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
@@ -84,6 +85,7 @@ export function resetSeason(w: World, now: number) {
   w.nextRaidAt = w.config.raidIntervalMin > 0 ? now + w.config.raidIntervalMin * 60_000 : 0;
   w.nextNpcTick = 0;
   if (w.config.npcDensity > 0) { generateEmpires(w, now); w.nextNpcTick = now + NPC_TICK_MS; }
+  recountTerritory(w);
   w.season = { number: s.number + 1, startedAt: now, endsAt: w.config.seasonDays > 0 ? now + w.config.seasonDays * 24 * HOUR : null };
   for (const p of Object.values(w.players)) if (!p.npc) notifyPlayer(w, p.id, 'news', `Season ${w.season.number} has begun`, 'The universe has been reset. You start again on a fresh homeworld; your credits, officers, class and achievements carried over.');
   bus.push({ to: '*', type: 'refresh' });

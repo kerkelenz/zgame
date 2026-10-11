@@ -157,7 +157,9 @@ export interface Planet {
   /** buildings waiting behind the active job; paid for when they start */
   buildBacklog: BuildingId[];
   /** a build order running here: every step is "raise this to level N", started whenever it is affordable */
-  plan?: { name: string; steps: BuildStep[]; status: string; startedAt: number; added: number };
+  plan?: { name: string; steps: BuildStep[]; status: string; startedAt: number; added: number; /** after a blocked attempt, do not try again before this time */ retryAt?: number };
+  /** after a rule could not act (no fields, cannot pay), do not evaluate the rules again before this time */
+  rulesRetryAt?: number;
   /** resources already reserved for each buildBacklog entry (same index) */
   buildPaid?: Res[];
   shipyardQueue: ShipyardJob[];
@@ -215,6 +217,8 @@ export interface Alliance {
   /** custom ranks with individual permissions (founders hold every permission; plain officers get the defaults) */
   ranks?: { id: string; name: string; perms: AlliancePerm[] }[];
   bulletin?: { id: string; authorId: string; author: string; text: string; at: number; pinned: boolean }[];
+  /** how many systems it holds: a cache refreshed with every territory pass, so production maths can read it in O(1) */
+  territory?: number;
   /** treaties with other alliances, keyed by their id */
   diplomacy?: Record<string, { kind: 'pact' | 'war'; since: number }>;
   /** pact offers other alliances made to us */

@@ -50,7 +50,15 @@ export function influenceMap(w: World): Map<string, Map<string, { value: number;
 }
 
 export const territoryCount = (w: World, allianceId: string) => Object.values(w.sectors ?? {}).filter((x) => x.allianceId === allianceId).length;
-export const territoryBonus = (w: World, allianceId: string) => Math.min(SECTOR.bonusCap, territoryCount(w, allianceId) * SECTOR.bonusPerSector);
+/** The bonus reads the cached count: production is calculated thousands of times a tick and must not scan the map each time. */
+export const territoryBonus = (w: World, allianceId: string) => Math.min(SECTOR.bonusCap, (w.alliances[allianceId]?.territory ?? 0) * SECTOR.bonusPerSector);
+
+/** Refresh every alliance's cached count from the map (called by every code path that changes who holds what). */
+export function recountTerritory(w: World) {
+  const counts = new Map<string, number>();
+  for (const h of Object.values(w.sectors ?? {})) counts.set(h.allianceId, (counts.get(h.allianceId) ?? 0) + 1);
+  for (const a of Object.values(w.alliances)) a.territory = counts.get(a.id) ?? 0;
+}
 
 const tag = (w: World, id: string) => w.alliances[id]?.tag ?? '?';
 function tell(w: World, a: Alliance | undefined, subject: string, body: string) {
@@ -90,6 +98,7 @@ export function processSectors(w: World, now: number): number {
     } else if (next) tell(w, w.alliances[next], 'Sector claimed', `[${tag(w, next)}] now holds ${where}.`);
     else if (holder) tell(w, w.alliances[holder], 'Sector lost', `${where} is no longer under your control.`);
   }
+  recountTerritory(w);
   if (changes) bus.push({ to: '*', type: 'refresh' });
   return changes;
 }

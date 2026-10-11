@@ -36,15 +36,29 @@ const sendFront = (p: Player, planet: Planet, ships: Record<string, number>, t =
 };
 
 describe('the Armada', () => {
-  it('scales with the strength of the server, within limits', () => {
+  it('follows the combat fleets of the whole server, not its buildings', () => {
     pa.fleet = {}; pb.fleet = {};
-    const small = bossBudget(w);
-    expect(small).toBe(1_000_000);                                   // a tiny server still gets a real fleet
-    w.config.invasionStrength = 0.15;
     pa.buildings = { metalMine: 30, crystalMine: 30, solarPlant: 30 };
-    expect(bossBudget(w)).toBeGreaterThan(small);
-    pa.fleet = { deathstar: 5000 };
-    expect(bossBudget(w)).toBe(200_000_000);                         // and never an unbounded one
+    expect(bossBudget(w)).toBe(1_000_000);                           // economy alone does not grow the Armada; a tiny server still gets a real fleet
+    w.config.invasionStrength = 0.35;
+    pa.fleet = { cruiser: 1000, battleship: 100, smallCargo: 50, solarSatellite: 400, crawler: 400 };
+    const expected = (1000 * 29_000 + 100 * 75_000 + 50 * 4000) * 0.35; // satellites and crawlers cannot fight; cargo ships barely can
+    expect(bossBudget(w)).toBeGreaterThan(8_000_000);
+    expect(bossBudget(w)).toBeLessThan(expected * 1.1);
+    const one = bossBudget(w);
+    pb.fleet = { cruiser: 500 };
+    expect(bossBudget(w)).toBeGreaterThan(one);                      // every commander's fleet counts
+    pa.fleet = { deathstar: 50_000 };
+    expect(bossBudget(w)).toBe(2_000_000_000);                       // and never an unbounded one
+  });
+
+  it('counts fleets in the air too', () => {
+    pa.fleet = { cruiser: 1000 }; pb.fleet = {};
+    const home = bossBudget(w);
+    a.techs = { combustionDrive: 6, computer: 6 };
+    pa.resources = { metal: 1e12, crystal: 1e12, deuterium: 1e12 };
+    sendFleet(w, a, { fromPlanetId: pa.id, to: pb.coords, ships: { cruiser: 400 }, mission: 'transport' }, T0);
+    expect(bossBudget(w)).toBe(home);                                // nothing is lost by being airborne
   });
 
   it('is built from a mix of combat ships worth about the budget', () => {
@@ -187,12 +201,12 @@ describe('an engagement', () => {
 
   it('is still quick with the largest Armada against a huge fleet', () => {
     const inv = open();
-    inv.startFleet = buildBoss(200_000_000); inv.fleet = { ...inv.startFleet };
-    pa.fleet = { cruiser: 20000, battleship: 5000, bomber: 2000 };
-    sendFront(a, pa, { cruiser: 20000, battleship: 5000, bomber: 2000 });
+    inv.startFleet = buildBoss(2_000_000_000); inv.fleet = { ...inv.startFleet };
+    pa.fleet = { cruiser: 60000, battleship: 20000, bomber: 5000 };
+    sendFront(a, pa, { cruiser: 60000, battleship: 20000, bomber: 5000 });
     const t = Date.now();
     engage(w, T0 + 30 * MIN);
-    expect(Date.now() - t).toBeLessThan(15_000);
+    expect(Date.now() - t).toBeLessThan(10_000);
   });
 });
 

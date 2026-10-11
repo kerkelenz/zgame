@@ -3,6 +3,13 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-e', date: '2026-10-11', title: 'A tidier menu and a faster server',
+    items: [
+      'The menu is grouped into Planet, Space, Empire, Social and More, and pages like Automation, Territory, Invasion and the Simulator appear once they are useful (Settings can show them all).',
+      'Void invasions: the Armada is now sized from the combat fleets on the server, so it can actually be beaten by a good part of the server working together; damage you deal stays until it rebuilds.',
+      'The server does far less work every second and the rankings refresh every fifteen seconds, so big worlds stay responsive.',
+    ],
+  },  {
     id: '2026-10-d', date: '2026-10-10', title: 'Automation and more',
     items: [
       'Install the game as an app and get push notifications on your phone or desktop (Settings), using the same alert categories as Discord and ntfy.',

@@ -215,3 +215,17 @@ label.row { flex-direction: row; align-items: center; gap: 6px; color: var(--tex
 .sector-banner { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
 .invbar { background: #3d1f33; }
+
+/* grouped side menu */
+.navgroup { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+.navhead { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 4px 6px; background: transparent !important; border-color: transparent !important; color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.navhead:hover { color: var(--text); }
+.navgroup.closed .navitem { display: none; }
+.navitem { padding-left: 14px; }
+@media (max-width: 760px) {
+  /* on a phone the menu is one scrolling row: no headings, every available page */
+  .navgroup { display: contents; }
+  .navhead { display: none; }
+  .navgroup.closed .navitem { display: inline-block; }
+  .navitem { padding-left: 10px; }
+}

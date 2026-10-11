@@ -118,3 +118,77 @@ console.log('\n6. EXPEDITION SHIPS - cost against the find bonus they give');
   const base = 3000 + fleet * 0.04;
   console.log(`  A ${fmt(fleet)} value expedition fleet finds about ${fmt(base * Math.sqrt(speed))} per resource find at x${speed}; five Pathfinders add ${fmt(base * Math.sqrt(speed) * 0.5)} per find`);
 }
+
+// ------------------------------------------------------------------ added after the first review: invasion, credits, territory
+import { makeRng, simulateCombat, type Combatant } from '../shared/combat';
+import { CHAR_CLASSES, OFFICERS } from '../shared/data';
+import { ALL_BONUS, KINDS, STREAK_CAP, STREAK_STEP, DAILY_COUNT, WEEKLY_COUNT } from './contracts';
+import { REWARD, buildBoss } from './invasion';
+import { SECTOR } from './sectors';
+import { fleetValue } from './npc';
+import type { Fleet } from '../shared/types';
+void CHAR_CLASSES;
+
+console.log('\n7. VOID INVASION - how decisive is one engagement? (6 rounds, Monte Carlo, 30 fights per row)');
+{
+  const boss = buildBoss(50_000_000);
+  const bossValue = fleetValue(boss);
+  const mixFor = (value: number): Fleet => {
+    // a typical player fleet: cruisers and battleships in a 2:1 value split
+    const c = UNITS.cruiser.cost.metal + UNITS.cruiser.cost.crystal, b = UNITS.battleship.cost.metal + UNITS.battleship.cost.crystal;
+    return { cruiser: Math.floor((value * 0.67) / c), battleship: Math.floor((value * 0.33) / b) };
+  };
+  console.log(`  Armada: ${fmt(bossValue)} of ships at technology level 3. Player fleets are cruisers and battleships.`);
+  for (const techs of [3, 6, 10]) {
+    console.log(`  player weapons/shield/armour ${techs}:`);
+    console.log('    force / Armada   Armada destroyed   Armada lost   force lost');
+    for (const ratio of [0.5, 0.8, 1.0, 1.2, 1.5, 2, 3]) {
+      let wins = 0, bossLost = 0, ownLost = 0;
+      const runs = 30;
+      for (let i = 0; i < runs; i++) {
+        const mine = mixFor(bossValue * ratio);
+        const att: Combatant = { owner: 'a', name: 'force', weapons: techs, shielding: techs, armour: techs, fleet: mine };
+        const def: Combatant = { owner: null, name: 'Armada', weapons: 3, shielding: 3, armour: 3, fleet: { ...boss } };
+        const r = simulateCombat([att], [def], makeRng(1000 + i));
+        const left = fleetValue(Object.fromEntries(Object.entries(r.defenders[0].after).filter(([k]) => k in UNITS && UNITS[k as keyof typeof UNITS].kind === 'ship')) as Fleet);
+        if (left === 0) wins++;
+        bossLost += 1 - left / bossValue;
+        ownLost += (r.attackers[0].lost.metal + r.attackers[0].lost.crystal) / fleetValue(mine);
+      }
+      console.log(`    ${String(ratio).padStart(5)}x            ${String(Math.round((wins / runs) * 100)).padStart(3)}%             ${String(Math.round((bossLost / runs) * 100)).padStart(3)}%         ${String(Math.round((ownLost / runs) * 100)).padStart(3)}%`);
+    }
+  }
+  console.log('  A fleet worth the Armada is wiped out for roughly its own size in damage; the Armada only falls to a clearly larger combined force. That is the intended rule: lone fleets feed it, coalitions beat it.');
+  console.log('  Damage carries over (the Armada only rebuilds 5% of its fleet per engagement), so a 1x wave that dies still leaves the Armada about half gone for the next one.');
+  console.log("  The Armada is 35% of the server's combat fleets when announced: roughly 42% of all fleets together (1.2x) are needed to destroy it in one engagement, so one big player cannot do it alone and no single fleet ever can.");
+}
+
+console.log('\n8. COMMAND CREDITS - what a dedicated commander earns in a week, against what credits buy');
+{
+  const dailyCredits = (Object.values(KINDS).map((k) => k.credits[0]).filter((x) => x > 0).sort((a, b) => b - a));
+  const typicalDaily = dailyCredits.slice(0, DAILY_COUNT).reduce((a, b) => a + b, 0) / 1; // the best three, an upper-ish bound
+  const lowDaily = [...dailyCredits].reverse().slice(0, DAILY_COUNT).reduce((a, b) => a + b, 0);
+  const avgDaily = Object.values(KINDS).filter((k) => k.credits[0] > 0).reduce((s, k) => s + k.credits[0], 0) / Object.values(KINDS).filter((k) => k.credits[0] > 0).length * DAILY_COUNT;
+  const streakMax = STREAK_CAP * STREAK_STEP * DAILY_COUNT;
+  const weeklyAvg = Object.values(KINDS).reduce((s, k) => s + k.credits[1], 0) / Object.values(KINDS).length * WEEKLY_COUNT;
+  console.log(`  a day of contracts: ${fmt(lowDaily)}-${fmt(typicalDaily)} credits (average ${fmt(avgDaily)}), plus up to ${streakMax} streak bonus and ${ALL_BONUS} for all three`);
+  const week = (avgDaily + streakMax + ALL_BONUS) * 7 + weeklyAvg;
+  console.log(`  a perfect week of contracts: about ${fmt(week)} credits (weeklies ${fmt(weeklyAvg)})`);
+  console.log(`  invasions: a victory pool is ${REWARD.base}-${REWARD.cap} credits shared by everyone who fought (a retreat pays a third); one wave every ~3 days at most`);
+  console.log('  what credits buy:');
+  for (const o of OFFICERS) console.log(`    ${o.name.padEnd(14)} ranks cost ${o.cost.join(' / ')}  -> permanent`);
+  console.log('    class change 2,000   cargo container 700 (one day of production, once)   supply crate 150   rushes 250-350');
+  const officersTotal = OFFICERS.reduce((s, o) => s + o.cost.reduce((a, b) => a + b, 0), 0);
+  console.log(`  the officers alone cost ${fmt(officersTotal)} credits: about ${(officersTotal / week).toFixed(0)} perfect weeks, so credits stay scarce and permanent upgrades remain the real goal`);
+}
+
+console.log('\n9. TERRITORY - how easy is it to hold systems, and what is it worth?');
+{
+  console.log(`  a system needs ${SECTOR.claimMin} influence: a planet is worth ${SECTOR.planetBase} plus its points, so three bare planets or one developed homeworld hold a quiet system`);
+  console.log(`  bonus: +${SECTOR.bonusPerSector * 100}% mine output per held system, capped at +${SECTOR.bonusCap * 100}% (${SECTOR.bonusCap / SECTOR.bonusPerSector} systems)`);
+  const { b, techs } = state(25);
+  const base = hourly(rate(b, techs));
+  const full = hourly(rate(b, techs, { allianceBonus: SECTOR.bonusCap }));
+  console.log(`  at mine level 25 the full +${SECTOR.bonusCap * 100}% is worth ${fmt(full - base)} value per hour (${ratio(((full - base) / base) * 100)}% of income); the alliance mining network upgrade alone reaches +20%`);
+  console.log('  an alliance whose members live in different systems holds one system per member for free: contested systems (two alliances present) are where the fighting is');
+}

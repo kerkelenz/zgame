@@ -12,6 +12,9 @@ describe('translations', () => {
     expect(t('nav.overview', 'Overview')).toBe('Overview'); // test env defaults to English
     expect(t('does.not.exist', 'Fallback')).toBe('Fallback');
   });
+  it('every menu group has a translation key', () => {
+    for (const id of ['planet', 'space', 'empire', 'social', 'more']) expect(englishKeys(), id).toContain('nav.group.' + id);
+  });
   it('every nav item has a translation key', () => {
     for (const id of ['overview', 'empire', 'economy', 'resources', 'buildings', 'research', 'shipyard', 'defense', 'automation', 'invasion', 'territory', 'contracts', 'fleet', 'galaxy', 'alliance', 'contacts', 'command', 'simulator', 'messages', 'chat', 'highscore', 'settings', 'guide', 'admin']) {
       expect(englishKeys(), id).toContain('nav.' + id);

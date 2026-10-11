@@ -413,7 +413,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.get('/players/:id', wrap((req) => profileView(w, req.params.id, now())));
   A.get('/highscore', wrap((req) => {
     const category = typeof req.query.cat === 'string' ? req.query.cat : 'total';
-    const players = categoryRows(w, category, true);
+    const players = categoryRows(w, category); // cached for 15 s: recomputing everyone's points per request would let a few clients keep the server busy
     const byId = new Map(players.map((r) => [r.id, r.value]));
     const alliances = Object.values(w.alliances).map((a) => ({
       id: a.id, tag: a.tag, name: a.name, members: a.members.length,
