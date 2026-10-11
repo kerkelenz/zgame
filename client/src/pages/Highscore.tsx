@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { get } from '../api';
 import { useGame } from '../game';
-import { Card, Page, fmt, when } from '../ui';
+import { Card, Countdown, Page, fmt, when } from '../ui';
 
 interface Pt { t: number; v: number }
 
@@ -45,7 +45,8 @@ export function Highscore() {
   const [cat, setCat] = useState('total');
   const [data, setData] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
-  useEffect(() => { void get('/history').then(setHistory); }, []);
+  const [season, setSeason] = useState<any>(null);
+  useEffect(() => { void get('/history').then(setHistory); void get('/season').then(setSeason); }, []);
   useEffect(() => { void get(`/highscore?cat=${cat}`).then(setData); }, [cat]);
   if (!data) return <Page title="Standing"><p className="muted">Loading…</p></Page>;
 
@@ -58,6 +59,24 @@ export function Highscore() {
   return (
     <Page title="Standing">
       <p className="muted">{fmt(rows.length)} empires · 1 point per 1,000 resources invested</p>
+      {season && (
+        <Card title={`Season ${season.number}`}>
+          <p className="muted small">
+            {season.ended ? `Over - champion ${season.ended.winnerName ?? 'nobody'}.` : season.endsAt ? <>Ends in <Countdown to={season.endsAt} />.</> : 'No time limit.'}
+            {season.victoryPoints > 0 && !season.ended && ` First to ${fmt(season.victoryPoints)} points wins early.`}
+            {' '}At the end the universe resets; you keep your account, credits, officers, class and achievements.
+          </p>
+          {season.hallOfFame.length > 0 && (
+            <table className="table">
+              <thead><tr><th>Season</th><th>Champion</th><th>Points</th><th>Runners-up</th><th>Top alliance</th></tr></thead>
+              <tbody>{season.hallOfFame.map((s: any) => (
+                <tr key={s.season}><td>{s.season}</td><td><b>{s.top[0]?.name ?? '-'}</b></td><td>{fmt(s.top[0]?.points ?? 0)}</td>
+                  <td>{s.top.slice(1, 3).map((x: any) => x.name).join(', ')}</td><td>{s.topAlliance ? `[${s.topAlliance.tag}] ${fmt(s.topAlliance.points)}` : '-'}</td></tr>
+              ))}</tbody>
+            </table>
+          )}
+        </Card>
+      )}
       <Card title="Your empire over time">
         <div className="charts">
           <LineChart series={history.map((h) => ({ t: h.t, v: h.points }))} label="Points" color="var(--accent)" />

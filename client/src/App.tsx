@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { drawStarfield } from './art';
 import { useGame } from './game';
-import { fmt, coordStr } from './ui';
+import { Countdown, fmt, coordStr } from './ui';
 import { t, useLang } from './i18n';
 import { Tour } from './Tour';
 import { CHANGELOG, markChangelogSeen, unseenRelease } from './changelog';
@@ -97,6 +97,8 @@ export function App() {
           <button className="link" onClick={g.logout}>{t('common.logout', 'Log out')}</button>
         </div>
       </header>
+      {me.season?.ended && <div className="alertbar newsbar" onClick={() => setPage('highscore')}>🏆 Season {me.season.number} is over - champion {me.season.ended.winnerName ?? 'nobody'}.{me.season.ended.resetAt ? <> The universe resets in <Countdown to={me.season.ended.resetAt} />.</> : ' Waiting for an admin to reset.'}</div>}
+      {!me.season?.ended && me.season?.endsAt && me.season.endsAt - Date.now() < 7 * 86_400_000 && <div className="alertbar newsbar" onClick={() => setPage('highscore')}>🏁 Season {me.season.number} ends in <Countdown to={me.season.endsAt} /></div>}
       {whatsNew && <div className="alertbar newsbar" onClick={() => { markChangelogSeen(); setWhatsNew(false); setPage('guide'); }}>✨ New: {CHANGELOG[0].title} - click to see what changed</div>}
       {offline && <div className="alertbar" style={{ background: '#4a3a1c', cursor: 'default' }}>Connection to the server lost - retrying…</div>}
       {me.vacation && <div className="alertbar vacbar" onClick={() => setPage('settings')}>🏖 Vacation mode: your empire is frozen and protected. You can leave after {new Date(me.vacation.minUntil).toLocaleString()} - open Settings.</div>}

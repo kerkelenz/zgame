@@ -9,6 +9,7 @@ import { processPlayer } from './economy';
 import { processMovements } from './fleet';
 import { processRaids } from './npc';
 import { checkProgress } from './progress';
+import { processSeason } from './season';
 import { loadWorld, saveWorld } from './store';
 import { NPC_TICK_MS, generateEmpires, hasEmpires, npcTick, processTributes } from './empires';
 
@@ -67,6 +68,7 @@ function tick() {
     processRaids(world, now);
     if (world.nextNpcTick && now >= world.nextNpcTick) npcTick(world, now);
     processTributes(world, now);
+    processSeason(world, now);
     for (const p of Object.values(world.players)) processPlayer(world, p, now);
     if (now - lastProgress > 5000) { lastProgress = now; for (const p of Object.values(world.players)) checkProgress(world, p, now); }
     dirty = true;

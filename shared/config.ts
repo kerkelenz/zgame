@@ -36,6 +36,12 @@ export interface UniverseConfig {
   /** days without a login before a commander shows as inactive (i) and long inactive (I) */
   inactiveDays: number;
   longInactiveDays: number;
+  /** a season lasts this many days, then the universe resets (0 = endless) */
+  seasonDays: number;
+  /** hours between the end of a season and the automatic reset (0 = wait for an admin) */
+  seasonResetHours: number;
+  /** the first commander to reach this many points wins early (0 = disabled) */
+  victoryPoints: number;
   /** registration closes at this many commanders */
   maxPlayers: number;
   startResources: { metal: number; crystal: number; deuterium: number };
@@ -59,6 +65,9 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   raidStrength: 1,
   wreckMinValue: 100_000,
   wreckHours: 72,
+  seasonDays: 0,
+  seasonResetHours: 24,
+  victoryPoints: 0,
   vacationMinHours: 48,
   inactiveDays: 7,
   longInactiveDays: 28,

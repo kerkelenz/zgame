@@ -35,6 +35,9 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `OGAME_NPC_DENSITY` | 0.3 | share of free slots settled by computer empires when the universe is created (0 = none; an existing save without empires gets them on next start) |
 | `OGAME_RAID_STRENGTH` | 1 | size of raiding fleets: 0.6 relaxed, 1 standard, 1.35 brutal |
 | `OGAME_VACATION_MIN_HOURS` | 48 | minimum vacation stay |
+| `OGAME_SEASON_DAYS` | 0 | season length in days, then the universe resets (0 = endless) |
+| `OGAME_SEASON_RESET_HOURS` | 24 | grace period between the end of a season and the automatic reset (0 = wait for an admin) |
+| `OGAME_VICTORY_POINTS` | 0 | first commander to reach this many points wins the season early (0 = off) |
 | `OGAME_INACTIVE_DAYS` / `OGAME_LONG_INACTIVE_DAYS` | 7 / 28 | days away before the i / I flags |
 | `OGAME_MAX_PLAYERS` | 500 | registration closes at this many commanders |
 | `OGAME_TRUST_PROXY` | unset | set to `true` (or a hop count) when behind a reverse proxy so rate limits use the real client IP |
@@ -73,6 +76,7 @@ Config is stored in the save on first start; env vars override it on later start
 - **Battle reports and expeditions** – every report has a round-by-round census and a public share link. Expeditions last 1-4 hours (+30% finds per extra hour, a wider black hole), recyclers add +25% resource finds and can salvage wreckage, probes scout and shrink pirate fleets 25%, and ancient data caches speed up your running research.
 - **Merchant daily deal and empire gather** – each day the merchant does one trade at a 2% cut up to a daily allowance; a one-click Gather sends cargo ships from all your planets to the current one.
 - **Polish** – phone-friendly layout, a welcome tour, an in-game What's new, optional sound cues, unread/hostile counters in the browser tab title, and menus/login in English, German, Spanish and French (other screens fall back to English).
+- **Seasons** – optional time limit and/or victory score. When a season ends the champion gets Command Credits and an achievement, the top 10 enter the hall of fame (Standing page), and after a grace period the universe resets: new homeworlds and computer empires, while accounts, credits, officers, class, achievements and alliances carry over.
 - **Empire page** – every planet and moon on one screen: resources, production, construction, ships, storage warnings.
 - **Live UI** – WebSocket push for alerts/messages/chat, interpolated resource counters, countdowns.
 

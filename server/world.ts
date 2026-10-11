@@ -229,6 +229,8 @@ export interface World {
   messages: Message[];
   chat: ChatMsg[];
   reports?: PlayerReport[];
+  season?: import('./season').SeasonState;
+  hallOfFame?: import('./season').HallEntry[];
   /** battle reports published with a public link */
   shared?: Record<string, { id: string; at: number; subject: string; report: unknown }>;
   sessions: Record<string, string>;

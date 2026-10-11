@@ -19,6 +19,7 @@ import { endVacation, startVacation } from './vacation';
 import { startRepair } from './wrecks';
 import * as ACC from './account';
 import * as SOC from './social';
+import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { recoverAccount } from './account';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
@@ -144,6 +145,9 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.post('/report', wrap((req) => { SOC.reportPlayer(w, req.player!, str(req.body.id), str(req.body.reason, 300), now()); return { ok: true }; }));
 
   // ---------------------------------------------------------------- admin
+  A.get('/season', wrap(() => seasonView(w, now())));
+  A.post('/admin/season/end', wrap((req) => { ACC.requireAdmin(req.player!); endSeason(w, now(), 'admin'); return seasonView(w, now()); }));
+  A.post('/admin/season/reset', wrap((req) => { ACC.requireAdmin(req.player!); if (!w.season?.ended) throw new GameError('End the season first'); resetSeason(w, now()); return seasonView(w, now()); }));
   A.get('/admin/reports', wrap((req) => { ACC.requireAdmin(req.player!); return (w.reports ?? []).filter((r) => !r.resolved).sort((x, y) => y.at - x.at); }));
   A.post('/admin/reports/resolve', wrap((req) => { ACC.requireAdmin(req.player!); SOC.resolveReport(w, str(req.body.id)); return { ok: true }; }));
   const admin = (req: Request) => ACC.requireAdmin(req.player!);

@@ -22,6 +22,13 @@ export function Admin() {
       <Card title="World">
         <div className="chips">{Object.entries(d.world).map(([k, v]) => <span key={k} className="tag">{k}: {fmt(v as number)}</span>)}</div>
       </Card>
+      <Card title="Season">
+        <div className="row wrap">
+          <button className="danger" onClick={() => confirm('End the current season now? The champion is crowned immediately.') && void run(() => post('/admin/season/end'), 'Season ended')}>End season</button>
+          <button className="danger" onClick={() => confirm('Reset the universe? Everyone starts over on a new homeworld (accounts, credits, officers and achievements stay).') && void run(() => post('/admin/season/reset'), 'Universe reset')}>Reset universe</button>
+          <span className="muted small">Reset only works after the season has ended. Automatic timing: OGAME_SEASON_DAYS, OGAME_SEASON_RESET_HOURS, OGAME_VICTORY_POINTS.</span>
+        </div>
+      </Card>
       <Card title="Announcement">
         <div className="row"><input className="grow" value={text} maxLength={500} placeholder="Message to every commander" onChange={(e) => setText(e.target.value)} />
           <button className="primary" disabled={!text.trim()} onClick={() => void run(() => post('/admin/announce', { text }), 'Announcement sent').then(() => setText(''))}>Send</button></div>
