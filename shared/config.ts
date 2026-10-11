@@ -51,6 +51,8 @@ export interface UniverseConfig {
   invasionEngageMinutes: number;
   /** the Armada's size as a share of all commanders' combat fleets (by resource value) when it is announced */
   invasionStrength: number;
+  /** length of an alliance war in hours (0 = wars are switched off) */
+  warHours: number;
   /** no invasions until this many commanders have started playing */
   invasionMinPlayers: number;
   /** registration closes at this many commanders */
@@ -82,6 +84,7 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   invasionEngageMinutes: 30,
   invasionStrength: 0.35,
   invasionMinPlayers: 2,
+  warHours: 48,
   seasonDays: 0,
   seasonResetHours: 24,
   victoryPoints: 0,

@@ -2,6 +2,7 @@ import { TECHS, UNITS, resName, SHIP_IDS, DEFENSE_IDS, BUILDING_IDS, TECH_IDS, i
 import {
   addRes, cargoCapacity, canAfford, distance, flightSeconds, fleetSpeed, fuelUse, lvl, sameCoords, subRes, totalRes, zeroRes,
 } from '../shared/formulas';
+import { recordBattle } from './wars';
 import { computeLoot, fleetCount, makeRng, simulateCombat, type Combatant, type CombatResult } from '../shared/combat';
 import type { Coords, DefenseId, Defenses, Fleet, Mission, Res, ShipId } from '../shared/types';
 import { bus } from './bus';
@@ -603,6 +604,10 @@ function resolveAttack(w: World, lead: Movement, at: number) {
     }
   }
   if (res.winner === 'defender') defOwner.stats.destroyed += attackersLost;
+  if (w.wars?.length) {
+    const side = (list: typeof res.attackers) => list.filter((x) => x.owner && !w.players[x.owner]?.npc).map((x) => ({ playerId: x.owner!, lost: totalRes(x.lost) }));
+    recordBattle(w, side(res.attackers), side(res.defenders), at);
+  }
   bus.push({ to: '*', type: 'refresh' });
 
   for (const m of group) {

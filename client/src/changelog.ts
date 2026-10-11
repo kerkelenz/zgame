@@ -3,6 +3,14 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-f', date: '2026-10-11', title: 'Alliance wars',
+    items: [
+      'Wars are now scored contests: 48 hours, points for the value of enemy units your side destroys and for every system you hold. The higher score wins.',
+      'The winner earns a share of the losses of the enemy for the alliance bank and Command Credits for the fighters; conceding ends a war at once.',
+      'The Alliance page has a War panel with the live score, the top fighters and the last results.',
+    ],
+  },
+  {
     id: '2026-10-e', date: '2026-10-11', title: 'A tidier menu and a faster server',
     items: [
       'The menu is grouped into Planet, Space, Empire, Social and More, and pages like Automation, Territory, Invasion and the Simulator appear once they are useful (Settings can show them all).',

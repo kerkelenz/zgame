@@ -220,7 +220,7 @@ export interface Alliance {
   /** how many systems it holds: a cache refreshed with every territory pass, so production maths can read it in O(1) */
   territory?: number;
   /** treaties with other alliances, keyed by their id */
-  diplomacy?: Record<string, { kind: 'pact' | 'war'; since: number }>;
+  diplomacy?: Record<string, { kind: 'pact' | 'war'; since: number; warId?: string }>;
   /** pact offers other alliances made to us */
   proposals?: { fromId: string; at: number }[];
   applications: { playerId: string; text: string; at: number }[];
@@ -228,6 +228,24 @@ export interface Alliance {
   upgrades: Record<string, number>;
   log: { at: number; text: string }[];
   createdAt: number;
+}
+
+export interface WarSide { kills: number; held: number; /** points by commander */ by: Record<string, number> }
+export interface War {
+  id: string;
+  aId: string;
+  bId: string;
+  tags: Record<string, string>;
+  startedAt: number;
+  endsAt: number;
+  /** held-system points have been counted up to here */
+  heldAt: number;
+  score: Record<string, WarSide>;
+  endedAt?: number;
+  how?: 'time' | 'conceded' | 'dissolved';
+  /** null = draw */
+  winnerId?: string | null;
+  reward?: { loot: number; credits: number };
 }
 
 export type MessageKind = 'system' | 'espionage' | 'combat' | 'expedition' | 'transport' | 'player' | 'alliance' | 'raid' | 'news';
@@ -275,6 +293,8 @@ export interface World {
   invasionCount?: number;
   nextInvasionAt?: number;
   invasionHistory?: InvasionRecord[];
+  /** scored alliance wars: the running one and recent history, newest first */
+  wars?: War[];
   /** which alliance holds which system ("g:s") */
   sectors?: Record<string, { allianceId: string; since: number }>;
   season?: import('./season').SeasonState;

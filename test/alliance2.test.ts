@@ -17,6 +17,7 @@ beforeEach(() => {
   AL.joinAlliance(w, b, a.allianceId!);
   AL.joinAlliance(w, c, a.allianceId!);
   AL.createAlliance(w, d, 'DDD', 'Delta');
+  AL.joinAlliance(w, register(w, 'erinn', 'secret1', T0).player, d.allianceId!);   // wars need two members on each side
 });
 const A = () => w.alliances[a.allianceId!];
 const D = () => w.alliances[d.allianceId!];

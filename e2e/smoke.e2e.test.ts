@@ -170,6 +170,38 @@ describe('using the game', () => {
   });
 });
 
+describe('alliance war', () => {
+  const api = async (path: string, token: string | null, body?: unknown) => {
+    const r = await fetch(server.base + '/api' + path, { method: body ? 'POST' : 'GET', headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    return r.json() as Promise<any>;
+  };
+
+  run('declares a war from the Alliance page, shows the live score and a concession ends it', async () => {
+    const mk = async (name: string) => (await api('/register', null, { username: name, password: 'correct-horse-9' })).token as string;
+    const ally = await mk('wingman'), foe1 = await mk('rival_one'), foe2 = await mk('rival_two');
+    const mine = await api('/alliance', await page.evaluate(() => localStorage.getItem('sf.token')));
+    await api('/alliance/join', ally, { id: mine.id });
+    const made = await api('/alliance/create', foe1, { tag: 'RIV', name: 'The Rivals' });
+    await api('/alliance/join', foe2, { id: made.id });
+
+    await go('Alliance');
+    await page.reload();
+    await page.waitForSelector('header.top');
+    await go('Alliance');
+    await page.locator('select').filter({ hasText: 'alliance…' }).selectOption({ label: '[RIV] The Rivals' });
+    page.once('dialog', (d) => void d.accept());
+    await page.getByRole('button', { name: 'Declare war' }).click();
+    await page.getByRole('heading', { name: 'War' }).waitFor({ timeout: 10_000 });
+    expect(await page.locator('.warboard').innerText()).toMatch(/\[RIV\]/);
+    expect(await page.locator('.warscore').count()).toBe(2);
+    page.once('dialog', (d) => void d.accept());
+    await page.getByRole('button', { name: 'Concede' }).click();
+    await page.getByText('Defeat').first().waitFor({ timeout: 10_000 });
+    expect(await page.locator('.warboard').count()).toBe(0);
+    noErrors();
+  });
+});
+
 describe('signing out and in', () => {
   run('logging out signs the device out on the server, and logging back in works', async () => {
     const token = await page.evaluate(() => localStorage.getItem('sf.token'));

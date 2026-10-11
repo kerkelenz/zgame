@@ -4,6 +4,7 @@ import type { Res } from '../shared/types';
 import { updatePlanet } from './economy';
 import { bus } from './bus';
 import { notifyPlayer } from './messages';
+import { concedeWar, startWar } from './wars';
 import { ALLIANCE_PERMS, GameError, uid, type Alliance, type AlliancePerm, type Player, type World } from './world';
 
 const MAX_MEMBERS = 50;
@@ -348,13 +349,11 @@ export function declareWar(w: World, actor: Player, otherId: string) {
   need(a, actor, 'diplomacy');
   const o = otherAlliance(w, a, otherId);
   if (a.diplomacy?.[o.id]?.kind === 'war') throw new GameError('Already at war');
-  const since = Date.now();
-  (a.diplomacy ||= {})[o.id] = { kind: 'war', since };
-  (o.diplomacy ||= {})[a.id] = { kind: 'war', since };
-  a.proposals = a.proposals?.filter((x) => x.fromId !== o.id);
-  o.proposals = o.proposals?.filter((x) => x.fromId !== a.id);
-  log(a, `${actor.username} declared war on [${o.tag}].`); log(o, `[${a.tag}] declared war on us.`);
-  for (const m of o.members) notifyPlayer(w, m.playerId, 'alliance', 'War declared', `[${a.tag}] ${a.name} has declared war on your alliance.`);
+  const war = startWar(w, a, o);
+  const hours = Math.round((war.endsAt - war.startedAt) / 3_600_000);
+  log(a, `${actor.username} declared war on [${o.tag}] (${hours} hours).`); log(o, `[${a.tag}] declared war on us (${hours} hours).`);
+  for (const m of o.members) notifyPlayer(w, m.playerId, 'alliance', 'War declared', `[${a.tag}] ${a.name} has declared war on your alliance. It lasts ${hours} hours: destroy their units and hold systems to out-score them.`);
+  for (const m of a.members) if (m.playerId !== actor.id) notifyPlayer(w, m.playerId, 'alliance', 'War declared', `${actor.username} declared war on [${o.tag}]. It lasts ${hours} hours.`);
 }
 
 export function endTreaty(w: World, actor: Player, otherId: string) {
@@ -363,6 +362,10 @@ export function endTreaty(w: World, actor: Player, otherId: string) {
   const o = otherAlliance(w, a, otherId);
   const t = a.diplomacy?.[o.id];
   if (!t) throw new GameError('No treaty with that alliance');
+  if (t.kind === 'war') {
+    const war = (w.wars ?? []).find((x) => x.id === t.warId && !x.endedAt);
+    if (war) { concedeWar(w, war, a.id); log(a, `${actor.username} conceded the war with [${o.tag}].`); log(o, `[${a.tag}] conceded the war.`); return; }
+  }
   delete a.diplomacy![o.id];
   if (o.diplomacy) delete o.diplomacy[a.id];
   log(a, `${actor.username} ended the ${t.kind} with [${o.tag}].`); log(o, `[${a.tag}] ended the ${t.kind}.`);

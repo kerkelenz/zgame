@@ -7,6 +7,7 @@ import { processInvasion } from './invasion';
 import { processRaids } from './npc';
 import { checkProgress } from './progress';
 import { SECTOR, processSectors } from './sectors';
+import { processWars } from './wars';
 import { processSeason } from './season';
 import type { World } from './world';
 
@@ -30,6 +31,7 @@ export function createTicker(world: World) {
     processSeason(world, now);
     processInvasion(world, now); lap('seasons, tribute, invasion');
     if (now - lastSectors >= SECTOR.everyMs) { lastSectors = now; processSectors(world, now); }
+    processWars(world, now);
     lap('territory');
     for (const p of Object.values(world.players)) processPlayer(world, p, now);
     lap('economy (every player)');

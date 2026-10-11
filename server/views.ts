@@ -15,6 +15,7 @@ import { seasonBanner } from './season';
 import { invasionBanner } from './invasion';
 import { contractsView } from './contracts';
 import { featuresOf } from './features';
+import { warsView } from './wars';
 import { ALLIANCE_PERMS } from './world';
 import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
 import { OFFICERS, OFFICER_MAX, FACTIONS, JOIN_REP, FACTION_BY_ID, CHAR_CLASSES, CLASS_CHANGE_COST } from '../shared/data';
@@ -63,6 +64,7 @@ export function allianceView(w: World, a: Alliance, viewer: Player) {
     ranks: a.ranks ?? [], allPerms: ALLIANCE_PERMS,
     bulletin: [...(a.bulletin ?? [])].sort((x, y) => Number(y.pinned) - Number(x.pinned) || y.at - x.at),
     diplomacy: Object.entries(a.diplomacy ?? {}).map(([id, t]) => ({ ...tagOf(id)!, kind: t.kind, since: t.since })).filter((x) => x.id),
+    war: warsView(w, a),
     proposals: (a.proposals ?? []).map((x) => ({ ...tagOf(x.fromId)!, at: x.at })).filter((x) => x.id),
     offered: Object.values(w.alliances).filter((o) => o.proposals?.some((x) => x.fromId === a.id)).map((o) => o.id),
     members: a.members.map((m) => {

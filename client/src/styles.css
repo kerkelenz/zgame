@@ -229,3 +229,8 @@ label.row { flex-direction: row; align-items: center; gap: 6px; color: var(--tex
   .navgroup.closed .navitem { display: inline-block; }
   .navitem { padding-left: 10px; }
 }
+
+.tag.bad { color: #ff6b8a; border-color: #6b2030; }
+.warboard { display: flex; align-items: center; justify-content: space-around; gap: 12px; padding: 8px 0; flex-wrap: wrap; }
+.warside { text-align: center; min-width: 120px; } .warside.mine .warscore { color: var(--accent); }
+.warscore { font-size: 28px; font-weight: 700; line-height: 1.1; }

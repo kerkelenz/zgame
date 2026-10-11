@@ -40,7 +40,7 @@ describe('influence', () => {
   });
 
   it('adds up per system and alliance, ignoring commanders without an alliance and computer empires', () => {
-    place(a1, 1, 5); place(a2, 1, 5); place(b1, 1, 5);
+    place(a1, 1, 5); place(a2, 1, 5); place(b1, 1, 5); place(b2, 2, 9);   // b2 elsewhere, or a random home could land in 1:5
     const solo = register(w, 'solo', 'secret1', T0).player;
     place(solo, 1, 5);
     const npc = register(w, 'npcx', 'secret1', T0).player;

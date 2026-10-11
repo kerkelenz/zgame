@@ -182,15 +182,17 @@ function Mine({ a, run, planetId, me, setPage, openProfile, showInGalaxy }: { a:
         </Card>
       )}
 
+      <WarCard war={a.war} has={has} run={run} />
+
       <Card title="Diplomacy">
         {a.proposals.map((x: any) => (
           <div key={x.id} className="row between"><span>[{x.tag}] {x.name} <span className="muted">offers a non-aggression pact</span></span>
             {has('diplomacy') && <span className="row"><button className="primary" onClick={() => void run(() => post('/alliance/pact/respond', { id: x.id, accept: true }), 'Pact signed')}>Accept</button><button onClick={() => void run(() => post('/alliance/pact/respond', { id: x.id, accept: false }))}>Decline</button></span>}</div>
         ))}
-        {a.diplomacy.length === 0 && a.proposals.length === 0 && <p className="muted">No treaties. Pacts stop both alliances attacking each other; war is a declaration of intent that flags them in the galaxy.</p>}
-        {a.diplomacy.map((x: any) => (
+        {a.diplomacy.length === 0 && a.proposals.length === 0 && <p className="muted">No treaties. Pacts stop both alliances attacking each other. A war is a scored contest that runs for {a.war.rules.hours} hours.</p>}
+        {a.diplomacy.filter((x: any) => x.kind === 'pact').map((x: any) => (
           <div key={x.id} className="row between"><span><span className={`tag ${x.kind === 'war' ? 'bad' : 'you'}`}>{x.kind}</span> [{x.tag}] {x.name} <span className="muted small">since {when(x.since)}</span></span>
-            {has('diplomacy') && <button onClick={() => confirm(`End the ${x.kind} with [${x.tag}]?`) && void run(() => post('/alliance/treaty/end', { id: x.id }), 'Treaty ended')}>End</button>}</div>
+            {has('diplomacy') && <button onClick={() => confirm(`End the pact with [${x.tag}]?`) && void run(() => post('/alliance/treaty/end', { id: x.id }), 'Treaty ended')}>End</button>}</div>
         ))}
         {has('diplomacy') && (
           <div className="row wrap">
@@ -199,7 +201,7 @@ function Mine({ a, run, planetId, me, setPage, openProfile, showInGalaxy }: { a:
               {others.map((o) => <option key={o.id} value={o.id}>[{o.tag}] {o.name}</option>)}
             </select>
             <button disabled={!target || a.offered.includes(target)} onClick={() => void run(() => post('/alliance/pact', { id: target }), 'Pact offered')}>{a.offered.includes(target) ? 'Offer pending' : 'Propose pact'}</button>
-            <button className="danger" disabled={!target} onClick={() => confirm('Declare war?') && void run(() => post('/alliance/war', { id: target }), 'War declared')}>Declare war</button>
+            <button className="danger" disabled={!target || !!a.war.current} onClick={() => confirm(`Declare a ${a.war.rules.hours}-hour war? The higher score wins; ending it early is a surrender.`) && void run(() => post('/alliance/war', { id: target }), 'War declared')}>Declare war</button>
           </div>
         )}
       </Card>
@@ -225,5 +227,44 @@ function Mine({ a, run, planetId, me, setPage, openProfile, showInGalaxy }: { a:
         {a.log.map((l: any, i: number) => <div key={i} className="muted small">{when(l.at)} – {l.text}</div>)}
       </Card>
     </Page>
+  );
+}
+
+function Side({ s, mine }: { s: any; mine?: boolean }) {
+  return (
+    <div className={`warside ${mine ? 'mine' : ''}`}>
+      <div className="small muted">[{s.tag}]{mine ? ' (us)' : ''}</div>
+      <div className="warscore">{s.total.toLocaleString('en-US')}</div>
+      <div className="small muted">{s.kills.toLocaleString('en-US')} from battles · {s.held.toLocaleString('en-US')} from systems</div>
+    </div>
+  );
+}
+
+function WarCard({ war, has, run }: { war: any; has: (p: string) => boolean; run: (f: () => Promise<any>, ok?: string) => Promise<any> }) {
+  const c = war.current;
+  const last = war.history[0];
+  if (!c && !last) return null;
+  const verdict = (x: any) => x.winner === 'draw' ? 'Draw' : x.winner === 'us' ? 'Victory' : 'Defeat';
+  return (
+    <Card title="War">
+      {c && (
+        <>
+          <div className="row between wrap"><b>[{c.us.tag}] against [{c.them.tag}]</b><span className="muted small">ends {when(c.endsAt)}</span></div>
+          <div className="warboard"><Side s={c.us} mine /><span className="muted">vs</span><Side s={c.them} /></div>
+          <p className="muted small">Points come from the value of enemy units destroyed ({war.rules.valuePerPoint.toLocaleString('en-US')} resources = 1 point) and from systems held ({war.rules.heldPerHour} points per system per hour).</p>
+          {c.top.length > 0 && <p className="small">Top fighters: {c.top.map((t: any) => `${t.username} ${t.points}`).join(', ')}</p>}
+          {has('diplomacy') && <button className="danger" onClick={() => confirm(`Concede the war? [${c.them.tag}] wins at once.`) && void run(() => post('/alliance/treaty/end', { id: c.them.id }), 'War conceded')}>Concede</button>}
+        </>
+      )}
+      {!c && last && (
+        <div className="row between wrap">
+          <span><span className={`tag ${last.winner === 'us' ? 'you' : last.winner === 'them' ? 'bad' : ''}`}>{verdict(last)}</span> [{last.us.tag}] {last.us.total} - {last.them.total} [{last.them.tag}] <span className="muted small">{last.how === 'conceded' ? 'conceded' : ''} {when(last.endedAt)}</span></span>
+          {last.reward && last.winner === 'us' && <span className="small">+{last.reward.loot.toLocaleString('en-US')} resources to the bank, {last.reward.credits} credits shared</span>}
+        </div>
+      )}
+      {war.history.length > (c ? 0 : 1) && (
+        <div className="small muted">Earlier: {war.history.slice(c ? 0 : 1).map((x: any) => `${verdict(x)} vs [${x.them.tag}] ${x.us.total}-${x.them.total}`).join(' · ')}</div>
+      )}
+    </Card>
   );
 }
