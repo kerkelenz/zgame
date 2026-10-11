@@ -7,7 +7,7 @@ export const CHANGELOG: Release[] = [
     items: [
       'Wars are now scored contests: 48 hours, points for the value of enemy units your side destroys and for every system you hold. The higher score wins.',
       'The winner earns a share of the losses of the enemy for the alliance bank and Command Credits for the fighters; conceding ends a war at once.',
-      'What's new is now in the menu (under More), so the release notes are always one click away.',
+      'The release notes page is now in the menu (under More), always one click away.',
       'The Alliance page has a War panel with the live score, the top fighters and the last results.',
     ],
   },
