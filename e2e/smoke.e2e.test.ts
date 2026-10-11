@@ -73,6 +73,9 @@ describe('every page', () => {
 
   run('collapse all and expand all work on the side menu', async () => {
     await go('Overview');
+    const navLook = await page.locator('nav').evaluate((el) => ({ bar: getComputedStyle(el).scrollbarWidth, width: el.getBoundingClientRect().width }));
+    expect(navLook.bar).toBe('none');                                      // no scroll bar drawn in the menu
+    expect(navLook.width).toBeGreaterThanOrEqual(165);
     await page.getByRole('button', { name: 'Collapse all' }).click();
     expect(await page.locator('nav .navgroup.closed').count()).toBe(await page.locator('nav .navgroup').count() - 1);    // the group you are in stays open
     await page.getByRole('button', { name: 'Expand all' }).click();

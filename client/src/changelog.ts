@@ -7,7 +7,7 @@ export const CHANGELOG: Release[] = [
     items: [
       'The Moon Forge turns the debris field above one of your planets into a moon for certain. It needs Graviton Technology 1, a level 12 Shipyard on that planet and at least 1,000,000 resources of debris, costs vespene gas (as much as the debris) plus a quarter each of metal and crystal, and takes 12 hours. A bigger field makes a bigger moon, from 3,000 to 8,000 km.',
       'The side menu has Expand all and Collapse all buttons at the top.',
-      'The side menu scroll bar is slim and dark instead of the bright default one, and the menu no longer scrolls sideways.',
+      'The side menu is a little wider and has no visible scroll bar (it still scrolls with the wheel or a swipe when it is taller than the window), and it never scrolls sideways.',
       'The forge appears as a card on the Overview and as an entry in the Events list while it runs; cancelling gives back the price but not the debris.',
     ],
   },
