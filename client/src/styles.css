@@ -293,3 +293,5 @@ ol.steps { margin: 4px 0; padding-left: 20px; } ol.steps li { margin: 2px 0; }
 .event.projected .evtext { opacity: .65; font-style: italic; }
 .event .plink { color: inherit; }
 @media (max-width: 640px) { .event { grid-template-columns: 1fr; gap: 0; } .event .evtime, .event .evleft { display: inline; } }
+
+.bedge path { stroke-linejoin: round; stroke-linecap: round; }

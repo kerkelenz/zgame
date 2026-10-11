@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-f', date: '2026-10-11', title: 'Alliance wars',
     items: [
+      'Tech tree connections are now grid-style lines that only run up, down or sideways through the gaps between cards, never over or behind a card; lines leaving the same card share a trunk.',
       'The Overview has an Events list of every fleet movement that concerns you in time order: your fleets going out and the return flight still to come, hostile fleets heading for you or your allies (who, from where, when) and friendly deliveries, each with a clock time and countdown.',
       'Recyclers can now collect the debris field above your own planets and moons (it used to say "You are already there").',
       'A Tech tree page: one card per building, research, ship and defense with your level on it, rows by purpose and columns by step, what you can start right now glowing, click a card to light its chain and open its levels, and "Show only the path to" any item (with your next steps listed). Plus a Production and effects view of what boosts what. The map pans and zooms with the mouse or touch.',

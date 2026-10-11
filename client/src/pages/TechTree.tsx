@@ -3,10 +3,12 @@ import { lvl } from '../../../shared/formulas';
 import { BUILDINGS } from '../../../shared/data';
 import { FLOWS, ITEM_EDGES, TREE, VISIBLE_EDGES, ancestors, descendants, levelsShown, mapLayout, nodeOf, pathSet, pathTo } from '../../../shared/techtree';
 import type { BuildingId, TechId, UnitId } from '../../../shared/types';
+import { GEOM, geometry, routeEdges } from '../../../shared/techroute';
 import { useGame } from '../game';
 import { Card, ItemLink, Page } from '../ui';
 
-const CARD_W = 164, CARD_H = 46, COL_GAP = 92, ROW_GAP = 8, BAND_GAP = 34, PAD = 18, LADDER = 24;
+const { cardW: CARD_W, cardH: CARD_H, rowGap: ROW_GAP, bandGap: BAND_GAP, bandLabel: BAND_LABEL } = GEOM;
+const LADDER = 24;
 const MIN_K = 0.2, MAX_K = 1.6;
 const KIND_LABEL: Record<string, string> = { building: 'building', tech: 'research', ship: 'ship', defense: 'defense' };
 
@@ -27,11 +29,8 @@ export function TechTree() {
   const only = useMemo(() => (goal ? pathSet(goal) : undefined), [goal]);
   const layout = useMemo(() => {
     const m = mapLayout(only);
-    const bandTop: number[] = [];
-    let y = PAD;
-    m.bands.forEach((b, i) => { bandTop[i] = y + 22; y += 22 + b.slots * (CARD_H + ROW_GAP) + BAND_GAP; });
-    const pos = new Map(m.cells.map((c) => [c.id, { x: PAD + c.col * (CARD_W + COL_GAP), y: bandTop[c.band] + c.slot * (CARD_H + ROW_GAP) }]));
-    return { m, bandTop, pos, width: PAD * 2 + m.cols * (CARD_W + COL_GAP) - COL_GAP, height: y };
+    const geo = geometry(m);
+    return { m, geo, bandTop: geo.bandTop, pos: geo.pos, width: geo.width, height: geo.height };
   }, [only]);
   const shown = (id: string) => !only || only.has(id);
 
@@ -57,6 +56,7 @@ export function TechTree() {
   const fwd = useMemo(() => (active ? descendants(active) : new Set<string>()), [active]);
   const lit = (id: string) => active === id || back.has(id) || fwd.has(id);
   const edges = useMemo(() => (goal ? ITEM_EDGES.filter((e) => only!.has(e.from) && only!.has(e.to)).map((e) => ({ ...e, hub: false })) : VISIBLE_EDGES), [goal, only]);
+  const routes = useMemo(() => routeEdges(layout.geo, edges), [layout, edges]);
   const litEdges = useMemo(() => edges.filter((e) => active && lit(e.from) && lit(e.to)), [edges, active, back, fwd]); // eslint-disable-line react-hooks/exhaustive-deps
   const needed = useMemo(() => {
     const m = new Map<string, Set<number>>();
@@ -213,23 +213,22 @@ export function TechTree() {
           <div className="graphbox" ref={box} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
             <div className={`graph ${gliding ? 'glide' : ''}`} style={{ transform: `translate(${cam.x}px, ${cam.y}px) scale(${cam.k})` }}>
               {layout.m.bands.map((b, i) => (
-                <div key={b.id} className="band" style={{ top: layout.bandTop[i] - 22, height: 22 + b.slots * (CARD_H + ROW_GAP) + BAND_GAP / 2, width: layout.width }}><span>{b.label}</span></div>
+                <div key={b.id} className="band" style={{ top: layout.bandTop[i] - BAND_LABEL, height: BAND_LABEL + b.slots * (CARD_H + ROW_GAP) + BAND_GAP / 2, width: layout.width }}><span>{b.label}</span></div>
               ))}
               <svg className="edges" width="1" height="1" aria-hidden="true">
                 {edges.map((e) => {
-                  const a = layout.pos.get(e.from), b = layout.pos.get(e.to);
-                  if (!a || !b) return null;
-                  const x1 = a.x + CARD_W, y1 = a.y + CARD_H / 2, x2 = b.x, y2 = b.y + CARD_H / 2;
-                  const dx = Math.max(30, (x2 - x1) / 2);
+                  const pts = routes.get(e.from + '>' + e.to);
+                  if (!pts) return null;
+                  const end = pts[pts.length - 1];
                   const onPath = !!active && lit(e.from) && lit(e.to);
                   const forward = e.from === active || fwd.has(e.from);
                   const cls = `bedge ${nodeOf(e.from)!.kind} ${e.hub ? 'hub' : ''} ${active ? (onPath ? (forward ? 'fwd' : 'back') : 'off') : ''}`;
                   const label = onPath || (goal && !active);
                   return (
                     <g key={e.from + '>' + e.to} className={cls}>
-                      <path d={`M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`} />
-                      <circle cx={x2} cy={y2} r={2.6} />
-                      {label && e.level > 0 && <text x={x2 - 30} y={y2 - 5}>needs {e.level}</text>}
+                      <path d={pts.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(' ')} />
+                      <circle cx={end.x} cy={end.y} r={2.8} />
+                      {label && e.level > 0 && <text x={end.x - 52} y={end.y - 4}>needs {e.level}</text>}
                     </g>
                   );
                 })}
