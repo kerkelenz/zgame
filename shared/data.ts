@@ -189,3 +189,6 @@ export const ALLIANCE_UPGRADES: Record<string, AllianceUpgrade> = {
   command: { id: 'command', name: 'Joint Command', desc: '+1 fleet slot for every member per 2 levels.', base: { metal: 80_000, crystal: 50_000, deuterium: 40_000 }, factor: 2.2, perLevel: 0.5 },
   logistics: { id: 'logistics', name: 'Allied Logistics', desc: '+3% fleet speed per level for every member.', base: { metal: 60_000, crystal: 30_000, deuterium: 30_000 }, factor: 2, perLevel: 0.03 },
 };
+
+/** how long an expedition may stay out (whole hours); the server clamps to this and the Fleet page offers exactly these */
+export const EXPEDITION_HOURS = { min: 1, max: 4 };

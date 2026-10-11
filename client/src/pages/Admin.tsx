@@ -3,6 +3,7 @@ import { resName } from '../../../shared/data';
 import { get, post } from '../api';
 import { useGame } from '../game';
 import { Card, Page, fmt, when } from '../ui';
+import { NumInput } from '../NumInput';
 
 export function Admin() {
   const { act, me } = useGame();
@@ -80,7 +81,7 @@ export function Admin() {
       {sel && (
         <Card title={`Gift resources to ${d.players.find((p: any) => p.id === sel)?.username ?? ''}`}>
           <div className="row wrap">
-            {(['metal', 'crystal', 'deuterium'] as const).map((k) => <label key={k}>{resName(k)}<input type="number" min={0} value={gift[k]} onChange={(e) => setGift({ ...gift, [k]: Number(e.target.value) })} /></label>)}
+            {(['metal', 'crystal', 'deuterium'] as const).map((k) => <label key={k}>{resName(k)}<NumInput value={gift[k]} onChange={(n) => setGift({ ...gift, [k]: n })} /></label>)}
             <button className="primary" onClick={() => void run(() => post('/admin/gift', { id: sel, ...gift }), 'Gift delivered')}>Send to homeworld</button>
           </div>
         </Card>

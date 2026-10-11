@@ -63,3 +63,9 @@ export function Card({ title, children, right }: { title?: ReactNode; children: 
 export function Page({ title, children }: { title: string; children: ReactNode }) {
   return <div className="page"><h2>{title}</h2>{children}</div>;
 }
+
+/** Coordinates that open the galaxy at that system when clicked. */
+export function CoordLink({ c, children }: { c: { g: number; s: number; p: number }; children?: ReactNode }) {
+  const { showInGalaxy } = useGame();
+  return <a className="plink" title="Show in the galaxy" onClick={(e) => { e.preventDefault(); showInGalaxy(c); }}>{children ?? coordStr(c)}</a>;
+}

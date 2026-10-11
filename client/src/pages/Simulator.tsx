@@ -6,6 +6,7 @@ import type { UnitId } from '../../../shared/types';
 import { get } from '../api';
 import { useGame } from '../game';
 import { Card, Page, coordStr, fmt } from '../ui';
+import { NumInput } from '../NumInput';
 
 type Units = Partial<Record<UnitId, number>>;
 type Tech = { weapons: number; shielding: number; armour: number };
@@ -67,7 +68,7 @@ export function Simulator() {
     <table className="ships"><tbody>
       {ids.map((id) => (
         <tr key={id}><td>{UNITS[id].name}</td>
-          <td><input type="number" min={0} placeholder="0" value={units[id] || ''} onChange={(e) => set(side, id, Number(e.target.value))} /></td></tr>
+          <td><NumInput blankZero placeholder="0" value={units[id] || 0} onChange={(n) => set(side, id, n)} /></td></tr>
       ))}
     </tbody></table>
   );

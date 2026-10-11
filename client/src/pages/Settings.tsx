@@ -6,6 +6,8 @@ import { LANGS, getLang, setLang, t, useLang } from '../i18n';
 import { playCue, setSound, soundOn } from '../sound';
 import { setShowAllPages, useShowAllPages } from '../nav';
 import { canInstall, disablePush, enablePush, installApp, isIos, isStandalone, onInstallChange, pushSupported, thisDeviceSubscription } from '../pwa';
+import { NumInput } from '../NumInput';
+import { getProbes, setProbes } from '../prefs';
 
 function Vacation() {
   const { me, act, now } = useGame();
@@ -159,6 +161,7 @@ function Interface() {
   const { setPage } = useGame();
   const [sound, setS] = useState(soundOn());
   const showAll = useShowAllPages();
+  const [probes, setProbesState] = useState(getProbes());
   return (
     <Card title="Interface">
       <div className="settings-section">
@@ -169,6 +172,7 @@ function Interface() {
         <label className="check"><input type="checkbox" checked={sound} onChange={(e) => { setSound(e.target.checked); setS(e.target.checked); if (e.target.checked) playCue('done', true); }} /> <b>{t('common.sound', 'Sound cues')}</b> <span className="muted small">- a short tone for messages, finished jobs and attack alerts</span></label>
         {sound && <div className="row"><button onClick={() => playCue('alert', true)}>Test alert</button><button onClick={() => playCue('message', true)}>Test message</button></div>}
         <label className="check"><input type="checkbox" checked={showAll} onChange={(e) => setShowAllPages(e.target.checked)} /> <b>Show every page in the menu</b> <span className="muted small">- Automation, Territory, Invasion and the Simulator normally appear once they are useful to you</span></label>
+        <label className="row"><b>Spy probes to send</b> <NumInput className="sm" max={1000} value={probes} onChange={(n) => { setProbesState(n); setProbes(n); }} /> <span className="muted small">- how many Espionage Probes the Fleet page prepares when you press Spy in the galaxy (0 prepares none). Kept in this browser.</span></label>
         <button className="link" onClick={() => setPage('news')}>See what's new</button>
         <button className="link" onClick={() => { try { localStorage.removeItem('zg.tourDone'); } catch { /* ignore */ } location.reload(); }}>Replay the welcome tour</button>
       </div>

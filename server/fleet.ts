@@ -1,4 +1,4 @@
-import { TECHS, UNITS, resName, SHIP_IDS, DEFENSE_IDS, BUILDING_IDS, TECH_IDS, isShip, isStationary } from '../shared/data';
+import { EXPEDITION_HOURS, TECHS, UNITS, resName, SHIP_IDS, DEFENSE_IDS, BUILDING_IDS, TECH_IDS, isShip, isStationary } from '../shared/data';
 import {
   addRes, cargoCapacity, canAfford, distance, flightSeconds, fleetSpeed, fuelUse, lvl, sameCoords, subRes, totalRes, zeroRes,
 } from '../shared/formulas';
@@ -181,7 +181,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     id: uid(), ownerId: player.id, ownerName: player.username, mission, phase: 'outbound',
     from: { ...planet.coords }, fromPlanetId: planet.id, to: { ...to }, ships, cargo, toMoon: toMoon || undefined,
     speedPct, departAt: now, arriveAt: now + plan.secs * 1000, flightMs: plan.secs * 1000,
-    holdHours: mission === 'hold' ? Math.min(48, Math.max(0.1, Number(req.holdHours) || 1)) : mission === 'expedition' ? Math.min(4, Math.max(1, Math.round(Number(req.holdHours) || 1))) : undefined,
+    holdHours: mission === 'hold' ? Math.min(48, Math.max(0.1, Number(req.holdHours) || 1)) : mission === 'expedition' ? Math.min(EXPEDITION_HOURS.max, Math.max(EXPEDITION_HOURS.min, Math.round(Number(req.holdHours) || 1))) : undefined,
   };
   if (joinLead) {
     // arrive together with the leader; the return trip still takes the natural flight time

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { SHIP_IDS, UNITS, isStationary, resName } from '../../../shared/data';
+import { EXPEDITION_HOURS, SHIP_IDS, UNITS, isStationary, resName } from '../../../shared/data';
 import { cargoCapacity } from '../../../shared/formulas';
 import type { Mission, ShipId } from '../../../shared/types';
 import { get, post } from '../api';
 import { useGame } from '../game';
+import { NumInput } from '../NumInput';
+import { getProbes } from '../prefs';
 import { IntelText } from './FleetEvents';
-import { Card, Countdown, Page, coordStr, fmt, fmtDur } from '../ui';
+import { Card, CoordLink, Countdown, Page, coordStr, fmt, fmtDur } from '../ui';
 
 const MISSIONS: [Mission, string][] = [
   ['attack', 'Attack'], ['invade', 'Join the invasion front (Void Armada)'], ['destroy', 'Destroy moon (Deathstars)'], ['transport', 'Transport'], ['deploy', 'Deploy'], ['hold', 'Defend ally (hold)'],
@@ -42,19 +44,23 @@ export function FleetPage() {
   const [jumpTo, setJumpTo] = useState('');
   const [mTo, setMTo] = useState({ g: planet.coords.g, s: planet.coords.s, p: 1 });
   const [mCount, setMCount] = useState(1);
-  const [plan, setPlan] = useState<{ dist: number; secs: number; fuel: number } | null>(null);
+  const [plan, setPlan] = useState<{ dist: number; secs: number; fuel: number; capacity: number; recycleCapacity: number } | null>(null);
   const [quick, setQuick] = useState<{ bookmarks: any[]; recent: any[] }>({ bookmarks: [], recent: [] });
   useEffect(() => { void get('/social').then((s) => setQuick({ bookmarks: s.bookmarks, recent: s.recent })).catch(() => undefined); }, []);
 
   useEffect(() => {
-    if (target) { setTo(target.coords); if (target.mission) setMission(target.mission); setToMoon(!!target.toMoon); setTarget(null); }
+    if (target) {
+      setTo(target.coords); if (target.mission) setMission(target.mission); setToMoon(!!target.toMoon); setTarget(null);
+      // pressing Spy in the galaxy prepares the number of probes chosen in Settings, so it need not be typed every time
+      if (target.mission === 'espionage') { const n = Math.min(getProbes(), planet.fleet.espionageProbe || 0); if (n > 0) setShips({ espionageProbe: n }); }
+    }
   }, [target, setTarget]);
 
   const available = SHIP_IDS.filter((id) => !isStationary(id) && (planet.fleet[id] || 0) > 0);
   const chosen: Partial<Record<ShipId, number>> = {};
   for (const [id, n] of Object.entries(ships)) if (n && n > 0) chosen[id as ShipId] = Math.min(n, planet.fleet[id] || 0);
   const count = Object.values(chosen).reduce((a, b) => a + (b || 0), 0);
-  const cap = cargoCapacity(chosen);
+  const cap = plan?.capacity ?? cargoCapacity(chosen);
 
   useEffect(() => {
     if (!count) { setPlan(null); return; }
@@ -92,7 +98,7 @@ export function FleetPage() {
         {fleets.mine.map((m) => (
           <div className="row between fleetrow" key={m.id}>
             <div>
-              <b>{m.mission}</b> {coordStr(m.from)} → {coordStr(m.to)} <span className="muted">({m.phase})</span> · <Countdown to={phaseTime(m)} />
+              <b>{m.mission}</b> <CoordLink c={m.from} /> → <CoordLink c={m.to} /> <span className="muted">({m.phase})</span> · <Countdown to={phaseTime(m)} />
               <div className="muted small">{m.missiles ? `${m.missiles} interplanetary missile(s)` : shipList(m.ships)}{m.cargo && m.cargo.metal + m.cargo.crystal + m.cargo.deuterium > 0 ? ` · cargo ${fmt(m.cargo.metal)}M ${fmt(m.cargo.crystal)}C ${fmt(m.cargo.deuterium)}D` : ''}</div>
             </div>
             {m.phase !== 'returning' && m.mission !== 'missile' && <button onClick={() => void act(() => post(`/fleets/${m.id}/recall`), 'Recalled')}>Recall</button>}
@@ -102,7 +108,7 @@ export function FleetPage() {
 
       {fleets.stationed.length > 0 && (
         <Card title="Allied fleets defending your planets">
-          {fleets.stationed.map((m) => <div key={m.id}>{m.ownerName}: {shipList(m.ships)} at {coordStr(m.to)} · leaves in <Countdown to={m.holdUntil} /></div>)}
+          {fleets.stationed.map((m) => <div key={m.id}>{m.ownerName}: {shipList(m.ships)} at <CoordLink c={m.to} /> · leaves in <Countdown to={m.holdUntil} /></div>)}
         </Card>
       )}
 
@@ -155,7 +161,7 @@ export function FleetPage() {
         </Card>
       )}
 
-      <Card title={`Send fleet from ${planet.name} ${coordStr(planet.coords)}`}>
+      <Card title={<>Send fleet from {planet.name} <CoordLink c={planet.coords} /></>}>
         {available.length === 0 ? <p className="muted">No ships at this planet. Build some in the shipyard.</p> : (
           <>
             <table className="ships">
@@ -164,12 +170,18 @@ export function FleetPage() {
                   <tr key={id}>
                     <td>{UNITS[id].name}</td>
                     <td className="muted">{fmt(planet.fleet[id])}</td>
-                    <td><input type="number" min={0} max={planet.fleet[id]} value={ships[id] ?? 0} onChange={(e) => setShips({ ...ships, [id]: Number(e.target.value) })} /></td>
+                    <td><NumInput max={planet.fleet[id]} value={ships[id] ?? 0} onChange={(n) => setShips({ ...ships, [id]: n })} /></td>
                     <td><button onClick={() => setShips({ ...ships, [id]: planet.fleet[id] })}>all</button></td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {count > 0 && (
+              <p className="small capline">
+                Transport capacity of the selected ships: <b>{fmt(cap)}</b>
+                {(chosen.recycler || 0) > 0 && <> · Recycling capacity: <b>{fmt(plan?.recycleCapacity ?? (chosen.recycler || 0) * UNITS.recycler.cargo)}</b></>}
+              </p>
+            )}
             <div className="chips">
               <button onClick={() => { const name = prompt('Name this fleet preset'); if (name && count) void savePreset(name, chosen); }} disabled={!count}>+ save selection as preset</button>
               {presets.map((p) => (
@@ -179,6 +191,14 @@ export function FleetPage() {
                 </span>
               ))}
             </div>
+            {planets.filter((x) => x.id !== planet.id).length > 0 && (
+              <div className="chips">
+                <span className="muted small">Your planets and moons:</span>
+                {planets.filter((x) => x.id !== planet.id).map((x) => (
+                  <button key={x.id} title={x.isMoon ? 'Send to this moon' : 'Send to this planet'} onClick={() => { setTo(x.coords); setToMoon(!!x.isMoon); }}>{x.isMoon ? '🌙 ' : ''}{x.name} {coordStr(x.coords)}</button>
+                ))}
+              </div>
+            )}
             {(quick.bookmarks.length > 0 || quick.recent.length > 0) && (
               <div className="chips">
                 {quick.bookmarks.map((b: any) => <button key={b.id} title="Bookmark" onClick={() => setTo(b.coords)}>★ {b.name}</button>)}
@@ -213,8 +233,8 @@ export function FleetPage() {
               )}
               {mission === 'expedition' && (
                 <label>Stay out
-                  <select value={Math.min(4, Math.max(1, Math.round(holdHours)))} onChange={(e) => setHoldHours(Number(e.target.value))} title="Longer trips find +30% per extra hour but risk the black hole more. Recyclers help salvage, probes scout for pirates.">
-                    {[1, 2, 3, 4].map((h) => <option key={h} value={h}>{h} h</option>)}
+                  <select value={Math.min(EXPEDITION_HOURS.max, Math.max(EXPEDITION_HOURS.min, Math.round(holdHours)))} onChange={(e) => setHoldHours(Number(e.target.value))} title="Longer trips find +30% per extra hour but risk the black hole more. Recyclers help salvage, probes scout for pirates.">
+                    {Array.from({ length: EXPEDITION_HOURS.max - EXPEDITION_HOURS.min + 1 }, (_, i) => EXPEDITION_HOURS.min + i).map((h) => <option key={h} value={h}>{h} h</option>)}
                   </select>
                 </label>
               )}
@@ -225,12 +245,17 @@ export function FleetPage() {
             {(mission === 'transport' || mission === 'deploy' || mission === 'hold' || mission === 'colonize' || mission === 'expedition') && (
               <div className="row wrap">
                 <span className="muted">Cargo (capacity {fmt(cap)}):</span>
-                {(['metal', 'crystal', 'deuterium'] as const).map((k) => (
-                  <label key={k} className={k === 'deuterium' ? 'deut' : k}>{resName(k)}
-                    <input type="number" min={0} value={cargo[k]} onChange={(e) => setCargo({ ...cargo, [k]: Math.max(0, Number(e.target.value)) })} />
-                  </label>
-                ))}
-                <button type="button" onClick={() => setCargo({ metal: Math.min(Math.floor(planet.resources.metal), cap), crystal: 0, deuterium: 0 })}>max metal</button>
+                {(['metal', 'crystal', 'deuterium'] as const).map((k) => {
+                  // the most this resource can be: what the planet has (less the fuel for vespene gas) and what still fits in the hold
+                  const others = (['metal', 'crystal', 'deuterium'] as const).filter((x) => x !== k).reduce((sum, x) => sum + cargo[x], 0);
+                  const most = Math.max(0, Math.min(Math.floor(planet.resources[k]) - (k === 'deuterium' ? plan?.fuel ?? 0 : 0), cap - others));
+                  return (
+                    <label key={k} className={k === 'deuterium' ? 'deut' : k}>{resName(k)}
+                      <NumInput value={cargo[k]} onChange={(n) => setCargo({ ...cargo, [k]: n })} />
+                      <a className="maxlink" onClick={() => setCargo({ ...cargo, [k]: most })} title={`Fill with as much ${resName(k)} as fits`}>max</a>
+                    </label>
+                  );
+                })}
               </div>
             )}
             <div className="row between">

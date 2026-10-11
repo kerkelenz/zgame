@@ -219,6 +219,28 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('number fields group the digits as you type, and the probe default is a setting', async () => {
+    await go('Resources');
+    const field = page.locator('input[inputmode="numeric"]').first();
+    await field.click();
+    await field.fill('');
+    await field.pressSequentially('2000000');
+    expect(await field.inputValue()).toBe('2,000,000');
+    await field.press('Home');
+    await field.press('Delete');
+    expect(await field.inputValue()).toBe('0');                                   // 2,000,000 minus its first digit
+    await go('Settings');
+    const probes = page.locator('label', { hasText: 'Spy probes to send' }).locator('input');
+    expect(await probes.inputValue()).toBe('1');                                  // the default
+    await probes.fill('');
+    await probes.pressSequentially('6');
+    await page.reload();
+    await page.waitForSelector('header.top');
+    await go('Settings');
+    expect(await page.locator('label', { hasText: 'Spy probes to send' }).locator('input').inputValue()).toBe('6');
+    noErrors();
+  });
+
   run('the overview lists fleet events and the list can be hidden', async () => {
     await go('Overview');
     await page.getByRole('heading', { name: /^Events/ }).waitFor();

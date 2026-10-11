@@ -8,6 +8,7 @@ import { post } from '../api';
 import { Art } from '../art';
 import { useGame } from '../game';
 import { Card, Cost, Countdown, ItemLink, Page, Progress, ReqList, fmtDur, unmet, fmt } from '../ui';
+import { NumInput } from '../NumInput';
 
 type Kind = 'building' | 'tech' | 'ship' | 'defense';
 const TITLES: Record<Kind, string> = { building: 'Buildings', tech: 'Research', ship: 'Shipyard', defense: 'Defense' };
@@ -152,7 +153,7 @@ export function Items({ kind }: { kind: Kind }) {
               {Object.keys(d.rapidFire).length > 0 && <div className="muted small">Rapid fire vs {Object.entries(d.rapidFire).map(([k, v]) => `${UNITS[k as UnitId].name} ×${v}`).join(', ')}</div>}
               {missing.length > 0 && <ReqList reqs={missing} />}
               <div className="row">
-                <input type="number" min={1} max={d.max ?? 1000000} value={counts[id] ?? 1} onChange={(e) => setCounts({ ...counts, [id]: Number(e.target.value) })} />
+                <NumInput min={1} max={d.max ?? 1000000} value={counts[id] ?? 1} onChange={(n) => setCounts({ ...counts, [id]: n })} />
                 <button onClick={() => setCounts({ ...counts, [id]: Math.max(1, Math.min(d.max ?? Infinity, maxAfford)) })}>Max</button>
                 <button className="primary" disabled={!ok} onClick={() => void act(() => post(`/planets/${planet.id}/produce`, { id, count: n }), `Queued ${n}× ${d.name}`)}>Build {n}</button>
               </div>

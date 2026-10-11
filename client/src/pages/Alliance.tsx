@@ -5,6 +5,7 @@ import { get, post } from '../api';
 import { post as post_ } from '../api';
 import { useGame } from '../game';
 import { Card, Cost, Page, coordStr, fmt, when } from '../ui';
+import { NumInput } from '../NumInput';
 
 export function Alliance() {
   const { me, act, planet, setPage, openProfile, showInGalaxy } = useGame();
@@ -86,7 +87,7 @@ function Mine({ a: raw, run, planetId, me, setPage, openProfile, showInGalaxy }:
           <div className="bankline"><span className="metal"><ResIcon k="metal" size={18} /> {fmt(a.bank.metal)}</span><span className="crystal"><ResIcon k="crystal" size={18} /> {fmt(a.bank.crystal)}</span><span className="deut"><ResIcon k="deuterium" size={18} /> {fmt(a.bank.deuterium)}</span></div>
           <h4>Donate from current planet</h4>
           <div className="row wrap">
-            {(['metal', 'crystal', 'deuterium'] as const).map((k) => <input key={k} type="number" min={0} className="md" placeholder={resName(k)} value={don[k] || ''} onChange={(e) => setDon({ ...don, [k]: Number(e.target.value) })} />)}
+            {(['metal', 'crystal', 'deuterium'] as const).map((k) => <NumInput key={k} blankZero className="md" placeholder={resName(k)} value={don[k] || 0} onChange={(n) => setDon({ ...don, [k]: n })} />)}
             <button className="primary" onClick={() => void run(() => post('/alliance/donate', { planetId, amount: don }), 'Donated').then(() => setDon({ metal: 0, crystal: 0, deuterium: 0 }))}>Donate</button>
           </div>
           {has('bank') && (
@@ -97,7 +98,7 @@ function Mine({ a: raw, run, planetId, me, setPage, openProfile, showInGalaxy }:
                   <option value="">member…</option>
                   {a.members.map((m: any) => <option key={m.id} value={m.id}>{m.username}</option>)}
                 </select>
-                {(['metal', 'crystal', 'deuterium'] as const).map((k) => <input key={k} type="number" min={0} className="md" placeholder={resName(k)} value={grant[k] || ''} onChange={(e) => setGrant({ ...grant, [k]: Number(e.target.value) })} />)}
+                {(['metal', 'crystal', 'deuterium'] as const).map((k) => <NumInput key={k} blankZero className="md" placeholder={resName(k)} value={grant[k] || 0} onChange={(n) => setGrant({ ...grant, [k]: n })} />)}
                 <button onClick={() => void run(() => post('/alliance/withdraw', { playerId: grant.playerId, amount: grant }), 'Granted')}>Send</button>
               </div>
             </>

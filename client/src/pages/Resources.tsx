@@ -4,6 +4,7 @@ import { post } from '../api';
 import { TRADE_FEE, TRADE_FEE_COLLECTOR, resName, tradeQuote } from '../../../shared/data';
 import { useGame } from '../game';
 import { Card, Countdown, Page, fmt } from '../ui';
+import { NumInput } from '../NumInput';
 
 const SOURCES: [string, string][] = [
   ['metalMine', 'Metal Mine'], ['crystalMine', 'Crystal Mine'], ['deuteriumSynthesizer', 'Vespene Extractor'],
@@ -44,7 +45,7 @@ export function Resources() {
           <button className="link" onClick={() => { setGive(deal.give); setGet(deal.get); setAmount(Math.min(Math.floor(planet.resources[deal.give]), deal.left)); }}>use it</button></p>
         <div className="row wrap">
           <label>Give<select value={give} onChange={(e) => setGive(e.target.value as typeof give)}>{(['metal', 'crystal', 'deuterium'] as const).map((k) => <option key={k} value={k}>{resName(k)}</option>)}</select></label>
-          <input type="number" min={0} value={amount} onChange={(e) => setAmount(Math.max(0, Number(e.target.value)))} />
+          <NumInput value={amount} onChange={setAmount} />
           <button onClick={() => setAmount(Math.floor(planet.resources[give]))}>all</button>
           <label>Get<select value={get} onChange={(e) => setGet(e.target.value as typeof get)}>{(['metal', 'crystal', 'deuterium'] as const).map((k) => <option key={k} value={k}>{resName(k)}</option>)}</select></label>
           <b>{give === get ? '-' : fmt(quote)}</b>

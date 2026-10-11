@@ -12,6 +12,7 @@ import { Art } from '../art';
 import { useGame } from '../game';
 import { fmtCell, fmtDelta } from '../../../shared/format';
 import { Card, Cost, ItemLink, Page, fmt, fmtDur } from '../ui';
+import { NumInput } from '../NumInput';
 
 const fmtDeltaCell = (c: Col, v: number) => fmtDelta(c.fmt, v);
 
@@ -223,7 +224,7 @@ export function ItemDetail() {
           <h4>Requirements</h4>
           <Requirements id={id} ctx={ctx} />
           <div className="row">
-            <input type="number" min={1} max={u.max ?? 1000000} value={count} onChange={(e) => setCount(Math.max(1, Number(e.target.value) || 1))} />
+            <NumInput min={1} max={u.max ?? 1000000} value={count} onChange={(n) => setCount(n)} />
             <button className="primary" disabled={!ok} onClick={() => void act(() => post(`/planets/${planet.id}/produce`, { id, count: n }), `Queued ${n}× ${u.name}`)}>Build {n}</button>
           </div>
         </Card>

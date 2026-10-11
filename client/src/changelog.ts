@@ -3,6 +3,17 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-j', date: '2026-10-12', title: 'A friendlier Fleet page',
+    items: [
+      'Coordinates on the Fleet page are links to the galaxy.',
+      'The Fleet page shows the transport capacity of the ships you pick (and the recycling capacity of Recyclers), and the cargo boxes have a small max link instead of the max metal button.',
+      'Buttons with your own planets and moons fill in the target in one click.',
+      'Number fields group the digits as you type: 2000000 becomes 2,000,000.',
+      'Settings has a default number of Espionage Probes that Spy in the galaxy prepares for you.',
+      'The expedition time choices come from the same limits the server uses (1 to 4 hours).',
+    ],
+  },
+  {
     id: '2026-10-i', date: '2026-10-11', title: 'Player search and a tidier menu',
     items: [
       'Search players: a box in the top bar finds commanders by name (and alliance members by tag) and opens their profile.',

@@ -2,6 +2,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { BUILDINGS, TECHS, UNITS } from '../shared/data';
+import { cargoFor } from './perks';
 import { bus } from './bus';
 import { authenticate, login, logout, register } from './accounts';
 import * as AL from './alliance';
@@ -396,7 +397,8 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const planet = ownedPlanet(w, p.id, str(req.body.fromPlanetId));
     const to = { g: Number(req.body.to?.g), s: Number(req.body.to?.s), p: Number(req.body.to?.p) };
     if (!inBounds(w, to, true)) throw new GameError('Invalid destination');
-    return flightPlan(w, p, req.body.ships || {}, planet.coords, to, Number(req.body.speedPct) || 100);
+    const ships = req.body.ships || {};
+    return { ...flightPlan(w, p, ships, planet.coords, to, Number(req.body.speedPct) || 100), capacity: cargoFor(p, ships), recycleCapacity: (Number(ships.recycler) || 0) * UNITS.recycler.cargo };
   }));
   A.post('/fleets/send', wrap((req) => {
     const p = req.player!;
