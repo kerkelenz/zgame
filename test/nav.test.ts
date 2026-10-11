@@ -14,7 +14,7 @@ describe('the menu', () => {
   it('lists every page exactly once', () => {
     const all = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
     expect(new Set(all).size).toBe(all.length);
-    expect(all).toEqual(expect.arrayContaining(['overview', 'resources', 'buildings', 'research', 'shipyard', 'defense', 'automation', 'fleet', 'galaxy', 'invasion', 'simulator', 'empire', 'economy', 'contracts', 'command', 'alliance', 'territory', 'contacts', 'messages', 'chat', 'highscore', 'settings', 'guide', 'news', 'admin']));
+    expect(all).toEqual(expect.arrayContaining(['overview', 'resources', 'buildings', 'research', 'techtree', 'shipyard', 'defense', 'automation', 'fleet', 'galaxy', 'invasion', 'simulator', 'empire', 'economy', 'contracts', 'command', 'alliance', 'territory', 'contacts', 'messages', 'chat', 'highscore', 'settings', 'guide', 'news', 'admin']));
   });
 
   it('has a page behind every entry', () => {

@@ -69,7 +69,7 @@ describe('first visit', () => {
 });
 
 describe('every page', () => {
-  const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Empire', 'Economy', 'Contracts', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
+  const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Empire', 'Economy', 'Contracts', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
 
   run('opens without errors on a desktop', async () => {
     for (const label of PAGES) {
@@ -120,6 +120,17 @@ describe('using the game', () => {
     await page.getByText('Under construction').waitFor({ timeout: 10_000 });
     expect(await page.locator('main').innerText()).toMatch(/Metal Mine → level 1/);
     await page.getByText(/Add to queue/).first().waitFor();
+    noErrors();
+  });
+
+  run('the tech tree highlights what an item needs and opens up', async () => {
+    await go('Tech tree');
+    await page.locator('.tnode', { hasText: 'Fusion Reactor' }).click();
+    expect(await page.locator('.treeinfo').innerText()).toMatch(/Vespene Extractor level 5/);
+    expect(await page.locator('.tnode.anc').count()).toBeGreaterThanOrEqual(3);
+    expect(await page.locator('.tnode.dim').count()).toBeGreaterThan(20);
+    await page.getByRole('button', { name: 'Production and effects' }).click();
+    expect(await page.locator('main').innerText()).toMatch(/Raised by/);
     noErrors();
   });
 

@@ -16,7 +16,7 @@ describe('the in-game guide', () => {
   });
 
   it('covers every screen in the navigation', () => {
-    for (const page of ['Overview', 'Empire', 'Economy', 'Resources', 'Buildings', 'Research', 'Shipyard', 'Defense', 'Automation', 'Invasion', 'Territory', 'Contracts', 'Fleet', 'Galaxy', 'Alliance', 'Contacts', 'Command', 'Simulator', 'Messages', 'Chat', 'Standing', 'Settings']) {
+    for (const page of ['Overview', 'Empire', 'Economy', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Automation', 'Invasion', 'Territory', 'Contracts', 'Fleet', 'Galaxy', 'Alliance', 'Contacts', 'Command', 'Simulator', 'Messages', 'Chat', 'Standing', 'Settings']) {
       expect(text, page).toContain(page);
     }
   });

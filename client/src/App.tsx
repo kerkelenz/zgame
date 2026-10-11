@@ -30,6 +30,7 @@ import { Highscore } from './pages/Highscore';
 import { Messages } from './pages/Messages';
 import { Overview } from './pages/Overview';
 import { Items } from './pages/Items';
+import { TechTree } from './pages/TechTree';
 import { Resources } from './pages/Resources';
 
 
@@ -60,6 +61,7 @@ export function App() {
       case 'resources': return <Resources />;
       case 'buildings': return <Items kind="building" />;
       case 'research': return <Items kind="tech" />;
+      case 'techtree': return <TechTree />;
       case 'shipyard': return <Items kind="ship" />;
       case 'defense': return <Items kind="defense" />;
       case 'fleet': return <FleetPage />;

@@ -234,3 +234,19 @@ label.row { flex-direction: row; align-items: center; gap: 6px; color: var(--tex
 .warboard { display: flex; align-items: center; justify-content: space-around; gap: 12px; padding: 8px 0; flex-wrap: wrap; }
 .warside { text-align: center; min-width: 120px; } .warside.mine .warscore { color: var(--accent); }
 .warscore { font-size: 28px; font-weight: 700; line-height: 1.1; }
+
+.tier { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
+.tierlabel { flex: 0 0 52px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding-top: 8px; }
+.tiernodes { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+.tnode { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 13px; text-align: left; }
+.tnode .icon { width: 22px; height: 22px; }
+.tnode .lvl { margin-left: 2px; }
+.tnode.owned { border-color: #2e5a3c; } .tnode.ready { border-color: var(--accent); } .tnode.locked { opacity: .6; }
+.tnode.dim { opacity: .35; } .tnode.sel { outline: 2px solid var(--accent); }
+.tnode.anc { background: rgba(255, 190, 80, .18); opacity: 1; } .tnode.desc { background: rgba(110, 200, 255, .16); opacity: 1; }
+.tlegend { padding: 0 6px; border-radius: 4px; border: 1px solid var(--line); }
+.tlegend.anc { background: rgba(255, 190, 80, .18); } .tlegend.desc { background: rgba(110, 200, 255, .16); }
+.tlegend.owned { border-color: #2e5a3c; } .tlegend.ready { border-color: var(--accent); } .tlegend.locked { opacity: .6; }
+.treeinfo { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.good { color: var(--good); }
+ul.flow { margin: 2px 0 8px; padding-left: 18px; } ul.flow li { margin: 2px 0; }

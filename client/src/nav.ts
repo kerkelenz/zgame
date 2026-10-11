@@ -7,7 +7,7 @@ export interface NavGroup { id: string; label: string; items: NavItem[] }
 
 export const NAV_GROUPS: NavGroup[] = [
   { id: 'planet', label: 'Planet', items: [
-    { id: 'overview', label: 'Overview' }, { id: 'resources', label: 'Resources' }, { id: 'buildings', label: 'Buildings' }, { id: 'research', label: 'Research' },
+    { id: 'overview', label: 'Overview' }, { id: 'resources', label: 'Resources' }, { id: 'buildings', label: 'Buildings' }, { id: 'research', label: 'Research' }, { id: 'techtree', label: 'Tech tree' },
     { id: 'shipyard', label: 'Shipyard' }, { id: 'defense', label: 'Defense' }, { id: 'automation', label: 'Automation', feature: 'automation' },
   ] },
   { id: 'space', label: 'Space', items: [
