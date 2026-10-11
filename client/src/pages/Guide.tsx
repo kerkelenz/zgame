@@ -1,8 +1,11 @@
 import { CHANGELOG, markChangelogSeen } from '../changelog';
 import { Card, Page } from '../ui';
 import { useEffect } from 'react';
+import { useGame } from '../game';
+import { ResIcon } from '../ResIcon';
 
 export function Guide() {
+  const { me } = useGame();
   useEffect(() => { markChangelogSeen(); }, []);
   return (
     <Page title="Guide">
@@ -13,6 +16,12 @@ export function Guide() {
             <ul className="notes">{r.items.map((x) => <li key={x}>{x}</li>)}</ul>
           </div>
         ))}
+      </Card>
+      <Card title="The three resources">
+        <ul>
+          <li><b><ResIcon k="metal" /> Metal</b> (steel ingots) builds almost everything. <b><ResIcon k="crystal" /> Crystal</b> (the blue gem) goes into research, electronics and most ships. <b><ResIcon k="deuterium" /> Vespene Gas</b> (the glowing green canister) fuels your fleets and pays for advanced tech.</li>
+          <li>Their pictures appear in the top bar (stock / storage), on every cost, and on the Resources page. The top bar fills up toward its storage limit - build storage before a resource sits capped.</li>
+        </ul>
       </Card>
       <Card title="Getting started">
         <ol>
@@ -52,7 +61,7 @@ export function Guide() {
       </Card>
       <Card title="Queues and the merchant">
         <ul>
-          <li>Buildings and research can queue four deep behind the running job. Each entry is <b>paid and reserved when you queue it</b> and refunded if you remove it; use the arrows to reorder.</li>
+          <li>Buildings and research can queue four deep behind the running job. Each entry is <b>paid and reserved when you queue it</b> and refunded if you remove it; use the arrows to reorder. If the item is already being upgraded or queued, the card shows the <i>later</i> level ("Level 16") and its real price, so the button only enables when you can afford exactly what you will get.</li>
           <li>The <b>travelling merchant</b> swaps resources at 3 : 2 : 1 with a 12% cut (8% for Collectors). Each day he does one pair at only 2% up to a daily allowance - the Resources page shows today's deal.</li>
           <li>The <b>Supply depot</b> in Command spends Command Credits on production crates and on halving the time left on your current build or research.</li>
           <li><b>Gather</b> (Resources page) sends loaded cargo ships from all your other planets to the one you are viewing.</li>
@@ -81,13 +90,23 @@ export function Guide() {
       </Card>
       <Card title="People, standing and seasons">
         <ul>
-          <li>Click any commander's name for their <b>profile</b>: rank in every category, record, class, alliance and achievements. <b>Standing</b> switches between total, economy, research, fleet, defense and activity rankings.</li>
+          <li>Click any commander's name (in Standing, the Galaxy, Contacts or your Alliance) for their <b>profile</b>: rank in every category, record, class, alliance, achievements and <b>where all their planets are</b>. Back returns to the page you came from. On the Alliance page member names and home coordinates are links too. <b>Standing</b> switches between total, economy, research, fleet, defense and activity rankings.</li>
           <li><b>Contacts</b> keeps buddies, blocked commanders, private notes, bookmarks and your latest <b>spy report</b> for each planet. Use Report on a profile if someone breaks the rules.</li>
           <li>Battle reports have a round-by-round table; <b>Share link</b> makes a public page you can paste into chat.</li>
           <li>Some universes run in <b>seasons</b>: at the end the top players enter the hall of fame and the universe resets. You keep your account, credits, officers, class and achievements.</li>
-          <li>Account settings (password, rename, recovery key, delete) are in Settings. Keep a <b>recovery key</b> - there is no email reset.</li>
+          <li>Account settings (password, rename, recovery key, delete) are in Settings. Keep a <b>recovery key</b> - there is no email reset. Logins expire after 30 days without use, and <b>Log out</b> signs that device out on the server too.</li>
         </ul>
       </Card>
+      {me.player.admin && (
+        <Card title="For admins">
+          <ul>
+            <li>The <b>Admin</b> page lists every commander: <b>Ban</b> and <b>Mute</b> (timed or permanent, with a reason the player sees), <b>Raid</b> (send a computer-empire raid), <b>Inspect</b> (their full state, minus password data), <b>Remove</b>, and <b>gift resources</b> to a homeworld.</li>
+            <li><b>Announcement</b> messages every commander and pops a notice for anyone online. <b>Player reports</b> sent from profiles queue up here until you resolve them.</li>
+            <li><b>Season</b>: end the current season (crowns the champion, fills the hall of fame) and then reset the universe. Timing can be automatic with OGAME_SEASON_DAYS, OGAME_SEASON_RESET_HOURS and OGAME_VICTORY_POINTS.</li>
+            <li>Admin names come from OGAME_ADMINS and are <b>reserved until registered</b>; claim yours with OGAME_ADMIN_KEY in the Register tab's setup-key box. Backups: <code>npm run backup</code>; see docs/DEPLOY.md.</li>
+          </ul>
+        </Card>
+      )}
       <Card title="Fleet tips">
         <ul>
           <li>Flights cost vespene gas. Slower speed % uses less fuel. Recall at any time - the fleet returns after the time already travelled.</li>

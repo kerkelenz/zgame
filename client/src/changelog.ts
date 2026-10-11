@@ -3,6 +3,15 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-c', date: '2026-10-10', title: 'Vespene Gas, pictures and fixes',
+    items: [
+      'Deuterium is now Vespene Gas (the Synthesizer is the Vespene Extractor), and metal, crystal and Vespene Gas have pictures everywhere.',
+      'Queued upgrades are priced at the level you will actually get, and failed purchases say exactly what is missing.',
+      'Hostile fleets show where they launched from; alliance member names and home coordinates are clickable, and profiles list all planets.',
+      'Crawlers now draw 6 energy each and Collectors get +25% from them (was +50%) - see the Economy page energy breakdown.',
+      'Safer logins: sessions expire after 30 days without use, Log out signs you out on the server, and repeated wrong passwords are throttled.',
+    ],
+  },  {
     id: '2026-10-b', date: '2026-10-10', title: 'Community & tools',
     items: [
       'Alliance ranks with permissions, a bulletin board, mass messages and pacts/wars between alliances.',
