@@ -8,7 +8,7 @@ const finish = () => { try { localStorage.setItem(TOUR_KEY, '1'); } catch { /* i
 
 const STEPS: { page: string; title: string; text: string }[] = [
   { page: 'overview', title: 'Welcome, Commander', text: 'This is your homeworld. Resources flow in even while you are away, and the bar above always shows your stock, storage and energy balance. Follow the Objective card to learn the game step by step.' },
-  { page: 'buildings', title: 'Buildings', text: 'Mines make metal, crystal and deuterium; solar plants keep them running. Queue upgrades here - they are paid for when queued and you can reorder or remove them.' },
+  { page: 'buildings', title: 'Buildings', text: 'Mines make metal, crystal and vespene gas; solar plants keep them running. Queue upgrades here - they are paid for when queued and you can reorder or remove them.' },
   { page: 'research', title: 'Research', text: 'Technologies unlock ships, speed up fleets and strengthen your economy. One project runs at a time, with a queue behind it.' },
   { page: 'shipyard', title: 'Shipyard & defense', text: 'Build cargo ships, fighters, probes and colony ships - and defenses that protect you while you are offline.' },
   { page: 'galaxy', title: 'The galaxy', text: 'Browse systems, spot inactive neighbours (i / I flags), bookmark favourites and send fleets from here. Beginners are protected until they grow.' },

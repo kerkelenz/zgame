@@ -192,7 +192,7 @@ export function withdraw(w: World, actor: Player, targetId: string, amount: Part
   a.bank = subRes(a.bank, take);
   planet.resources = addRes(planet.resources, take);
   log(a, `${actor.username} granted ${take.metal} M / ${take.crystal} C / ${take.deuterium} D to ${t.username}.`);
-  notifyPlayer(w, t.id, 'alliance', 'Alliance grant', `${actor.username} sent you ${take.metal} metal, ${take.crystal} crystal, ${take.deuterium} deuterium from the alliance bank.`);
+  notifyPlayer(w, t.id, 'alliance', 'Alliance grant', `${actor.username} sent you ${take.metal} metal, ${take.crystal} crystal, ${take.deuterium} vespene gas from the alliance bank.`);
 }
 
 export function upgradeCost(key: string, level: number): Res {

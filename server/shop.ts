@@ -36,7 +36,7 @@ export function buyItem(w: World, p: Player, planet: Planet, id: string, now: nu
     for (const k of ['metal', 'crystal', 'deuterium'] as const) give[k] = Math.max(0, Math.min(Math.floor(rate[k] * HOURS[id]), Math.floor(cap[k] - planet.resources[k])));
     if (give.metal + give.crystal + give.deuterium <= 0) throw new GameError('Your storage is full - nothing to deliver');
     planet.resources = addRes(planet.resources, give);
-    result = `Delivered ${give.metal.toLocaleString('en-US')} metal, ${give.crystal.toLocaleString('en-US')} crystal, ${give.deuterium.toLocaleString('en-US')} deuterium.`;
+    result = `Delivered ${give.metal.toLocaleString('en-US')} metal, ${give.crystal.toLocaleString('en-US')} crystal, ${give.deuterium.toLocaleString('en-US')} vespene gas.`;
   } else if (id === 'build_rush') {
     const j = planet.buildQueue;
     if (!j || j.end <= now) throw new GameError('Nothing is under construction here');

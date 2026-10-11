@@ -10,7 +10,7 @@ import { useGame } from '../game';
 import { fmtDurShort } from '../../../shared/format';
 import { Card, ItemLink, Page, coordStr, fmt, fmtDur } from '../ui';
 
-const LABEL: Record<ResKey, string> = { metal: 'Metal', crystal: 'Crystal', deuterium: 'Deuterium' };
+const LABEL: Record<ResKey, string> = { metal: 'Metal', crystal: 'Crystal', deuterium: 'Vespene Gas' };
 const CLS: Record<ResKey, string> = { metal: 'metal', crystal: 'crystal', deuterium: 'deut' };
 const hours = (h: number | null) => (h == null ? '–' : h === Infinity ? 'never' : h < 1 ? `${Math.max(1, Math.round(h * 60))} min` : h < 100 ? `${h.toFixed(1)} h` : `${Math.round(h / 24)} days`);
 const signed = (n: number) => (Math.abs(n) < 0.5 ? '0' : (n > 0 ? '+' : '−') + fmt(Math.abs(n)));
@@ -75,7 +75,7 @@ export function Economy() {
             </div>
           ))}
         </div>
-        <p className="muted small">In metal-equivalents (crystal ×1.5, deuterium ×3): <b>{fmt(totals.value.perHour)}</b> per hour · <b>{fmt(totals.value.perDay)}</b> per day · stockpile <b>{fmt(totals.value.stock)}</b>.</p>
+        <p className="muted small">In metal-equivalents (crystal ×1.5, vespene gas ×3): <b>{fmt(totals.value.perHour)}</b> per hour · <b>{fmt(totals.value.perDay)}</b> per day · stockpile <b>{fmt(totals.value.stock)}</b>.</p>
         {totals.lostValuePerHour > 1 && <p className="bad">⚠ Energy shortages are costing you about {fmt(totals.lostValuePerHour)} metal-equivalents every hour. Open the planet below to fix it.</p>}
       </Card>
 
@@ -145,7 +145,7 @@ export function Economy() {
           <div>
             <h4>Used by mines: {fmt(eco.energy.used)}</h4>
             <Stack total={Math.max(eco.energy.used, 1)} parts={[
-              { label: 'Metal mine', v: d.energy.usedMetal, cls: 'seg-basic' }, { label: 'Crystal mine', v: d.energy.usedCrystal, cls: 'seg-mine' }, { label: 'Deuterium synthesizer', v: d.energy.usedDeuterium, cls: 'seg-plasma' }]} />
+              { label: 'Metal mine', v: d.energy.usedMetal, cls: 'seg-basic' }, { label: 'Crystal mine', v: d.energy.usedCrystal, cls: 'seg-mine' }, { label: 'Vespene extractor', v: d.energy.usedDeuterium, cls: 'seg-plasma' }]} />
             <div className="legend">
               <span><i className="seg-basic" /><ItemLink id="metalMine" /> <b>{fmt(d.energy.usedMetal)}</b></span>
               <span><i className="seg-mine" /><ItemLink id="crystalMine" /> <b>{fmt(d.energy.usedCrystal)}</b></span>
@@ -199,7 +199,7 @@ export function Economy() {
             ))}
           </tbody>
         </table></div>
-        <p className="muted small">Payback = cost ÷ extra income, both in metal-equivalents (crystal ×1.5, deuterium ×3). Energy buildings pay back by lifting the efficiency of every mine. Storage and facility upgrades are not ranked here because they pay back in other ways (room to grow, faster building).</p>
+        <p className="muted small">Payback = cost ÷ extra income, both in metal-equivalents (crystal ×1.5, vespene gas ×3). Energy buildings pay back by lifting the efficiency of every mine. Storage and facility upgrades are not ranked here because they pay back in other ways (room to grow, faster building).</p>
       </Card>
     </Page>
   );

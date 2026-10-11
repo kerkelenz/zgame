@@ -47,7 +47,7 @@ Config is stored in the save on first start; env vars override it on later start
 
 ## Features
 
-- **Economy** – metal/crystal/deuterium mines, solar/fusion/satellite energy, storage caps, production sliders, robotics/nanite build speed, planet fields & temperature.
+- **Economy** – metal/crystal/vespene gas mines, solar/fusion/satellite energy, storage caps, production sliders, robotics/nanite build speed, planet fields & temperature.
 - **Tech** – 14 researches with OGame-style prerequisites; drives change ship speeds, weapons/shielding/armour change combat.
 - **Shipyard** – 14 ships, 8 defenses, batch queues with refunds, shield-dome limits. Buildings and research can queue 4 deep (paid and reserved when queued, refunded if removed).
 - **Moons** – big debris fields can condense into a moon (1% per 100k, max 20%). Build a Lunar Base for room, a **Sensor Phalanx** to scan fleet movements around planets in range (spot raiders heading for allies) and a **Jump Gate** to teleport ships between your moons. Missions can target moons.

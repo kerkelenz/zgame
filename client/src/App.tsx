@@ -88,7 +88,7 @@ export function App() {
         <div className="res">
           <span className="metal" title="Metal">M {fmt(live.metal)}<small>/{fmt(planet.capacity.metal)}</small></span>
           <span className="crystal" title="Crystal">C {fmt(live.crystal)}<small>/{fmt(planet.capacity.crystal)}</small></span>
-          <span className="deut" title="Deuterium">D {fmt(live.deuterium)}<small>/{fmt(planet.capacity.deuterium)}</small></span>
+          <span className="deut" title="Vespene Gas">D {fmt(live.deuterium)}<small>/{fmt(planet.capacity.deuterium)}</small></span>
           <span className={energy < 0 ? 'bad' : 'energy'} title="Energy balance">⚡ {fmt(energy)}</span>
         </div>
         <div className="who">

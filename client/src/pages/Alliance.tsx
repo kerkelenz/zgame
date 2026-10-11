@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { resName } from '../../../shared/data';
 import { get, post } from '../api';
 import { post as post_ } from '../api';
 import { useGame } from '../game';
@@ -82,7 +83,7 @@ function Mine({ a, run, planetId, me, setPage }: { a: any; run: (f: () => Promis
           <div className="bankline"><span className="metal">{fmt(a.bank.metal)} M</span><span className="crystal">{fmt(a.bank.crystal)} C</span><span className="deut">{fmt(a.bank.deuterium)} D</span></div>
           <h4>Donate from current planet</h4>
           <div className="row wrap">
-            {(['metal', 'crystal', 'deuterium'] as const).map((k) => <input key={k} type="number" min={0} className="md" placeholder={k} value={don[k] || ''} onChange={(e) => setDon({ ...don, [k]: Number(e.target.value) })} />)}
+            {(['metal', 'crystal', 'deuterium'] as const).map((k) => <input key={k} type="number" min={0} className="md" placeholder={resName(k)} value={don[k] || ''} onChange={(e) => setDon({ ...don, [k]: Number(e.target.value) })} />)}
             <button className="primary" onClick={() => void run(() => post('/alliance/donate', { planetId, amount: don }), 'Donated').then(() => setDon({ metal: 0, crystal: 0, deuterium: 0 }))}>Donate</button>
           </div>
           {has('bank') && (
@@ -93,7 +94,7 @@ function Mine({ a, run, planetId, me, setPage }: { a: any; run: (f: () => Promis
                   <option value="">member…</option>
                   {a.members.map((m: any) => <option key={m.id} value={m.id}>{m.username}</option>)}
                 </select>
-                {(['metal', 'crystal', 'deuterium'] as const).map((k) => <input key={k} type="number" min={0} className="md" placeholder={k} value={grant[k] || ''} onChange={(e) => setGrant({ ...grant, [k]: Number(e.target.value) })} />)}
+                {(['metal', 'crystal', 'deuterium'] as const).map((k) => <input key={k} type="number" min={0} className="md" placeholder={resName(k)} value={grant[k] || ''} onChange={(e) => setGrant({ ...grant, [k]: Number(e.target.value) })} />)}
                 <button onClick={() => void run(() => post('/alliance/withdraw', { playerId: grant.playerId, amount: grant }), 'Granted')}>Send</button>
               </div>
             </>

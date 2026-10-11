@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { SHIP_IDS, UNITS, isStationary } from '../../../shared/data';
+import { SHIP_IDS, UNITS, isStationary, resName } from '../../../shared/data';
 import { cargoCapacity } from '../../../shared/formulas';
 import type { Mission, ShipId } from '../../../shared/types';
 import { get, post } from '../api';
@@ -111,7 +111,7 @@ export function FleetPage() {
             <input type="number" className="sm" value={scanTo.g} onChange={(e) => setScanTo({ ...scanTo, g: Number(e.target.value) })} />
             <input type="number" className="sm" value={scanTo.s} onChange={(e) => setScanTo({ ...scanTo, s: Number(e.target.value) })} />
             <input type="number" className="sm" value={scanTo.p} onChange={(e) => setScanTo({ ...scanTo, p: Number(e.target.value) })} />
-            <button onClick={async () => { const r = await act(() => post(`/planets/${planet.id}/phalanx`, { to: scanTo })); if (r) setScan(r); }}>Scan (5,000 deuterium)</button>
+            <button onClick={async () => { const r = await act(() => post(`/planets/${planet.id}/phalanx`, { to: scanTo })); if (r) setScan(r); }}>Scan (5,000 vespene gas)</button>
           </div>
           {scan && (
             <div>
@@ -225,7 +225,7 @@ export function FleetPage() {
               <div className="row wrap">
                 <span className="muted">Cargo (capacity {fmt(cap)}):</span>
                 {(['metal', 'crystal', 'deuterium'] as const).map((k) => (
-                  <label key={k} className={k === 'deuterium' ? 'deut' : k}>{k}
+                  <label key={k} className={k === 'deuterium' ? 'deut' : k}>{resName(k)}
                     <input type="number" min={0} value={cargo[k]} onChange={(e) => setCargo({ ...cargo, [k]: Math.max(0, Number(e.target.value)) })} />
                   </label>
                 ))}
@@ -234,7 +234,7 @@ export function FleetPage() {
             )}
             <div className="row between">
               <div className="muted">
-                {plan ? <>Distance {fmt(plan.dist)} · duration {fmtDur(plan.secs * 1000)} · fuel {fmt(plan.fuel)} deuterium</> : 'Select ships to see the flight plan.'}
+                {plan ? <>Distance {fmt(plan.dist)} · duration {fmtDur(plan.secs * 1000)} · fuel {fmt(plan.fuel)} vespene gas</> : 'Select ships to see the flight plan.'}
               </div>
               <button className="primary" disabled={!count} onClick={send}>Send {count ? `${fmt(count)} ships` : ''}</button>
             </div>

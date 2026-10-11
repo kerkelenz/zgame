@@ -8,7 +8,7 @@
  */
 import { FACTIONS } from '../shared/data';
 import { makeRng, simulateCombat, type Combatant, type Rng } from '../shared/combat';
-import { UNITS } from '../shared/data';
+import { UNITS, resName } from '../shared/data';
 import { buildingCost, canAfford, distance, lvl, subRes, totalRes } from '../shared/formulas';
 import type { BuildingId, FactionId, Fleet, Res, UnitId } from '../shared/types';
 import { planetCapacity, planetProduction, updatePlanet } from './economy';
@@ -285,7 +285,7 @@ export function factionAid(w: World, now: number) {
     const base = Math.max(20_000, playerPoints(w, p).total * 120);
     const gift = { metal: Math.round(base * (0.4 + Math.random() * 0.4)), crystal: Math.round(base * (0.2 + Math.random() * 0.3)), deuterium: Math.round(base * (0.05 + Math.random() * 0.15)) };
     for (const k of KEYS) planet.resources[k] += gift[k];
-    notifyPlayer(w, p.id, 'news', 'Your faction sent supplies', `A convoy unloaded at ${planet.name}: ${gift.metal.toLocaleString('en-US')} metal, ${gift.crystal.toLocaleString('en-US')} crystal, ${gift.deuterium.toLocaleString('en-US')} deuterium.`);
+    notifyPlayer(w, p.id, 'news', 'Your faction sent supplies', `A convoy unloaded at ${planet.name}: ${gift.metal.toLocaleString('en-US')} metal, ${gift.crystal.toLocaleString('en-US')} crystal, ${gift.deuterium.toLocaleString('en-US')} vespene gas.`);
   }
 }
 
@@ -325,7 +325,7 @@ export function demandTribute(w: World, p: Player, now: number) {
   const rec = { id: uid(), npc: npc.id, want, deadline: now + (2 * HOUR) / sec(w), answered: false as const };
   p.tributes.push(rec);
   notifyPlayer(w, p.id, 'news', `${npc.username} demands tribute`,
-    `${npc.username} will keep their fleets away from your systems for a while in exchange for ${want.metal.toLocaleString('en-US')} metal, ${want.crystal.toLocaleString('en-US')} crystal and ${want.deuterium.toLocaleString('en-US')} deuterium. Answer in the Command screen before ${new Date(rec.deadline).toLocaleTimeString()} - silence counts as a refusal.`,
+    `${npc.username} will keep their fleets away from your systems for a while in exchange for ${want.metal.toLocaleString('en-US')} metal, ${want.crystal.toLocaleString('en-US')} crystal and ${want.deuterium.toLocaleString('en-US')} vespene gas. Answer in the Command screen before ${new Date(rec.deadline).toLocaleTimeString()} - silence counts as a refusal.`,
     { tribute: rec });
   return rec;
 }
@@ -338,7 +338,7 @@ export function answerTribute(w: World, p: Player, id: string, answer: 'pay' | '
     const owned = p.planetIds.map((pid) => w.planets[pid]).filter((x) => x && !x.isMoon);
     owned.forEach((pl) => updatePlanet(w, pl, now));
     // verify first so a failed payment takes nothing
-    for (const k of KEYS) if (owned.reduce((a, pl) => a + pl.resources[k], 0) < rec.want[k] - 1) throw new GameError(`Not enough ${k} across your planets to pay this`);
+    for (const k of KEYS) if (owned.reduce((a, pl) => a + pl.resources[k], 0) < rec.want[k] - 1) throw new GameError(`Not enough ${resName(k)} across your planets to pay this`);
     for (const k of KEYS) {
       let left = rec.want[k];
       for (const pl of [...owned].sort((a, b) => b.resources[k] - a.resources[k])) { const take = Math.min(pl.resources[k], left); pl.resources[k] -= take; left -= take; if (left <= 0) break; }

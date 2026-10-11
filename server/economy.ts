@@ -1,4 +1,4 @@
-import { ALLIANCE_UPGRADES, BUILDINGS, DEAL_FEE, TECHS, UNITS, buildingAllowed, dailyDeal, tradeQuote } from '../shared/data';
+import { ALLIANCE_UPGRADES, BUILDINGS, DEAL_FEE, TECHS, UNITS, buildingAllowed, dailyDeal, resName, tradeQuote } from '../shared/data';
 import {
   buildingCost, buildingTime, canAfford, production, researchTime, scaleRes, storageCapacity,
   subRes, addRes, techCost, unitTime, lvl,
@@ -393,7 +393,7 @@ export function tradeResources(w: World, planet: Planet, give: string, get: stri
   if (!(amount > 0)) throw new GameError('Enter an amount to trade');
   updatePlanet(w, planet, now);
   const g = give as (typeof keys)[number], t = get as (typeof keys)[number];
-  if (planet.resources[g] < amount) throw new GameError(`Not enough ${g} on ${planet.name}`);
+  if (planet.resources[g] < amount) throw new GameError(`Not enough ${resName(g)} on ${planet.name}`);
   const owner = w.players[planet.ownerId];
   const deal = merchantDeal(w, owner, now);
   const cheap = deal.give === g && deal.get === t ? Math.min(amount, deal.left) : 0;

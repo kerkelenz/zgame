@@ -17,7 +17,7 @@ export function Guide() {
       <Card title="Getting started">
         <ol>
           <li>Build <b>Metal Mine</b>, <b>Crystal Mine</b> and a <b>Solar Plant</b> first. Mines need energy - if the energy balance (top bar) goes negative, production drops.</li>
-          <li>Add a <b>Deuterium Synthesizer</b>, storages when a resource bar is full, and a <b>Robotics Factory</b> to speed up construction.</li>
+          <li>Add a <b>Vespene Extractor</b>, storages when a resource bar is full, and a <b>Robotics Factory</b> to speed up construction.</li>
           <li>Build a <b>Research Lab</b>, then research Energy, Combustion Drive and Computer. A <b>Shipyard</b> (needs Robotics 2) unlocks ships and defenses.</li>
           <li>Colonize more planets with colony ships (more planets need <b>Astrophysics</b>). Expeditions also need it.</li>
         </ol>
@@ -90,7 +90,7 @@ export function Guide() {
       </Card>
       <Card title="Fleet tips">
         <ul>
-          <li>Flights cost deuterium. Slower speed % uses less fuel. Recall at any time - the fleet returns after the time already travelled.</li>
+          <li>Flights cost vespene gas. Slower speed % uses less fuel. Recall at any time - the fleet returns after the time already travelled.</li>
           <li><b>Espionage</b> probes reveal resources, fleet, defenses, buildings and research depending on probe count and tech difference. Check before attacking.</li>
           <li>Destroyed ships leave a <b>debris field</b>; Recyclers collect it. Defenses rebuild ~70% of the time after a battle.</li>
           <li>Players with low points are under <b>newbie protection</b> and can neither attack nor be attacked. The Galaxy flags them: <b>n</b> too weak, <b>s</b> too strong, <b>v</b> vacation, <b>i / I</b> inactive 7 / 28 days, ● online.</li>

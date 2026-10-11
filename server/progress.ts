@@ -25,7 +25,7 @@ export const OBJECTIVES: Objective[] = [
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'solarPlant') >= 4 && planetProduction(w, x).efficiency >= 0.999) },
   { id: 'o3', name: 'Deeper shafts', hint: 'Metal Mine 8 and Crystal Mine 7. Your whole empire runs on this curve.', reward: { metal: 4000, crystal: 2500, deuterium: 500 },
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'metalMine') >= 8 && lvl(x.buildings, 'crystalMine') >= 7) },
-  { id: 'o4', name: 'Heavy water', hint: 'Build the Deuterium Synthesizer to level 5 - fleets run on it.', reward: { deuterium: 2000 },
+  { id: 'o4', name: 'Heavy water', hint: 'Build the Vespene Extractor to level 5 - fleets run on it.', reward: { deuterium: 2000 },
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'deuteriumSynthesizer') >= 5) },
   { id: 'o5', name: 'Science first', hint: 'Build a Research Lab, then research Energy Technology.', reward: { crystal: 4000 },
     test: (_w, p) => lvl(p.techs, 'energy') >= 1 },
@@ -65,7 +65,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 ];
 
 const resLine = (r: Partial<Res> & { credits?: number }) =>
-  [r.metal && `${r.metal.toLocaleString('en-US')} metal`, r.crystal && `${r.crystal.toLocaleString('en-US')} crystal`, r.deuterium && `${r.deuterium.toLocaleString('en-US')} deuterium`, r.credits && `${r.credits.toLocaleString('en-US')} credits`]
+  [r.metal && `${r.metal.toLocaleString('en-US')} metal`, r.crystal && `${r.crystal.toLocaleString('en-US')} crystal`, r.deuterium && `${r.deuterium.toLocaleString('en-US')} vespene gas`, r.credits && `${r.credits.toLocaleString('en-US')} credits`]
     .filter(Boolean).join(', ');
 
 export const currentObjective = (p: Player): Objective | null => OBJECTIVES.find((o) => !p.objectives[o.id]) ?? null;

@@ -1,4 +1,4 @@
-import { TECHS, UNITS, SHIP_IDS, DEFENSE_IDS, BUILDING_IDS, TECH_IDS, isShip, isStationary } from '../shared/data';
+import { TECHS, UNITS, resName, SHIP_IDS, DEFENSE_IDS, BUILDING_IDS, TECH_IDS, isShip, isStationary } from '../shared/data';
 import {
   addRes, cargoCapacity, canAfford, distance, flightSeconds, fleetSpeed, fuelUse, lvl, sameCoords, subRes, totalRes, zeroRes,
 } from '../shared/formulas';
@@ -160,7 +160,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   const cap = cargoFor(player, ships);
   if (totalRes(cargo) > cap) throw new GameError(`Cargo exceeds capacity (${num(cap)})`);
   const need = addRes(cargo, { metal: 0, crystal: 0, deuterium: plan.fuel });
-  if (!canAfford(planet.resources, need)) throw new GameError(`Not enough resources (fuel: ${num(plan.fuel)} deuterium)`);
+  if (!canAfford(planet.resources, need)) throw new GameError(`Not enough resources (fuel: ${num(plan.fuel)} vespene gas)`);
 
   if (joinLead && now + plan.secs * 1000 > joinLead.arriveAt) throw new GameError('Your fleet is too slow to arrive together with that attack');
   planet.resources = subRes(planet.resources, need);
@@ -293,7 +293,7 @@ function arrive(w: World, m: Movement, at: number) {
       target.resources = addRes(target.resources, delivered);
       m.cargo = zeroRes();
       const owner = w.players[m.ownerId!];
-      const body = `${num(delivered.metal)} metal, ${num(delivered.crystal)} crystal, ${num(delivered.deuterium)} deuterium delivered to ${target.name} ${fmt(m.to)}.`;
+      const body = `${num(delivered.metal)} metal, ${num(delivered.crystal)} crystal, ${num(delivered.deuterium)} vespene gas delivered to ${target.name} ${fmt(m.to)}.`;
       notifyPlayer(w, owner.id, 'transport', 'Transport arrived', body);
       if (target.ownerId !== owner.id) notifyPlayer(w, target.ownerId, 'transport', `Delivery from ${owner.username}`, body);
       bus.push({ to: target.ownerId, type: 'refresh' });
@@ -393,7 +393,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   };
   const r = target.resources;
   notifyPlayer(w, spy.id, 'espionage', `Spy report ${target.name} ${fmt(m.to)}`,
-    `${def.username}: metal ${num(r.metal)}, crystal ${num(r.crystal)}, deuterium ${num(r.deuterium)}.`, report);
+    `${def.username}: metal ${num(r.metal)}, crystal ${num(r.crystal)}, vespene gas ${num(r.deuterium)}.`, report);
   archiveSpy(spy, target.id, { ...report, moon: !!target.isMoon }, at);
   sendHome(m, at);
 }
@@ -549,7 +549,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
     `${names} vs ${defOwner.username} at ${target.name} ${fmt(lead.to)} - ${headline} after ${res.rounds} round(s).\n` +
     res.attackers.map((a) => `${a.name} lost: ${lost(a.before, a.after)}.\n`).join('') +
     `Defender lost: ${lost(res.defenders[0].before, res.defenders[0].after, res.defenders[0].rebuilt)}.\n` +
-    (totalRes(loot) ? `Loot: ${num(loot.metal)} metal, ${num(loot.crystal)} crystal, ${num(loot.deuterium)} deuterium.\n` : '') +
+    (totalRes(loot) ? `Loot: ${num(loot.metal)} metal, ${num(loot.crystal)} crystal, ${num(loot.deuterium)} vespene gas.\n` : '') +
     (res.debris.metal || res.debris.crystal ? `Debris field: ${num(res.debris.metal)} metal, ${num(res.debris.crystal)} crystal.\n` : '') +
     (bounty ? `Raider bounty: ${num(bounty)} resources shared among defenders.\n` : '') +
     (newMoon ? 'The debris condensed into a moon!\n' : '') +
@@ -656,14 +656,14 @@ function resolveExpedition(w: World, m: Movement, at: number) {
       const kind = Math.random() < 0.5 ? 'metal' : 'crystal';
       m.cargo[kind] += amount;
       title = 'Expedition: wreckage salvaged';
-      text = `Your recyclers stripped an ancient hulk and loaded ${num(amount)} ${kind}.`;
+      text = `Your recyclers stripped an ancient hulk and loaded ${num(amount)} ${resName(kind)}.`;
     }
   } else if (r < 0.58) {
     const kind = (['metal', 'crystal', 'deuterium'] as const)[Math.floor(Math.random() * 3)];
     const amount = Math.min(free, Math.floor((3000 + value * 0.04) * yieldMul * (salvagers ? 1.25 : 1) * (0.5 + Math.random()) * Math.sqrt(w.config.economySpeed)));
     m.cargo[kind] += amount;
     title = 'Expedition: resources found';
-    text = `Your fleet discovered a rich asteroid cluster and loaded ${num(amount)} ${kind}.`;
+    text = `Your fleet discovered a rich asteroid cluster and loaded ${num(amount)} ${resName(kind)}.`;
   } else if (r < 0.68) {
     const budget = Math.max(3000, value * yieldMul * (0.05 + Math.random() * 0.1));
     const found = buildNpcFleet(budget, Math.random);
@@ -815,7 +815,7 @@ export function phalanxScan(w: World, player: Player, moonId: string, to: Coords
   if (to.g !== moon.coords.g || Math.abs(to.s - moon.coords.s) > phalanxRange(level)) throw new GameError(`Out of range (this phalanx reaches ${phalanxRange(level)} systems)`);
   const target = planetAt(w, to);
   if (!target) throw new GameError('There is no planet there');
-  if (moon.resources.deuterium < PHALANX_COST) throw new GameError(`The moon needs ${PHALANX_COST} deuterium per scan - transport some there`);
+  if (moon.resources.deuterium < PHALANX_COST) throw new GameError(`The moon needs ${PHALANX_COST} vespene gas per scan - transport some there`);
   moon.resources.deuterium -= PHALANX_COST;
   const moves = Object.values(w.movements).filter((m) => m.mission !== 'missile' && m.ownerId !== player.id && (sameCoords(m.from, to) || sameCoords(m.to, to)));
   return {

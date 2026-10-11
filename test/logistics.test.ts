@@ -41,7 +41,7 @@ describe('gather resources', () => {
     expect(s.cargo.deuterium).toBeGreaterThan(0);
     expect(s.cargo.deuterium).toBeLessThan(20_000); // fuel stays behind
     expect(c1.resources.deuterium).toBeGreaterThanOrEqual(0);
-    expect(r.skipped.find((x) => x.fromPlanetId === c2.id)!.reason).toMatch(/deuterium/);
+    expect(r.skipped.find((x) => x.fromPlanetId === c2.id)!.reason).toMatch(/vespene gas/);
   });
   it('skips planets without haulers, validates input and only targets your own planets', () => {
     const r = gatherResources(w, a, home.id, 90, ['metal'], T0);
