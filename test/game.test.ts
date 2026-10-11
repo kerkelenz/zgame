@@ -303,10 +303,32 @@ describe('fleets', () => {
     ap.fleet = { recycler: 1 };
     const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: { g: 1, s: 5, p: 9 }, ships: { recycler: 1 }, mission: 'recycle' }, T0);
     processMovements(w, m.arriveAt);
-    expect(m.cargo.metal).toBe(20_000);
-    expect(w.debris['1:5:9'].metal).toBe(10_000);
-    expect(w.debris['1:5:9'].crystal).toBe(10_000);
+    // a full load of 20,000 is shared between both kinds in the proportion they lie there (3 : 1)
+    expect(m.cargo.metal).toBe(15_000);
+    expect(m.cargo.crystal).toBe(5_000);
+    expect(w.debris['1:5:9'].metal).toBe(15_000);
+    expect(w.debris['1:5:9'].crystal).toBe(5_000);
     expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: { g: 1, s: 5, p: 14 }, ships: { cruiser: 1 }, mission: 'recycle' }, T0)).toThrow();
+  });
+
+  it('recyclers never fill up with only one kind, and take everything when it fits', () => {
+    const run = (field: { metal: number; crystal: number }, recyclers: number) => {
+      w.debris['1:5:9'] = { ...field };
+      ap.fleet = { recycler: recyclers };
+      const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: { g: 1, s: 5, p: 9 }, ships: { recycler: recyclers }, mission: 'recycle' }, T0);
+      processMovements(w, m.arriveAt);
+      return { cargo: m.cargo, left: w.debris['1:5:9'] };
+    };
+    const half = run({ metal: 50_000, crystal: 50_000 }, 1);                  // 20,000 capacity of 100,000
+    expect(half.cargo.metal).toBe(10_000); expect(half.cargo.crystal).toBe(10_000);
+    delete w.debris['1:5:9']; for (const mv of Object.keys(w.movements)) delete w.movements[mv];
+    const all = run({ metal: 6_000, crystal: 2_000 }, 1);                     // fits: take it all and the field is gone
+    expect(all.cargo.metal).toBe(6_000); expect(all.cargo.crystal).toBe(2_000); expect(all.left).toBeUndefined();
+    for (const mv of Object.keys(w.movements)) delete w.movements[mv];
+    const odd = run({ metal: 33_333, crystal: 1 }, 1);                        // rounding never takes more than lies there
+    expect(odd.cargo.metal + odd.cargo.crystal).toBe(20_000);
+    expect(odd.cargo.crystal).toBeLessThanOrEqual(1);
+    expect(odd.left!.metal).toBeGreaterThanOrEqual(0); expect(odd.left!.crystal).toBeGreaterThanOrEqual(0);
   });
 
   it('expeditions need astrophysics and resolve into some outcome', () => {

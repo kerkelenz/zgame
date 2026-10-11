@@ -16,7 +16,8 @@ import { invasionBanner } from './invasion';
 import { contractsView } from './contracts';
 import { featuresOf } from './features';
 import { warsView } from './wars';
-import { fleetEvents } from './events';
+import { fleetEvents, intelFields } from './events';
+const intelView = (w: World, p: Player, m: Movement) => { const { count, ...rest } = intelFields(w, p, m); return { ...rest, shipCount: count }; };
 import { ALLIANCE_PERMS } from './world';
 import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
 import { OFFICERS, OFFICER_MAX, FACTIONS, JOIN_REP, FACTION_BY_ID, CHAR_CLASSES, CLASS_CHANGE_COST } from '../shared/data';
@@ -152,7 +153,7 @@ export function fleetsView(w: World, p: Player) {
   const allyCoords = [...allyIds].flatMap((id) => w.players[id].planetIds.map((pid) => ({ owner: w.players[id].username, ownerId: id, c: w.planets[pid].coords, name: w.planets[pid].name })));
 
   const mine: ReturnType<typeof mv>[] = [];
-  const incoming: (ReturnType<typeof mv> & { target: string; ally: boolean; targetOwnerId?: string; targetOwner?: string; targetName?: string })[] = [];
+  const incoming: (ReturnType<typeof mv> & { target: string; ally: boolean; intel?: string; shipCount?: number | null; shipTypes?: string[] | null; fleet?: Record<string, number | undefined> | null; targetOwnerId?: string; targetOwner?: string; targetName?: string })[] = [];
   const stationed: ReturnType<typeof mv>[] = [];
   const joinable: (ReturnType<typeof mv> & { targetName: string })[] = [];
   for (const m of Object.values(w.movements)) {
@@ -160,8 +161,8 @@ export function fleetsView(w: World, p: Player) {
     if ((m.mission === 'attack' || m.mission === 'missile' || m.mission === 'destroy') && m.phase === 'outbound' && m.ownerId !== p.id) {
       const hitMe = myCoords.some((c) => sameCoords(c, m.to));
       const hitAlly = allyCoords.find((a) => sameCoords(a.c, m.to));
-      if (hitMe) incoming.push({ ...mv(m, false, w), ships: {}, target: 'you', ally: false });
-      else if (hitAlly) incoming.push({ ...mv(m, false, w), ships: {}, target: `${hitAlly.owner} (${hitAlly.name})`, ally: true, targetOwnerId: hitAlly.ownerId, targetOwner: hitAlly.owner, targetName: hitAlly.name });
+      if (hitMe) incoming.push({ ...mv(m, false, w), ships: {}, target: 'you', ally: false, ...intelView(w, p, m) });
+      else if (hitAlly) incoming.push({ ...mv(m, false, w), ships: {}, target: `${hitAlly.owner} (${hitAlly.name})`, ally: true, ...intelView(w, p, m), targetOwnerId: hitAlly.ownerId, targetOwner: hitAlly.owner, targetName: hitAlly.name });
     }
     if (m.mission === 'attack' && m.phase === 'outbound' && m.ownerId && !m.acsId && (m.ownerId === p.id || allyIds.has(m.ownerId))) {
       joinable.push({ ...mv(m, false), ships: {}, targetName: planetAt(w, m.to, !!m.toMoon)?.name ?? '?' });

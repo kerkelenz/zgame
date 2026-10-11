@@ -45,7 +45,8 @@ describe('the fleet event list', () => {
     expect(held[1].at).toBe(h.holdUntil! + h.flightMs);
   });
 
-  it('lists incoming hostile fleets without revealing their ships, for you and for allies', () => {
+  it('lists incoming hostile fleets for you and for allies, hiding the ships of an enemy with better espionage', () => {
+    bob.techs.espionage = 2;
     AL.createAlliance(w, alice, 'AAA', 'Alpha'); AL.joinAlliance(w, cara, alice.allianceId!);
     const hit = sendFleet(w, bob, { fromPlanetId: bp.id, to: ap.coords, ships: { cruiser: 5 }, mission: 'attack' }, T0);
     const hitAlly = sendFleet(w, bob, { fromPlanetId: bp.id, to: cp.coords, ships: { cruiser: 3 }, mission: 'attack' }, T0 + 10);
@@ -77,6 +78,34 @@ describe('the fleet event list', () => {
     expect(fleetEvents(w, alice).find((e) => e.id === `${gift.id}:arrive`)!.cargo).toEqual({ metal: 777, crystal: 0, deuterium: 0 });
     const raid = sendFleet(w, cara, { fromPlanetId: cp.id, to: ap.coords, ships: { cruiser: 2 }, mission: 'attack' }, T0);
     expect(fleetEvents(w, alice).find((e) => e.id === `${raid.id}:arrive`)!.cargo).toBeNull();
+  });
+
+  it('tells how much of a hostile fleet you can see from your espionage level compared with theirs', () => {
+    sendFleet(w, bob, { fromPlanetId: bp.id, to: ap.coords, ships: { cruiser: 6, lightFighter: 0, smallCargo: 2 }, mission: 'attack' }, T0);
+    const see = () => fleetEvents(w, alice).find((e) => e.kind === 'hostile')!;
+    bob.techs.espionage = 3;
+    alice.techs.espionage = 1;                                      // behind: nothing
+    expect(see()).toMatchObject({ intel: 'none', ships: null, shipTypes: null, fleet: null });
+    alice.techs.espionage = 3;                                      // level: how many ships
+    expect(see()).toMatchObject({ intel: 'count', ships: 8, shipTypes: null, fleet: null });
+    alice.techs.espionage = 4;
+    expect(see()).toMatchObject({ intel: 'count', ships: 8 });
+    alice.techs.espionage = 5;                                      // two ahead: and the types
+    expect(see()).toMatchObject({ intel: 'types', ships: 8 });
+    expect([...see().shipTypes!].sort()).toEqual(['cruiser', 'smallCargo']);
+    expect(see().fleet).toBeNull();
+    alice.techs.espionage = 7;                                      // four ahead: the exact fleet
+    expect(see()).toMatchObject({ intel: 'exact', ships: 8, fleet: { cruiser: 6, smallCargo: 2 } });
+  });
+
+  it('gives the same intel on the incoming list, and treats a missing espionage as level 0', () => {
+    sendFleet(w, bob, { fromPlanetId: bp.id, to: ap.coords, ships: { cruiser: 4 }, mission: 'attack' }, T0);
+    alice.techs.espionage = 0; bob.techs.espionage = 0;
+    expect(fleetsView(w, alice).incoming[0]).toMatchObject({ intel: 'count', shipCount: 4, ships: {} });
+    alice.techs.espionage = 4;
+    expect(fleetsView(w, alice).incoming[0]).toMatchObject({ intel: 'exact', fleet: { cruiser: 4 } });
+    bob.techs.espionage = 9;
+    expect(fleetsView(w, alice).incoming[0].intel).toBe('none');
   });
 
   it('shows friendly deliveries, but not other commanders\' business', () => {

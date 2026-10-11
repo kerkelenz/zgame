@@ -1,7 +1,8 @@
 import { fleetCount } from '../shared/combat';
 import { sameCoords } from '../shared/formulas';
 import { totalRes } from '../shared/formulas';
-import type { Coords, Mission, Res } from '../shared/types';
+import { lvl } from '../shared/formulas';
+import type { Coords, Fleet, Mission, Res } from '../shared/types';
 import { planetAt, sameAlliance, friendly, type Movement, type Player, type World } from './world';
 
 /**
@@ -26,11 +27,32 @@ export interface FleetEvent {
   /** whose planet the target is, when it is not the viewer's */
   targetOwner: { id: string; name: string } | null;
   ships: number | null;
+  /** how much of a hostile fleet the viewer can tell (own and friendly fleets are always 'exact'); with the ship types or the full composition when espionage allows */
+  intel: Intel;
+  shipTypes: string[] | null;
+  fleet: Fleet | null;
   /** resources the fleet carries at this step (a delivery on the way out, loot or salvage on the way home); null when it carries none or the viewer cannot know */
   cargo: Res | null;
   speedPct: number | null;
 }
 export interface Place { coords: Coords; name: string | null; moon: boolean }
+
+/**
+ * What you can tell about an enemy fleet depends on your Espionage Technology compared with theirs. Behind: nothing. Level or one ahead: how many
+ * ships. Two ahead: and which types. Four ahead: the exact composition. (Raiders from computer empires and pirates count as level 0.)
+ */
+export type Intel = 'none' | 'count' | 'types' | 'exact';
+export const INTEL = { count: 0, types: 2, exact: 4 };
+export function intelFields(w: World, viewer: Player, m: Movement): { intel: Intel; count: number | null; shipTypes: string[] | null; fleet: Fleet | null } {
+  const theirs = m.ownerId ? lvl(w.players[m.ownerId]?.techs ?? {}, 'espionage') : 0;
+  const diff = lvl(viewer.techs, 'espionage') - theirs;
+  if (diff < INTEL.count) return { intel: 'none', count: null, shipTypes: null, fleet: null };
+  const ships = fleetCount(m.ships);
+  const types = Object.entries(m.ships).filter(([, n]) => (n || 0) > 0).map(([id]) => id);
+  if (diff < INTEL.types) return { intel: 'count', count: ships, shipTypes: null, fleet: null };
+  if (diff < INTEL.exact) return { intel: 'types', count: ships, shipTypes: types, fleet: null };
+  return { intel: 'exact', count: ships, shipTypes: types, fleet: { ...m.ships } };
+}
 
 /** missions whose fleet flies home after the job */
 const RETURNS: Mission[] = ['attack', 'espionage', 'recycle', 'transport', 'destroy'];
@@ -48,7 +70,7 @@ export function fleetEvents(w: World, viewer: Player): FleetEvent[] {
   };
   const ownerOf = (m: Movement) => ({ id: m.ownerId, name: m.ownerName, alliance: (m.ownerId && w.alliances[w.players[m.ownerId]?.allianceId ?? '']?.tag) || null });
   const targetOwner = (m: Movement) => { const t = planetAt(w, m.to, !!m.toMoon); return t && t.ownerId !== viewer.id ? { id: t.ownerId, name: w.players[t.ownerId]?.username ?? '?' } : null; };
-  const base = (m: Movement, kind: FleetEvent['kind']) => ({ kind, mission: m.mission, owner: ownerOf(m), targetOwner: targetOwner(m), speedPct: m.speedPct, cargo: null as Res | null });
+  const base = (m: Movement, kind: FleetEvent['kind']) => ({ kind, mission: m.mission, owner: ownerOf(m), targetOwner: targetOwner(m), speedPct: m.speedPct, cargo: null as Res | null, intel: 'exact' as Intel, shipTypes: null as string[] | null, fleet: null as Fleet | null });
   const load = (m: Movement): Res | null => (totalRes(m.cargo) > 0 ? { ...m.cargo } : null);
 
   const out: FleetEvent[] = [];
@@ -57,7 +79,7 @@ export function fleetEvents(w: World, viewer: Player): FleetEvent[] {
     const dest = place(m.to, undefined, !!m.toMoon);
     if (m.ownerId === viewer.id) {
       const ships = fleetCount(m.ships);
-      const b = { ...base(m, 'own'), ships };
+      const b = { ...base(m, 'own'), ships, fleet: { ...m.ships } as Fleet | null, shipTypes: Object.keys(m.ships) as string[] | null };
       const carried = load(m);
       if (m.phase === 'outbound') {
         out.push({ ...b, id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, cargo: carried });
@@ -74,9 +96,9 @@ export function fleetEvents(w: World, viewer: Player): FleetEvent[] {
     if (m.phase !== 'outbound') continue;
     const towardMe = isMine(m.to), towardAlly = allyAt(m.to);
     if ((m.mission === 'attack' || m.mission === 'missile' || m.mission === 'destroy') && (towardMe || towardAlly)) {
-      out.push({ ...base(m, 'hostile'), id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, ships: null });
+      out.push({ ...base(m, 'hostile'), id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, ...(({ count, ...rest }) => ({ ...rest, ships: count }))(intelFields(w, viewer, m)) });
     } else if ((m.mission === 'transport' || m.mission === 'hold' || m.mission === 'deploy') && towardMe && m.ownerId && (sameAlliance(w, viewer.id, m.ownerId) || friendly(w, viewer.id, m.ownerId))) {
-      out.push({ ...base(m, 'friendly'), id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, ships: fleetCount(m.ships), cargo: load(m) });
+      out.push({ ...base(m, 'friendly'), id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, ships: fleetCount(m.ships), fleet: { ...m.ships }, shipTypes: Object.keys(m.ships), cargo: load(m) });
     }
   }
   return out.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));

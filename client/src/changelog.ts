@@ -5,6 +5,8 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-f', date: '2026-10-11', title: 'Alliance wars',
     items: [
+      'Recyclers take metal and crystal together in the proportion they lie in the debris field, so a full load is a mix of both instead of all metal first.',
+      'Hostile fleets in the Events list and on the Fleet page show what they attack with, as far as your Espionage Technology compared with theirs lets you tell: nothing, the ship count, the types, or the exact fleet.',
       'The Overview Events list now shows how many resources fleets carry (a delivery on its way out, loot and salvage on the way home, a delivery from an ally), per resource and in total.',
       'Moons: a battle over a planet without a moon now gives a flat 20% chance (once the debris field holds 100,000 resources; less below that), and debris left by earlier battles counts toward it.',
       'The Overview shows a planet and its moon side by side, and the planet list keeps each moon next to its planet.',

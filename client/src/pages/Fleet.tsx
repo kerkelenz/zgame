@@ -4,6 +4,7 @@ import { cargoCapacity } from '../../../shared/formulas';
 import type { Mission, ShipId } from '../../../shared/types';
 import { get, post } from '../api';
 import { useGame } from '../game';
+import { IntelText } from './FleetEvents';
 import { Card, Countdown, Page, coordStr, fmt, fmtDur } from '../ui';
 
 const MISSIONS: [Mission, string][] = [
@@ -79,7 +80,7 @@ export function FleetPage() {
         <Card title="⚠ Hostile fleets inbound">
           {fleets.incoming.map((f) => (
             <div key={f.id} className="bad">
-              {f.ownerId ? <a className="plink" onClick={() => openProfile(f.ownerId!)}>{f.ownerName}</a> : f.ownerName}{f.ownerAlliance ? ` [${f.ownerAlliance}]` : ''} from <a className="plink" onClick={() => showInGalaxy(f.from)}>{f.fromName ? `${f.fromMoon ? '🌙 ' : ''}${f.fromName} ` : ''}{coordStr(f.from)}</a> → {f.targetOwnerId ? <><a className="plink" onClick={() => openProfile(f.targetOwnerId!)}>{f.targetOwner}</a> (<a className="plink" onClick={() => showInGalaxy(f.to)}>{f.targetName}</a>)</> : f.target} at <a className="plink" onClick={() => showInGalaxy(f.to)}>{coordStr(f.to)}</a> · arrives in <Countdown to={f.arriveAt} />
+              {f.ownerId ? <a className="plink" onClick={() => openProfile(f.ownerId!)}>{f.ownerName}</a> : f.ownerName}{f.ownerAlliance ? ` [${f.ownerAlliance}]` : ''} from <a className="plink" onClick={() => showInGalaxy(f.from)}>{f.fromName ? `${f.fromMoon ? '🌙 ' : ''}${f.fromName} ` : ''}{coordStr(f.from)}</a> → {f.targetOwnerId ? <><a className="plink" onClick={() => openProfile(f.targetOwnerId!)}>{f.targetOwner}</a> (<a className="plink" onClick={() => showInGalaxy(f.to)}>{f.targetName}</a>)</> : f.target} at <a className="plink" onClick={() => showInGalaxy(f.to)}>{coordStr(f.to)}</a> · arrives in <Countdown to={f.arriveAt} /><IntelText intel={f.intel} count={f.shipCount} types={f.shipTypes} fleet={f.fleet} />
               {f.ally && <span className="muted"> — send a "Defend ally" fleet to help!</span>}
             </div>
           ))}

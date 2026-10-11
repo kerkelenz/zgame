@@ -371,8 +371,11 @@ function resolveRecycle(w: World, m: Movement, at: number) {
     return;
   }
   const free = (m.ships.recycler || 0) * UNITS.recycler.cargo - totalRes(m.cargo);
-  const takeM = Math.min(d.metal, Math.max(0, free));
-  const takeC = Math.min(d.crystal, Math.max(0, free - takeM));
+  // recyclers take metal and crystal together, in the proportion they lie in the field, so a full load is never all of one kind
+  const total = d.metal + d.crystal;
+  const take = Math.min(total, Math.max(0, free));
+  const takeM = total > 0 ? Math.min(d.metal, Math.round((take * d.metal) / total)) : 0;
+  const takeC = Math.min(d.crystal, take - takeM);
   d.metal -= takeM; d.crystal -= takeC;
   if (d.metal <= 0 && d.crystal <= 0) delete w.debris[key];
   m.cargo.metal += takeM; m.cargo.crystal += takeC;
