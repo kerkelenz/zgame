@@ -109,6 +109,7 @@ function Alerts() {
 
 function Interface() {
   useLang();
+  const { setPage } = useGame();
   const [sound, setS] = useState(soundOn());
   return (
     <Card title="Interface">
@@ -119,6 +120,7 @@ function Interface() {
         <p className="small muted">Menus, the login page and the tour are translated; everything else stays in English for now.</p>
         <label className="check"><input type="checkbox" checked={sound} onChange={(e) => { setSound(e.target.checked); setS(e.target.checked); if (e.target.checked) playCue('done', true); }} /> <b>{t('common.sound', 'Sound cues')}</b> <span className="muted small">- a short tone for messages, finished jobs and attack alerts</span></label>
         {sound && <div className="row"><button onClick={() => playCue('alert', true)}>Test alert</button><button onClick={() => playCue('message', true)}>Test message</button></div>}
+        <button className="link" onClick={() => setPage('news')}>See what's new</button>
         <button className="link" onClick={() => { try { localStorage.removeItem('sf.tourDone'); } catch { /* ignore */ } location.reload(); }}>Replay the welcome tour</button>
       </div>
     </Card>

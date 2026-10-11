@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-c', date: '2026-10-10', title: 'Vespene Gas, pictures and fixes',
     items: [
+      'The Guide is now a full player manual organised by topic; release notes live on this page (also under Settings).',
       'Deuterium is now Vespene Gas (the Synthesizer is the Vespene Extractor), and metal, crystal and Vespene Gas have pictures everywhere.',
       'Queued upgrades are priced at the level you will actually get, and failed purchases say exactly what is missing.',
       'Hostile fleets show where they launched from; alliance member names and home coordinates are clickable, and profiles list all planets.',

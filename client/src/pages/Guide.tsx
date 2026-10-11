@@ -1,122 +1,237 @@
-import { CHANGELOG, markChangelogSeen } from '../changelog';
-import { Card, Page } from '../ui';
-import { useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { useGame } from '../game';
 import { ResIcon } from '../ResIcon';
+import { Card, Page } from '../ui';
+
+interface Topic { id: string; title: string; body: ReactNode }
+
+const TOPICS: Topic[] = [
+  {
+    id: 'basics', title: 'The basics',
+    body: (
+      <>
+        <p>You are a commander with one homeworld in a shared galaxy. You mine resources, research technology, build ships and defenses, expand to new planets, and trade blows - or favours - with other commanders and with computer-run empires. Everything keeps running while you are away, so the game is about planning: queue work, protect yourself, and check in.</p>
+        <ul>
+          <li><b>Overview</b> is your planet at a glance with the current <b>objective</b> that teaches the game step by step. <b>Empire</b> shows all your planets together. <b>Economy</b> explains your income.</li>
+          <li><b>Resources, Buildings, Research, Shipyard, Defense</b> run the selected planet (pick it in the top bar). <b>Fleet</b> and <b>Galaxy</b> are where ships move.</li>
+          <li><b>Alliance, Contacts, Messages, Chat, Standing</b> are the social side; <b>Command</b> holds your class, officers, factions and achievements; <b>Settings</b> holds your account, alerts and vacation mode.</li>
+          <li>Click <b>any item name</b> (a building, technology, ship or defense, here or in a requirement list) to open its <b>details page</b>: what each level gives, what it costs, and what it unlocks. The <b>Simulator</b> predicts a battle before you fly it.</li>
+        </ul>
+      </>
+    ),
+  },
+  {
+    id: 'resources', title: 'Resources, energy and storage',
+    body: (
+      <ul>
+        <li><b><ResIcon k="metal" /> Metal</b> (steel ingots) is the backbone of nearly every building and ship. <b><ResIcon k="crystal" /> Crystal</b> (the blue gem) goes into research, electronics and most ships. <b><ResIcon k="deuterium" /> Vespene Gas</b> (the glowing green canister) fuels your fleets and pays for advanced technology.</li>
+        <li>Mines produce all three. Every planet also has a small free income of metal and crystal. The top bar shows your current stock against your storage limit; a resource at its limit stops growing, so build <b>storage</b> (Metal Storage, Crystal Storage, Vespene Tank) before it sits capped.</li>
+        <li><b>Energy.</b> Mines need power. Build <b>Solar Plants</b> first, later <b>Fusion Reactors</b> (burns Vespene Gas) and <b>Solar Satellites</b> (ships that stay in orbit). If the energy balance in the top bar is negative, every mine slows down proportionally. Extra mine levels give less and less once the planet cannot power them; the details pages show this level by level.</li>
+        <li>The <b>production sliders</b> on the Resources page let you run a mine below 100% to save energy.</li>
+        <li>Moons produce nothing. Storage does not protect against raids, so spend what you can.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'build', title: 'Buildings, research and queues',
+    body: (
+      <ul>
+        <li><b>Buildings</b> upgrade one level at a time and take time that shrinks with the <b>Robotics Factory</b> and the <b>Nanite Factory</b>. A planet has a limited number of building fields; a <b>Terraformer</b> adds more.</li>
+        <li><b>Research</b> needs a <b>Research Lab</b> and runs one project at a time across your whole empire. Technologies unlock ships, speed up drives, strengthen weapons, shields and armour, and raise limits like how many planets you can hold. The Lab cannot be upgraded while research is running.</li>
+        <li><b>Queues.</b> Each of buildings and research can queue four jobs behind the running one. A queued job is <b>paid for and reserved the moment you queue it</b> and refunded if you remove it, so it can never fail later for lack of resources. Use the arrows to reorder. If an item is already being upgraded or queued, its card shows the <i>later</i> level and that level's real price; the button only enables when you can afford exactly what you will get.</li>
+        <li>Requirements are shown on every card; a requirement you meet turns green. Some buildings are moon-only and some planet-only.</li>
+        <li>Research projects that need a minimum energy output say so on their card.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'ships', title: 'Ships, defenses and missiles',
+    body: (
+      <ul>
+        <li>The <b>Shipyard</b> builds ships; the <b>Defense</b> page builds planetary defenses. Both need a Shipyard building and the right technology, run as queues, and can be cancelled for a refund of unbuilt units. Shield domes are limited to one of each per planet.</li>
+        <li>Every unit card shows attack, shield, hull, cargo, speed and <b>rapid fire</b>: some ships get extra shots against certain targets, which is why mixed fleets beat a pile of one type. <b>Solar Satellites</b> and <b>Crawlers</b> never leave their planet.</li>
+        <li><b>Crawlers</b> add +0.1% to every mine each, to a maximum of +50% overall and no more than 6 per level across your three mines. Each working crawler draws 6 energy, so build power for them. They are fragile and can only live on planets.</li>
+        <li><b>Pathfinders</b> are built for deep space: each one adds 10% to expedition finds (five count) and has a 20% chance to steer the fleet clear of a black hole. <b>Recyclers</b> collect debris fields. <b>Espionage Probes</b> spy. <b>Colony Ships</b> settle new planets.</li>
+        <li><b>Missiles.</b> A <b>Missile Silo</b> stores missiles (10 slots per level; an interplanetary missile takes 2, an anti-ballistic missile 1) and sets the range (5 systems per level, minus one). Interplanetary missiles destroy defenses - never ships - and the target's anti-ballistic missiles each intercept one.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'planets', title: 'Planets, colonies and moons',
+    body: (
+      <ul>
+        <li><b>Colonizing.</b> Send a Colony Ship to an empty position. How many planets you may hold is set by <b>Astrophysics</b> (one more planet for every two levels). Distance, temperature and position decide a planet's size and what it is good at. You can <b>abandon</b> a colony, never your homeworld.</li>
+        <li><b>Orbit matters.</b> Positions 1-3 give bonus crystal (+40%, +30%, +20%); positions 6-10 give bonus metal (+17%, +23%, +35% at position 8, +23%, +17%). Hot planets make less Vespene Gas, cold planets more.</li>
+        <li><b>Moons.</b> When a battle leaves debris, there is a 1% chance per 100,000 resources of debris (up to 20%) that it condenses into a moon over the planet. Moons are tiny: a <b>Lunar Base</b> adds usable fields (3 per level). A <b>Sensor Phalanx</b> scans fleet movements around the moon within (level² − 1) systems for 5,000 Vespene Gas a scan. A <b>Jump Gate</b> teleports ships between your own moons that have gates, with a cooldown.</li>
+        <li><b>Destroying a moon.</b> Deathstars sent on a <i>Destroy moon</i> mission can wreck a moon. More Deathstars and a smaller moon raise the odds, and the shock wave can destroy the Deathstars. Everything on the moon is lost.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'fleets', title: 'Fleets and missions',
+    body: (
+      <>
+        <ul>
+          <li>Pick a planet, choose ships, a target and a mission on the <b>Fleet</b> page, or start from a button in the <b>Galaxy</b>. The page shows flight time and fuel before you launch. Flights cost <b>Vespene Gas</b>; a lower speed percentage uses less. You can <b>recall</b> a fleet at any time and it returns after the time it already travelled.</li>
+          <li><b>Fleet slots</b> limit how many fleets fly at once: 1, plus Computer Technology levels, plus Fleet Admiral ranks, plus class and alliance bonuses. <b>Expeditions</b> have their own slots.</li>
+          <li><b>Fleet presets</b> save a ship selection under a name; they follow your account to any device. Bookmarks and recent targets appear as quick buttons above the target box.</li>
+        </ul>
+        <table className="table">
+          <thead><tr><th>Mission</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td>Attack</td><td>Fights the defender, steals up to half their stock (limited by cargo space) and can leave a debris field. Allies can <b>join</b> your attack from the Fleet page so everyone arrives together.</td></tr>
+            <tr><td>Destroy moon</td><td>Deathstars only, against a moon. See Planets, colonies and moons.</td></tr>
+            <tr><td>Transport</td><td>Delivers resources to any planet, yours or not.</td></tr>
+            <tr><td>Deploy</td><td>Moves ships to another of your planets and keeps them there.</td></tr>
+            <tr><td>Defend ally (hold)</td><td>Stations your fleet at an ally's planet for up to 48 hours; it fights beside their defenses against attackers and raiders.</td></tr>
+            <tr><td>Espionage</td><td>Probes return a report. More probes and more Espionage Technology than the target reveal more: resources, then fleet, defenses, buildings and finally research. Weak probes can be shot down.</td></tr>
+            <tr><td>Colonize</td><td>Settles an empty planet with a Colony Ship.</td></tr>
+            <tr><td>Recycle</td><td>Recyclers collect a debris field.</td></tr>
+            <tr><td>Expedition</td><td>Explores deep space. See Expeditions.</td></tr>
+          </tbody>
+        </table>
+        <p className="muted small">Hostile fleets heading for you are listed on the Fleet page and in the red bar at the top, with who sent them and the planet and coordinates they launched from.</p>
+      </>
+    ),
+  },
+  {
+    id: 'battles', title: 'Battles, loot and wrecks',
+    body: (
+      <ul>
+        <li>A battle lasts up to 6 rounds. Every ship and defense shoots at random enemies each round; shields absorb small hits, and damaged units can blow up early. Technologies for weapons, shielding and armour make every unit stronger.</li>
+        <li>The <b>battle report</b> lists both sides' losses round by round. <b>Share link</b> on a report makes a public page you can paste anywhere.</li>
+        <li><b>Debris.</b> Destroyed ships leave a debris field (about 30% of their cost, more with a Geologist or the General class) that Recyclers collect. Defenses are not recycled, but about 70% of destroyed defenses rebuild on their own after the battle.</li>
+        <li><b>Wreck fields and the Space Dock.</b> If a defender loses enough ships (100,000 resources worth), a wreck field forms over the planet. A <b>Space Dock</b> there rebuilds a share of it for free (30% + 6% per level, up to 90%) in a short repair. The wreck drifts away after 72 hours, and a repair in progress is never cancelled. Only the defender gets a wreck field; computer empires and moons do not.</li>
+        <li><b>Protection.</b> A commander under 200 points can neither attack nor be attacked, and while someone is under 5,000 points a player with more than five times their points cannot attack them either. The Galaxy marks these: <b>n</b> newbie protection, <b>s</b> too strong for you, <b>v</b> on vacation (untouchable), <b>i</b> inactive 7+ days, <b>I</b> inactive 28+ days, and a dot for online now. Computer empires are always fair game, and allies and pact partners cannot attack each other.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'galaxy', title: 'Reading the galaxy',
+    body: (
+      <ul>
+        <li>The galaxy has a few galaxies, each with systems and numbered positions. Each row shows the planet, its owner, their alliance or faction, and any debris field. Buttons start a mission against that position.</li>
+        <li>Use the filters to show only inactive targets or hide protected ones. <b>Bookmark</b> a system with the star, and the Galaxy remembers your recent targets. The 📝 button keeps a private note on a position; notes on commanders show there too.</li>
+        <li>Spies are most useful against <b>inactive</b> commanders and empires: they never spend what they hoard. Your latest report on each planet is kept under <b>Contacts</b>.</li>
+        <li>The last position of every system, one past the planets, is <b>deep space</b>, where expeditions go.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'expeditions', title: 'Expeditions',
+    body: (
+      <ul>
+        <li>An expedition needs <b>Astrophysics</b> and a free expedition slot (the square root of your Astrophysics level, rounded down, plus bonuses). Choose how long to stay out, <b>1-4 hours</b>: each extra hour finds about 30% more but widens the black-hole risk.</li>
+        <li>Outcomes range from nothing, resources, Command Credits and derelict ships joining you, to pirate ambushes, delays, a tailwind home, an ancient data cache that speeds up your current research, and rarely a black hole that swallows the fleet. Bigger fleets find more and meet bigger pirates.</li>
+        <li><b>What to bring:</b> a few <b>Pathfinders</b> (more finds, can dodge black holes), a <b>Recycler</b> (+25% resource finds and wreckage salvage), a probe or two (pirate fleets 25% smaller), and enough warships to survive an ambush. The Discoverer class and Geologist officer boost everything.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'economy', title: 'Growing your economy',
+    body: (
+      <ul>
+        <li>The <b>Economy</b> page shows where income comes from (mines, technology, orbit, crawlers, bonuses, energy losses), when your stores fill, and ranks upgrades by how fast they pay for themselves.</li>
+        <li>The <b>travelling merchant</b> (Resources page) swaps resources at 3 metal : 2 crystal : 1 Vespene Gas and keeps a 12% cut (8% for Collectors). Each day he also offers one trade at only a 2% cut, up to a daily allowance - the page shows today's deal and when it resets.</li>
+        <li><b>Gather</b> sends cargo ships from all your other planets, loaded with a share of their stock (fuel kept back), to the planet you are viewing.</li>
+        <li>The <b>Supply depot</b> in Command spends Command Credits on production crates and on halving the time left on your current building or research.</li>
+        <li>Keep a reserve of Vespene Gas for fuel, and spend resources before a planet's stores fill.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'empires', title: 'Computer empires, raiders and factions',
+    body: (
+      <ul>
+        <li><b>Computer empires</b> fill the galaxy. <i>Inactive</i> ones never spend, so spying on them and taking their stockpile is the classic early income. <i>Active</i> ones build up, and <i>aggressive</i> ones raid you. A grudge from your own raids can turn any empire hostile.</li>
+        <li><b>Raiders</b> attack commanders periodically. You always get at least 10 minutes of warning, and your allies are told too. Defenses and stationed allied fleets turn raids into profit: when raiders are crushed everyone who defended shares a bounty.</li>
+        <li>A strong hostile empire may <b>demand tribute</b>. Paying buys a truce; refusing or ignoring it brings their fleet. Answer in <b>Command</b> before the deadline.</li>
+        <li><b>Factions.</b> Raiding a faction's empires costs standing with it and earns half as much with its rival. At 40 standing you may join one: its members stop raiding you and you get its perk (Concord of Iron +10% shields, Verge Syndicate +15% plunder and +10% cargo, Solar Covenant +8% mine output, Black Chain +10% weapons). Attack a member of your own faction and you are out.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'command', title: 'Command: classes, officers, credits and achievements',
+    body: (
+      <ul>
+        <li><b>Command Credits</b> come from objectives, achievements, the winner of a season and a fraction of expeditions. They buy officers, a class change and Supply depot items.</li>
+        <li><b>Classes</b> - choose one in Command; the first choice is free, changing later costs 2,000 credits. <b>Collector:</b> +15% mine output, +10% energy, +25% cargo on Small and Large Cargo ships, a cheaper merchant, crawlers 25% stronger. <b>General:</b> +2 fleet slots, 25% less fuel, +25% speed for combat ships and recyclers, a little more debris. <b>Discoverer:</b> +1 expedition slot, +50% expedition finds, half the ambushes and black holes, +10% research speed, bigger colonies.</li>
+        <li><b>Officers</b> are permanent upgrades with three ranks each: Quartermaster (mines), Chief Engineer (build, research and ship time, energy), Fleet Admiral (fleet and expedition slots), Spymaster (better reports, fewer lost probes) and Geologist (debris and expedition finds).</li>
+        <li><b>Objectives</b> on the Overview walk you through the first hours with rewards. <b>Achievements</b> pay credits for milestones such as reaching a mine level, winning battles, holding planets or destroying a moon.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'alliance', title: 'Alliances',
+    body: (
+      <ul>
+        <li>Found or join an alliance (open ones let you in directly; closed ones take applications). Members share a <b>bank</b> everyone can donate to; permitted members grant from it and buy <b>alliance upgrades</b> that help every member: a mining network (+2% mine output per level), a research institute (-3% research time), allied logistics (+3% fleet speed) and a joint command (+1 fleet slot per two levels).</li>
+        <li><b>Defending each other.</b> Send a <i>Defend ally (hold)</i> fleet to a member's planet. Fleets stationed with allies go home if the alliance bond ends. For attacks, members can <b>join each other's attacks</b> to land together.</li>
+        <li><b>Ranks and permissions.</b> The founder creates custom ranks and gives each any of: review applications, remove members, grant from the bank, buy upgrades, edit the description, message everyone, post on the bulletin board, and handle diplomacy. Plain officers have all of these; plain members none. A member with a rank cannot remove another ranked member.</li>
+        <li><b>Bulletin board</b> for standing orders (pin the important ones) and <b>messages to everyone</b> from permitted members. The member list shows each member's rank and home coordinates; click a name for their profile.</li>
+        <li><b>Diplomacy.</b> A <b>pact</b> needs both alliances to agree and stops either side attacking the other. A <b>war</b> is declared by one side and marks the enemy in the Galaxy. Either side can end a treaty at any time.</li>
+        <li>Alliance chat is in <b>Chat</b>; the activity log on the Alliance page records who did what.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'people', title: 'People: profiles, contacts and messages',
+    body: (
+      <ul>
+        <li>Click a commander's name anywhere (Standing, the Galaxy, Contacts, your alliance) for their <b>profile</b>: rank in every category, record, class, alliance, achievements and <b>where all their planets are</b>. Resources, fleets and queues are always private. Back returns to the page you came from.</li>
+        <li><b>Contacts</b> holds your <b>buddies</b> (with online status and home coordinates), <b>blocked</b> commanders (they cannot message you and their chat lines are hidden), <b>bookmarks</b>, private <b>notes</b> and your <b>spy report archive</b>. Add a buddy, block or report someone from their profile; reports go to the admins.</li>
+        <li><b>Messages</b> collects battle, spy, expedition, alliance and system reports; you can message other commanders directly. <b>Chat</b> has a global and an alliance channel. Muted commanders cannot send either.</li>
+        <li>Be decent: spam and abuse get people muted or banned.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'standing', title: 'Standing and seasons',
+    body: (
+      <ul>
+        <li><b>Points</b> come from what you have invested: 1 point per 1,000 resources spent on buildings, research, ships and defenses. <b>Standing</b> ranks everyone by total points and by economy, research, fleet, defense, battles won, resources destroyed, plundered, recycled, expeditions, raids repelled and moons destroyed. Alliances are ranked by the sum of their members. Charts show your points and rank over time.</li>
+        <li>Some universes run in <b>seasons</b>. Standing shows the time left and any victory score. When a season ends the champion earns Command Credits and an achievement, the top players enter the <b>hall of fame</b>, and after a short grace period the universe resets: everyone starts on a fresh homeworld. You keep your account, credits, officers, class, achievements, alliance and contacts.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'account', title: 'Your account, alerts and vacation',
+    body: (
+      <ul>
+        <li><b>Settings</b> hold your account: change password, rename (once every 7 days; your homeworld is renamed too) and delete. Make a <b>recovery key</b> - there is no email reset, and a key is the only way back in if you forget your password. Logins expire after 30 days without use, and <b>Log out</b> signs that device out.</li>
+        <li><b>Alerts outside the game.</b> Add a Discord webhook or an ntfy topic (a free phone app) and choose what to be told about: attacks, raids and missiles aimed at you, allies under attack, tribute demands, finished construction, research, ships and objectives, and private messages. You can limit alerts to when you are away. Browser notifications, sound cues, the tab title (unread messages and incoming fleets) and a language choice are in Settings too.</li>
+        <li><b>Vacation mode</b> freezes your empire and makes you untouchable while you are away: nothing is produced, built or researched and nobody can attack or spy on you. To start, your empire must be quiet (no fleets in flight, no queues, no hostile fleets heading for you, no allied fleets stationed with you). It lasts at least 48 hours and you cannot do anything until you end it.</li>
+        <li>The <b>welcome tour</b> can be replayed from Settings.</li>
+      </ul>
+    ),
+  },
+];
+
+const ADMIN: Topic = {
+  id: 'admin', title: 'Admin tools',
+  body: (
+    <ul>
+      <li>The <b>Admin</b> page lists every commander. <b>Ban</b> and <b>Mute</b> take an optional number of hours (blank is permanent) and a reason the player sees. <b>Raid</b> sends a computer-empire raid, <b>Inspect</b> shows a commander's full state (without password data), <b>Remove</b> deletes them, and you can <b>gift resources</b> to a homeworld.</li>
+      <li><b>Announcement</b> messages every commander and pops a notice for anyone online. <b>Player reports</b> sent from profiles queue up until you resolve them.</li>
+      <li><b>Season:</b> end the current season (crowns the champion and fills the hall of fame), then reset the universe. Admins cannot be banned, muted or removed from this page.</li>
+    </ul>
+  ),
+};
 
 export function Guide() {
   const { me } = useGame();
-  useEffect(() => { markChangelogSeen(); }, []);
+  const topics = me.player.admin ? [...TOPICS, ADMIN] : TOPICS;
+  const go = (id: string) => document.getElementById('guide-' + id)?.scrollIntoView({ block: 'start' });
   return (
     <Page title="Guide">
-      <Card title="What's new">
-        {CHANGELOG.map((r) => (
-          <div key={r.id}>
-            <h4>{r.title} <span className="muted small">{r.date}</span></h4>
-            <ul className="notes">{r.items.map((x) => <li key={x}>{x}</li>)}</ul>
-          </div>
-        ))}
+      <Card title="Contents">
+        <div className="chips">{topics.map((t) => <button key={t.id} onClick={() => go(t.id)}>{t.title}</button>)}</div>
       </Card>
-      <Card title="The three resources">
-        <ul>
-          <li><b><ResIcon k="metal" /> Metal</b> (steel ingots) builds almost everything. <b><ResIcon k="crystal" /> Crystal</b> (the blue gem) goes into research, electronics and most ships. <b><ResIcon k="deuterium" /> Vespene Gas</b> (the glowing green canister) fuels your fleets and pays for advanced tech.</li>
-          <li>Their pictures appear in the top bar (stock / storage), on every cost, and on the Resources page. The top bar fills up toward its storage limit - build storage before a resource sits capped.</li>
-        </ul>
-      </Card>
-      <Card title="Getting started">
-        <ol>
-          <li>Build <b>Metal Mine</b>, <b>Crystal Mine</b> and a <b>Solar Plant</b> first. Mines need energy - if the energy balance (top bar) goes negative, production drops.</li>
-          <li>Add a <b>Vespene Extractor</b>, storages when a resource bar is full, and a <b>Robotics Factory</b> to speed up construction.</li>
-          <li>Build a <b>Research Lab</b>, then research Energy, Combustion Drive and Computer. A <b>Shipyard</b> (needs Robotics 2) unlocks ships and defenses.</li>
-          <li>Colonize more planets with colony ships (more planets need <b>Astrophysics</b>). Expeditions also need it.</li>
-        </ol>
-      </Card>
-      <Card title="Playing together">
-        <ul>
-          <li>Found or join an <b>Alliance</b>. Donate to the shared bank; officers buy upgrades that boost every member (mine output, research time, fleet speed).</li>
-          <li><b>Raiders</b> (NPCs) periodically attack players. You get at least 10 minutes warning, and allies are warned too.</li>
-          <li>Send a <b>Defend ally (hold)</b> fleet to an ally's planet - your ships fight next to theirs. When raiders are crushed, everyone who defended shares a bounty.</li>
-          <li>Attack another player together: dispatch an <b>Attack</b>, then allies pick <i>Joint attack</i> in the Fleet page to arrive at the same moment. Loot is split by cargo space.</li>
-          <li>Use <b>Chat</b> (global and alliance) to coordinate. The alliance <b>bulletin board</b> holds standing orders, and a leader can message every member at once.</li>
-          <li>The <b>Joint Command</b> alliance upgrade gives every member +1 fleet slot per two levels.</li>
-          <li>Founders can create <b>ranks</b> that grant individual permissions (applications, kicking, bank grants, upgrades, description, messages, bulletin, diplomacy).</li>
-          <li><b>Diplomacy:</b> a <i>pact</i> (both alliances must agree) stops either side attacking the other. A <i>war</i> is declared by one side and flags the enemy in the Galaxy. Either side can end a treaty.</li>
-        </ul>
-      </Card>
-      <Card title="Understanding your economy">
-        <ul>
-          <li>Click <b>any item name</b> (in Buildings, Research, Shipyard, or in a requirement list) for its <b>details page</b>: what each level gives you, what it costs, and what it unlocks.</li>
-          <li>The <b>Economy</b> page shows where your income comes from, when stores fill, and ranks upgrades by how fast they pay for themselves.</li>
-          <li>Watch the energy efficiency: past a point extra mine levels give less, because the planet cannot power them. The mine details pages show this level by level.</li>
-        </ul>
-      </Card>
-      <Card title="Empires, factions and Command">
-        <ul>
-          <li><b>Computer empires</b> fill the galaxy. <i>Inactive</i> ones never spend - spy on them and take their stockpile. <i>Aggressive</i> ones raid you; a grudge from your own raids can turn any empire hostile.</li>
-          <li>A strong hostile empire may <b>demand tribute</b>. Paying buys a truce; refusing (or ignoring it) brings their fleet. Answer in <b>Command</b>.</li>
-          <li>Raiding a <b>faction's</b> empires costs standing with it and earns half as much with its rival. At 40 standing you can join: members stop raiding you and you get the faction's perk.</li>
-          <li>Follow the <b>objectives</b> on the Overview for your first hours. Objectives, achievements and expeditions pay <b>Command Credits</b>, which buy permanent officers.</li>
-          <li>The <b>Battle Simulator</b> predicts a fight before you fly it - load a defender straight from a spy report.</li>
-        </ul>
-      </Card>
-      <Card title="Queues and the merchant">
-        <ul>
-          <li>Buildings and research can queue four deep behind the running job. Each entry is <b>paid and reserved when you queue it</b> and refunded if you remove it; use the arrows to reorder. If the item is already being upgraded or queued, the card shows the <i>later</i> level ("Level 16") and its real price, so the button only enables when you can afford exactly what you will get.</li>
-          <li>The <b>travelling merchant</b> swaps resources at 3 : 2 : 1 with a 12% cut (8% for Collectors). Each day he does one pair at only 2% up to a daily allowance - the Resources page shows today's deal.</li>
-          <li>The <b>Supply depot</b> in Command spends Command Credits on production crates and on halving the time left on your current build or research.</li>
-          <li><b>Gather</b> (Resources page) sends loaded cargo ships from all your other planets to the one you are viewing.</li>
-          <li>Orbit matters: positions 1-3 give extra crystal, 6-10 extra metal (up to +35% at position 8). <b>Crawlers</b> (planet-only, fragile) add +0.1% to every mine each, up to +50%, but every working crawler draws 6 energy - build power for them or the mines slow down.</li>
-        </ul>
-      </Card>
-      <Card title="Moons, wreck fields and the Space Dock">
-        <ul>
-          <li>A big enough debris field can condense into a <b>moon</b> (Lunar Base, Sensor Phalanx, Jump Gate). Send Deathstars on a <b>Destroy moon</b> mission to try to destroy one: the odds improve with more Deathstars and smaller moons, but the shock wave can destroy your Deathstars.</li>
-          <li>When a battle destroys enough of a defender's ships a <b>wreck field</b> forms. A <b>Space Dock</b> rebuilds a share of it for free (30% + 6% per level, up to 90%) before it drifts away after 72 hours. See the Overview.</li>
-        </ul>
-      </Card>
-      <Card title="Expeditions">
-        <ul>
-          <li>Deep space (the last slot of a system) needs Astrophysics. You choose how long to stay out, <b>1-4 hours</b>: each extra hour finds about 30% more but widens the black-hole risk.</li>
-          <li><b>Pathfinders</b> (a ship) add 10% to finds each (up to five) and have a 20% chance each to steer the fleet clear of a black hole.</li>
-          <li><b>Recyclers</b> add 25% to resource finds and can salvage wreckage; <b>probes</b> scout, making pirate fleets 25% smaller. Ancient data caches can speed up your running research. Discoverers get extra slots and find more.</li>
-        </ul>
-      </Card>
-      <Card title="Classes, vacation and alerts">
-        <ul>
-          <li>Pick a <b>class</b> in Command: Collector (mines, energy, cargo, merchant, crawlers), General (fleet slots, fuel, speed, debris) or Discoverer (expeditions, research, colonies). The first choice is free.</li>
-          <li><b>Vacation mode</b> (Settings) freezes your empire and protects it, but needs a quiet empire and lasts at least 48 hours.</li>
-          <li>Get <b>alerts outside the game</b> through a Discord webhook or the ntfy phone app (Settings), plus optional sound cues and browser notifications. The tab title shows unread messages and hostile fleets.</li>
-        </ul>
-      </Card>
-      <Card title="People, standing and seasons">
-        <ul>
-          <li>Click any commander's name (in Standing, the Galaxy, Contacts or your Alliance) for their <b>profile</b>: rank in every category, record, class, alliance, achievements and <b>where all their planets are</b>. Back returns to the page you came from. On the Alliance page member names and home coordinates are links too. <b>Standing</b> switches between total, economy, research, fleet, defense and activity rankings.</li>
-          <li><b>Contacts</b> keeps buddies, blocked commanders, private notes, bookmarks and your latest <b>spy report</b> for each planet. Use Report on a profile if someone breaks the rules.</li>
-          <li>Battle reports have a round-by-round table; <b>Share link</b> makes a public page you can paste into chat.</li>
-          <li>Some universes run in <b>seasons</b>: at the end the top players enter the hall of fame and the universe resets. You keep your account, credits, officers, class and achievements.</li>
-          <li>Account settings (password, rename, recovery key, delete) are in Settings. Keep a <b>recovery key</b> - there is no email reset. Logins expire after 30 days without use, and <b>Log out</b> signs that device out on the server too.</li>
-        </ul>
-      </Card>
-      {me.player.admin && (
-        <Card title="For admins">
-          <ul>
-            <li>The <b>Admin</b> page lists every commander: <b>Ban</b> and <b>Mute</b> (timed or permanent, with a reason the player sees), <b>Raid</b> (send a computer-empire raid), <b>Inspect</b> (their full state, minus password data), <b>Remove</b>, and <b>gift resources</b> to a homeworld.</li>
-            <li><b>Announcement</b> messages every commander and pops a notice for anyone online. <b>Player reports</b> sent from profiles queue up here until you resolve them.</li>
-            <li><b>Season</b>: end the current season (crowns the champion, fills the hall of fame) and then reset the universe. Timing can be automatic with OGAME_SEASON_DAYS, OGAME_SEASON_RESET_HOURS and OGAME_VICTORY_POINTS.</li>
-            <li>Admin names come from OGAME_ADMINS and are <b>reserved until registered</b>; claim yours with OGAME_ADMIN_KEY in the Register tab's setup-key box. Backups: <code>npm run backup</code>; see docs/DEPLOY.md.</li>
-          </ul>
-        </Card>
-      )}
-      <Card title="Fleet tips">
-        <ul>
-          <li>Flights cost vespene gas. Slower speed % uses less fuel. Recall at any time - the fleet returns after the time already travelled.</li>
-          <li><b>Espionage</b> probes reveal resources, fleet, defenses, buildings and research depending on probe count and tech difference. Check before attacking.</li>
-          <li>Destroyed ships leave a <b>debris field</b>; Recyclers collect it. Defenses rebuild ~70% of the time after a battle.</li>
-          <li>Players with low points are under <b>newbie protection</b> and can neither attack nor be attacked. The Galaxy flags them: <b>n</b> too weak, <b>s</b> too strong, <b>v</b> vacation, <b>i / I</b> inactive 7 / 28 days, ● online.</li>
-          <li>An incoming attack shows who sends it and <b>where it launched from</b> (planet and coordinates) in Fleet, the alert bar and your messages.</li>
-          <li>Battles last up to 6 rounds. Rapid fire lets some ships shoot repeatedly at certain targets - check the unit cards.</li>
-        </ul>
-      </Card>
+      {topics.map((t) => (
+        <div key={t.id} id={'guide-' + t.id}>
+          <Card title={t.title}>{t.body}</Card>
+        </div>
+      ))}
     </Page>
   );
 }

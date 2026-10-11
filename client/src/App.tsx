@@ -20,6 +20,7 @@ import { Galaxy } from './pages/Galaxy';
 import { Profile } from './pages/Profile';
 import { Admin } from './pages/Admin';
 import { Contacts } from './pages/Contacts';
+import { WhatsNew } from './pages/WhatsNew';
 import { Highscore } from './pages/Highscore';
 import { Messages } from './pages/Messages';
 import { Overview } from './pages/Overview';
@@ -68,6 +69,7 @@ export function App() {
       case 'profile': return <Profile />;
       case 'admin': return <Admin />;
       case 'contacts': return <Contacts />;
+      case 'news': return <WhatsNew />;
       case 'guide': return <Guide />;
       case 'settings': return <Settings />;
       case 'command': return <Command />;
@@ -100,7 +102,7 @@ export function App() {
       </header>
       {me.season?.ended && <div className="alertbar newsbar" onClick={() => setPage('highscore')}>🏆 Season {me.season.number} is over - champion {me.season.ended.winnerName ?? 'nobody'}.{me.season.ended.resetAt ? <> The universe resets in <Countdown to={me.season.ended.resetAt} />.</> : ' Waiting for an admin to reset.'}</div>}
       {!me.season?.ended && me.season?.endsAt && me.season.endsAt - Date.now() < 7 * 86_400_000 && <div className="alertbar newsbar" onClick={() => setPage('highscore')}>🏁 Season {me.season.number} ends in <Countdown to={me.season.endsAt} /></div>}
-      {whatsNew && <div className="alertbar newsbar" onClick={() => { markChangelogSeen(); setWhatsNew(false); setPage('guide'); }}>✨ New: {CHANGELOG[0].title} - click to see what changed</div>}
+      {whatsNew && <div className="alertbar newsbar" onClick={() => { markChangelogSeen(); setWhatsNew(false); setPage('news'); }}>✨ New: {CHANGELOG[0].title} - click to see what changed</div>}
       {offline && <div className="alertbar" style={{ background: '#4a3a1c', cursor: 'default' }}>Connection to the server lost - retrying…</div>}
       {me.vacation && <div className="alertbar vacbar" onClick={() => setPage('settings')}>🏖 Vacation mode: your empire is frozen and protected. You can leave after {new Date(me.vacation.minUntil).toLocaleString()} - open Settings.</div>}
       {me.pendingTributes > 0 && <div className="alertbar" onClick={() => setPage('command')}>⚠ A hostile empire is demanding tribute - open Command to answer before the deadline</div>}
