@@ -75,7 +75,7 @@ describe('every page', () => {
     for (const label of PAGES) {
       await go(label);
       await heading().waitFor({ timeout: 10_000 });
-      expect((await page.locator('main').innerText()).length, label).toBeGreaterThan(40);
+      await expect.poll(async () => (await page.locator('main').innerText()).length, { message: label, timeout: 8000 }).toBeGreaterThan(40);
       expect(await page.locator('main', { hasText: /Something went wrong/i }).count(), `${label} crashed`).toBe(0);
       expect(await overflow(), `${label} scrolls sideways`).toBeLessThanOrEqual(1);
     }
