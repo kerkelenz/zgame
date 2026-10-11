@@ -125,12 +125,13 @@ describe('using the game', () => {
 
   run('the tech tree highlights what an item needs and opens up', async () => {
     await go('Tech tree');
-    expect(await page.locator('.gnode').count()).toBeGreaterThan(150);
-    await page.locator('.gnode', { hasText: 'Fusion Reactor' }).first().click();
-    expect(await page.locator('.treeinfo').innerText()).toMatch(/Vespene Extractor 5/);
-    expect(await page.locator('.gnode.anc').count()).toBe(9);
-    expect(await page.locator('.gnode.dim').count()).toBeGreaterThan(100);
-    expect(await page.locator('.edge.on').count()).toBeGreaterThan(5);
+    expect(await page.locator('.gcard').count()).toBeGreaterThan(55);
+    expect(await page.locator('.pip').count()).toBeGreaterThan(200);          // every level is a square
+    await page.locator('.gcard', { hasText: 'Fusion Reactor' }).first().click();
+    expect(await page.locator('.treeinfo').innerText()).toMatch(/Vespene Extractor to level 5/);
+    expect(await page.locator('.gcard.anc').count()).toBe(3);
+    expect(await page.locator('.gcard.dim').count()).toBeGreaterThan(40);
+    expect(await page.locator('.edges g').count()).toBe(3);
     await page.getByRole('button', { name: 'Production and effects' }).click();
     expect(await page.locator('main').innerText()).toMatch(/Raised by/);
     noErrors();

@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { lvl } from '../../../shared/formulas';
 import { BUILDINGS } from '../../../shared/data';
-import { FLOWS, TREE, levelGraph, levelKey, nodeOf, reach, type LevelNode } from '../../../shared/techtree';
+import { FLOWS, ITEM_EDGES, TREE, ancestors, columns, descendants, levelsShown, nodeOf, pathTo } from '../../../shared/techtree';
 import type { BuildingId, TechId, UnitId } from '../../../shared/types';
 import { useGame } from '../game';
 import { Card, ItemLink, Page } from '../ui';
 
-const COL_W = 118, ROW_H = 34, NODE_W = 106, NODE_H = 26, PAD = 12;
-const ZOOMS = [0.5, 0.75, 1];
+const PIP = 16, CARD_H = 56, GAP_Y = 12, GAP_X = 96, PAD = 14, MIN_W = 140;
+const KIND_LABEL: Record<string, string> = { building: 'building', tech: 'research', ship: 'ship', defense: 'defense' };
 
 export function TechTree() {
   const { planet, me, openItem } = useGame();
@@ -15,9 +15,6 @@ export function TechTree() {
   const [sel, setSel] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const box = useRef<HTMLDivElement>(null);
-
-  const g = useMemo(() => levelGraph(), []);
-  const byKey = useMemo(() => new Map(g.nodes.map((n) => [n.key, n])), [g]);
 
   const have = (id: string): number => {
     const n = nodeOf(id)!;
@@ -27,101 +24,128 @@ export function TechTree() {
   const ready = (id: string) => nodeOf(id)!.requires.every((r) => haveReq(r.id) >= r.level);
   const count = (id: string) => { const n = nodeOf(id)!; return n.kind === 'ship' || n.kind === 'defense' ? `×${have(id)}` : String(have(id)); };
 
-  const status = (n: LevelNode): 'done' | 'next' | 'locked' => {
-    const h = have(n.id);
-    if (h >= n.level) return 'done';
-    return h === n.level - 1 && ready(n.id) ? 'next' : 'locked';
+  // geometry: one column per step, cards stacked inside it
+  const layout = useMemo(() => {
+    const cols = columns();
+    const pos = new Map<string, { x: number; y: number; w: number }>();
+    let x = PAD;
+    for (const c of cols) {
+      const widths = c.map((id) => Math.max(MIN_W, 18 + levelsShown(id) * PIP));
+      const w = Math.max(...widths, MIN_W);
+      c.forEach((id, i) => pos.set(id, { x, y: PAD + 22 + i * (CARD_H + GAP_Y), w: widths[i] }));
+      x += w + GAP_X;
+    }
+    return { pos, cols, width: x - GAP_X + PAD, height: PAD + 22 + Math.max(...cols.map((c) => c.length)) * (CARD_H + GAP_Y) };
+  }, []);
+
+  const back = useMemo(() => (sel ? ancestors(sel) : new Map<string, number>()), [sel]);
+  const fwd = useMemo(() => (sel ? descendants(sel) : new Set<string>()), [sel]);
+  const lit = (id: string) => sel === id || back.has(id) || fwd.has(id);
+  const litEdges = useMemo(() => ITEM_EDGES.filter((e) => sel && lit(e.from) && lit(e.to)), [sel, back, fwd]); // eslint-disable-line react-hooks/exhaustive-deps
+  const needed = useMemo(() => {
+    const m = new Map<string, Set<number>>();
+    for (const e of litEdges) (m.get(e.from) ?? m.set(e.from, new Set()).get(e.from)!).add(e.level);
+    return m;
+  }, [litEdges]);
+
+  const centre = (id: string) => {
+    const p = layout.pos.get(id)!, el = box.current;
+    if (el) el.scrollTo({ left: Math.max(0, (p.x + p.w / 2) * zoom - el.clientWidth / 2), top: Math.max(0, (p.y + CARD_H / 2) * zoom - el.clientHeight / 2), behavior: 'smooth' });
   };
+  const jump = (id: string) => { if (!id) return; setSel(id); centre(id); };
+  const pick = (id: string) => { if (id === sel) setSel(null); else jump(id); };
 
-  const back = useMemo(() => (sel ? reach(g, sel, true) : new Set<string>()), [g, sel]);
-  const fwd = useMemo(() => (sel ? reach(g, sel, false) : new Set<string>()), [g, sel]);
-  const lit = (k: string) => sel === k || back.has(k) || fwd.has(k);
-
-  const pos = (n: LevelNode) => ({ x: PAD + n.layer * COL_W, y: PAD + n.lane * ROW_H });
-  const width = PAD * 2 + g.layers * COL_W, height = PAD * 2 + g.lanes.length * ROW_H;
-
-  const pickItem = (id: string) => {
-    if (!id) return;
-    const k = levelKey(id, Math.min(have(id) + 1, g.nodes.filter((n) => n.id === id).length) || 1);
-    setSel(k);
-    const n = byKey.get(k)!;
-    const el = box.current;
-    if (el) el.scrollTo({ left: Math.max(0, (PAD + n.layer * COL_W) * zoom - 120), top: Math.max(0, (PAD + n.lane * ROW_H) * zoom - 120), behavior: 'smooth' });
-  };
-  useEffect(() => { if (view === 'tree' && box.current && sel === null) box.current.scrollTo({ left: 0, top: 0 }); }, [view, sel]);
-
-  const selNode = sel ? byKey.get(sel) : undefined;
-  const needs = selNode ? g.preds.get(selNode.key)!.map((k) => byKey.get(k)!) : [];
-  const leads = selNode ? g.succs.get(selNode.key)!.map((k) => byKey.get(k)!) : [];
-  const label = (n: LevelNode) => (n.kind === 'building' || n.kind === 'tech' ? `${n.name} ${n.level}` : n.name);
+  const selNode = sel ? nodeOf(sel) : undefined;
+  const path = sel ? pathTo(sel) : [];
+  const leads = sel ? ITEM_EDGES.filter((e) => e.from === sel).sort((a, b) => a.level - b.level) : [];
 
   return (
     <Page title="Tech tree">
       <div className="row wrap">
-        <button className={view === 'tree' ? 'primary' : ''} onClick={() => setView('tree')}>Progression graph</button>
+        <button className={view === 'tree' ? 'primary' : ''} onClick={() => setView('tree')}>Progression</button>
         <button className={view === 'flows' ? 'primary' : ''} onClick={() => setView('flows')}>Production and effects</button>
       </div>
 
       {view === 'tree' && (
         <>
           <p className="muted small">
-            Every level of every building and research is a box; arrows run from what you need to what it opens, from left to right. A level needs the one before it, and an item&apos;s first level needs the levels shown on the arrows pointing at it. Click a box to light up the whole path leading to it (<span className="tlegend anc">needed first</span>) and everything it leads to (<span className="tlegend desc">unlocks</span>). <span className="tlegend done">have it</span> <span className="tlegend next">next to start</span> <span className="tlegend locked">locked</span> Levels continue beyond those shown; nothing else needs them.
+            Each card is a building, research, ship or defense, and its squares are its levels. Cards flow left to right: whatever a card needs is to its left. Click a card to draw its arrows: <span className="tlegend anc">what leads to it</span>, <span className="tlegend desc">what it opens</span>, with the level each arrow needs.
+            Squares: <span className="tlegend done">have</span> <span className="tlegend next">next</span> <span className="tlegend locked">locked</span>
           </p>
           <div className="row wrap">
-            <select value="" onChange={(e) => pickItem(e.target.value)} aria-label="Jump to an item">
+            <select value="" onChange={(e) => jump(e.target.value)} aria-label="Jump to an item">
               <option value="">Jump to…</option>
-              {TREE.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+              {[...TREE].sort((a, b) => a.name.localeCompare(b.name)).map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
             </select>
             <span className="muted small">Zoom</span>
-            {ZOOMS.map((z) => <button key={z} className={zoom === z ? 'primary' : ''} onClick={() => setZoom(z)}>{Math.round(z * 100)}%</button>)}
+            {[0.6, 0.8, 1].map((z) => <button key={z} className={zoom === z ? 'primary' : ''} onClick={() => setZoom(z)}>{Math.round(z * 100)}%</button>)}
             {sel && <button onClick={() => setSel(null)}>Clear</button>}
           </div>
 
           {selNode && (
-            <Card title={<>{label(selNode)} <span className="muted small">{selNode.kind === 'tech' ? 'research' : selNode.kind}</span></>} right={<button onClick={() => openItem(selNode.id)}>Details</button>}>
+            <Card title={<>{selNode.name} <span className="muted small">{KIND_LABEL[selNode.kind]}</span></>} right={<button onClick={() => openItem(selNode.id)}>Details</button>}>
               <div className="treeinfo">
                 <div>
-                  <b>Needs directly</b>
-                  {needs.length === 0 && <div className="muted small">Nothing: available from the start.</div>}
-                  {needs.map((n) => {
-                    const ok = status(n) === 'done';
-                    return <div key={n.key} className={ok ? 'good' : 'bad'}><a className="itemlink" onClick={() => setSel(n.key)}>{label(n)}</a> <span className="muted small">(you: {count(n.id)})</span></div>;
-                  })}
-                  {back.size > needs.length && <div className="muted small">{back.size} steps lead here in all.</div>}
+                  <b>Path to get there</b>
+                  {path.length === 0 && <div className="muted small">Nothing needed: it is available from the start.</div>}
+                  <ol className="steps">
+                    {path.map((s) => {
+                      const ok = haveReq(s.id) >= s.level;
+                      return <li key={s.id} className={ok ? 'good' : 'bad'}><a className="itemlink" onClick={() => jump(s.id)}>{nodeOf(s.id)!.name}</a> to level {s.level} <span className="muted small">{ok ? 'done' : `you: ${haveReq(s.id)}`}</span></li>;
+                    })}
+                    <li><b>{selNode.name}</b>{ready(selNode.id) ? <span className="good small"> ready to start</span> : null}</li>
+                  </ol>
                 </div>
                 <div>
-                  <b>Leads to</b>
+                  <b>Opens up</b>
                   {leads.length === 0 && <div className="muted small">Nothing else needs it.</div>}
-                  {leads.map((n) => <div key={n.key}><a className="itemlink" onClick={() => setSel(n.key)}>{label(n)}</a></div>)}
-                  {fwd.size > leads.length && <div className="muted small">{fwd.size} steps follow from it in all.</div>}
+                  {leads.map((e) => <div key={e.to}><a className="itemlink" onClick={() => jump(e.to)}>{nodeOf(e.to)!.name}</a> <span className="muted small">needs it at level {e.level}</span></div>)}
                 </div>
               </div>
             </Card>
           )}
 
           <div className="graphbox" ref={box}>
-            <div style={{ width: width * zoom, height: height * zoom }}>
-              <div className="graph" style={{ width, height, transform: `scale(${zoom})` }}>
-                <svg width={width} height={height} className="edges" aria-hidden="true">
+            <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
+              <div className="graph" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
+                {layout.cols.map((c, t) => {
+                  const first = layout.pos.get(c[0]);
+                  return first ? <div key={t} className="colhead" style={{ left: first.x, top: PAD }}>{t === 0 ? 'Start' : `Step ${t}`}</div> : null;
+                })}
+                <svg width={layout.width} height={layout.height} className="edges" aria-hidden="true">
                   <defs>
-                    <marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="currentColor" /></marker>
+                    <marker id="arrA" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#ffbe50" /></marker>
+                    <marker id="arrD" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#6ec8ff" /></marker>
                   </defs>
-                  {g.edges.map((e) => {
-                    const a = byKey.get(e.from)!, b = byKey.get(e.to)!;
-                    const p = pos(a), q = pos(b);
-                    const x1 = p.x + NODE_W, y1 = p.y + NODE_H / 2, x2 = q.x, y2 = q.y + NODE_H / 2;
-                    const dx = Math.max(24, (x2 - x1) / 2);
-                    const on = !sel || (lit(e.from) && lit(e.to));
-                    return <path key={e.from + e.to} className={`edge ${e.kind} ${sel ? (on ? 'on' : 'off') : ''}`} d={`M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`} markerEnd="url(#arr)" />;
+                  {litEdges.map((e) => {
+                    const a = layout.pos.get(e.from)!, b = layout.pos.get(e.to)!;
+                    const x1 = a.x + a.w, y1 = a.y + CARD_H / 2, x2 = b.x, y2 = b.y + CARD_H / 2;
+                    const dx = Math.max(30, (x2 - x1) / 2);
+                    const forward = e.from === sel || fwd.has(e.from);
+                    const lx = x2 - 22, ly = y2 + (y1 > y2 ? 12 : -4);
+                    return (
+                      <g key={e.from + e.to} className={forward ? 'edgeD' : 'edgeA'}>
+                        <path d={`M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`} markerEnd={forward ? 'url(#arrD)' : 'url(#arrA)'} />
+                        <text x={lx} y={ly}>{e.level}</text>
+                      </g>
+                    );
                   })}
                 </svg>
-                {g.nodes.map((n) => {
-                  const p = pos(n);
-                  const cls = ['gnode', n.kind, status(n), sel === n.key ? 'sel' : '', back.has(n.key) ? 'anc' : '', fwd.has(n.key) ? 'desc' : '', sel && !lit(n.key) ? 'dim' : ''].filter(Boolean).join(' ');
+                {TREE.map((n) => {
+                  const p = layout.pos.get(n.id)!;
+                  const total = levelsShown(n.id), h = have(n.id), isUnit = n.kind === 'ship' || n.kind === 'defense';
+                  const need = needed.get(n.id);
+                  const cls = ['gcard', n.kind, sel === n.id ? 'sel' : '', back.has(n.id) ? 'anc' : '', fwd.has(n.id) ? 'desc' : '', sel && !lit(n.id) ? 'dim' : ''].filter(Boolean).join(' ');
                   return (
-                    <button key={n.key} className={cls} style={{ left: p.x, top: p.y, width: NODE_W, height: NODE_H }} title={label(n)} onClick={() => setSel(sel === n.key ? null : n.key)}>
-                      {n.kind === 'building' || n.kind === 'tech' ? <><b>{n.level}</b>{n.level === 1 ? ` ${n.name}` : ''}</> : n.name}
-                    </button>
+                    <div key={n.id} className={cls} style={{ left: p.x, top: p.y, width: p.w, height: CARD_H }} onClick={() => pick(n.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(n.id); } }}>
+                      <div className="gname" title={n.name}>{n.name}{n.moonOnly ? ' 🌙' : ''}{isUnit && h > 0 ? <span className="lvl"> ×{h}</span> : null}</div>
+                      <div className="pips">
+                        {Array.from({ length: total }, (_, i) => i + 1).map((l) => {
+                          const st = isUnit ? (h > 0 ? 'done' : ready(n.id) ? 'next' : 'locked') : l <= h ? 'done' : l === h + 1 && ready(n.id) ? 'next' : 'locked';
+                          return <span key={l} className={`pip ${st} ${need?.has(l) ? 'need' : ''}`} title={isUnit ? n.name : `${n.name} ${l}`}>{isUnit ? '' : l}</span>;
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
