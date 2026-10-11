@@ -3,7 +3,7 @@ import { BUILDING_IDS, DEFENSE_IDS, SHIP_IDS, TECH_IDS, POS_DIAMETER, fieldsFrom
 import { extraExpeditionSlots } from './perks';
 import { activityOf, type Activity } from './vacation';
 import type { Coords, UnitId } from '../shared/types';
-import { GameError, ck, planetAt, uid, type Planet, type Player, type World } from './world';
+import { GameError, atWar, ck, friendly, planetAt, sameAlliance, uid, type Planet, type Player, type World } from './world';
 
 const rnd = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
 
@@ -130,7 +130,7 @@ export interface GalaxySlot {
   moon: null | { id: string; name: string };
   planet: null | {
     id: string; name: string; owner: string; ownerId: string; alliance: string | null;
-    mine: boolean; protectedFor: boolean; debris: { metal: number; crystal: number } | null;
+    mine: boolean; relation: 'ally' | 'war' | 'pact' | null; protectedFor: boolean; debris: { metal: number; crystal: number } | null;
     /** computer empire disposition, or null for a commander */
     npc: string | null; faction: string | null;
     /** flags: vacation (v), activity (online / inactive i / long inactive I), protection (weak = newbie n, strong = s) */
@@ -158,6 +158,7 @@ export function galaxyView(w: World, viewer: Player, g: number, s: number, now =
       planet: {
         id: pl.id, name: pl.name, owner: owner.username, ownerId: owner.id, alliance: ally,
         mine: owner.id === viewer.id,
+        relation: owner.id === viewer.id ? null : sameAlliance(w, viewer.id, owner.id) ? 'ally' : atWar(w, viewer.id, owner.id) ? 'war' : friendly(w, viewer.id, owner.id) ? 'pact' : null,
         npc: owner.npc?.status ?? null,
         faction: owner.npc ? owner.npc.faction : owner.faction,
         protectedFor: owner.id !== viewer.id && isProtected(w, viewer, owner),

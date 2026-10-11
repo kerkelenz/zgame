@@ -1,6 +1,6 @@
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { bus } from './bus';
-import { releaseHolds } from './alliance';
+import { dropAlliance, releaseHolds } from './alliance';
 import { notifyPlayer } from './messages';
 import { GameError, type Player, type World } from './world';
 
@@ -77,7 +77,7 @@ export function removePlayer(w: World, p: Player) {
   const ally = p.allianceId ? w.alliances[p.allianceId] : null;
   if (ally) {
     ally.members = ally.members.filter((m) => m.playerId !== p.id);
-    if (!ally.members.length) delete w.alliances[ally.id];
+    if (!ally.members.length) dropAlliance(w, ally);
   }
   for (const a of Object.values(w.alliances)) a.applications = a.applications.filter((x) => x.playerId !== p.id);
   for (const m of Object.values(w.movements)) if (m.ownerId === p.id) delete w.movements[m.id];

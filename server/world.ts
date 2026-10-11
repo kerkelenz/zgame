@@ -154,6 +154,9 @@ export interface Movement {
   missiles?: number;
 }
 
+export type AlliancePerm = 'applications' | 'kick' | 'bank' | 'upgrades' | 'edit' | 'message' | 'bulletin' | 'diplomacy';
+export const ALLIANCE_PERMS: AlliancePerm[] = ['applications', 'kick', 'bank', 'upgrades', 'edit', 'message', 'bulletin', 'diplomacy'];
+
 export interface Alliance {
   id: string;
   tag: string;
@@ -161,7 +164,14 @@ export interface Alliance {
   description: string;
   open: boolean;
   founderId: string;
-  members: { playerId: string; role: 'founder' | 'officer' | 'member'; joinedAt: number }[];
+  members: { playerId: string; role: 'founder' | 'officer' | 'member'; joinedAt: number; rankId?: string }[];
+  /** custom ranks with individual permissions (founders hold every permission; plain officers get the defaults) */
+  ranks?: { id: string; name: string; perms: AlliancePerm[] }[];
+  bulletin?: { id: string; authorId: string; author: string; text: string; at: number; pinned: boolean }[];
+  /** treaties with other alliances, keyed by their id */
+  diplomacy?: Record<string, { kind: 'pact' | 'war'; since: number }>;
+  /** pact offers other alliances made to us */
+  proposals?: { fromId: string; at: number }[];
   applications: { playerId: string; text: string; at: number }[];
   bank: Res;
   upgrades: Record<string, number>;
@@ -266,6 +276,17 @@ export function ownedPlanet(w: World, playerId: string, planetId: string): Plane
 export function allianceOf(w: World, p: Player): Alliance | null {
   return p.allianceId ? w.alliances[p.allianceId] ?? null : null;
 }
+/** Allies by membership or by a pact between their alliances: neither may attack the other. */
+export function friendly(w: World, aId: string | null, bId: string | null): boolean {
+  if (sameAlliance(w, aId, bId)) return true;
+  const a = aId ? w.players[aId]?.allianceId : null, b = bId ? w.players[bId]?.allianceId : null;
+  return !!a && !!b && w.alliances[a]?.diplomacy?.[b]?.kind === 'pact';
+}
+export function atWar(w: World, aId: string | null, bId: string | null): boolean {
+  const a = aId ? w.players[aId]?.allianceId : null, b = bId ? w.players[bId]?.allianceId : null;
+  return !!a && !!b && w.alliances[a]?.diplomacy?.[b]?.kind === 'war';
+}
+
 export function sameAlliance(w: World, aId: string | null, bId: string | null): boolean {
   if (!aId || !bId || aId === bId) return false;
   const a = w.players[aId], b = w.players[bId];

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { get, post } from '../api';
+import { post as post_ } from '../api';
 import { useGame } from '../game';
 import { Card, Cost, Page, fmt, when } from '../ui';
 
@@ -48,8 +49,16 @@ function Browse({ list, run }: { list: any[]; run: (f: () => Promise<any>, ok?: 
 }
 
 function Mine({ a, run, planetId, me, setPage }: { a: any; run: (f: () => Promise<any>, ok?: string) => Promise<any>; planetId: string; me: any; setPage: (p: string) => void }) {
-  const officer = a.myRole === 'founder' || a.myRole === 'officer';
+  const has = (perm: string) => (a.myPerms as string[]).includes(perm);
+  const officer = has('edit');
   const founder = a.myRole === 'founder';
+  const [others, setOthers] = useState<any[]>([]);
+  const [draft, setDraft] = useState(''); const [pinned, setPinned] = useState(false);
+  const [msg, setMsg] = useState({ subject: '', text: '' });
+  const [rankName, setRankName] = useState(''); const [rankPerms, setRankPerms] = useState<string[]>([]);
+  const [target, setTarget] = useState('');
+  useEffect(() => { if (has('diplomacy')) void get('/alliances').then((l) => setOthers(l.filter((x: any) => x.id !== a.id))); }, [a.id, a.diplomacy.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const PERM_LABEL: Record<string, string> = { applications: 'Review applications', kick: 'Remove members', bank: 'Grant from bank', upgrades: 'Buy upgrades', edit: 'Edit description', message: 'Mass message', bulletin: 'Bulletin board', diplomacy: 'Diplomacy' };
   const [don, setDon] = useState({ metal: 0, crystal: 0, deuterium: 0 });
   const [grant, setGrant] = useState({ playerId: '', metal: 0, crystal: 0, deuterium: 0 });
   const [desc, setDesc] = useState(a.description);
@@ -76,7 +85,7 @@ function Mine({ a, run, planetId, me, setPage }: { a: any; run: (f: () => Promis
             {(['metal', 'crystal', 'deuterium'] as const).map((k) => <input key={k} type="number" min={0} className="md" placeholder={k} value={don[k] || ''} onChange={(e) => setDon({ ...don, [k]: Number(e.target.value) })} />)}
             <button className="primary" onClick={() => void run(() => post('/alliance/donate', { planetId, amount: don }), 'Donated').then(() => setDon({ metal: 0, crystal: 0, deuterium: 0 }))}>Donate</button>
           </div>
-          {officer && (
+          {has('bank') && (
             <>
               <h4>Grant to a member</h4>
               <div className="row wrap">
@@ -98,13 +107,13 @@ function Mine({ a, run, planetId, me, setPage }: { a: any; run: (f: () => Promis
             <div><b>{u.name}</b> <span className="lvl">{u.level}</span><div className="muted small">{u.desc}</div></div>
             <div className="row">
               {u.level < 10 ? <><Cost cost={u.next} have={a.bank} />
-                <button disabled={!officer} onClick={() => void run(() => post('/alliance/upgrade', { key: u.id }), `${u.name} upgraded`)}>Upgrade</button></> : <span className="muted">max</span>}
+                <button disabled={!has('upgrades')} onClick={() => void run(() => post('/alliance/upgrade', { key: u.id }), `${u.name} upgraded`)}>Upgrade</button></> : <span className="muted">max</span>}
             </div>
           </div>
         ))}
       </Card>
 
-      {officer && a.applications.length > 0 && (
+      {has('applications') && a.applications.length > 0 && (
         <Card title="Applications">
           {a.applications.map((x: any) => (
             <div className="row between" key={x.playerId}>
@@ -121,20 +130,94 @@ function Mine({ a, run, planetId, me, setPage }: { a: any; run: (f: () => Promis
           <tbody>
             {a.members.map((m: any) => (
               <tr key={m.id}>
-                <td>{m.username}{m.id === me.player.id && ' (you)'}</td><td>{m.role}</td><td>{fmt(m.points)}</td>
+                <td>{m.username}{m.id === me.player.id && ' (you)'}</td><td>{m.rank ?? m.role}</td><td>{fmt(m.points)}</td>
                 <td className="muted">{Date.now() - m.lastSeen < 120000 ? 'online' : when(m.lastSeen)}</td>
                 <td className="actions">
+                  {founder && m.id !== me.player.id && a.ranks.length > 0 && m.role !== 'founder' && (
+                    <select value={m.rankId ?? ''} onChange={(e) => void run(() => post('/alliance/rank/assign', { playerId: m.id, rankId: e.target.value || null }))}>
+                      <option value="">no rank</option>{a.ranks.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                    </select>
+                  )}
                   {founder && m.id !== me.player.id && <>
                     <button onClick={() => void run(() => post('/alliance/role', { playerId: m.id, role: m.role === 'officer' ? 'member' : 'officer' }))}>{m.role === 'officer' ? 'Demote' : 'Promote'}</button>
                     <button onClick={() => confirm(`Hand leadership to ${m.username}?`) && void run(() => post('/alliance/role', { playerId: m.id, role: 'founder' }))}>Make founder</button>
                   </>}
-                  {officer && m.id !== me.player.id && m.role !== 'founder' && (founder || m.role === 'member') && <button onClick={() => confirm(`Remove ${m.username}?`) && void run(() => post('/alliance/kick', { playerId: m.id }))}>Kick</button>}
+                  {has('kick') && m.id !== me.player.id && m.role !== 'founder' && (founder || (m.role === 'member' && !m.rankId)) && <button onClick={() => confirm(`Remove ${m.username}?`) && void run(() => post('/alliance/kick', { playerId: m.id }))}>Kick</button>}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </Card>
+
+      <Card title="Bulletin board">
+        {a.bulletin.length === 0 && <p className="muted">Nothing posted yet.</p>}
+        {a.bulletin.map((b: any) => (
+          <div key={b.id} className="row between bulletin">
+            <div>{b.pinned && <span className="tag you">pinned</span>} <b>{b.author}</b> <span className="muted small">{when(b.at)}</span><div>{b.text}</div></div>
+            <span className="row">
+              {has('bulletin') && <button onClick={() => void run(() => post('/alliance/bulletin/pin', { id: b.id, pinned: !b.pinned }))}>{b.pinned ? 'Unpin' : 'Pin'}</button>}
+              {(has('bulletin') || b.authorId === me.player.id || b.author === me.player.username) && <button onClick={() => void run(() => post('/alliance/bulletin/remove', { id: b.id }))}>Delete</button>}
+            </span>
+          </div>
+        ))}
+        {has('bulletin') && (
+          <div className="row wrap">
+            <input className="grow" maxLength={600} placeholder="Post to the board" value={draft} onChange={(e) => setDraft(e.target.value)} />
+            <label className="row"><input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} /> pin</label>
+            <button className="primary" disabled={!draft.trim()} onClick={() => void run(() => post('/alliance/bulletin', { text: draft, pinned }), 'Posted').then(() => setDraft(''))}>Post</button>
+          </div>
+        )}
+      </Card>
+
+      {has('message') && (
+        <Card title="Message all members">
+          <div className="row wrap">
+            <input placeholder="Subject" maxLength={60} value={msg.subject} onChange={(e) => setMsg({ ...msg, subject: e.target.value })} />
+            <input className="grow" placeholder="Message" maxLength={1000} value={msg.text} onChange={(e) => setMsg({ ...msg, text: e.target.value })} />
+            <button className="primary" disabled={!msg.text.trim()} onClick={() => void run(() => post('/alliance/message', msg), 'Sent to every member').then(() => setMsg({ subject: '', text: '' }))}>Send</button>
+          </div>
+        </Card>
+      )}
+
+      <Card title="Diplomacy">
+        {a.proposals.map((x: any) => (
+          <div key={x.id} className="row between"><span>[{x.tag}] {x.name} <span className="muted">offers a non-aggression pact</span></span>
+            {has('diplomacy') && <span className="row"><button className="primary" onClick={() => void run(() => post('/alliance/pact/respond', { id: x.id, accept: true }), 'Pact signed')}>Accept</button><button onClick={() => void run(() => post('/alliance/pact/respond', { id: x.id, accept: false }))}>Decline</button></span>}</div>
+        ))}
+        {a.diplomacy.length === 0 && a.proposals.length === 0 && <p className="muted">No treaties. Pacts stop both alliances attacking each other; war is a declaration of intent that flags them in the galaxy.</p>}
+        {a.diplomacy.map((x: any) => (
+          <div key={x.id} className="row between"><span><span className={`tag ${x.kind === 'war' ? 'bad' : 'you'}`}>{x.kind}</span> [{x.tag}] {x.name} <span className="muted small">since {when(x.since)}</span></span>
+            {has('diplomacy') && <button onClick={() => confirm(`End the ${x.kind} with [${x.tag}]?`) && void run(() => post('/alliance/treaty/end', { id: x.id }), 'Treaty ended')}>End</button>}</div>
+        ))}
+        {has('diplomacy') && (
+          <div className="row wrap">
+            <select value={target} onChange={(e) => setTarget(e.target.value)}>
+              <option value="">alliance…</option>
+              {others.map((o) => <option key={o.id} value={o.id}>[{o.tag}] {o.name}</option>)}
+            </select>
+            <button disabled={!target || a.offered.includes(target)} onClick={() => void run(() => post('/alliance/pact', { id: target }), 'Pact offered')}>{a.offered.includes(target) ? 'Offer pending' : 'Propose pact'}</button>
+            <button className="danger" disabled={!target} onClick={() => confirm('Declare war?') && void run(() => post('/alliance/war', { id: target }), 'War declared')}>Declare war</button>
+          </div>
+        )}
+      </Card>
+
+      {founder && (
+        <Card title="Ranks">
+          <p className="muted small">Ranks give members individual permissions. Plain officers keep every permission; founders always have all of them.</p>
+          {a.ranks.map((r: any) => (
+            <div key={r.id} className="row between">
+              <span><b>{r.name}</b> <span className="muted small">{r.perms.map((x: string) => PERM_LABEL[x]).join(', ') || 'no permissions'}</span></span>
+              <button onClick={() => confirm(`Delete the rank ${r.name}?`) && void run(() => post('/alliance/rank/delete', { id: r.id }))}>Delete</button>
+            </div>
+          ))}
+          <div className="row wrap">
+            <input placeholder="Rank name" maxLength={20} value={rankName} onChange={(e) => setRankName(e.target.value)} />
+            {a.allPerms.map((x: string) => <label key={x} className="row small"><input type="checkbox" checked={rankPerms.includes(x)} onChange={(e) => setRankPerms(e.target.checked ? [...rankPerms, x] : rankPerms.filter((y) => y !== x))} /> {PERM_LABEL[x]}</label>)}
+            <button className="primary" disabled={rankName.trim().length < 2} onClick={() => void run(() => post('/alliance/rank', { name: rankName, perms: rankPerms }), 'Rank created').then(() => { setRankName(''); setRankPerms([]); })}>Create rank</button>
+          </div>
+        </Card>
+      )}
 
       <Card title="Activity log">
         {a.log.map((l: any, i: number) => <div key={i} className="muted small">{when(l.at)} – {l.text}</div>)}

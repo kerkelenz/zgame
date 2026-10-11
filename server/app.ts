@@ -276,9 +276,10 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.get('/highscore', wrap((req) => {
     const category = typeof req.query.cat === 'string' ? req.query.cat : 'total';
     const players = categoryRows(w, category, true);
+    const byId = new Map(players.map((r) => [r.id, r.value]));
     const alliances = Object.values(w.alliances).map((a) => ({
       id: a.id, tag: a.tag, name: a.name, members: a.members.length,
-      total: a.members.reduce((s, m) => s + playerPoints(w, w.players[m.playerId]).total, 0),
+      total: a.members.reduce((s, m) => s + (byId.get(m.playerId) ?? 0), 0),
     })).sort((a, b) => b.total - a.total).map((a, i) => ({ rank: i + 1, ...a }));
     return { players, alliances, category, categories: SCORE_CATEGORIES.map((c) => ({ id: c.id, label: c.label, unit: c.unit })) };
   }));
@@ -378,6 +379,23 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.post('/alliance/disband', wrap((req) => { AL.disbandAlliance(w, req.player!); return { ok: true }; }));
   A.post('/alliance/donate', wrap((req) => { AL.donate(w, req.player!, str(req.body.planetId), req.body.amount || {}, now()); return mine(req); }));
   A.post('/alliance/withdraw', wrap((req) => { AL.withdraw(w, req.player!, str(req.body.playerId), req.body.amount || {}, now()); return mine(req); }));
+  A.post('/alliance/rank', wrap((req) => { AL.createRank(w, req.player!, str(req.body.name, 30), req.body.perms); return mine(req); }));
+  A.post('/alliance/rank/update', wrap((req) => { AL.updateRank(w, req.player!, str(req.body.id), { name: req.body.name, perms: req.body.perms }); return mine(req); }));
+  A.post('/alliance/rank/delete', wrap((req) => { AL.deleteRank(w, req.player!, str(req.body.id)); return mine(req); }));
+  A.post('/alliance/rank/assign', wrap((req) => { AL.assignRank(w, req.player!, str(req.body.playerId), req.body.rankId ? str(req.body.rankId) : null); return mine(req); }));
+  A.post('/alliance/bulletin', wrap((req) => { AL.postBulletin(w, req.player!, str(req.body.text, 600), !!req.body.pinned); return mine(req); }));
+  A.post('/alliance/bulletin/remove', wrap((req) => { AL.removeBulletin(w, req.player!, str(req.body.id)); return mine(req); }));
+  A.post('/alliance/bulletin/pin', wrap((req) => { AL.pinBulletin(w, req.player!, str(req.body.id), !!req.body.pinned); return mine(req); }));
+  A.post('/alliance/message', wrap((req) => {
+    const p = req.player!;
+    ACC.assertNotMuted(p, now());
+    if (limited('amsg:' + p.id, 5, 60_000)) throw new GameError('You are sending messages too fast', 429);
+    return { sent: AL.massMessage(w, p, str(req.body.subject, 60), str(req.body.text, 1000)) };
+  }));
+  A.post('/alliance/pact', wrap((req) => { AL.proposePact(w, req.player!, str(req.body.id)); return mine(req); }));
+  A.post('/alliance/pact/respond', wrap((req) => { AL.respondPact(w, req.player!, str(req.body.id), !!req.body.accept); return mine(req); }));
+  A.post('/alliance/war', wrap((req) => { AL.declareWar(w, req.player!, str(req.body.id)); return mine(req); }));
+  A.post('/alliance/treaty/end', wrap((req) => { AL.endTreaty(w, req.player!, str(req.body.id)); return mine(req); }));
   A.post('/alliance/upgrade', wrap((req) => { AL.buyUpgrade(w, req.player!, str(req.body.key)); return mine(req); }));
 
   app.use('/api', A);

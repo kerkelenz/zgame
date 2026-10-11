@@ -7,6 +7,8 @@ import { colonyCount, maxPlanets, playerPoints } from './galaxy';
 import { sameCoords } from '../shared/formulas';
 import { upgradeCost } from './alliance';
 import { isAdmin, isMuted } from './account';
+import { permsOf } from './alliance';
+import { ALLIANCE_PERMS } from './world';
 import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
 import { OFFICERS, OFFICER_MAX, FACTIONS, JOIN_REP, FACTION_BY_ID, CHAR_CLASSES, CLASS_CHANGE_COST } from '../shared/data';
 import { planetAt, type Alliance, type Movement, type Planet, type Player, type World } from './world';
@@ -44,13 +46,20 @@ export function planetView(w: World, planet: Planet, now: number) {
 
 export function allianceView(w: World, a: Alliance, viewer: Player) {
   const myRole = a.members.find((m) => m.playerId === viewer.id)?.role;
-  const officer = myRole === 'founder' || myRole === 'officer';
+  const myPerms = permsOf(a, viewer.id);
+  const officer = myPerms.includes('applications');
+  const tagOf = (id: string) => { const o = w.alliances[id]; return o ? { id: o.id, tag: o.tag, name: o.name } : null; };
   return {
     id: a.id, tag: a.tag, name: a.name, description: a.description, open: a.open, createdAt: a.createdAt,
-    bank: a.bank, upgrades: a.upgrades, myRole,
+    bank: a.bank, upgrades: a.upgrades, myRole, myPerms,
+    ranks: a.ranks ?? [], allPerms: ALLIANCE_PERMS,
+    bulletin: [...(a.bulletin ?? [])].sort((x, y) => Number(y.pinned) - Number(x.pinned) || y.at - x.at),
+    diplomacy: Object.entries(a.diplomacy ?? {}).map(([id, t]) => ({ ...tagOf(id)!, kind: t.kind, since: t.since })).filter((x) => x.id),
+    proposals: (a.proposals ?? []).map((x) => ({ ...tagOf(x.fromId)!, at: x.at })).filter((x) => x.id),
+    offered: Object.values(w.alliances).filter((o) => o.proposals?.some((x) => x.fromId === a.id)).map((o) => o.id),
     members: a.members.map((m) => {
       const p = w.players[m.playerId];
-      return { id: p.id, username: p.username, role: m.role, points: playerPoints(w, p).total, lastSeen: p.lastSeen, joinedAt: m.joinedAt };
+      return { id: p.id, username: p.username, role: m.role, rankId: m.rankId ?? null, rank: m.rankId ? a.ranks?.find((r) => r.id === m.rankId)?.name ?? null : null, points: playerPoints(w, p).total, lastSeen: p.lastSeen, joinedAt: m.joinedAt };
     }),
     applications: officer ? a.applications.map((x) => ({ playerId: x.playerId, username: w.players[x.playerId]?.username, text: x.text, at: x.at })) : [],
     log: a.log.slice(-40).reverse(),

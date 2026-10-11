@@ -395,7 +395,7 @@ describe('alliances', () => {
     AL.donate(w, alice, ap.id, { metal: 500_000, crystal: 300_000, deuterium: 200_000 }, T0);
     AL.donate(w, bob, bp.id, { metal: 100_000 }, T0);
     expect(a.bank.metal).toBe(600_000);
-    expect(() => AL.withdraw(w, bob, bob.id, { metal: 1 }, T0)).toThrow(/Officers/);
+    expect(() => AL.withdraw(w, bob, bob.id, { metal: 1 }, T0)).toThrow(/rank does not allow/);
     expect(() => AL.donate(w, alice, ap.id, { metal: 1e12 }, T0)).toThrow(/resources/);
 
     bp.buildings.metalMine = 5;
@@ -406,7 +406,7 @@ describe('alliances', () => {
     const bankMetal = a.bank.metal;
     AL.withdraw(w, alice, bob.id, { metal: 1000 }, T0);
     expect(a.bank.metal).toBe(bankMetal - 1000);
-    expect(() => AL.buyUpgrade(w, bob, 'research')).toThrow(/Officers/);
+    expect(() => AL.buyUpgrade(w, bob, 'research')).toThrow(/rank does not allow/);
   });
 
   it('research upgrade shortens research time for members', () => {

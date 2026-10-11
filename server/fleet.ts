@@ -14,7 +14,7 @@ import { assertActive, onVacation } from './vacation';
 import { addWreck } from './wrecks';
 import { cargoFor, classSpeedFor, colonyFieldsMul, debrisShare, dodgesBadLuck, expeditionYield, extraFleetSlots, fuelFactor, lootShare, shieldMul, spyBonus, spyEvasion, weaponMul } from './perks';
 import { buildNpcFleet, fleetValue } from './npc';
-import { GameError, ck, planetAt, sameAlliance, uid, type Movement, type Planet, type Player, type World } from './world';
+import { GameError, ck, friendly, planetAt, sameAlliance, uid, type Movement, type Planet, type Player, type World } from './world';
 
 export interface SendRequest {
   fromPlanetId: string;
@@ -92,7 +92,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     case 'attack': {
       if (!target || !targetOwner) throw new GameError('There is no planet there');
       if (targetOwner.id === player.id) throw new GameError('Cannot attack yourself');
-      if (sameAlliance(w, player.id, targetOwner.id)) throw new GameError('Cannot attack an alliance member');
+      if (friendly(w, player.id, targetOwner.id)) throw new GameError('Cannot attack an alliance member or a pact partner');
       if (!SHIP_IDS.some((id) => has(id) && UNITS[id].attack > 1)) throw new GameError('Your fleet has no combat ships');
       if (onVacation(targetOwner)) throw new GameError('That player is on vacation');
       if (isProtected(w, player, targetOwner)) throw new GameError('That player is under newbie protection');
@@ -110,7 +110,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
       if (!target || !targetOwner) throw new GameError('There is no moon there');
       if (!has('deathstar')) throw new GameError('Only Deathstars can destroy a moon');
       if (targetOwner.id === player.id) throw new GameError('Cannot attack yourself');
-      if (sameAlliance(w, player.id, targetOwner.id)) throw new GameError('Cannot attack an alliance member');
+      if (friendly(w, player.id, targetOwner.id)) throw new GameError('Cannot attack an alliance member or a pact partner');
       if (onVacation(targetOwner)) throw new GameError('That player is on vacation');
       if (isProtected(w, player, targetOwner)) throw new GameError('That player is under newbie protection');
       if (req.joinFleetId) throw new GameError('A moon strike cannot join a joint attack');
@@ -444,7 +444,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   const defOwner = w.players[target.ownerId];
   // diplomacy may have changed while the fleets were in flight
   if (onVacation(defOwner)) return abort(`The target at ${fmt(lead.to)} is on vacation - attack called off.`);
-  if (group.some((m) => m.ownerId && (m.ownerId === defOwner.id || sameAlliance(w, m.ownerId, defOwner.id)))) return abort(`The target at ${fmt(lead.to)} is now an ally - attack called off.`);
+  if (group.some((m) => m.ownerId && (m.ownerId === defOwner.id || friendly(w, m.ownerId, defOwner.id)))) return abort(`The target at ${fmt(lead.to)} is now an ally - attack called off.`);
   processPlayer(w, defOwner, at);
   for (const m of group) { const a = attackerOf(m); if (a) processPlayer(w, a, at); }
 
@@ -694,7 +694,7 @@ export function launchMissiles(w: World, player: Player, fromPlanetId: string, t
   const owner = target ? w.players[target.ownerId] : null;
   if (!target || !owner) throw new GameError('There is no planet there');
   if (owner.id === player.id) throw new GameError('You cannot fire at yourself');
-  if (sameAlliance(w, player.id, owner.id)) throw new GameError('Cannot attack an alliance member');
+  if (friendly(w, player.id, owner.id)) throw new GameError('Cannot attack an alliance member or a pact partner');
   if (onVacation(owner)) throw new GameError('That player is on vacation');
   if (isProtected(w, player, owner)) throw new GameError('That player is under newbie protection');
   if (to.g !== planet.coords.g) throw new GameError('Missiles cannot leave the galaxy');
