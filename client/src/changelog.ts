@@ -5,7 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-f', date: '2026-10-11', title: 'Alliance wars',
     items: [
-      'The Overview Events list now shows how many resources fleets carry (a delivery on its way out, loot and salvage on the way home, an ally's delivery to you), per resource and in total.',
+      'The Overview Events list now shows how many resources fleets carry (a delivery on its way out, loot and salvage on the way home, a delivery from an ally), per resource and in total.',
       'Moons: a battle over a planet without a moon now gives a flat 20% chance (once the debris field holds 100,000 resources; less below that), and debris left by earlier battles counts toward it.',
       'The Overview shows a planet and its moon side by side, and the planet list keeps each moon next to its planet.',
       'Tech tree connections are now grid-style lines that only run up, down or sideways through the gaps between cards, never over or behind a card; lines leaving the same card share a trunk.',
