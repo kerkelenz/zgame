@@ -133,6 +133,20 @@ describe('using the game', () => {
     expect(await page.locator('.gcard.dim').count()).toBeGreaterThan(40);
     expect(await page.locator('.bedge.back').count()).toBe(3);
     expect(await page.locator('.bedge').count()).toBeGreaterThan(70);          // the whole map is drawn, not only the selection
+    // panned by dragging, zoomed with the wheel, no scroll bars
+    const tf = () => page.locator('.graph').evaluate((el) => (el as HTMLElement).style.transform);
+    const box = (await page.locator('.graphbox').boundingBox())!;
+    expect(await page.locator('.graphbox').evaluate((el) => getComputedStyle(el).overflow)).toBe('hidden');
+    const before = await tf();
+    await page.mouse.move(box.x + box.width / 2, box.y + 60);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 40, box.y + 130, { steps: 6 });
+    await page.mouse.up();
+    expect(await tf()).not.toBe(before);
+    expect(await page.locator('.gcard.sel').count()).toBe(1);               // a drag does not change the selection
+    const panned = await tf();
+    await page.mouse.wheel(0, -300);
+    expect(await tf()).not.toBe(panned);
     await page.getByRole('button', { name: 'Production and effects' }).click();
     expect(await page.locator('main').innerText()).toMatch(/Raised by/);
     noErrors();

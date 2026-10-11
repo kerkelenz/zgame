@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { lvl } from '../../../shared/formulas';
 import { BUILDINGS } from '../../../shared/data';
 import { FLOWS, ITEM_EDGES, TREE, VISIBLE_EDGES, ancestors, columns, descendants, levelsShown, nodeOf, pathTo } from '../../../shared/techtree';
@@ -14,8 +14,13 @@ export function TechTree() {
   const [view, setView] = useState<'tree' | 'flows'>('tree');
   const [sel, setSel] = useState<string | null>(null);
   const [hover, setHover] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(1);
+  // the map is panned with the mouse or a finger and zoomed with the wheel, a pinch or the buttons; there are no scroll bars
+  const [cam, setCam] = useState({ x: 12, y: 8, k: 0.8 });
+  const [gliding, setGliding] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const gesture = useRef({ moved: 0, pinch: 0 });
+  const MIN_K = 0.3, MAX_K = 1.6;
 
   const have = (id: string): number => {
     const n = nodeOf(id)!;
@@ -68,10 +73,66 @@ export function TechTree() {
     return m;
   }, [litEdges]);
 
+  const clampCam = (c: { x: number; y: number; k: number }) => {
+    const el = box.current;
+    if (!el) return c;
+    const keep = 120;
+    return { k: c.k, x: Math.min(el.clientWidth - keep, Math.max(keep - layout.width * c.k, c.x)), y: Math.min(el.clientHeight - keep, Math.max(keep - layout.height * c.k, c.y)) };
+  };
+  /** zoom by a factor around a point of the viewport */
+  const zoomAt = (factor: number, px: number, py: number) => setCam((c) => {
+    const k = Math.min(MAX_K, Math.max(MIN_K, c.k * factor));
+    const f = k / c.k;
+    return clampCam({ k, x: px - (px - c.x) * f, y: py - (py - c.y) * f });
+  });
+  const zoomCentre = (factor: number) => { const el = box.current; setGliding(true); zoomAt(factor, (el?.clientWidth ?? 0) / 2, (el?.clientHeight ?? 0) / 2); };
+  const fit = () => { const el = box.current; if (!el) return; setGliding(true); const k = Math.min(MAX_K, Math.max(MIN_K, Math.min(el.clientWidth / layout.width, el.clientHeight / layout.height))); setCam({ k, x: (el.clientWidth - layout.width * k) / 2, y: (el.clientHeight - layout.height * k) / 2 }); };
   const centre = (id: string) => {
     const p = layout.pos.get(id)!, el = box.current;
-    if (el) el.scrollTo({ left: Math.max(0, (p.x + p.w / 2) * zoom - el.clientWidth / 2), top: Math.max(0, (p.y + CARD_H / 2) * zoom - el.clientHeight / 2), behavior: 'smooth' });
+    if (!el) return;
+    setGliding(true);
+    setCam((c) => clampCam({ k: c.k, x: el.clientWidth / 2 - (p.x + p.w / 2) * c.k, y: el.clientHeight / 2 - (p.y + CARD_H / 2) * c.k }));
   };
+
+  // the wheel must be a non-passive listener to stop the page scrolling while the pointer is over the map
+  useEffect(() => {
+    const el = box.current;
+    if (!el || view !== 'tree') return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      setGliding(false);
+      zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onDown = (e: React.PointerEvent) => {
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    gesture.current = { moved: 0, pinch: 0 };
+    setGliding(false);
+  };
+  const onMove = (e: React.PointerEvent) => {
+    const prev = pointers.current.get(e.pointerId);
+    if (!prev) return;
+    const now = { x: e.clientX, y: e.clientY };
+    const el = box.current!;
+    const r = el.getBoundingClientRect();
+    if (pointers.current.size === 1) {
+      const dx = now.x - prev.x, dy = now.y - prev.y;
+      gesture.current.moved += Math.abs(dx) + Math.abs(dy);
+      if (gesture.current.moved > 6) { try { el.setPointerCapture(e.pointerId); } catch { /* ignore */ } setCam((c) => clampCam({ ...c, x: c.x + dx, y: c.y + dy })); }
+    } else if (pointers.current.size === 2) {
+      const other = [...pointers.current.entries()].find(([id]) => id !== e.pointerId)![1];
+      const dist = Math.hypot(now.x - other.x, now.y - other.y), before = gesture.current.pinch;
+      gesture.current.moved += 10;
+      if (before > 0 && dist > 0) zoomAt(dist / before, (now.x + other.x) / 2 - r.left, (now.y + other.y) / 2 - r.top);
+      gesture.current.pinch = dist;
+    }
+    pointers.current.set(e.pointerId, now);
+  };
+  const onUp = (e: React.PointerEvent) => { pointers.current.delete(e.pointerId); gesture.current.pinch = 0; };
   const jump = (id: string) => { if (!id) return; setSel(id); centre(id); };
   const pick = (id: string) => { if (id === sel) setSel(null); else jump(id); };
 
@@ -97,8 +158,10 @@ export function TechTree() {
               <option value="">Jump to…</option>
               {[...TREE].sort((a, b) => a.name.localeCompare(b.name)).map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
             </select>
-            <span className="muted small">Zoom</span>
-            {[0.6, 0.8, 1].map((z) => <button key={z} className={zoom === z ? 'primary' : ''} onClick={() => setZoom(z)}>{Math.round(z * 100)}%</button>)}
+            <span className="muted small">Drag to pan, wheel or pinch to zoom</span>
+            <button onClick={() => zoomCentre(1 / 1.25)} aria-label="Zoom out">−</button>
+            <button onClick={() => zoomCentre(1.25)} aria-label="Zoom in">+</button>
+            <button onClick={fit}>Fit all</button>
             {sel && <button onClick={() => setSel(null)}>Clear</button>}
           </div>
 
@@ -125,9 +188,9 @@ export function TechTree() {
             </Card>
           )}
 
-          <div className="graphbox" ref={box}>
-            <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
-              <div className="graph" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
+          <div className="graphbox" ref={box} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
+            <div>
+              <div className={`graph ${gliding ? 'glide' : ''}`} style={{ width: layout.width, height: layout.height, transform: `translate(${cam.x}px, ${cam.y}px) scale(${cam.k})` }}>
                 {layout.cols.map((c, t) => {
                   const first = layout.pos.get(c[0]);
                   return first ? <div key={t} className="colhead" style={{ left: first.x, top: PAD }}>{t === 0 ? 'Start' : `Step ${t}`}</div> : null;
@@ -156,7 +219,7 @@ export function TechTree() {
                   const need = needed.get(n.id);
                   const cls = ['gcard', n.kind, sel === n.id ? 'sel' : '', back.has(n.id) ? 'anc' : '', fwd.has(n.id) ? 'desc' : '', sel && !lit(n.id) ? 'dim' : '', !sel && active && lit(n.id) ? 'peek' : ''].filter(Boolean).join(' ');
                   return (
-                    <div key={n.id} className={cls} style={{ left: p.x, top: p.y, width: p.w, height: CARD_H }} onClick={() => pick(n.id)} onMouseEnter={() => setHover(n.id)} onMouseLeave={() => setHover(null)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(n.id); } }}>
+                    <div key={n.id} className={cls} style={{ left: p.x, top: p.y, width: p.w, height: CARD_H }} onClick={() => { if (gesture.current.moved <= 6) pick(n.id); }} onMouseEnter={() => setHover(n.id)} onMouseLeave={() => setHover(null)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(n.id); } }}>
                       <div className="gname" title={n.name}>{n.name}{n.moonOnly ? ' 🌙' : ''}{isUnit && h > 0 ? <span className="lvl"> ×{h}</span> : null}</div>
                       <div className="needs" title={n.requires.map((r) => `${nodeOf(r.id)!.name} ${r.level}`).join(', ')}>{n.requires.length ? `Needs ${n.requires.map((r) => `${nodeOf(r.id)!.name.replace(' Technology', '')} ${r.level}`).join(', ')}` : 'No requirements'}</div>
                       <div className="pips">
