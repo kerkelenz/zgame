@@ -143,9 +143,9 @@ export function shipSpeed(id: ShipId, techs: Levels<TechId>, logisticsBonus = 0)
   return base * (1 + per * lvl(techs, u.drive)) * (1 + logisticsBonus);
 }
 
-export function fleetSpeed(fleet: Fleet, techs: Levels<TechId>, logisticsBonus = 0): number {
+export function fleetSpeed(fleet: Fleet, techs: Levels<TechId>, logisticsBonus = 0, extra?: (id: ShipId) => number): number {
   let min = Infinity;
-  for (const [id, n] of Object.entries(fleet)) if (n && n > 0) min = Math.min(min, shipSpeed(id as ShipId, techs, logisticsBonus));
+  for (const [id, n] of Object.entries(fleet)) if (n && n > 0) min = Math.min(min, shipSpeed(id as ShipId, techs, logisticsBonus) * (1 + (extra ? extra(id as ShipId) : 0)));
   return Number.isFinite(min) ? min : 0;
 }
 

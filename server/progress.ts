@@ -1,4 +1,4 @@
-import { OFFICERS, OFFICER_MAX, FACTIONS, FACTION_BY_ID, JOIN_REP } from '../shared/data';
+import { OFFICERS, OFFICER_MAX, FACTIONS, FACTION_BY_ID, JOIN_REP, CHAR_CLASSES, CLASS_CHANGE_COST } from '../shared/data';
 import { lvl } from '../shared/formulas';
 import type { OfficerId, Res } from '../shared/types';
 import { bus } from './bus';
@@ -142,3 +142,17 @@ export function joinFaction(p: Player, id: string) {
 }
 
 export function leaveFaction(p: Player) { p.faction = null; }
+
+// ---------------------------------------------------------------- character classes
+
+/** The first class is free; switching later costs Command Credits. */
+export function chooseClass(p: Player, id: string) {
+  const def = CHAR_CLASSES.find((c) => c.id === id);
+  if (!def) throw new GameError('Unknown class');
+  if (p.charClass === def.id) throw new GameError(`You are already a ${def.name}`);
+  if (p.charClass) {
+    if (p.credits < CLASS_CHANGE_COST) throw new GameError(`Changing class costs ${CLASS_CHANGE_COST.toLocaleString('en-US')} Command Credits and you have ${Math.floor(p.credits).toLocaleString('en-US')}`);
+    p.credits -= CLASS_CHANGE_COST;
+  }
+  p.charClass = def.id;
+}

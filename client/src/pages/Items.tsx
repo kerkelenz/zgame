@@ -20,7 +20,8 @@ export function Items({ kind }: { kind: Kind }) {
   const [counts, setCounts] = useState<Record<string, number>>({});
 
   // the Chief Engineer shortens every timer; the server applies the same factor
-  const timeFactor = Math.max(0.1, 1 - 0.1 * (me.player.officers?.engineer ?? 0));
+  const timeFactor = planet.detail.timeFactor as number;
+  const researchFactor = planet.detail.researchFactor as number; // Discoverer: research only
   const robotics = lvl(planet.buildings, 'roboticsFactory');
   const nanite = lvl(planet.buildings, 'naniteFactory');
   const shipyard = lvl(planet.buildings, 'shipyard');
@@ -99,7 +100,7 @@ export function Items({ kind }: { kind: Kind }) {
           const d = TECHS[id];
           const level = lvl(techs, id);
           const cost = techCost(id, level + 1);
-          const secs = researchTime(cost, lab, cfg.economySpeed * cfg.researchBoost, me.allianceBonuses.research, timeFactor);
+          const secs = researchTime(cost, lab, cfg.economySpeed * cfg.researchBoost, me.allianceBonuses.research, timeFactor * researchFactor);
           const missing = unmet(d.requires, planet.buildings, techs);
           const energyOk = !d.energyReq || planet.production.energyProduced >= d.energyReq * 3 ** level;
           const ok = !missing.length && energyOk && (researchQ ? rBacklog.length < MAXQ : canAfford(have, cost));

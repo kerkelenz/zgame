@@ -43,6 +43,7 @@ export function Overview() {
           <table className="kv">
             <tbody>
               <tr><td>Points</td><td><b>{fmt(pts.total)}</b> (B {fmt(pts.buildings)} · R {fmt(pts.research)} · F {fmt(pts.fleet)} · D {fmt(pts.defense)})</td></tr>
+              <tr><td>Class</td><td>{me.player.charClass ? <span style={{ textTransform: 'capitalize' }}>{me.player.charClass}</span> : <a onClick={() => setPage('command')}>none - choose one</a>}</td></tr>
               <tr><td>Colonies</td><td>{me.colonies} / {me.maxPlanets}</td></tr>
               <tr><td>Fleet slots</td><td>{me.slots.used} / {me.slots.max} · expeditions {me.slots.expUsed} / {me.slots.expMax}</td></tr>
               <tr><td>Battles</td><td>{me.player.stats.battlesWon}W / {me.player.stats.battlesLost}L · raids repelled {me.player.stats.raidsRepelled}</td></tr>

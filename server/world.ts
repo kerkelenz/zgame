@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { DEFAULT_CONFIG, type UniverseConfig } from '../shared/config';
 import type {
-  BuildingId, Coords, Defenses, FactionId, Fleet, Mission, OfficerId, Res, TechId, UnitId,
+  BuildingId, CharClass, Coords, Defenses, FactionId, Fleet, Mission, OfficerId, Res, TechId, UnitId,
 } from '../shared/types';
 import type { Levels } from '../shared/formulas';
 import { defaultNotify, type NotifySettings } from './external';
@@ -42,6 +42,8 @@ export interface Player {
   tributes: Tribute[];
   nextTribute: number;
   history: HistoryPoint[];
+  /** chosen character class (first pick is free) */
+  charClass: CharClass | null;
   /** alerts outside the game (Discord / ntfy) */
   notify: NotifySettings;
   /** set while on vacation: production is frozen and nobody can attack you */
@@ -65,7 +67,7 @@ export function blankPlayer(id: string, username: string, now: number, extra: Pa
   return {
     id, username, salt: '', hash: '', createdAt: now, lastSeen: now, techs: {}, research: null, researchBacklog: [],
     allianceId: null, planetIds: [], stats: blankStats(), credits: 0, officers: {}, achievements: {}, objectives: {},
-    faction: null, rep: {}, heat: {}, truces: {}, tributes: [], nextTribute: 0, history: [], vacation: null, notify: defaultNotify(), ...extra,
+    faction: null, rep: {}, heat: {}, truces: {}, tributes: [], nextTribute: 0, history: [], vacation: null, notify: defaultNotify(), charClass: null, ...extra,
   };
 }
 
@@ -76,6 +78,7 @@ export function migratePlayer(p: Player) {
   p.credits ??= 0; p.officers ??= {}; p.achievements ??= {}; p.objectives ??= {}; p.faction ??= null;
   p.rep ??= {}; p.heat ??= {}; p.truces ??= {}; p.tributes ??= []; p.nextTribute ??= 0; p.history ??= [];
   p.vacation ??= null;
+  p.charClass ??= null;
   p.notify = { ...defaultNotify(), ...(p.notify ?? {}), events: { ...defaultNotify().events, ...(p.notify?.events ?? {}) } };
   p.researchBacklog ??= [];
 }

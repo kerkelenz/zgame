@@ -39,6 +39,27 @@ export function Command() {
         </Card>
       )}
 
+      <Card title="Character class">
+        <p className="muted small">{d.charClass
+          ? <>You are a <b>{d.classes.find((c: any) => c.chosen)?.name}</b>. Switching costs {fmt(d.classChangeCost)} Command Credits.</>
+          : 'Pick a path. Your first choice is free; changing later costs Command Credits. In an alliance, members with different classes complement each other.'}</p>
+        <div className="items">
+          {d.classes.map((c: any) => (
+            <section key={c.id} className={`card faction${c.chosen ? ' joined' : ''}`}>
+              <h3>{c.name} {c.chosen && <span className="tag you">your class</span>}</h3>
+              <p className="muted small">{c.tag}</p>
+              <ul className="notes small">{c.perks.map((p: string) => <li key={p}>{p}</li>)}</ul>
+              {!c.chosen && (
+                <button className="primary" disabled={!!d.charClass && d.credits < d.classChangeCost}
+                  onClick={() => { if (!d.charClass || confirm(`Become a ${c.name}? This costs ${fmt(d.classChangeCost)} Command Credits.`)) void run(() => post('/class/choose', { id: c.id }), `You are now a ${c.name}`); }}>
+                  {d.charClass ? `Switch · ${fmt(d.classChangeCost)} credits` : 'Choose'}
+                </button>
+              )}
+            </section>
+          ))}
+        </div>
+      </Card>
+
       <Card title="Objectives">
         <ol className="objectives">
           {d.objectives.map((o: any) => (

@@ -1,12 +1,12 @@
 import { ALLIANCE_UPGRADES } from '../shared/data';
 import { allianceBonuses, maxFields, planetCapacity, planetProduction, updatePlanet, usedFields } from './economy';
 import { activeSlots } from './fleet';
-import { energyBoost, mineBoost, timeFactor } from './perks';
+import { classSpeedBonus, energyBoost, mineBoost, researchFactor, timeFactor } from './perks';
 import { colonyCount, maxPlanets, playerPoints } from './galaxy';
 import { sameCoords } from '../shared/formulas';
 import { upgradeCost } from './alliance';
 import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
-import { OFFICERS, OFFICER_MAX, FACTIONS, JOIN_REP, FACTION_BY_ID } from '../shared/data';
+import { OFFICERS, OFFICER_MAX, FACTIONS, JOIN_REP, FACTION_BY_ID, CHAR_CLASSES, CLASS_CHANGE_COST } from '../shared/data';
 import { planetAt, type Alliance, type Movement, type Planet, type Player, type World } from './world';
 
 export function planetView(w: World, planet: Planet, now: number) {
@@ -27,7 +27,7 @@ export function planetView(w: World, planet: Planet, now: number) {
     detail: (() => {
       const owner = w.players[planet.ownerId], ab = allianceBonuses(w, owner), c = w.config;
       return {
-        allianceProduction: ab.production, allianceResearch: ab.research, boost: mineBoost(owner), energyBoost: energyBoost(owner), timeFactor: timeFactor(owner),
+        allianceProduction: ab.production, allianceResearch: ab.research, boost: mineBoost(owner), energyBoost: energyBoost(owner), timeFactor: timeFactor(owner), researchFactor: researchFactor(owner), classSpeed: classSpeedBonus(owner),
         speeds: {
           production: c.economySpeed * c.productionBoost, construction: c.economySpeed * c.constructionBoost, research: c.economySpeed * c.researchBoost,
           shipyard: c.economySpeed * c.shipyardBoost, storage: Math.max(1, c.economySpeed) * c.storageBoost, fleet: c.fleetSpeed,
@@ -62,7 +62,7 @@ export function meView(w: World, p: Player, now: number) {
   return {
     now,
     player: {
-      id: p.id, username: p.username, techs: p.techs, research: p.research, researchBacklog: p.researchBacklog ?? [], officers: p.officers, allianceId: p.allianceId,
+      id: p.id, username: p.username, techs: p.techs, research: p.research, researchBacklog: p.researchBacklog ?? [], officers: p.officers, charClass: p.charClass, allianceId: p.allianceId,
       points: playerPoints(w, p), stats: p.stats,
     },
     planets: p.planetIds.map((id) => {
@@ -93,6 +93,9 @@ export function commandView(w: World, p: Player) {
       return { id: o.id, name: o.name, desc: o.desc, rank, max: OFFICER_MAX, nextCost: rank < OFFICER_MAX ? o.cost[rank] : null };
     }),
     faction: p.faction,
+    charClass: p.charClass,
+    classes: CHAR_CLASSES.map((c) => ({ ...c, chosen: p.charClass === c.id })),
+    classChangeCost: p.charClass ? CLASS_CHANGE_COST : 0,
     factions: FACTIONS.map((f) => ({
       id: f.id, name: f.name, tag: f.tag, perk: f.perk, rival: f.rival, rivalName: FACTION_BY_ID[f.rival].name,
       rep: Math.round(p.rep[f.id] || 0), joinRep: JOIN_REP, joined: p.faction === f.id,

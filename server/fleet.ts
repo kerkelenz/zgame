@@ -11,7 +11,7 @@ import { notifyPlayer } from './messages';
 import { adjustRep } from './progress';
 import { externalNotify } from './external';
 import { assertActive, onVacation } from './vacation';
-import { cargoMul, debrisShare, expeditionYield, extraFleetSlots, lootShare, shieldMul, spyBonus, spyEvasion, weaponMul } from './perks';
+import { cargoFor, classSpeedFor, colonyFieldsMul, debrisShare, dodgesBadLuck, expeditionYield, extraFleetSlots, fuelFactor, lootShare, shieldMul, spyBonus, spyEvasion, weaponMul } from './perks';
 import { buildNpcFleet, fleetValue } from './npc';
 import { GameError, ck, planetAt, sameAlliance, uid, type Movement, type Planet, type Player, type World } from './world';
 
@@ -45,9 +45,9 @@ export function activeSlots(w: World, player: Player) {
 export function flightPlan(w: World, player: Player, ships: Fleet, from: Coords, to: Coords, speedPct: number) {
   const lg = allianceBonuses(w, player).logistics;
   const dist = distance(from, to);
-  const speed = fleetSpeed(ships, player.techs, lg);
+  const speed = fleetSpeed(ships, player.techs, lg, (id) => classSpeedFor(player, id));
   const secs = flightSeconds(dist, speed, speedPct, w.config.fleetSpeed);
-  return { dist, speed, secs, fuel: fuelUse(ships, dist, speedPct) };
+  return { dist, speed, secs, fuel: Math.max(1, Math.round(fuelUse(ships, dist, speedPct) * fuelFactor(player))) };
 }
 
 export function sendFleet(w: World, player: Player, req: SendRequest, now: number): Movement {
@@ -144,7 +144,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     deuterium: Math.max(0, Math.floor(req.cargo?.deuterium || 0)),
   };
   if (mission === 'attack' || mission === 'espionage') { cargo.metal = cargo.crystal = cargo.deuterium = 0; }
-  const cap = Math.floor(cargoCapacity(ships) * cargoMul(player));
+  const cap = cargoFor(player, ships);
   if (totalRes(cargo) > cap) throw new GameError(`Cargo exceeds capacity (${num(cap)})`);
   const need = addRes(cargo, { metal: 0, crystal: 0, deuterium: plan.fuel });
   if (!canAfford(planet.resources, need)) throw new GameError(`Not enough resources (fuel: ${num(plan.fuel)} deuterium)`);
@@ -315,6 +315,7 @@ function resolveColonize(w: World, m: Movement, at: number) {
     return;
   }
   const colony = createPlanet(w, owner, { ...m.to }, { name: 'Colony', now: at });
+  colony.fields = Math.floor(colony.fields * colonyFieldsMul(owner));
   m.ships.colonyShip = (m.ships.colonyShip || 0) - 1;
   if (!m.ships.colonyShip) delete m.ships.colonyShip;
   notifyPlayer(w, owner.id, 'system', 'New colony founded', `You settled ${fmt(m.to)} (${colony.fields} fields, max ${colony.maxTemp}°C).`);
@@ -459,7 +460,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   // loot: bounded by the survivors' combined free cargo, split by each fleet's share of it
   let loot: Res = zeroRes();
   const lootBy: Record<string, Res> = {};
-  const free = group.map((m) => (fleetCount(m.ships) ? Math.max(0, Math.floor(cargoCapacity(m.ships) * cargoMul(attackerOf(m))) - totalRes(m.cargo)) : 0));
+  const free = group.map((m) => (fleetCount(m.ships) ? Math.max(0, cargoFor(attackerOf(m), m.ships) - totalRes(m.cargo)) : 0));
   const freeTotal = free.reduce((a, b) => a + b, 0);
   if (res.winner === 'attacker' && freeTotal > 0) {
     loot = computeLoot(target.resources, freeTotal, lootShare(leadPlayer));
@@ -544,16 +545,19 @@ function resolveAttack(w: World, lead: Movement, at: number) {
 function resolveExpedition(w: World, m: Movement, at: number) {
   const owner = w.players[m.ownerId!];
   owner.stats.expeditions++;
-  const value = fleetValue(m.ships) * expeditionYield(owner);
-  const r = Math.random();
-  const free = Math.max(0, cargoCapacity(m.ships) - totalRes(m.cargo));
+  const value = fleetValue(m.ships); // what the fleet is worth: sets the size of pirates
+  const yieldMul = expeditionYield(owner); // Geologist / Discoverer: scales everything you find
+  let r = Math.random();
+  // Discoverers dodge half of the nasty surprises (pirates, black holes)
+  if (dodgesBadLuck(owner) && ((r >= 0.68 && r < 0.77) || (r >= 0.9 && r < 0.95)) && Math.random() < 0.5) r = 0.1;
+  const free = Math.max(0, cargoFor(owner, m.ships) - totalRes(m.cargo));
   let title = 'Expedition: nothing found';
   let text = 'Your fleet drifted through empty space and found nothing of interest.';
   let hold = 3_600_000 / w.config.fleetSpeed;
 
   if (Math.random() < 0.15) {
     // deep space sometimes pays in Command Credits instead of cargo
-    const cc = Math.round(20 + Math.random() * 40 + Math.sqrt(value / 1000) * 4);
+    const cc = Math.round((20 + Math.random() * 40 + Math.sqrt(value / 1000) * 4) * yieldMul);
     owner.credits += cc;
     title = 'Expedition: command gear salvaged';
     text = `The crew stripped intact command gear from a derelict and sold it on the way home: ${num(cc)} Command Credits.`;
@@ -561,12 +565,12 @@ function resolveExpedition(w: World, m: Movement, at: number) {
     // nothing
   } else if (r < 0.58) {
     const kind = (['metal', 'crystal', 'deuterium'] as const)[Math.floor(Math.random() * 3)];
-    const amount = Math.min(free, Math.floor((3000 + value * 0.04) * (0.5 + Math.random()) * Math.sqrt(w.config.economySpeed)));
+    const amount = Math.min(free, Math.floor((3000 + value * 0.04) * yieldMul * (0.5 + Math.random()) * Math.sqrt(w.config.economySpeed)));
     m.cargo[kind] += amount;
     title = 'Expedition: resources found';
     text = `Your fleet discovered a rich asteroid cluster and loaded ${num(amount)} ${kind}.`;
   } else if (r < 0.68) {
-    const budget = Math.max(3000, value * (0.05 + Math.random() * 0.1));
+    const budget = Math.max(3000, value * yieldMul * (0.05 + Math.random() * 0.1));
     const found = buildNpcFleet(budget, Math.random);
     const added: Fleet = {};
     for (const [id, n] of Object.entries(found)) { if (UNITS[id as ShipId].attack > 1 && id !== 'battleship') { m.ships[id as ShipId] = (m.ships[id as ShipId] || 0) + (n || 0); added[id as ShipId] = n; } }

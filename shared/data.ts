@@ -1,5 +1,5 @@
 import type {
-  BuildingDef, BuildingId, DefenseId, FactionId, OfficerId, ShipId, TechDef, TechId, UnitDef, UnitId, Res,
+  BuildingDef, BuildingId, CharClass, DefenseId, FactionId, OfficerId, ShipId, TechDef, TechId, UnitDef, UnitId, Res,
 } from './types';
 
 const r = (metal = 0, crystal = 0, deuterium = 0): Res => ({ metal, crystal, deuterium });
@@ -115,11 +115,23 @@ export const OFFICERS: OfficerDef[] = [
 ];
 export const OFFICER_MAX = 3;
 
+export interface CharClassDef { id: CharClass; name: string; tag: string; perks: string[] }
+/** Pick one: the first choice is free, changing later costs Command Credits. */
+export const CHAR_CLASSES: CharClassDef[] = [
+  { id: 'collector', name: 'Collector', tag: 'Economy: the empire builder.', perks: ['+15% output from every mine', '+10% energy production', '+25% cargo on Small and Large Cargo ships', 'The merchant keeps 8% instead of 12%'] },
+  { id: 'general', name: 'General', tag: 'War: the fleet commander.', perks: ['+2 fleet slots', '25% less fuel on every flight', '+25% flight speed for combat ships and recyclers', '+3% more debris from battles'] },
+  { id: 'discoverer', name: 'Discoverer', tag: 'Exploration: the pathfinder.', perks: ['+1 expedition slot', '+50% resources and ships found on expeditions', 'Half as many pirate ambushes and black holes', '+10% research speed', 'New colonies are 10% bigger'] },
+];
+export const CLASS_CHANGE_COST = 2000;
+/** ships the General's +25% speed applies to */
+export const GENERAL_FAST_SHIPS: string[] = ['lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'battlecruiser', 'bomber', 'destroyer', 'deathstar', 'recycler'];
+
 /** Travelling merchant: swaps resources at a fixed 3:2:1 rate, keeping a cut. */
 export const TRADE_VALUE = { metal: 1, crystal: 1.5, deuterium: 3 } as const;
 export const TRADE_FEE = 0.12;
-export const tradeQuote = (give: keyof typeof TRADE_VALUE, get: keyof typeof TRADE_VALUE, amount: number) =>
-  Math.floor((Math.max(0, amount) * TRADE_VALUE[give]) / TRADE_VALUE[get] * (1 - TRADE_FEE));
+export const TRADE_FEE_COLLECTOR = 0.08;
+export const tradeQuote = (give: keyof typeof TRADE_VALUE, get: keyof typeof TRADE_VALUE, amount: number, fee = TRADE_FEE) =>
+  Math.floor((Math.max(0, amount) * TRADE_VALUE[give]) / TRADE_VALUE[get] * (1 - fee));
 
 export interface AllianceUpgrade { id: string; name: string; desc: string; base: Res; factor: number; perLevel: number }
 export const ALLIANCE_UPGRADES: Record<string, AllianceUpgrade> = {

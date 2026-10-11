@@ -2,7 +2,7 @@
  * What an item does at each level, computed from the same formulas the server runs.
  * Pure functions: the client renders them as "details" pages, tests compare them to the engine.
  */
-import { BUILDINGS, TECHS, UNITS, isShip } from './data';
+import { BUILDINGS, GENERAL_FAST_SHIPS, TECHS, UNITS, isShip } from './data';
 import {
   buildingCost, buildingTime, production, researchTime, shipSpeed, storageCapacity, techCost, unitTime, lvl,
   type Levels, type ProductionInput,
@@ -24,6 +24,10 @@ export interface DetailCtx {
   energyBoost: number;
   /** construction/research/shipyard duration multiplier (Chief Engineer) */
   timeFactor: number;
+  /** extra research-only duration multiplier (Discoverer) */
+  researchFactor: number;
+  /** class flight speed bonus for combat ships (General) */
+  classSpeed: number;
   speeds: { production: number; construction: number; research: number; shipyard: number; storage: number; fleet: number };
 }
 
@@ -232,7 +236,7 @@ export function techTable(id: TechId, ctx: DetailCtx, from: number, to: number):
   const fx = TECH_EFFECTS[id];
   const rows = range(Math.max(1, from), to).map((L) => {
     const cost = techCost(id, L);
-    return { level: L, cost, seconds: researchTime(cost, lvl(ctx.buildings, 'researchLab'), ctx.speeds.research, ctx.allianceResearch, ctx.timeFactor), v: fx ? fx.at(L, ctx) : {} };
+    return { level: L, cost, seconds: researchTime(cost, lvl(ctx.buildings, 'researchLab'), ctx.speeds.research, ctx.allianceResearch, ctx.timeFactor * ctx.researchFactor), v: fx ? fx.at(L, ctx) : {} };
   });
   return { columns: fx?.columns ?? [], rows, notes: fx?.notes ?? [] };
 }
@@ -289,7 +293,8 @@ export interface UnitDetails {
 export function unitDetails(id: UnitId, ctx: DetailCtx, maxTech = 10): UnitDetails {
   const u = UNITS[id];
   const w = lvl(ctx.techs, 'weapons'), s = lvl(ctx.techs, 'shielding'), a = lvl(ctx.techs, 'armour');
-  const speedAt = (techs: Levels<TechId>) => (isShip(id) ? shipSpeed(id, techs) : 0);
+  const classMul = 1 + (GENERAL_FAST_SHIPS.includes(id) ? ctx.classSpeed : 0);
+  const speedAt = (techs: Levels<TechId>) => (isShip(id) ? shipSpeed(id, techs) * classMul : 0);
   const base: UnitStats = { attack: u.attack, shield: u.shield, hull: u.hull, cargo: u.cargo, speed: u.speed, fuel: u.fuel };
   const effective: UnitStats = { ...base, attack: u.attack * (1 + 0.1 * w), shield: u.shield * (1 + 0.1 * s), hull: u.hull * (1 + 0.1 * a), speed: speedAt(ctx.techs) };
   return {
@@ -314,7 +319,7 @@ export interface PlanetViewForDetails {
   isMoon?: boolean;
   fleet: { solarSatellite?: number };
   settings: Record<string, number>;
-  detail: Pick<DetailCtx, 'allianceProduction' | 'allianceResearch' | 'boost' | 'energyBoost' | 'timeFactor' | 'speeds'>;
+  detail: Pick<DetailCtx, 'allianceProduction' | 'allianceResearch' | 'boost' | 'energyBoost' | 'timeFactor' | 'researchFactor' | 'classSpeed' | 'speeds'>;
 }
 export function detailCtxFrom(planet: PlanetViewForDetails, techs: Levels<TechId>): DetailCtx {
   return {

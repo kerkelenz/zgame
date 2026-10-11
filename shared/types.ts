@@ -49,6 +49,7 @@ export interface TechDef {
 }
 
 export type FactionId = 'iron' | 'verge' | 'solar' | 'chain';
+export type CharClass = 'collector' | 'general' | 'discoverer';
 export type OfficerId = 'quartermaster' | 'engineer' | 'admiral' | 'spymaster' | 'geologist';
 export interface UnitDef {
   id: UnitId; name: string; desc: string; kind: 'ship' | 'defense';

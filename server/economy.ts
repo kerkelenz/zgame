@@ -6,7 +6,7 @@ import {
 import type { BuildingId, Requirement, Res, TechId, UnitId } from '../shared/types';
 import { bus } from './bus';
 import { notifyPlayer } from './messages';
-import { energyBoost, mineBoost, timeFactor } from './perks';
+import { energyBoost, mineBoost, researchFactor, timeFactor, tradeFee } from './perks';
 import { assertActive } from './vacation';
 import { GameError, allianceOf, type Planet, type Player, type World } from './world';
 
@@ -248,7 +248,7 @@ function beginResearch(w: World, player: Player, planet: Planet, id: TechId, now
   }
   const cost = techCost(id, level);
   pay(planet, cost);
-  const secs = researchTime(cost, lvl(planet.buildings, 'researchLab'), w.config.economySpeed * w.config.researchBoost, allianceBonuses(w, player).research, timeFactor(player));
+  const secs = researchTime(cost, lvl(planet.buildings, 'researchLab'), w.config.economySpeed * w.config.researchBoost, allianceBonuses(w, player).research, timeFactor(player) * researchFactor(player));
   player.research = { id, level, start: now, end: now + secs * 1000, cost, planetId: planet.id };
 }
 
@@ -330,7 +330,7 @@ export function tradeResources(w: World, planet: Planet, give: string, get: stri
   updatePlanet(w, planet, now);
   const g = give as (typeof keys)[number], t = get as (typeof keys)[number];
   if (planet.resources[g] < amount) throw new GameError(`Not enough ${g} on ${planet.name}`);
-  const out = tradeQuote(g, t, amount);
+  const out = tradeQuote(g, t, amount, tradeFee(w.players[planet.ownerId]));
   if (out <= 0) throw new GameError('That is too small a load for the merchant to bother with');
   planet.resources[g] -= amount;
   planet.resources[t] += out;

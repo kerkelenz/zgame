@@ -63,6 +63,7 @@ Config is stored in the save on first start; env vars override it on later start
 - **Economy page** – empire income per hour and day, a planet-by-planet table, a breakdown of where each resource comes from (mines, plasma, boosts, energy-shortage losses), the energy picture, storage fill timers and projections, and an upgrade planner that ranks mine and energy upgrades by payback time.
 - **Vacation mode and status flags** – freeze your empire while away (nothing produced, nobody can attack or spy on you; needs a quiet empire and lasts a minimum stay). The Galaxy flags vacation, online/inactive/long-inactive commanders, and newbie vs. too-strong protection.
 - **Alerts outside the game** – when a fleet, raid or missile is heading for you (or an ally), or a tribute is demanded, get a push on Discord (webhook) or your phone (ntfy.sh topic), or a browser notification. Per-event switches, only-when-away by default, rate-limited; addresses are allowlisted (no arbitrary URLs) and masked in the UI.
+- **Character classes** – pick Collector (+15% mines, +10% energy, bigger cargo ships, cheaper merchant), General (+2 fleet slots, -25% fuel, faster combat ships, more debris) or Discoverer (+1 expedition slot, +50% finds, fewer ambushes, faster research, bigger colonies). First pick is free; changing costs Command Credits.
 - **Empire page** – every planet and moon on one screen: resources, production, construction, ships, storage warnings.
 - **Live UI** – WebSocket push for alerts/messages/chat, interpolated resource counters, countdowns.
 

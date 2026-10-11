@@ -10,7 +10,7 @@ import { flightPlan, jumpGate, launchMissiles, phalanxScan, recallFleet, sendFle
 import { colonyCount, galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
 import { allianceView, commandView, fleetsView, meView, planetView } from './views';
-import { checkProgress, hireOfficer, joinFaction, leaveFaction } from './progress';
+import { checkProgress, chooseClass, hireOfficer, joinFaction, leaveFaction } from './progress';
 import { answerTribute } from './empires';
 import { spawnRaid } from './npc';
 import { rankings } from './rankings';
@@ -228,6 +228,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     answerTribute(w, p, req.params.id, answer, now(), (npcId) => { spawnRaid(w, now(), Math.random, { targetPlayerId: p.id, sourceNpcId: npcId }); });
     return commandView(w, p);
   }));
+  A.post('/class/choose', wrap((req) => { chooseClass(req.player!, str(req.body.id)); return commandView(w, req.player!); }));
   A.post('/faction/join', wrap((req) => { joinFaction(req.player!, str(req.body.id)); return commandView(w, req.player!); }));
   A.post('/faction/leave', wrap((req) => { leaveFaction(req.player!); return commandView(w, req.player!); }));
   A.get('/defs', wrap(() => ({ BUILDINGS, TECHS, UNITS })));
