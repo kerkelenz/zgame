@@ -31,7 +31,7 @@ export function TechTree() {
   // the physics: nodes are bodies, arrows are springs. It opens already relaxed and moves again when a node is dragged.
   const sim = useMemo(() => {
     const s = createSim(
-      g.nodes.map((n) => ({ key: n.key, x: PAD + n.layer * COL_W, y: PAD + n.lane * ROW_H, w: NODE_W, h: NODE_H })),
+      g.nodes.map((n) => ({ key: n.key, column: n.layer, x: PAD + n.layer * COL_W, y: PAD + n.lane * ROW_H, w: NODE_W, h: NODE_H })),
       g.edges.map((e) => ({ from: e.from, to: e.to, kind: e.kind })),
     );
     settle(s);
@@ -127,7 +127,7 @@ export function TechTree() {
   const jump = (key: string) => { if (!key) return; setSel(key); centre(key); };
   const pick = (key: string) => { if (key === sel) setSel(null); else jump(key); };
   const jumpItem = (id: string) => { if (id) jump(levelKey(id, Math.min(Math.max(1, have(id) + 1), g.nodes.filter((n) => n.id === id).length))); };
-  const shake = () => { for (const b of sim.bodies) { b.vx += (Math.random() - 0.5) * 12; b.vy += (Math.random() - 0.5) * 12; } kick(0.9); };
+  const shake = () => { for (const b of sim.bodies) { b.vy += (Math.random() - 0.5) * 24; } kick(0.9); };
 
   useEffect(() => { if (view === 'tree') fit(false); }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
   // the wheel must be a non-passive listener to stop the page scrolling while the pointer is over the map
@@ -163,10 +163,9 @@ export function TechTree() {
       if (gesture.current.moved > 6) {
         try { el.setPointerCapture(e.pointerId); } catch { /* ignore */ }
         if (grab.current && grab.current.id === e.pointerId) {
-          // a node is being dragged: pin it under the pointer and let the springs pull the rest along
+          // a node is being dragged up or down its column: pin it under the pointer and let the springs pull the rest along
           const b = sim.byKey.get(grab.current.key)!;
           b.pinned = true;
-          b.x = (now.x - r.left - cam.x) / cam.k - b.w / 2;
           b.y = (now.y - r.top - cam.y) / cam.k - b.h / 2;
           kick(0.7);
         } else setCam((c) => clampCam({ ...c, x: c.x + dx, y: c.y + dy }));
@@ -202,7 +201,7 @@ export function TechTree() {
       {view === 'tree' && (
         <>
           <p className="muted small">
-            Every level of every building and research is its own node, chained to the one before it; ships and defenses are single nodes. The map is a live physics simulation: arrows are springs, nodes push each other apart, and everything flows left to right from what a node needs to what it opens. <b>Drag a node</b> to pull its neighbours along; let go and it springs back. An item&apos;s first level is joined to the levels it requires (faint arrows come from items that feed many others, such as the Shipyard). Point at a node, or click it to keep it selected, to light its whole chain: <span className="tlegend anc">what leads to it</span>, <span className="tlegend desc">what it opens</span>.
+            Every level of every building and research is its own node, chained to the one before it; ships and defenses are single nodes. The map is divided into numbered columns and every node lives in exactly one of them: each arrow goes from a column to a later one, so everything flows left to right from what a node needs to what it opens. Within its column a node is positioned by physics: arrows are springs that line a node up with what it connects to, and nodes push each other apart. <b>Drag a node up or down</b> its column to pull its neighbours along; let go and it springs back. An item&apos;s first level is joined to the levels it requires (faint arrows come from items that feed many others, such as the Shipyard). Point at a node, or click it to keep it selected, to light its whole chain: <span className="tlegend anc">what leads to it</span>, <span className="tlegend desc">what it opens</span>.
             <span className="tlegend done">have</span> <span className="tlegend next">next</span> <span className="tlegend locked">locked</span>
           </p>
           <div className="row wrap">
@@ -247,6 +246,9 @@ export function TechTree() {
 
           <div className="graphbox" ref={box} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
             <div className={`graph ${gliding ? 'glide' : ''}`} style={{ transform: `translate(${cam.x}px, ${cam.y}px) scale(${cam.k})` }}>
+              {Array.from({ length: g.layers }, (_, i) => (
+                <div key={i} className={`colband ${i % 2 ? 'odd' : ''}`} style={{ left: PAD + i * COL_W - (COL_W - NODE_W) / 2, width: COL_W }}><span>{i + 1}</span></div>
+              ))}
               <svg className="edges" width="1" height="1" aria-hidden="true">
                 {g.edges.map((e) => {
                   const A = byKey.get(e.from)!;

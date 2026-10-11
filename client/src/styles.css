@@ -272,3 +272,7 @@ ol.steps { margin: 4px 0; padding-left: 20px; } ol.steps li { margin: 2px 0; }
 .bedge.level path { stroke-width: 1.2; opacity: .45; }
 
 .graph .edges { overflow: visible; position: absolute; left: 0; top: 0; }
+
+.colband { position: absolute; top: -4000px; height: 9000px; background: rgba(255,255,255,.015); pointer-events: none; }
+.colband.odd { background: rgba(255,255,255,.04); }
+.colband span { position: absolute; top: 3965px; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--muted); }

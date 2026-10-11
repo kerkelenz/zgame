@@ -147,10 +147,14 @@ describe('using the game', () => {
       return null;
     });
     expect(empty, 'an empty spot to grab').toBeTruthy();
-    await page.mouse.move(empty!.x, empty!.y);
-    await page.mouse.down();
-    await page.mouse.move(empty!.x + 40, empty!.y - 30, { steps: 6 });
-    await page.mouse.up();
+    const drag = async (dx: number, dy: number) => {
+      await page.mouse.move(empty!.x, empty!.y);
+      await page.mouse.down();
+      await page.mouse.move(empty!.x + dx, empty!.y + dy, { steps: 6 });
+      await page.mouse.up();
+    };
+    await drag(40, -30);
+    if ((await tf()) === before) await drag(-40, 30);                          // the map may already be at one edge
     expect(await tf()).not.toBe(before);
     expect(await page.locator('.gnode.sel').count()).toBe(1);               // a drag does not change the selection
     const panned = await tf();
