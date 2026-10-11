@@ -13,7 +13,7 @@ const TOPICS: Topic[] = [
         <p>You are a commander with one homeworld in a shared galaxy. You mine resources, research technology, build ships and defenses, expand to new planets, and trade blows - or favours - with other commanders and with computer-run empires. Everything keeps running while you are away, so the game is about planning: queue work, protect yourself, and check in.</p>
         <ul>
           <li><b>Overview</b> is your planet at a glance with the current <b>objective</b> that teaches the game step by step. <b>Empire</b> shows all your planets together. <b>Economy</b> explains your income.</li>
-          <li><b>Resources, Buildings, Research, Shipyard, Defense</b> run the selected planet (pick it in the top bar). <b>Automation</b> does routine work for you. <b>Fleet</b> and <b>Galaxy</b> are where ships move.</li>
+          <li><b>Resources, Buildings, Research, Shipyard, Defense</b> run the selected planet (pick it in the top bar). <b>Automation</b> does routine work for you and <b>Contracts</b> pays you for the things you do anyway. <b>Fleet</b> and <b>Galaxy</b> are where ships move.</li>
           <li><b>Alliance, Contacts, Messages, Chat, Standing</b> are the social side; <b>Command</b> holds your class, officers, factions and achievements; <b>Settings</b> holds your account, alerts and vacation mode.</li>
           <li>Click <b>any item name</b> (a building, technology, ship or defense, here or in a requirement list) to open its <b>details page</b>: what each level gives, what it costs, and what it unlocks. The <b>Simulator</b> predicts a battle before you fly it.</li>
         </ul>
@@ -53,6 +53,17 @@ const TOPICS: Topic[] = [
         <li>The Automation page offers <b>ready-made orders</b> (an economy opener, a science start, a colony starter). Copy one into the editor to change it, or build your own from scratch and save up to twelve. A running order shows every step with a tick when it is reached, and a status line saying what it is doing or waiting for. <b>Stop</b> ends it at any time.</li>
         <li><b>Rules</b> react to events. <i>Keep the lights on</i> builds a Solar Plant on a planet that runs short of energy. <i>Never cap out</i> upgrades a storage building when a resource reaches 90% of its limit. <i>Dig in when attacked</i> queues defenses of a type you choose when a hostile fleet is heading for one of your planets - once per fleet, never more than your count, and never spending more than the percentage of that planet's stock you set. Rules only start work when the planet has no building in progress.</li>
         <li>The log on the Automation page lists everything the server did for you.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'contracts', title: 'Contracts',
+    body: (
+      <ul>
+        <li>The <b>Contracts</b> page offers three <b>daily</b> and two <b>weekly</b> contracts, picked for you from jobs you can actually do: finish buildings, complete research, build ships or defenses, bring back spy reports, win battles, repel raider fleets, complete expeditions, collect debris, deliver resources to alliance members, or plunder. Targets for resource amounts grow with the universe's speed.</li>
+        <li>Progress counts only what you do after the contract appears, and each contract has a progress bar. When it is full, press <b>Claim</b> for Command Credits. A number appears in the menu and on the Overview while something is waiting.</li>
+        <li><b>Streak.</b> Claim at least one daily on consecutive days and every daily claim pays an extra 2 credits per streak day, up to +20. Miss a whole day and the streak starts again. Finishing and claiming <b>all three</b> dailies in a day adds a bonus.</li>
+        <li>New dailies appear at midnight (UTC) and new weeklies on Monday; anything unclaimed is replaced. Weeklies pay several times a daily but have no streak bonus. Credits buy officers, a class change and Supply depot items in Command.</li>
       </ul>
     ),
   },

@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-d', date: '2026-10-10', title: 'Automation and more',
     items: [
+      'Contracts: three daily and two weekly jobs that pay Command Credits, with a daily streak and an all-dailies bonus.',
       'Automation page: build orders that raise buildings and research in sequence on a planet (with automatic prerequisites), plus rules that keep energy up, avoid full storage and build defenses when a fleet is heading for you.',
     ],
   },  {

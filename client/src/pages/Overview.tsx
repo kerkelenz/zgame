@@ -62,6 +62,11 @@ export function Overview() {
         </Card>
       )}
 
+      {me.contractsClaimable > 0 && (
+        <Card title="Contracts ready" right={<button className="primary" onClick={() => setPage('contracts')}>Collect</button>}>
+          <p>{me.contractsClaimable} finished contract{me.contractsClaimable > 1 ? 's are' : ' is'} waiting for you to claim the reward.</p>
+        </Card>
+      )}
       <Card title="In progress">
         {!b && !r && !q && <p className="muted">Nothing is being built. Head to Buildings or Research.</p>}
         {b && <div className="job"><div>Building: <b>{BUILDINGS[b.id as keyof typeof BUILDINGS].name}</b> → level {b.level} <Countdown to={b.end} /></div><Progress from={b.start} to={b.end} /></div>}

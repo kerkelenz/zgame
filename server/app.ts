@@ -23,6 +23,7 @@ import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { buyItem, shopView } from './shop';
 import * as AUTO from './automation';
+import { claimContract, contractsView } from './contracts';
 import { recoverAccount } from './account';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
@@ -208,6 +209,11 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
   A.post('/automation/stop', wrap((req) => { const p = req.player!; AUTO.stopPlan(p, ownedPlanet(w, p.id, str(req.body.planetId)), now()); return AUTO.automationView(w, p); }));
   A.post('/automation/rules', wrap((req) => { AUTO.setRules(req.player!, req.body || {}); return AUTO.automationView(w, req.player!); }));
+  A.get('/contracts', wrap((req) => contractsView(w, req.player!, now())));
+  A.post('/contracts/claim', wrap((req) => {
+    const r = claimContract(w, req.player!, str(req.body.id), now());
+    return { ...r, view: contractsView(w, req.player!, now()), credits_total: Math.floor(req.player!.credits) };
+  }));
   A.get('/spy-archive', wrap((req) => SOC.spyArchiveView(w, req.player!)));
   A.post('/report', wrap((req) => { SOC.reportPlayer(w, req.player!, str(req.body.id), str(req.body.reason, 300), now()); return { ok: true }; }));
 

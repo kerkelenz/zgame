@@ -76,6 +76,8 @@ export function updatePlanet(w: World, planet: Planet, now: number) {
     t = job.end;
     planet.buildings[job.id] = job.level;
     planet.buildQueue = null;
+    const ownerP = w.players[planet.ownerId];
+    if (ownerP) ownerP.stats.buildingsDone++;
     notifyPlayer(w, planet.ownerId, 'system', `Construction complete`, `${BUILDINGS[job.id].name} on ${planet.name} is now level ${job.level}.`);
     bus.push({ to: planet.ownerId, type: 'toast', data: `${BUILDINGS[job.id].name} level ${job.level} done on ${planet.name}` });
     startNextBuilding(w, planet, t);
@@ -111,6 +113,8 @@ function processShipyard(w: World, planet: Planet, now: number) {
     j.remaining -= n;
     j.start += n * j.unitMs;
     const u = UNITS[j.id];
+    const builder = w.players[planet.ownerId];
+    if (builder) builder.stats.shipsBuilt += n;
     if (u.kind === 'ship') planet.fleet[j.id as keyof typeof planet.fleet] = (planet.fleet[j.id as keyof typeof planet.fleet] || 0) + n;
     else planet.defenses[j.id as keyof typeof planet.defenses] = (planet.defenses[j.id as keyof typeof planet.defenses] || 0) + n;
     if (j.remaining <= 0) {
@@ -140,6 +144,7 @@ export function processPlayer(w: World, player: Player, now: number) {
   for (let job = player.research; job && job.end <= now; job = player.research) {
     player.techs[job.id] = job.level;
     player.research = null;
+    player.stats.researchDone++;
     notifyPlayer(w, player.id, 'system', 'Research complete', `${TECHS[job.id].name} is now level ${job.level}.`);
     bus.push({ to: player.id, type: 'toast', data: `Research: ${TECHS[job.id].name} level ${job.level}` });
     startNextResearch(w, player, job.end);

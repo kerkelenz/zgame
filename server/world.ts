@@ -30,6 +30,8 @@ export interface Player {
   muted?: { until: number | null; reason: string };
   recovery?: { salt: string; hash: string };
   renamedAt?: number;
+  /** today's and this week's contracts, and the claim streak */
+  contracts?: import('./contracts').ContractBook;
   /** saved build orders, automation rules and what the rules did recently */
   buildOrders?: BuildOrder[];
   autoRules?: AutoRules;
@@ -80,13 +82,15 @@ export interface Player {
 export interface PlayerStats {
   raidsRepelled: number; battlesWon: number; battlesLost: number; expeditions: number;
   destroyed: number; plundered: number; harvested: number; ipmKills: number; moonsDestroyed: number;
+  /** counters that contracts are measured against */
+  buildingsDone: number; researchDone: number; shipsBuilt: number; spyReports: number; delivered: number;
 }
 export interface Tribute { id: string; npc: string; want: Res; deadline: number; answered: false | 'paid' | 'refused' | 'ignored' }
 export interface HistoryPoint { t: number; points: number; rank: number; fleet: number }
 export type NpcStatus = 'inactive' | 'active' | 'aggressive';
 export interface NpcInfo { status: NpcStatus; seedPoints: number; faction: FactionId | null }
 
-export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0, destroyed: 0, plundered: 0, harvested: 0, ipmKills: 0, moonsDestroyed: 0 });
+export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0, destroyed: 0, plundered: 0, harvested: 0, ipmKills: 0, moonsDestroyed: 0, buildingsDone: 0, researchDone: 0, shipsBuilt: 0, spyReports: 0, delivered: 0 });
 
 export function blankPlayer(id: string, username: string, now: number, extra: Partial<Player> = {}): Player {
   return {

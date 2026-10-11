@@ -21,6 +21,7 @@ import { Profile } from './pages/Profile';
 import { Admin } from './pages/Admin';
 import { Contacts } from './pages/Contacts';
 import { WhatsNew } from './pages/WhatsNew';
+import { Contracts } from './pages/Contracts';
 import { Automation } from './pages/Automation';
 import { Highscore } from './pages/Highscore';
 import { Messages } from './pages/Messages';
@@ -31,7 +32,7 @@ import { Resources } from './pages/Resources';
 const NAV: [string, string][] = [
   ['overview', 'Overview'], ['empire', 'Empire'], ['economy', 'Economy'], ['resources', 'Resources'], ['buildings', 'Buildings'], ['research', 'Research'],
   ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['automation', 'Automation'], ['fleet', 'Fleet'], ['galaxy', 'Galaxy'],
-  ['alliance', 'Alliance'], ['contacts', 'Contacts'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['settings', 'Settings'], ['guide', 'Guide'],
+  ['alliance', 'Alliance'], ['contacts', 'Contacts'], ['contracts', 'Contracts'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['settings', 'Settings'], ['guide', 'Guide'],
 ];
 
 export function App() {
@@ -71,6 +72,7 @@ export function App() {
       case 'admin': return <Admin />;
       case 'contacts': return <Contacts />;
       case 'news': return <WhatsNew />;
+      case 'contracts': return <Contracts />;
       case 'automation': return <Automation />;
       case 'guide': return <Guide />;
       case 'settings': return <Settings />;
@@ -117,7 +119,7 @@ export function App() {
         <nav>
           {(me.player.admin ? [...NAV, ['admin', 'Admin'] as [string, string]] : NAV).map(([id, label]) => (
             <button key={id} className={page === id ? 'active' : ''} onClick={() => setPage(id)}>
-              {t(`nav.${id}`, label)}{id === 'messages' && me.unread > 0 && <b className="badge">{me.unread}</b>}
+              {t(`nav.${id}`, label)}{id === 'messages' && me.unread > 0 && <b className="badge">{me.unread}</b>}{id === 'contracts' && me.contractsClaimable > 0 && <b className="badge">{me.contractsClaimable}</b>}
             </button>
           ))}
         </nav>

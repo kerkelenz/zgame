@@ -290,6 +290,7 @@ function arrive(w: World, m: Movement, at: number) {
       if (!target) { sendHome(m, at); return; }
       updatePlanet(w, target, at);
       const delivered = m.cargo;
+      if (target.ownerId !== m.ownerId && m.ownerId && sameAlliance(w, m.ownerId, target.ownerId)) w.players[m.ownerId].stats.delivered += totalRes(delivered);
       target.resources = addRes(target.resources, delivered);
       m.cargo = zeroRes();
       const owner = w.players[m.ownerId!];
@@ -394,6 +395,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   const r = target.resources;
   notifyPlayer(w, spy.id, 'espionage', `Spy report ${target.name} ${fmt(m.to)}`,
     `${def.username}: metal ${num(r.metal)}, crystal ${num(r.crystal)}, vespene gas ${num(r.deuterium)}.`, report);
+  spy.stats.spyReports++;
   archiveSpy(spy, target.id, { ...report, moon: !!target.isMoon }, at);
   sendHome(m, at);
 }
