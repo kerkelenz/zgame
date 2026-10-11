@@ -6,7 +6,7 @@ export const CHANGELOG: Release[] = [
     id: '2026-10-f', date: '2026-10-11', title: 'Alliance wars',
     items: [
       'Recyclers can now collect the debris field above your own planets and moons (it used to say "You are already there").',
-      'A Tech tree page: a progression map in which every building and research level is its own node, with arrows joining each item to the levels it needs (point at a node to light its whole chain); the map is divided into numbered columns with every node in exactly one and every arrow going to a later column, and physics lines nodes up within their columns (drag a node up or down to pull its neighbours along), plus a path-to-get-there list; the map pans by dragging (mouse or touch) and zooms with the wheel or a pinch, plus a Production and effects view of what boosts what.',
+      'A Tech tree page: one card per building, research, ship and defense with your level on it, rows by purpose and columns by step, what you can start right now glowing, click a card to light its chain and open its levels, and "Show only the path to" any item (with your next steps listed). Plus a Production and effects view of what boosts what. The map pans and zooms with the mouse or touch.',
       'Wars are now scored contests: 48 hours, points for the value of enemy units your side destroys and for every system you hold. The higher score wins.',
       'The winner earns a share of the losses of the enemy for the alliance bank and Command Credits for the fighters; conceding ends a war at once.',
       'The release notes page is now in the menu (under More), always one click away.',

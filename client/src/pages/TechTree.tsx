@@ -1,14 +1,13 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { lvl } from '../../../shared/formulas';
 import { BUILDINGS } from '../../../shared/data';
-import { FLOWS, TREE, levelGraph, levelKey, nodeOf, pathTo, reach, type LevelNode } from '../../../shared/techtree';
+import { FLOWS, ITEM_EDGES, TREE, VISIBLE_EDGES, ancestors, descendants, levelsShown, mapLayout, nodeOf, pathSet, pathTo } from '../../../shared/techtree';
 import type { BuildingId, TechId, UnitId } from '../../../shared/types';
 import { useGame } from '../game';
-import { createSim, settle } from '../physics';
 import { Card, ItemLink, Page } from '../ui';
 
-const COL_W = 128, ROW_H = 34, NODE_W = 116, NODE_H = 26, PAD = 16;
-const MIN_K = 0.18, MAX_K = 1.6;
+const CARD_W = 164, CARD_H = 46, COL_GAP = 92, ROW_GAP = 8, BAND_GAP = 34, PAD = 18, LADDER = 24;
+const MIN_K = 0.2, MAX_K = 1.6;
 const KIND_LABEL: Record<string, string> = { building: 'building', tech: 'research', ship: 'ship', defense: 'defense' };
 
 export function TechTree() {
@@ -16,67 +15,25 @@ export function TechTree() {
   const [view, setView] = useState<'tree' | 'flows'>('tree');
   const [sel, setSel] = useState<string | null>(null);
   const [hover, setHover] = useState<string | null>(null);
+  /** when set, only this goal and everything leading to it is shown */
+  const [goal, setGoal] = useState<string | null>(null);
   // the map is panned with the mouse or a finger and zoomed with the wheel, a pinch or the buttons; there are no scroll bars
-  const [cam, setCam] = useState({ x: 12, y: 8, k: 0.8 });
+  const [cam, setCam] = useState({ x: 12, y: 8, k: 0.7 });
   const [gliding, setGliding] = useState(false);
-  const [live, setLive] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef({ moved: 0, pinch: 0 });
-  const grab = useRef<{ key: string; id: number } | null>(null);
 
-  const g = useMemo(() => levelGraph(), []);
-  const byKey = useMemo(() => new Map(g.nodes.map((n) => [n.key, n])), [g]);
-
-  // the physics: nodes are bodies, arrows are springs. It opens already relaxed and moves again when a node is dragged.
-  const sim = useMemo(() => {
-    const s = createSim(
-      g.nodes.map((n) => ({ key: n.key, column: n.layer, x: PAD + n.layer * COL_W, y: PAD + n.lane * ROW_H, w: NODE_W, h: NODE_H })),
-      g.edges.map((e) => ({ from: e.from, to: e.to, kind: e.kind })),
-    );
-    settle(s);
-    return s;
-  }, [g]);
-  const nodeEls = useRef(new Map<string, HTMLElement>());
-  const edgeEls = useRef(new Map<string, { path: SVGPathElement; dot: SVGCircleElement; from: string; to: string }>());
-  const frame = useRef(0);
-  const running = useRef(false);
-
-  /** write every body's position into the page (nodes and arrows); React never touches these attributes */
-  const paint = useCallback(() => {
-    for (const b of sim.bodies) {
-      const el = nodeEls.current.get(b.key);
-      if (el) el.style.transform = `translate(${b.x}px, ${b.y}px)`;
-    }
-    for (const e of edgeEls.current.values()) {
-      const a = sim.byKey.get(e.from)!, b = sim.byKey.get(e.to)!;
-      const x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x, y2 = b.y + b.h / 2;
-      const dx = Math.max(14, Math.abs(x2 - x1) / 2);
-      e.path.setAttribute('d', `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`);
-      e.dot.setAttribute('cx', String(x2)); e.dot.setAttribute('cy', String(y2));
-    }
-  }, [sim]);
-  const kick = useCallback((alpha = 0.6) => {
-    sim.reheat(alpha);
-    if (running.current) return;
-    running.current = true;
-    const tick = () => {
-      sim.step(); sim.step();
-      paint();
-      if (!sim.settled() || grab.current) frame.current = requestAnimationFrame(tick);
-      else { running.current = false; setLive(false); }
-    };
-    setLive(true);
-    frame.current = requestAnimationFrame(tick);
-  }, [sim, paint]);
-  useLayoutEffect(() => { paint(); });
-  useEffect(() => () => { cancelAnimationFrame(frame.current); running.current = false; }, []);
-
-  const bounds = () => {
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (const b of sim.bodies) { x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.w); y1 = Math.max(y1, b.y + b.h); }
-    return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0 };
-  };
+  const only = useMemo(() => (goal ? pathSet(goal) : undefined), [goal]);
+  const layout = useMemo(() => {
+    const m = mapLayout(only);
+    const bandTop: number[] = [];
+    let y = PAD;
+    m.bands.forEach((b, i) => { bandTop[i] = y + 22; y += 22 + b.slots * (CARD_H + ROW_GAP) + BAND_GAP; });
+    const pos = new Map(m.cells.map((c) => [c.id, { x: PAD + c.col * (CARD_W + COL_GAP), y: bandTop[c.band] + c.slot * (CARD_H + ROW_GAP) }]));
+    return { m, bandTop, pos, width: PAD * 2 + m.cols * (CARD_W + COL_GAP) - COL_GAP, height: y };
+  }, [only]);
+  const shown = (id: string) => !only || only.has(id);
 
   const have = (id: string): number => {
     const n = nodeOf(id)!;
@@ -85,23 +42,33 @@ export function TechTree() {
   const haveReq = (id: string) => (id in BUILDINGS ? lvl(planet.buildings, id as BuildingId) : lvl(me.techs, id as TechId));
   const ready = (id: string) => nodeOf(id)!.requires.every((r) => haveReq(r.id) >= r.level);
   const count = (id: string) => { const n = nodeOf(id)!; return n.kind === 'ship' || n.kind === 'defense' ? `×${have(id)}` : String(have(id)); };
-  const status = (n: LevelNode): 'done' | 'next' | 'locked' => {
-    const h = have(n.id);
-    if (h >= n.level) return 'done';
-    return h === n.level - 1 && ready(n.id) ? 'next' : 'locked';
+  /** the level of each item the chosen goal needs (the goal itself needs one) */
+  const needLevel = useMemo(() => (goal ? new Map<string, number>([...ancestors(goal), [goal, 1]]) : null), [goal]);
+  const status = (id: string): 'done' | 'ready' | 'locked' => {
+    const need = needLevel?.get(id);
+    if (need !== undefined) return have(id) >= need ? 'done' : ready(id) ? 'ready' : 'locked';
+    return have(id) > 0 ? 'done' : ready(id) ? 'ready' : 'locked';
   };
-  const label = (n: LevelNode) => (n.kind === 'building' || n.kind === 'tech' ? `${n.name} ${n.level}` : n.name);
+  /** in path mode: the steps that can be started right now */
+  const nextUp = goal ? [...(only ?? [])].filter((id) => status(id) === 'ready').sort((a, b) => nodeOf(a)!.tier - nodeOf(b)!.tier) : [];
 
   const active = sel ?? hover;
-  const back = useMemo(() => (active ? reach(g, active, true) : new Set<string>()), [g, active]);
-  const fwd = useMemo(() => (active ? reach(g, active, false) : new Set<string>()), [g, active]);
-  const lit = (k: string) => active === k || back.has(k) || fwd.has(k);
+  const back = useMemo(() => (active ? ancestors(active) : new Map<string, number>()), [active]);
+  const fwd = useMemo(() => (active ? descendants(active) : new Set<string>()), [active]);
+  const lit = (id: string) => active === id || back.has(id) || fwd.has(id);
+  const edges = useMemo(() => (goal ? ITEM_EDGES.filter((e) => only!.has(e.from) && only!.has(e.to)).map((e) => ({ ...e, hub: false })) : VISIBLE_EDGES), [goal, only]);
+  const litEdges = useMemo(() => edges.filter((e) => active && lit(e.from) && lit(e.to)), [edges, active, back, fwd]); // eslint-disable-line react-hooks/exhaustive-deps
+  const needed = useMemo(() => {
+    const m = new Map<string, Set<number>>();
+    for (const e of litEdges) (m.get(e.from) ?? m.set(e.from, new Set()).get(e.from)!).add(e.level);
+    return m;
+  }, [litEdges]);
 
   const clampCam = (c: { x: number; y: number; k: number }) => {
     const el = box.current;
     if (!el) return c;
-    const keep = 120, b = bounds();
-    return { k: c.k, x: Math.min(el.clientWidth - keep - b.x0 * c.k, Math.max(keep - b.x1 * c.k, c.x)), y: Math.min(el.clientHeight - keep - b.y0 * c.k, Math.max(keep - b.y1 * c.k, c.y)) };
+    const keep = 120;
+    return { k: c.k, x: Math.min(el.clientWidth - keep, Math.max(keep - layout.width * c.k, c.x)), y: Math.min(el.clientHeight - keep, Math.max(keep - layout.height * c.k, c.y)) };
   };
   /** zoom by a factor around a point of the viewport */
   const zoomAt = (factor: number, px: number, py: number) => setCam((c) => {
@@ -114,22 +81,21 @@ export function TechTree() {
     const el = box.current;
     if (!el) return;
     setGliding(glide);
-    const b = bounds();
-    const k = Math.min(MAX_K, Math.max(MIN_K, Math.min(el.clientWidth / (b.w + 2 * PAD), el.clientHeight / (b.h + 2 * PAD))));
-    setCam({ k, x: (el.clientWidth - b.w * k) / 2 - b.x0 * k, y: (el.clientHeight - b.h * k) / 2 - b.y0 * k });
+    const k = Math.min(1, Math.max(MIN_K, Math.min(el.clientWidth / layout.width, el.clientHeight / layout.height)));
+    setCam({ k, x: (el.clientWidth - layout.width * k) / 2, y: 8 });
   };
-  const centre = (key: string) => {
-    const el = box.current, b = sim.byKey.get(key);
-    if (!el || !b) return;
+  const centre = (id: string) => {
+    const el = box.current, p = layout.pos.get(id);
+    if (!el || !p) return;
     setGliding(true);
-    setCam((c) => { const k = Math.max(c.k, 0.7); return clampCam({ k, x: el.clientWidth / 2 - (b.x + b.w / 2) * k, y: el.clientHeight / 2 - (b.y + b.h / 2) * k }); });
+    setCam((c) => { const k = Math.max(c.k, 0.7); return clampCam({ k, x: el.clientWidth / 2 - (p.x + CARD_W / 2) * k, y: el.clientHeight / 2 - (p.y + CARD_H / 2) * k }); });
   };
-  const jump = (key: string) => { if (!key) return; setSel(key); centre(key); };
-  const pick = (key: string) => { if (key === sel) setSel(null); else jump(key); };
-  const jumpItem = (id: string) => { if (id) jump(levelKey(id, Math.min(Math.max(1, have(id) + 1), g.nodes.filter((n) => n.id === id).length))); };
-  const shake = () => { for (const b of sim.bodies) { b.vy += (Math.random() - 0.5) * 24; } kick(0.9); };
+  const jump = (id: string) => { if (!id) return; if (!shown(id)) setGoal(null); setSel(id); setTimeout(() => centre(id), 0); };
+  const pick = (id: string) => { if (id === sel) setSel(null); else { setSel(id); centre(id); } };
+  const showPath = (id: string) => { setGoal(id); setSel(id); };
+  const showAll = () => { setGoal(null); };
 
-  useEffect(() => { if (view === 'tree') fit(false); }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (view === 'tree') fit(false); }, [view, goal]); // eslint-disable-line react-hooks/exhaustive-deps
   // the wheel must be a non-passive listener to stop the page scrolling while the pointer is over the map
   useEffect(() => {
     const el = box.current;
@@ -148,8 +114,6 @@ export function TechTree() {
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     gesture.current = { moved: 0, pinch: 0 };
     setGliding(false);
-    const key = (e.target as HTMLElement).closest?.('[data-key]')?.getAttribute('data-key');
-    grab.current = key && pointers.current.size === 1 ? { key, id: e.pointerId } : null;
   };
   const onMove = (e: React.PointerEvent) => {
     const prev = pointers.current.get(e.pointerId);
@@ -160,36 +124,26 @@ export function TechTree() {
     if (pointers.current.size === 1) {
       const dx = now.x - prev.x, dy = now.y - prev.y;
       gesture.current.moved += Math.abs(dx) + Math.abs(dy);
-      if (gesture.current.moved > 6) {
-        try { el.setPointerCapture(e.pointerId); } catch { /* ignore */ }
-        if (grab.current && grab.current.id === e.pointerId) {
-          // a node is being dragged up or down its column: pin it under the pointer and let the springs pull the rest along
-          const b = sim.byKey.get(grab.current.key)!;
-          b.pinned = true;
-          b.y = (now.y - r.top - cam.y) / cam.k - b.h / 2;
-          kick(0.7);
-        } else setCam((c) => clampCam({ ...c, x: c.x + dx, y: c.y + dy }));
-      }
+      if (gesture.current.moved > 6) { try { el.setPointerCapture(e.pointerId); } catch { /* ignore */ } setCam((c) => clampCam({ ...c, x: c.x + dx, y: c.y + dy })); }
     } else if (pointers.current.size === 2) {
       const other = [...pointers.current.entries()].find(([id]) => id !== e.pointerId)![1];
       const dist = Math.hypot(now.x - other.x, now.y - other.y), before = gesture.current.pinch;
       gesture.current.moved += 10;
-      grab.current = null;
       if (before > 0 && dist > 0) zoomAt(dist / before, (now.x + other.x) / 2 - r.left, (now.y + other.y) / 2 - r.top);
       gesture.current.pinch = dist;
     }
     pointers.current.set(e.pointerId, now);
   };
-  const onUp = (e: React.PointerEvent) => {
-    pointers.current.delete(e.pointerId);
-    gesture.current.pinch = 0;
-    if (grab.current) { const b = sim.byKey.get(grab.current.key); if (b) b.pinned = false; grab.current = null; kick(0.5); }
-  };
+  const onUp = (e: React.PointerEvent) => { pointers.current.delete(e.pointerId); gesture.current.pinch = 0; };
 
-  const selNode = sel ? byKey.get(sel) : undefined;
-  const needs = selNode ? g.preds.get(selNode.key)!.map((k) => byKey.get(k)!) : [];
-  const leads = selNode ? g.succs.get(selNode.key)!.map((k) => byKey.get(k)!) : [];
-  const path = selNode ? pathTo(selNode.id) : [];
+  const selNode = sel ? nodeOf(sel) : undefined;
+  const path = sel ? pathTo(sel) : [];
+  const leads = sel ? ITEM_EDGES.filter((e) => e.from === sel).sort((a, b) => a.level - b.level) : [];
+  const badge = (id: string) => {
+    const n = nodeOf(id)!, h = have(id);
+    if (n.kind === 'ship' || n.kind === 'defense') return h > 0 ? `×${h}` : 'none yet';
+    return `Level ${h} / ${levelsShown(id)}`;
+  };
 
   return (
     <Page title="Tech tree">
@@ -201,44 +155,56 @@ export function TechTree() {
       {view === 'tree' && (
         <>
           <p className="muted small">
-            Every level of every building and research is its own node, chained to the one before it; ships and defenses are single nodes. The map is divided into numbered columns and every node lives in exactly one of them: each arrow goes from a column to a later one, so everything flows left to right from what a node needs to what it opens. Within its column a node is positioned by physics: arrows are springs that line a node up with what it connects to, and nodes push each other apart. <b>Drag a node up or down</b> its column to pull its neighbours along; let go and it springs back. An item&apos;s first level is joined to the levels it requires (faint arrows come from items that feed many others, such as the Shipyard). Point at a node, or click it to keep it selected, to light its whole chain: <span className="tlegend anc">what leads to it</span>, <span className="tlegend desc">what it opens</span>.
-            <span className="tlegend done">have</span> <span className="tlegend next">next</span> <span className="tlegend locked">locked</span>
+            One card for every building, research, ship and defense. Rows group them by purpose and columns are steps: whatever a card needs is in a column to its left, joined by an arrow (faint arrows come from items that feed many others, such as the Shipyard). Click a card to light its chain and open its levels.
+            <span className="tlegend done">have it</span> <span className="tlegend ready">you can start it now</span> <span className="tlegend locked">locked</span>
           </p>
           <div className="row wrap">
-            <select value="" onChange={(e) => jumpItem(e.target.value)} aria-label="Jump to an item">
+            <select value="" onChange={(e) => jump(e.target.value)} aria-label="Jump to an item">
               <option value="">Jump to…</option>
               {[...TREE].sort((a, b) => a.name.localeCompare(b.name)).map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
             </select>
-            <span className="muted small">Drag the background to pan, wheel or pinch to zoom</span>
+            <select value="" onChange={(e) => e.target.value && showPath(e.target.value)} aria-label="Show only the path to an item">
+              <option value="">Show only the path to…</option>
+              {[...TREE].filter((n) => n.requires.length > 0).sort((a, b) => a.name.localeCompare(b.name)).map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+            </select>
+            {goal && <button className="primary" onClick={showAll}>Show everything</button>}
             <button onClick={() => zoomCentre(1 / 1.25)} aria-label="Zoom out">−</button>
             <button onClick={() => zoomCentre(1.25)} aria-label="Zoom in">+</button>
             <button onClick={() => fit()}>Fit all</button>
-            <button onClick={shake} title="Jostle the map and let it settle again">Shake</button>
             {sel && <button onClick={() => setSel(null)}>Clear</button>}
-            <span className="muted small" data-testid="physics-state">{live ? 'moving' : 'settled'}</span>
+            <span className="muted small">Drag to pan, wheel or pinch to zoom</span>
           </div>
 
+          {goal && (
+            <div className="goalbar">
+              Showing only the path to <b>{nodeOf(goal)!.name}</b>.{' '}
+              {status(goal) === 'done' ? <span className="good">You have it.</span>
+                : nextUp.length ? <>Next you can start: {nextUp.map((id, i) => <span key={id}>{i ? ', ' : ''}<a className="itemlink" onClick={() => jump(id)}>{nodeOf(id)!.name}{needLevel!.get(id)! > 1 ? ` to level ${needLevel!.get(id)}` : ''}</a></span>)}.</>
+                  : <span className="muted">Nothing on this path can be started yet.</span>}
+            </div>
+          )}
+
           {selNode && (
-            <Card title={<>{label(selNode)} <span className="muted small">{KIND_LABEL[selNode.kind]}</span></>} right={<button onClick={() => openItem(selNode.id)}>Details</button>}>
+            <Card title={<>{selNode.name} <span className="muted small">{KIND_LABEL[selNode.kind]}</span></>} right={<span className="row"><button onClick={() => showPath(selNode.id)} disabled={!selNode.requires.length || goal === selNode.id}>Show only its path</button><button onClick={() => openItem(selNode.id)}>Details</button></span>}>
               <div className="treeinfo">
                 <div>
                   <b>Path to get there</b>
-                  {path.length === 0 && selNode.level === 1 && <div className="muted small">Nothing needed: it is available from the start.</div>}
+                  {path.length === 0 && <div className="muted small">Nothing needed: it is available from the start.</div>}
                   <ol className="steps">
                     {path.map((s) => {
                       const ok = haveReq(s.id) >= s.level;
-                      return <li key={s.id} className={ok ? 'good' : 'bad'}><a className="itemlink" onClick={() => jump(levelKey(s.id, s.level))}>{nodeOf(s.id)!.name}</a> to level {s.level} <span className="muted small">{ok ? 'done' : `you: ${haveReq(s.id)}`}</span></li>;
+                      return <li key={s.id} className={ok ? 'good' : 'bad'}><a className="itemlink" onClick={() => jump(s.id)}>{nodeOf(s.id)!.name}</a> to level {s.level} <span className="muted small">{ok ? 'done' : `you: ${haveReq(s.id)}`}</span></li>;
                     })}
-                    <li><b>{selNode.name}</b>{selNode.level > 1 ? ` to level ${selNode.level}` : ''}{status(selNode) === 'done' ? <span className="good small"> you have it</span> : status(selNode) === 'next' ? <span className="good small"> ready to start</span> : null}</li>
+                    <li><b>{selNode.name}</b>{status(selNode.id) === 'done' && !goal ? <span className="good small"> you have it</span> : ready(selNode.id) ? <span className="good small"> ready to start</span> : null}</li>
                   </ol>
                 </div>
                 <div>
                   <b>Needs directly</b>
-                  {needs.length === 0 && <div className="muted small">Nothing.</div>}
-                  {needs.map((n) => <div key={n.key} className={status(n) === 'done' ? 'good' : 'bad'}><a className="itemlink" onClick={() => jump(n.key)}>{label(n)}</a> <span className="muted small">(you: {count(n.id)})</span></div>)}
+                  {selNode.requires.length === 0 && <div className="muted small">Nothing.</div>}
+                  {selNode.requires.map((r) => <div key={r.id} className={haveReq(r.id) >= r.level ? 'good' : 'bad'}><a className="itemlink" onClick={() => jump(r.id)}>{nodeOf(r.id)!.name}</a> level {r.level} <span className="muted small">(you: {count(r.id)})</span></div>)}
                   <b>Opens up</b>
                   {leads.length === 0 && <div className="muted small">Nothing else needs it.</div>}
-                  {leads.map((n) => <div key={n.key}><a className="itemlink" onClick={() => jump(n.key)}>{label(n)}</a></div>)}
+                  {leads.map((e) => <div key={e.to}><a className="itemlink" onClick={() => jump(e.to)}>{nodeOf(e.to)!.name}</a> <span className="muted small">needs it at level {e.level}</span></div>)}
                 </div>
               </div>
             </Card>
@@ -246,33 +212,48 @@ export function TechTree() {
 
           <div className="graphbox" ref={box} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
             <div className={`graph ${gliding ? 'glide' : ''}`} style={{ transform: `translate(${cam.x}px, ${cam.y}px) scale(${cam.k})` }}>
-              {Array.from({ length: g.layers }, (_, i) => (
-                <div key={i} className={`colband ${i % 2 ? 'odd' : ''}`} style={{ left: PAD + i * COL_W - (COL_W - NODE_W) / 2, width: COL_W }}><span>{i + 1}</span></div>
+              {layout.m.bands.map((b, i) => (
+                <div key={b.id} className="band" style={{ top: layout.bandTop[i] - 22, height: 22 + b.slots * (CARD_H + ROW_GAP) + BAND_GAP / 2, width: layout.width }}><span>{b.label}</span></div>
               ))}
               <svg className="edges" width="1" height="1" aria-hidden="true">
-                {g.edges.map((e) => {
-                  const A = byKey.get(e.from)!;
-                  const k = e.from + '>' + e.to;
+                {edges.map((e) => {
+                  const a = layout.pos.get(e.from), b = layout.pos.get(e.to);
+                  if (!a || !b) return null;
+                  const x1 = a.x + CARD_W, y1 = a.y + CARD_H / 2, x2 = b.x, y2 = b.y + CARD_H / 2;
+                  const dx = Math.max(30, (x2 - x1) / 2);
                   const onPath = !!active && lit(e.from) && lit(e.to);
                   const forward = e.from === active || fwd.has(e.from);
-                  const cls = `bedge ${A.kind} ${e.kind} ${e.hub ? 'hub' : ''} ${active ? (onPath ? (forward ? 'fwd' : 'back') : 'off') : ''}`;
+                  const cls = `bedge ${nodeOf(e.from)!.kind} ${e.hub ? 'hub' : ''} ${active ? (onPath ? (forward ? 'fwd' : 'back') : 'off') : ''}`;
+                  const label = onPath || (goal && !active);
                   return (
-                    <g key={k} className={cls} ref={(el) => { if (el) edgeEls.current.set(k, { path: el.children[0] as SVGPathElement, dot: el.children[1] as SVGCircleElement, from: e.from, to: e.to }); else edgeEls.current.delete(k); }}>
-                      <path />
-                      <circle r={2.4} />
+                    <g key={e.from + '>' + e.to} className={cls}>
+                      <path d={`M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`} />
+                      <circle cx={x2} cy={y2} r={2.6} />
+                      {label && e.level > 0 && <text x={x2 - 30} y={y2 - 5}>needs {e.level}</text>}
                     </g>
                   );
                 })}
               </svg>
-              {g.nodes.map((n) => {
-                const cls = ['gnode', n.kind, status(n), sel === n.key ? 'sel' : '', back.has(n.key) ? 'anc' : '', fwd.has(n.key) ? 'desc' : '', sel && !lit(n.key) ? 'dim' : '', !sel && active && lit(n.key) ? 'peek' : ''].filter(Boolean).join(' ');
-                const isUnit = n.kind === 'ship' || n.kind === 'defense';
+              {layout.m.cells.map((c) => {
+                const p = layout.pos.get(c.id)!, n = nodeOf(c.id)!;
+                const st = status(c.id);
+                const isNext = !!goal && st === 'ready';
+                const cls = ['icard', n.kind, st, isNext ? 'next' : '', sel === c.id ? 'sel' : '', back.has(c.id) ? 'anc' : '', fwd.has(c.id) ? 'desc' : '', sel && !lit(c.id) ? 'dim' : '', !sel && active && lit(c.id) ? 'peek' : ''].filter(Boolean).join(' ');
+                const total = levelsShown(c.id), h = have(c.id), need = needed.get(c.id);
+                const ladder = sel === c.id && total > 1;
                 return (
-                  <div key={n.key} data-key={n.key} className={cls} style={{ width: NODE_W, height: NODE_H }} title={label(n)} role="button" tabIndex={0}
-                    ref={(el) => { if (el) nodeEls.current.set(n.key, el); else nodeEls.current.delete(n.key); }}
-                    onClick={() => { if (gesture.current.moved <= 6) pick(n.key); }} onMouseEnter={() => setHover(n.key)} onMouseLeave={() => setHover(null)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(n.key); } }}>
-                    {isUnit ? <>{n.name}{have(n.id) > 0 ? <span className="lvl"> ×{have(n.id)}</span> : null}</> : <><b>{n.level}</b> {n.name}</>}
+                  <div key={c.id} className={cls} style={{ left: p.x, top: p.y, width: CARD_W, height: CARD_H }} role="button" tabIndex={0} title={n.name}
+                    onClick={() => { if (gesture.current.moved <= 6) pick(c.id); }} onMouseEnter={() => setHover(c.id)} onMouseLeave={() => setHover(null)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(c.id); } }}>
+                    <div className="iname">{n.name}{st === 'done' && !isNext ? <span className="tick"> ✓</span> : null}</div>
+                    <div className="ibadge">{badge(c.id)}{needLevel?.get(c.id) && needLevel.get(c.id)! > 1 ? ` · need ${needLevel.get(c.id)}` : ''}</div>
+                    {ladder && (
+                      <div className="ladder" style={{ width: Math.min(total, 12) * LADDER + 12 }} onClick={(e) => e.stopPropagation()}>
+                        {Array.from({ length: total }, (_, i) => i + 1).map((l) => (
+                          <span key={l} className={`pip ${l <= h ? 'done' : l === h + 1 && ready(c.id) ? 'next' : 'locked'} ${need?.has(l) ? 'need' : ''}`} title={`${n.name} ${l}`}>{l}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}

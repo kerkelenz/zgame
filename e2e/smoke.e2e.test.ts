@@ -123,19 +123,21 @@ describe('using the game', () => {
     noErrors();
   });
 
-  run('the tech tree highlights what an item needs and opens up', async () => {
+  run('the tech tree shows one card per item, lights a chain, opens levels and can show only a path', async () => {
     await go('Tech tree');
-    expect(await page.locator('.gnode').count()).toBeGreaterThan(200);        // every level is its own node
-    expect(await page.locator('.gnode', { hasText: 'Energy Technology' }).count()).toBeGreaterThanOrEqual(1);
-    await page.locator('.gnode', { hasText: 'Fusion Reactor' }).first().click();
+    expect(await page.locator('.icard').count()).toBe(59);                  // one card per building, research, ship and defense
+    expect(await page.locator('.band').count()).toBe(5);                     // rows grouped by purpose
+    expect(await page.locator('.icard.ready').count()).toBeGreaterThan(5);   // what you can start right now stands out
+    await page.locator('.icard', { hasText: 'Fusion Reactor' }).first().click();
     expect(await page.locator('.treeinfo').innerText()).toMatch(/Vespene Extractor to level 5/);
-    expect(await page.locator('.gnode.anc').count()).toBe(9);
-    expect(await page.locator('.gnode.dim').count()).toBeGreaterThan(150);
-    expect(await page.locator('.bedge.back').count()).toBeGreaterThan(8);
-    expect(await page.locator('.bedge').count()).toBeGreaterThan(250);         // the whole map is drawn, not only the selection
-    // panned by dragging, zoomed with the wheel, no scroll bars
+    expect(await page.locator('.icard.anc').count()).toBe(3);
+    expect(await page.locator('.icard.dim').count()).toBeGreaterThan(40);
+    expect(await page.locator('.bedge.back').count()).toBe(3);
+    expect(await page.locator('.bedge').count()).toBeGreaterThan(70);        // the whole map is drawn, not only the selection
+    await page.locator('.icard', { hasText: 'Energy Technology' }).first().click();
+    expect(await page.locator('.ladder .pip').count()).toBeGreaterThanOrEqual(12);   // its levels open in place
+    // pan with the mouse, zoom with the wheel; no scroll bars
     const tf = () => page.locator('.graph').evaluate((el) => (el as HTMLElement).style.transform);
-    const box = (await page.locator('.graphbox').boundingBox())!;
     expect(await page.locator('.graphbox').evaluate((el) => getComputedStyle(el).overflow)).toBe('hidden');
     const before = await tf();
     const empty = await page.locator('.graphbox').evaluate((el) => {
@@ -156,23 +158,21 @@ describe('using the game', () => {
     await drag(40, -30);
     if ((await tf()) === before) await drag(-40, 30);                          // the map may already be at one edge
     expect(await tf()).not.toBe(before);
-    expect(await page.locator('.gnode.sel').count()).toBe(1);               // a drag does not change the selection
+    expect(await page.locator('.icard.sel').count()).toBe(1);               // a drag does not change the selection
     const panned = await tf();
     await page.mouse.wheel(0, -300);
     expect(await tf()).not.toBe(panned);
-    // the map is a physics simulation: dragging a node moves it and pulls its neighbours, and it settles again
-    const at = (key: string) => page.locator(`[data-key="${key}"]`).evaluate((el) => (el as HTMLElement).style.transform);
-    await page.getByRole('button', { name: 'Clear' }).click();
-    const nb = (await page.locator('[data-key="energy@2"]').boundingBox())!;
-    const neighbour = await at('energy@3');
-    await page.mouse.move(nb.x + nb.width / 2, nb.y + nb.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(nb.x + nb.width / 2 + 10, nb.y + nb.height / 2 + 150, { steps: 8 });
-    await page.waitForTimeout(300);
-    await page.mouse.up();
-    expect(await at('energy@2')).not.toMatch(/^translate\(NaN/);
-    expect(await at('energy@3')).not.toBe(neighbour);                         // the chain followed
-    await expect.poll(() => page.getByTestId('physics-state').innerText(), { timeout: 15_000 }).toBe('settled');
+    // show only the path to a goal
+    await page.locator('select[aria-label="Show only the path to an item"]').selectOption({ label: 'Deathstar' });
+    await page.locator('.goalbar').waitFor();
+    expect(await page.locator('.goalbar').innerText()).toMatch(/Showing only the path to Deathstar/);
+    expect(await page.locator('.goalbar').innerText()).toMatch(/Next you can start/);
+    const few = await page.locator('.icard').count();
+    expect(few).toBeGreaterThan(5);
+    expect(few).toBeLessThan(30);
+    expect(await page.locator('.icard.next').count()).toBeGreaterThan(0);    // the next move is highlighted
+    await page.getByRole('button', { name: 'Show everything' }).click();
+    expect(await page.locator('.icard').count()).toBe(59);
     await page.getByRole('button', { name: 'Production and effects' }).click();
     expect(await page.locator('main').innerText()).toMatch(/Raised by/);
     noErrors();
