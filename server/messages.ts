@@ -1,4 +1,5 @@
 import { bus } from './bus';
+import { categoryOf, externalNotify } from './external';
 import { uid, type MessageKind, type World } from './world';
 
 const MAX_PER_PLAYER = 150;
@@ -15,4 +16,6 @@ export function notifyPlayer(
     if (w.messages[i].to === to && ++count > MAX_PER_PLAYER) w.messages.splice(i, 1);
   }
   bus.push({ to, type: 'message', data: { kind, subject } });
+  const cat = categoryOf(kind, subject);
+  if (cat) externalNotify(w, to, cat, subject, body.slice(0, 600), now);
 }

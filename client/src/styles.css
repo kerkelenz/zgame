@@ -157,3 +157,6 @@ td .bar { margin: 0 0 3px; }
 .online { color: var(--good); font-size: 11px; }
 .alertbar.vacbar { background: #1c3a55; color: #cfe6ff; }
 .settings-section p { margin: 4px 0; }
+
+label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14px; color: var(--text); padding: 3px 0; }
+label.check input { width: auto; }

@@ -9,6 +9,7 @@ import { allianceBonuses, planetCapacity, processPlayer, updatePlanet } from './
 import { colonyCount, createMoon, createPlanet, inBounds, isProtected, maxExpeditions, maxPlanets } from './galaxy';
 import { notifyPlayer } from './messages';
 import { adjustRep } from './progress';
+import { externalNotify } from './external';
 import { assertActive, onVacation } from './vacation';
 import { cargoMul, debrisShare, expeditionYield, extraFleetSlots, lootShare, shieldMul, spyBonus, spyEvasion, weaponMul } from './perks';
 import { buildNpcFleet, fleetValue } from './npc';
@@ -171,7 +172,10 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     notifyPlayer(w, targetOwner.id, 'system', 'Hostile fleet detected', `${player.username} is attacking ${target!.name} ${fmt(to)}. ETA ${new Date(m.arriveAt).toLocaleTimeString()}.`);
     bus.push({ to: targetOwner.id, type: 'alert', data: `Hostile fleet inbound to ${target!.name}` });
     for (const mem of targetOwner.allianceId ? w.alliances[targetOwner.allianceId]?.members ?? [] : []) {
-      if (mem.playerId !== targetOwner.id) bus.push({ to: mem.playerId, type: 'alert', data: `${targetOwner.username} is being attacked - consider sending help` });
+      if (mem.playerId !== targetOwner.id) {
+        bus.push({ to: mem.playerId, type: 'alert', data: `${targetOwner.username} is being attacked - consider sending help` });
+        externalNotify(w, mem.playerId, 'allies', 'Ally under attack', `${targetOwner.username} is being attacked by ${player.username}. Send a hold fleet to help defend!`);
+      }
     }
   }
   bus.push({ to: player.id, type: 'refresh' });

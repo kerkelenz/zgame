@@ -2,6 +2,16 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { Coords, Mission } from '../../shared/types';
 import { ApiError, get, getToken, post, setToken } from './api';
 
+export const BROWSER_NOTIFY_KEY = 'sf.browserNotify';
+/** a desktop notification while the tab is in the background (opt-in in Settings) */
+function browserNotify(title: string, body: string) {
+  try {
+    if (localStorage.getItem(BROWSER_NOTIFY_KEY) !== '1') return;
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted' || !document.hidden) return;
+    new Notification(title, { body, tag: title });
+  } catch { /* notifications unavailable */ }
+}
+
 export interface Toast { id: number; text: string; kind: 'info' | 'alert' | 'error' }
 
 export interface Target { coords: Coords; mission?: Mission; toMoon?: boolean }
@@ -103,6 +113,8 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
         const msg = JSON.parse(ev.data);
         if (msg.type === 'refresh' || msg.type === 'message') void refresh();
         if (msg.type === 'message') toast(`New message: ${msg.data?.subject ?? ''}`);
+        if (msg.type === 'message' && /raid|hostile|missile|attack|tribute|ally/i.test(msg.data?.subject ?? '')) browserNotify('Stellar Frontier', msg.data.subject);
+        if (msg.type === 'alert') browserNotify('Stellar Frontier', String(msg.data));
         if (msg.type === 'toast') toast(msg.data);
         if (msg.type === 'alert') toast(msg.data, 'alert');
         if (msg.type === 'chat') setChatEvents((c) => [...c.slice(-200), msg.data]);

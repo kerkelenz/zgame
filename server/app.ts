@@ -15,6 +15,7 @@ import { answerTribute } from './empires';
 import { spawnRaid } from './npc';
 import { rankings } from './rankings';
 import { endVacation, startVacation } from './vacation';
+import { CATEGORIES, mask, sendTest, validateTarget } from './external';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
 
 declare global {
@@ -206,6 +207,20 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.post('/officers/hire', wrap((req) => { hireOfficer(w, req.player!, str(req.body.id)); return commandView(w, req.player!); }));
   A.post('/vacation/start', wrap((req) => { startVacation(w, req.player!, now()); return meView(w, req.player!, now()); }));
   A.post('/vacation/end', wrap((req) => { endVacation(w, req.player!, now()); return meView(w, req.player!, now()); }));
+  const notifyView = (p: Player) => ({ discord: mask(p.notify.discord), ntfy: mask(p.notify.ntfy), events: p.notify.events, onlyWhenAway: p.notify.onlyWhenAway });
+  A.get('/notify', wrap((req) => notifyView(req.player!)));
+  A.post('/notify', wrap((req) => {
+    const p = req.player!, b = req.body || {}, n = p.notify;
+    if ('discord' in b) n.discord = validateTarget('discord', b.discord);
+    if ('ntfy' in b) n.ntfy = validateTarget('ntfy', b.ntfy);
+    if (typeof b.onlyWhenAway === 'boolean') n.onlyWhenAway = b.onlyWhenAway;
+    if (b.events && typeof b.events === 'object') for (const c of CATEGORIES) if (typeof b.events[c] === 'boolean') n.events[c] = b.events[c];
+    return notifyView(p);
+  }));
+  A.post('/notify/test', (req, res, next) => {
+    if (limited('ntest:' + req.player!.id, 5, 60_000)) return next(new GameError('Slow down', 429));
+    sendTest(w, req.player!).then((results) => res.json({ results })).catch(next);
+  });
   A.get('/history', wrap((req) => req.player!.history));
   A.post('/tribute/:id', wrap((req) => {
     const p = req.player!;

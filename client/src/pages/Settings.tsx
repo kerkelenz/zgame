@@ -1,5 +1,6 @@
-import { post } from '../api';
-import { useGame } from '../game';
+import { useEffect, useState } from 'react';
+import { get, post } from '../api';
+import { BROWSER_NOTIFY_KEY, useGame } from '../game';
 import { Card, Countdown, Page, when } from '../ui';
 
 function Vacation() {
@@ -31,9 +32,83 @@ function Vacation() {
   );
 }
 
+const EVENTS: [string, string, string][] = [
+  ['attacks', 'Attacks on me', 'hostile fleets, raids and missiles heading for your planets'],
+  ['allies', 'Allies under attack', 'an alliance member is attacked or raided - time to send a hold fleet'],
+  ['tribute', 'Tribute demands', 'a hostile empire asks for payment'],
+  ['completions', 'Things finished', 'construction, research, ships and objectives'],
+  ['messages', 'Private messages', 'mail from other commanders'],
+];
+
+function Alerts() {
+  const { toast } = useGame();
+  const [cfg, setCfg] = useState<any | null>(null);
+  const [discord, setDiscord] = useState('');
+  const [ntfy, setNtfy] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [browser, setBrowser] = useState(() => { try { return localStorage.getItem(BROWSER_NOTIFY_KEY) === '1'; } catch { return false; } });
+  useEffect(() => { void get('/notify').then(setCfg); }, []);
+  if (!cfg) return <Card title="Alerts outside the game"><p className="muted">Loading…</p></Card>;
+
+  const save = async (patch: Record<string, unknown>, ok?: string) => {
+    setBusy(true);
+    try { setCfg(await post('/notify', patch)); if (ok) toast(ok); return true; } catch (e) { toast((e as Error).message, 'error'); return false; } finally { setBusy(false); }
+  };
+  const test = async () => {
+    setBusy(true);
+    try {
+      const r = await post('/notify/test');
+      for (const x of r.results) {
+        const name = x.channel === 'discord' ? 'Discord' : 'ntfy';
+        toast(x.ok ? name + ': test message sent' : name + ' failed (status ' + (x.status || 'no answer') + ')', x.ok ? 'info' : 'error');
+      }
+    } catch (e) { toast((e as Error).message, 'error'); } finally { setBusy(false); }
+  };
+  const toggleBrowser = async () => {
+    if (browser) { try { localStorage.setItem(BROWSER_NOTIFY_KEY, '0'); } catch { /* ignore */ } setBrowser(false); return; }
+    if (typeof Notification === 'undefined') return toast('This browser does not support notifications', 'error');
+    const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+    if (perm !== 'granted') return toast('Notifications were not allowed - change it in your browser settings', 'error');
+    try { localStorage.setItem(BROWSER_NOTIFY_KEY, '1'); } catch { /* ignore */ }
+    setBrowser(true);
+    new Notification('Stellar Frontier', { body: 'Browser alerts are on.' });
+  };
+
+  return (
+    <Card title="Alerts outside the game">
+      <div className="settings-section">
+        <p className="muted">Get a message on your phone or Discord when a fleet is heading for you, so you (or an ally) can react. Alerts are only sent while you are away from the game.</p>
+        <h4>Browser notifications</h4>
+        <p className="small muted">Pops up while this tab is in the background. Works only while the page is open.</p>
+        <button onClick={toggleBrowser}>{browser ? 'Turn off browser notifications' : 'Turn on browser notifications'}</button>
+
+        <h4>Discord</h4>
+        <p className="small muted">Server Settings → Integrations → Webhooks → New Webhook → Copy Webhook URL. {cfg.discord && <>Saved: <code>{cfg.discord}</code></>}</p>
+        <div className="row"><input className="grow" placeholder={cfg.discord ? 'Paste a new webhook URL to replace it' : 'https://discord.com/api/webhooks/…'} value={discord} onChange={(e) => setDiscord(e.target.value)} />
+          <button disabled={busy || !discord.trim()} onClick={async () => { if (await save({ discord }, 'Discord webhook saved')) setDiscord(''); }}>Save</button>
+          {cfg.discord && <button disabled={busy} onClick={() => void save({ discord: '' }, 'Discord webhook removed')}>Remove</button>}</div>
+
+        <h4>Phone push (ntfy)</h4>
+        <p className="small muted">Install the free <b>ntfy</b> app, subscribe to a hard-to-guess topic name (8+ letters/numbers; it works like a password) and enter it here. {cfg.ntfy && <>Saved: <code>{cfg.ntfy}</code></>}</p>
+        <div className="row"><input className="grow" placeholder={cfg.ntfy ? 'Enter a new topic to replace it' : 'e.g. frontier-alice-7f3k29x'} value={ntfy} onChange={(e) => setNtfy(e.target.value)} />
+          <button disabled={busy || !ntfy.trim()} onClick={async () => { if (await save({ ntfy }, 'ntfy topic saved')) setNtfy(''); }}>Save</button>
+          {cfg.ntfy && <button disabled={busy} onClick={() => void save({ ntfy: '' }, 'ntfy topic removed')}>Remove</button>}</div>
+
+        <h4>What to tell me about</h4>
+        {EVENTS.map(([key, label, hint]) => (
+          <label key={key} className="check"><input type="checkbox" checked={!!cfg.events[key]} onChange={(e) => void save({ events: { [key]: e.target.checked } })} /> <b>{label}</b> <span className="muted small">- {hint}</span></label>
+        ))}
+        <label className="check"><input type="checkbox" checked={cfg.onlyWhenAway} onChange={(e) => void save({ onlyWhenAway: e.target.checked })} /> <b>Only when I am away</b> <span className="muted small">- skip alerts while you are playing</span></label>
+        <div className="row"><button className="primary" disabled={busy || (!cfg.discord && !cfg.ntfy)} onClick={test}>Send a test message</button></div>
+      </div>
+    </Card>
+  );
+}
+
 export function Settings() {
   return (
     <Page title="Settings">
+      <Alerts />
       <Vacation />
     </Page>
   );
