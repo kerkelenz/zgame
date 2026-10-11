@@ -46,7 +46,7 @@ Config is stored in the save on first start; env vars override it on later start
 
 - **Economy** – metal/crystal/deuterium mines, solar/fusion/satellite energy, storage caps, production sliders, robotics/nanite build speed, planet fields & temperature.
 - **Tech** – 14 researches with OGame-style prerequisites; drives change ship speeds, weapons/shielding/armour change combat.
-- **Shipyard** – 14 ships, 8 defenses, batch queues with refunds, shield-dome limits. Buildings and research can queue 4 deep (paid when each starts).
+- **Shipyard** – 14 ships, 8 defenses, batch queues with refunds, shield-dome limits. Buildings and research can queue 4 deep (paid and reserved when queued, refunded if removed).
 - **Moons** – big debris fields can condense into a moon (1% per 100k, max 20%). Build a Lunar Base for room, a **Sensor Phalanx** to scan fleet movements around planets in range (spot raiders heading for allies) and a **Jump Gate** to teleport ships between your moons. Missions can target moons.
 - **Computer empires** – hundreds of bot empires (inactive / active / aggressive) fill the galaxy with raid targets. They develop, expand, fight each other (wars leave debris and moons, with galaxy news), and aggressive ones raid commanders in fleets sized to your defenses. Raiding one builds a grudge that can turn it hostile; strong ones demand tribute (pay for a truce, refuse and face their fleet).
 - **Factions and reputation** – four factions with rival pairs. Raiding a faction's empires costs standing with it and earns half as much with its rival; at 40 standing you can join for a perk (shields, weapons, mine output, or plunder + cargo), a pact with its members (they stop raiding you) and supply convoys. Hit your own and you are expelled.
