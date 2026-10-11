@@ -3,8 +3,9 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
-    id: '2026-10-f', date: '2026-10-11', title: 'Alliance wars',
+    id: '2026-10-g', date: '2026-10-11', title: 'Events, moons and the tech tree',
     items: [
+      'The game is now called Zgame.',
       'The Galaxy has a Recycle button next to Spy, Attack, Transport and Defend on every position with a debris field, including your own planets and empty positions.',
       'Recyclers take metal and crystal together in the proportion they lie in the debris field, so a full load is a mix of both instead of all metal first.',
       'Hostile fleets in the Events list and on the Fleet page show what they attack with, as far as your Espionage Technology compared with theirs lets you tell: nothing, the ship count, the types, or the exact fleet.',
@@ -15,9 +16,14 @@ export const CHANGELOG: Release[] = [
       'The Overview has an Events list of every fleet movement that concerns you in time order: your fleets going out and the return flight still to come, hostile fleets heading for you or your allies (who, from where, when) and friendly deliveries, each with a clock time and countdown.',
       'Recyclers can now collect the debris field above your own planets and moons (it used to say "You are already there").',
       'A Tech tree page: one card per building, research, ship and defense with your level on it, rows by purpose and columns by step, what you can start right now glowing, click a card to light its chain and open its levels, and "Show only the path to" any item (with your next steps listed). Plus a Production and effects view of what boosts what. The map pans and zooms with the mouse or touch.',
+      'The release notes page is now in the menu (under More), always one click away.',
+    ],
+  },
+  {
+    id: '2026-10-f', date: '2026-10-11', title: 'Alliance wars',
+    items: [
       'Wars are now scored contests: 48 hours, points for the value of enemy units your side destroys and for every system you hold. The higher score wins.',
       'The winner earns a share of the losses of the enemy for the alliance bank and Command Credits for the fighters; conceding ends a war at once.',
-      'The release notes page is now in the menu (under More), always one click away.',
       'The Alliance page has a War panel with the live score, the top fighters and the last results.',
     ],
   },
