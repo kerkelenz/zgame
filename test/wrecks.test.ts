@@ -74,7 +74,7 @@ describe('destroy mission rules', () => {
     expect(note.body).toContain(ap.name);
     expect(note.body).toContain(`${ap.coords.g}:${ap.coords.s}:${ap.coords.p}`);
     const inc = fleetsView(w, bob).incoming[0];
-    expect(inc).toMatchObject({ fromName: ap.name, from: ap.coords, ownerName: 'alice' });
+    expect(inc).toMatchObject({ fromName: ap.name, from: ap.coords, ownerName: 'alice', ownerId: alice.id });   // the client links these to the profile and the galaxy
   });
 });
 

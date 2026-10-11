@@ -12,7 +12,7 @@ const MISSIONS: [Mission, string][] = [
 ];
 
 export function FleetPage() {
-  const { me, planet, planets, fleets, act, target, setTarget, now } = useGame();
+  const { me, planet, planets, fleets, act, target, setTarget, now, openProfile, showInGalaxy } = useGame();
   const [ships, setShips] = useState<Partial<Record<ShipId, number>>>({});
   const [to, setTo] = useState({ g: planet.coords.g, s: planet.coords.s, p: planet.coords.p === 1 ? 2 : 1 });
   const [mission, setMission] = useState<Mission>('transport');
@@ -79,7 +79,7 @@ export function FleetPage() {
         <Card title="⚠ Hostile fleets inbound">
           {fleets.incoming.map((f) => (
             <div key={f.id} className="bad">
-              {f.ownerName}{f.ownerAlliance ? ` [${f.ownerAlliance}]` : ''} from {f.fromName ? `${f.fromMoon ? '🌙 ' : ''}${f.fromName} ` : ''}{coordStr(f.from)} → {f.target} at {coordStr(f.to)} · arrives in <Countdown to={f.arriveAt} />
+              {f.ownerId ? <a className="plink" onClick={() => openProfile(f.ownerId!)}>{f.ownerName}</a> : f.ownerName}{f.ownerAlliance ? ` [${f.ownerAlliance}]` : ''} from <a className="plink" onClick={() => showInGalaxy(f.from)}>{f.fromName ? `${f.fromMoon ? '🌙 ' : ''}${f.fromName} ` : ''}{coordStr(f.from)}</a> → {f.targetOwnerId ? <><a className="plink" onClick={() => openProfile(f.targetOwnerId!)}>{f.targetOwner}</a> (<a className="plink" onClick={() => showInGalaxy(f.to)}>{f.targetName}</a>)</> : f.target} at <a className="plink" onClick={() => showInGalaxy(f.to)}>{coordStr(f.to)}</a> · arrives in <Countdown to={f.arriveAt} />
               {f.ally && <span className="muted"> — send a "Defend ally" fleet to help!</span>}
             </div>
           ))}

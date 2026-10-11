@@ -151,7 +151,7 @@ export function fleetsView(w: World, p: Player) {
   const allyCoords = [...allyIds].flatMap((id) => w.players[id].planetIds.map((pid) => ({ owner: w.players[id].username, ownerId: id, c: w.planets[pid].coords, name: w.planets[pid].name })));
 
   const mine: ReturnType<typeof mv>[] = [];
-  const incoming: (ReturnType<typeof mv> & { target: string; ally: boolean })[] = [];
+  const incoming: (ReturnType<typeof mv> & { target: string; ally: boolean; targetOwnerId?: string; targetOwner?: string; targetName?: string })[] = [];
   const stationed: ReturnType<typeof mv>[] = [];
   const joinable: (ReturnType<typeof mv> & { targetName: string })[] = [];
   for (const m of Object.values(w.movements)) {
@@ -160,7 +160,7 @@ export function fleetsView(w: World, p: Player) {
       const hitMe = myCoords.some((c) => sameCoords(c, m.to));
       const hitAlly = allyCoords.find((a) => sameCoords(a.c, m.to));
       if (hitMe) incoming.push({ ...mv(m, false, w), ships: {}, target: 'you', ally: false });
-      else if (hitAlly) incoming.push({ ...mv(m, false, w), ships: {}, target: `${hitAlly.owner} (${hitAlly.name})`, ally: true });
+      else if (hitAlly) incoming.push({ ...mv(m, false, w), ships: {}, target: `${hitAlly.owner} (${hitAlly.name})`, ally: true, targetOwnerId: hitAlly.ownerId, targetOwner: hitAlly.owner, targetName: hitAlly.name });
     }
     if (m.mission === 'attack' && m.phase === 'outbound' && m.ownerId && !m.acsId && (m.ownerId === p.id || allyIds.has(m.ownerId))) {
       joinable.push({ ...mv(m, false), ships: {}, targetName: planetAt(w, m.to, !!m.toMoon)?.name ?? '?' });
