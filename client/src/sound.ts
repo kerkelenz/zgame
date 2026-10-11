@@ -1,5 +1,5 @@
 /** Tiny WebAudio cues (no audio files). Opt-in from Settings; browsers only allow sound after a first click on the page. */
-export const SOUND_KEY = 'sf.sound';
+export const SOUND_KEY = 'zg.sound';
 export const soundOn = () => { try { return localStorage.getItem(SOUND_KEY) === '1'; } catch { return false; } };
 export const setSound = (on: boolean) => { try { localStorage.setItem(SOUND_KEY, on ? '1' : '0'); } catch { /* ignore */ } };
 

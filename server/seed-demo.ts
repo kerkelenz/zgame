@@ -12,6 +12,7 @@ import { createMoon, createPlanet } from './galaxy';
 import { generateEmpires } from './empires';
 import { saveWorld } from './store';
 import { createWorld } from './world';
+import { env } from './env';
 
 export function buildDemoWorld(now = Date.now()) {
   const w = createWorld({ economySpeed: 60, fleetSpeed: 30, protectionPoints: 100, raidIntervalMin: 20, npcDensity: 0.2 }, now);
@@ -57,7 +58,7 @@ export function buildDemoWorld(now = Date.now()) {
 }
 
 if (process.argv[1] && /seed-demo/.test(process.argv[1])) {
-  const file = resolve(process.env.OGAME_SAVE || 'data/demo-world.json');
+  const file = resolve(env('SAVE') || 'data/demo-world.json');
   saveWorld(file, buildDemoWorld());
   console.log(`Demo universe written to ${file}\nLog in as alice / bob / carol (or rival) with password "demo1234".`);
 }

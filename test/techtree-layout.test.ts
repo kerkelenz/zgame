@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ITEM_EDGES, VISIBLE_EDGES, TREE, columns, levelsShown, nodeOf, pathTo } from '../shared/techtree';
+import { ITEM_EDGES, VISIBLE_EDGES, levelGraph, levelKey, reach, TREE, columns, levelsShown, nodeOf, pathTo } from '../shared/techtree';
 
 describe('the tech tree layout', () => {
   it('puts every item in exactly one column, by step', () => {
@@ -37,5 +37,41 @@ describe('the tech tree layout', () => {
     expect(has('deuteriumSynthesizer', 'fusionReactor')).toBe(true);
     expect(VISIBLE_EDGES.find((e) => e.from === 'shipyard')!.hub).toBe(true);
     expect(VISIBLE_EDGES.find((e) => e.from === 'laser' && e.to === 'plasma')!.hub).toBe(false);
+  });
+});
+
+describe('the level graph', () => {
+  const g = levelGraph();
+  const byKey = new Map(g.nodes.map((n) => [n.key, n]));
+
+  it('has a node for every level that something requires and for every unit', () => {
+    for (const e of ITEM_EDGES) expect(byKey.has(levelKey(e.from, e.level)), `${e.from} ${e.level}`).toBe(true);
+    expect(byKey.has(levelKey('energy', 12))).toBe(true);
+    expect(byKey.has(levelKey('weapons', 5))).toBe(true);
+    expect(byKey.has(levelKey('deathstar', 1))).toBe(true);
+    expect(byKey.has(levelKey('deathstar', 2))).toBe(false);
+  });
+
+  it('chains levels and links requirements to the first level', () => {
+    expect(g.edges).toContainEqual({ from: 'energy@2', to: 'energy@3', kind: 'level', hub: false });
+    expect(g.edges.find((e) => e.from === 'energy@3' && e.to === 'fusionReactor@1')).toMatchObject({ kind: 'needs', at: 3 });
+    expect(g.edges.some((e) => e.from === 'deuteriumSynthesizer@5' && e.to === 'fusionReactor@1')).toBe(true);
+  });
+
+  it('flows left to right: every edge goes to a later layer', () => {
+    for (const e of g.edges) expect(byKey.get(e.to)!.layer, `${e.from} -> ${e.to}`).toBeGreaterThan(byKey.get(e.from)!.layer);
+  });
+
+  it('gives every item one lane', () => {
+    expect(new Set(g.nodes.map((n) => n.lane)).size).toBe(TREE.length);
+  });
+
+  it('follows the chain both ways', () => {
+    const back = reach(g, 'fusionReactor@1', true);
+    for (const k of ['energy@3', 'energy@1', 'researchLab@1', 'deuteriumSynthesizer@5']) expect(back.has(k), k).toBe(true);
+    expect(back.has('energy@4')).toBe(false);
+    const fwd = reach(g, 'researchLab@1', false);
+    expect(fwd.has('energy@1')).toBe(true);
+    expect(fwd.has('researchLab@12')).toBe(true);
   });
 });

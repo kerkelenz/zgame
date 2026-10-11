@@ -60,7 +60,7 @@ describe('sessions', () => {
 
 describe('admin name reservation', () => {
   let w: World;
-  beforeEach(() => { w = createWorld({ npcDensity: 0 }, T0); delete process.env.OGAME_ADMIN_KEY; process.env.OGAME_ADMINS = 'boss, Second'; });
+  beforeEach(() => { w = createWorld({ npcDensity: 0 }, T0); delete process.env.ZGAME_ADMIN_KEY; process.env.ZGAME_ADMINS = 'boss, Second'; });
 
   it('reserves listed names until somebody legitimately holds them', () => {
     expect(reservedAdminName(w, 'boss')).toBe(true);
@@ -77,11 +77,11 @@ describe('admin name reservation', () => {
     expect(mayRegisterReserved('', '::1')).toBe(true);
     expect(mayRegisterReserved('', '::ffff:127.0.0.1')).toBe(true);
     expect(mayRegisterReserved('', undefined)).toBe(false);
-    process.env.OGAME_ADMIN_KEY = 'open-sesame';
+    process.env.ZGAME_ADMIN_KEY = 'open-sesame';
     expect(mayRegisterReserved('open-sesame', '203.0.113.9')).toBe(true);
     expect(mayRegisterReserved('open-sesam', '127.0.0.1')).toBe(false); // with a key set, being local is not enough
     expect(mayRegisterReserved('', '127.0.0.1')).toBe(false);
-    delete process.env.OGAME_ADMIN_KEY;
+    delete process.env.ZGAME_ADMIN_KEY;
   });
 });
 
@@ -132,15 +132,15 @@ describe('http hardening', () => {
   });
 
   it('refuses a reserved admin name from a remote address (here: only loopback is allowed without a key)', async () => {
-    process.env.OGAME_ADMINS = 'rootadmin';
+    process.env.ZGAME_ADMINS = 'rootadmin';
     // the test client connects over loopback, so it may claim the name...
     expect((await call('POST', '/api/register', undefined, { username: 'rootadmin', password: 'secret1' })).status).toBe(200);
     // ...and with a key configured, loopback is no longer enough
-    process.env.OGAME_ADMINS = 'rootadmin2';
-    process.env.OGAME_ADMIN_KEY = 'k3y';
+    process.env.ZGAME_ADMINS = 'rootadmin2';
+    process.env.ZGAME_ADMIN_KEY = 'k3y';
     expect((await call('POST', '/api/register', undefined, { username: 'rootadmin2', password: 'secret1' })).status).toBe(403);
     expect((await call('POST', '/api/register', undefined, { username: 'rootadmin2', password: 'secret1', adminKey: 'k3y' })).status).toBe(200);
-    delete process.env.OGAME_ADMIN_KEY;
+    delete process.env.ZGAME_ADMIN_KEY;
   });
 });
 
@@ -149,7 +149,7 @@ describe('websocket limits (real server process)', () => {
     const dir = mkdtempSync(join(tmpdir(), 'sf-ws-'));
     const port = 3900 + Math.floor(Math.random() * 90);
     const child = spawn(process.execPath, ['--import', 'tsx', 'server/index.ts'], {
-      env: { ...process.env, PORT: String(port), OGAME_SAVE: join(dir, 'w.json'), OGAME_NPC_DENSITY: '0', OGAME_RAID_INTERVAL_MIN: '0' }, stdio: 'ignore',
+      env: { ...process.env, PORT: String(port), ZGAME_SAVE: join(dir, 'w.json'), ZGAME_NPC_DENSITY: '0', ZGAME_RAID_INTERVAL_MIN: '0' }, stdio: 'ignore',
     });
     const base = `http://127.0.0.1:${port}`;
     try {

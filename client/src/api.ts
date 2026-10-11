@@ -3,7 +3,7 @@ export class ApiError extends Error {
   constructor(msg: string, status: number) { super(msg); this.status = status; }
 }
 
-const TOKEN_KEY = 'sf.token';
+const TOKEN_KEY = 'zg.token';
 export const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } };
 export const setToken = (t: string) => { try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ } };
 

@@ -4,6 +4,7 @@ import { dropAlliance, releaseHolds } from './alliance';
 import { notifyPlayer } from './messages';
 import { dropSession } from './accounts';
 import { GameError, type Player, type World } from './world';
+import { env } from './env';
 
 const hash = (pw: string, salt: string) => scryptSync(pw, salt, 32).toString('hex');
 const same = (a: string, b: string) => { const x = Buffer.from(a, 'hex'), y = Buffer.from(b, 'hex'); return x.length === y.length && timingSafeEqual(x, y); };
@@ -91,7 +92,7 @@ export function removePlayer(w: World, p: Player) {
 }
 
 // ------------------------------------------------------------------ moderation
-export const adminNames = () => (process.env.OGAME_ADMINS ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+export const adminNames = () => (env('ADMINS') ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 export const isAdmin = (p: Player) => !p.npc && adminNames().includes(p.username.toLowerCase());
 export const requireAdmin = (p: Player) => { if (!isAdmin(p)) throw new GameError('Admins only', 403); };
 
@@ -145,13 +146,13 @@ export function adminOverview(w: World, now: number, pointsOf: (p: Player) => nu
   };
 }
 
-/** Admin names from OGAME_ADMINS that nobody has registered yet: whoever registers first would become an admin, so these need a key. */
+/** Admin names from ZGAME_ADMINS that nobody has registered yet: whoever registers first would become an admin, so these need a key. */
 export function reservedAdminName(w: World, username: string): boolean {
   const n = (username || '').trim().toLowerCase();
   return adminNames().includes(n) && !Object.values(w.players).some((p) => !p.npc && p.username.toLowerCase() === n);
 }
 export function mayRegisterReserved(setupKey: string, ip: string | undefined): boolean {
-  const want = process.env.OGAME_ADMIN_KEY;
+  const want = env('ADMIN_KEY');
   if (want) {
     const a = Buffer.from(setupKey || ''), b = Buffer.from(want);
     return a.length === b.length && timingSafeEqual(a, b);

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGame } from './game';
 import { t, useLang } from './i18n';
 
-export const TOUR_KEY = 'sf.tourDone';
+export const TOUR_KEY = 'zg.tourDone';
 const seen = () => { try { return localStorage.getItem(TOUR_KEY) === '1'; } catch { return true; } };
 const finish = () => { try { localStorage.setItem(TOUR_KEY, '1'); } catch { /* ignore */ } };
 

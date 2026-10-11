@@ -170,7 +170,7 @@ function Interface() {
         {sound && <div className="row"><button onClick={() => playCue('alert', true)}>Test alert</button><button onClick={() => playCue('message', true)}>Test message</button></div>}
         <label className="check"><input type="checkbox" checked={showAll} onChange={(e) => setShowAllPages(e.target.checked)} /> <b>Show every page in the menu</b> <span className="muted small">- Automation, Territory, Invasion and the Simulator normally appear once they are useful to you</span></label>
         <button className="link" onClick={() => setPage('news')}>See what's new</button>
-        <button className="link" onClick={() => { try { localStorage.removeItem('sf.tourDone'); } catch { /* ignore */ } location.reload(); }}>Replay the welcome tour</button>
+        <button className="link" onClick={() => { try { localStorage.removeItem('zg.tourDone'); } catch { /* ignore */ } location.reload(); }}>Replay the welcome tour</button>
       </div>
     </Card>
   );

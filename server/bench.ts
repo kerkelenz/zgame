@@ -159,10 +159,10 @@ time('points for one commander', () => playerPoints(w, me), 30);
 
 // ---------------------------------------------------------------- persistence
 console.log('\nSAVING');
-const file = join(tmpdir(), 'ogame-bench-world.json');
+const file = join(tmpdir(), 'zgame-bench-world.json');
 time('JSON save (whole world)', () => saveWorld(file, w, { everyMs: Infinity, keep: 0 }), 3, BUDGET.save);
 console.log(`  JSON file: ${mb(statSync(file).size)}`);
-const db = new SqlStore(join(tmpdir(), `ogame-bench-${Date.now()}.sqlite`));
+const db = new SqlStore(join(tmpdir(), `zgame-bench-${Date.now()}.sqlite`));
 let r = { written: 0, deleted: 0, total: 0 };
 time('SQLite first save (every row)', () => { r = db.save(w); }, 1);
 console.log(`  ${r.total.toLocaleString('en-US')} rows`);

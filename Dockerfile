@@ -10,7 +10,7 @@ RUN npm run build
 FROM node:24-alpine
 RUN apk add --no-cache tini && mkdir -p /data && chown node:node /data
 WORKDIR /app
-ENV NODE_ENV=production PORT=3000 OGAME_SAVE=/data/world.json
+ENV NODE_ENV=production PORT=3000 ZGAME_SAVE=/data/world.json
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --chown=node:node server ./server

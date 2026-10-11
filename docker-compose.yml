@@ -1,18 +1,18 @@
 # Zgame behind Caddy, which gets and renews an HTTPS certificate automatically.
 #   1. point a DNS name at this machine and open ports 80 and 443
-#   2. put your settings in .env (see docs/DEPLOY.md), at least  DOMAIN=play.example.com  and  OGAME_ADMINS=yourname
+#   2. put your settings in .env (see docs/DEPLOY.md), at least  DOMAIN=play.example.com  and  ZGAME_ADMINS=yourname
 #   3. docker compose up -d
 services:
   game:
     build: .
     restart: unless-stopped
     environment:
-      OGAME_DB: /data/world.sqlite
-      OGAME_TRUST_PROXY: "1"
-      OGAME_ADMINS: ${OGAME_ADMINS:-}
-      OGAME_ADMIN_KEY: ${OGAME_ADMIN_KEY:-}
-      OGAME_SEASON_DAYS: ${OGAME_SEASON_DAYS:-0}
-      OGAME_MAX_PLAYERS: ${OGAME_MAX_PLAYERS:-500}
+      ZGAME_DB: /data/world.sqlite
+      ZGAME_TRUST_PROXY: "1"
+      ZGAME_ADMINS: ${ZGAME_ADMINS:-${OGAME_ADMINS:-}}
+      ZGAME_ADMIN_KEY: ${ZGAME_ADMIN_KEY:-${OGAME_ADMIN_KEY:-}}
+      ZGAME_SEASON_DAYS: ${ZGAME_SEASON_DAYS:-${OGAME_SEASON_DAYS:-0}}
+      ZGAME_MAX_PLAYERS: ${ZGAME_MAX_PLAYERS:-${OGAME_MAX_PLAYERS:-500}}
     volumes:
       - game-data:/data
     expose:
@@ -38,8 +38,8 @@ services:
     build: .
     restart: unless-stopped
     environment:
-      OGAME_DB: /data/world.sqlite
-      OGAME_BACKUP_KEEP: "14"
+      ZGAME_DB: /data/world.sqlite
+      ZGAME_BACKUP_KEEP: "14"
     volumes:
       - game-data:/data
     entrypoint: ["/bin/sh", "-c"]

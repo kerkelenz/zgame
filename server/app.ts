@@ -30,6 +30,7 @@ import { claimContract, contractsView } from './contracts';
 import { recoverAccount } from './account';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
+import { env } from './env';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -72,7 +73,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     next();
   });
   // behind a reverse proxy, rate limits must key on the real client address
-  if (process.env.OGAME_TRUST_PROXY) app.set('trust proxy', process.env.OGAME_TRUST_PROXY === 'true' ? true : Number(process.env.OGAME_TRUST_PROXY) || process.env.OGAME_TRUST_PROXY);
+  if (env('TRUST_PROXY')) app.set('trust proxy', env('TRUST_PROXY') === 'true' ? true : Number(env('TRUST_PROXY')) || env('TRUST_PROXY'));
   app.use(express.json({ limit: '100kb' }));
 
   const wrap = (fn: (req: Request, res: Response) => unknown) => (req: Request, res: Response, next: NextFunction) => {
@@ -99,7 +100,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   app.post('/api/register', wrap((req) => {
     if (limited('reg:' + req.ip, 10, 60_000) || limited('regday:' + req.ip, 40, 86_400_000)) throw new GameError('Too many attempts, slow down', 429);
     const wanted = str(req.body.username, 40);
-    if (ACC.reservedAdminName(w, wanted) && !ACC.mayRegisterReserved(str(req.body.adminKey, 100), req.ip)) throw new GameError('That name is reserved for an administrator. Enter the admin setup key (OGAME_ADMIN_KEY), or register it on the server machine itself.', 403);
+    if (ACC.reservedAdminName(w, wanted) && !ACC.mayRegisterReserved(str(req.body.adminKey, 100), req.ip)) throw new GameError('That name is reserved for an administrator. Enter the admin setup key (ZGAME_ADMIN_KEY), or register it on the server machine itself.', 403);
     const { player, token } = register(w, wanted, str(req.body.password, 200), now());
     bus.push({ to: '*', type: 'refresh' });
     return { token, id: player.id };

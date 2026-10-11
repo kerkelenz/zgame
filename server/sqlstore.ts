@@ -6,7 +6,7 @@ import { DEFAULT_CONFIG, type UniverseConfig } from '../shared/config';
 import { migratePlayer, type World } from './world';
 
 /**
- * Optional SQLite persistence (set OGAME_DB=data/world.sqlite). Every player, planet, fleet, message and so on is its own row,
+ * Optional SQLite persistence (set ZGAME_DB=data/world.sqlite). Every player, planet, fleet, message and so on is its own row,
  * and a save only writes the rows whose content changed since the last save - so a big, mostly idle universe costs
  * a handful of writes per autosave instead of rewriting one huge JSON file.
  */

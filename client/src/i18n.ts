@@ -5,7 +5,7 @@ import { useSyncExternalStore } from 'react';
  * so a language can be added one screen at a time.
  */
 export const LANGS: Record<string, string> = { en: 'English', de: 'Deutsch', es: 'Español', fr: 'Français' };
-const KEY = 'sf.lang';
+const KEY = 'zg.lang';
 
 type Dict = Record<string, string>;
 const TABLES: Record<string, Dict> = {

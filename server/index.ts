@@ -11,18 +11,19 @@ import { SqlStore } from './sqlstore';
 import { createWorld, type World } from './world';
 import { loadWorld, saveWorld } from './store';
 import { NPC_TICK_MS, generateEmpires, hasEmpires } from './empires';
+import { env } from './env';
 
-const num = (k: string, d: number) => (process.env[k] !== undefined ? Number(process.env[k]) : d);
+const num = (k: string, d: number) => (env(k) !== undefined ? Number(env(k)) : d);
 const overrides: Partial<UniverseConfig> = {};
 for (const k of Object.keys(DEFAULT_CONFIG) as (keyof UniverseConfig)[]) {
-  const envKey = 'OGAME_' + k.replace(/[A-Z]/g, (c) => '_' + c).toUpperCase();
-  if (typeof DEFAULT_CONFIG[k] === 'number' && process.env[envKey] !== undefined) (overrides as Record<string, number>)[k] = num(envKey, DEFAULT_CONFIG[k] as number);
+  const envKey = k.replace(/[A-Z]/g, (c) => '_' + c).toUpperCase();
+  if (typeof DEFAULT_CONFIG[k] === 'number' && env(envKey) !== undefined) (overrides as Record<string, number>)[k] = num(envKey, DEFAULT_CONFIG[k] as number);
 }
 
-const PORT = num('PORT', 3000);
-const SAVE_FILE = resolve(process.env.OGAME_SAVE || 'data/world.json');
-// OGAME_DB=data/world.sqlite switches persistence to SQLite (only changed rows are written); an existing JSON save is imported on first start
-const DB_FILE = process.env.OGAME_DB ? resolve(process.env.OGAME_DB) : null;
+const PORT = process.env.PORT !== undefined ? Number(process.env.PORT) : 3000;
+const SAVE_FILE = resolve(env('SAVE') || 'data/world.json');
+// ZGAME_DB=data/world.sqlite switches persistence to SQLite (only changed rows are written); an existing JSON save is imported on first start
+const DB_FILE = env('DB') ? resolve(env('DB')!) : null;
 const sql = DB_FILE ? new SqlStore(DB_FILE) : null;
 let world: World;
 if (sql) {
@@ -95,6 +96,6 @@ process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 server.listen(PORT, () => {
-  console.log(`OGame clone server on http://localhost:${PORT}  (save: ${DB_FILE ?? SAVE_FILE})`);
+  console.log(`Zgame server on http://localhost:${PORT}  (save: ${DB_FILE ?? SAVE_FILE})`);
   console.log(`Universe: ${world.config.galaxies}x${world.config.systems}x${world.config.positions}, economy x${world.config.economySpeed}, fleet x${world.config.fleetSpeed}`);
 });

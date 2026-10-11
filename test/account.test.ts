@@ -15,7 +15,7 @@ beforeEach(() => {
   w = createWorld({ economySpeed: 20, fleetSpeed: 100, protectionPoints: 0, raidIntervalMin: 0, npcDensity: 0 }, T0);
   a = register(w, 'alice', 'secret1', T0).player;
   b = register(w, 'bobby', 'secret2', T0).player;
-  process.env.OGAME_ADMINS = 'alice';
+  process.env.ZGAME_ADMINS = 'alice';
 });
 
 describe('password, rename and recovery', () => {
@@ -91,7 +91,7 @@ describe('deleting an account', () => {
 });
 
 describe('moderation', () => {
-  it('admins come from OGAME_ADMINS and cannot be moderated', () => {
+  it('admins come from ZGAME_ADMINS and cannot be moderated', () => {
     expect(ACC.isAdmin(a)).toBe(true);
     expect(ACC.isAdmin(b)).toBe(false);
     expect(() => ACC.requireAdmin(b)).toThrow(/Admins only/);
@@ -142,7 +142,7 @@ describe('account api', () => {
     return { status: r.status, json: (await r.json().catch(() => null)) as any };
   };
   beforeAll(async () => {
-    process.env.OGAME_ADMINS = 'root';
+    process.env.ZGAME_ADMINS = 'root';
     wa = createWorld({ economySpeed: 20, protectionPoints: 0, raidIntervalMin: 0 }, T0);
     const s = createApp(wa).listen(0);
     await new Promise((r) => s.once('listening', r));
@@ -152,7 +152,7 @@ describe('account api', () => {
   afterAll(() => close());
 
   it('full flow: register, admin rights, ban, recovery, delete', async () => {
-    process.env.OGAME_ADMINS = 'root';
+    process.env.ZGAME_ADMINS = 'root';
     const root = (await call('POST', '/api/register', undefined, { username: 'root', password: 'rootpw1' })).json;
     const user = (await call('POST', '/api/register', undefined, { username: 'gamer', password: 'gamerpw1' })).json;
     expect((await call('GET', '/api/me', root.token)).json.player.admin).toBe(true);

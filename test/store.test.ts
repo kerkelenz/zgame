@@ -9,7 +9,7 @@ import { loadWorld, saveWorld } from '../server/store';
 import { createWorld } from '../server/world';
 
 let dir: string;
-beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'ogame-store-')); vi.spyOn(console, 'error').mockImplementation(() => {}); });
+beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'zgame-store-')); vi.spyOn(console, 'error').mockImplementation(() => {}); });
 afterEach(() => { vi.restoreAllMocks(); rmSync(dir, { recursive: true, force: true }); });
 
 describe('persistence', () => {

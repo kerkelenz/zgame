@@ -1,9 +1,9 @@
 {
-  "name": "ogame-clone",
+  "name": "zgame",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Co-op multiplayer OGame-style space strategy game",
+  "description": "Zgame: a co-op multiplayer space strategy game",
   "scripts": {
     "dev": "concurrently -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
     "dev:server": "tsx watch server/index.ts",
@@ -15,7 +15,7 @@
     "balance": "tsx server/balance-sim.ts",
     "balance:new": "tsx server/balance-new.ts",
     "bench": "tsx server/bench.ts",
-    "demo": "tsx server/seed-demo.ts && cross-env OGAME_SAVE=data/demo-world.json tsx server/index.ts",
+    "demo": "tsx server/seed-demo.ts && cross-env ZGAME_SAVE=data/demo-world.json tsx server/index.ts",
     "backup": "tsx server/backup.ts",
     "e2e": "npm run build && vitest run --config vitest.e2e.config.ts"
   },

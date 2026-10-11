@@ -3,7 +3,7 @@ import type { Coords, Mission } from '../../shared/types';
 import { ApiError, get, getToken, post, setToken } from './api';
 import { playCue } from './sound';
 
-export const BROWSER_NOTIFY_KEY = 'sf.browserNotify';
+export const BROWSER_NOTIFY_KEY = 'zg.browserNotify';
 /** a desktop notification while the tab is in the background (opt-in in Settings) */
 function browserNotify(title: string, body: string) {
   try {
@@ -59,7 +59,7 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
   const [me, setMe] = useState<any | null>(null);
   const [planets, setPlanets] = useState<any[]>([]);
   const [fleets, setFleets] = useState({ mine: [] as any[], incoming: [] as any[], stationed: [] as any[], joinable: [] as any[] });
-  const [selected, setSelected] = useState<string>(() => { try { return localStorage.getItem('sf.planet') || ''; } catch { return ''; } });
+  const [selected, setSelected] = useState<string>(() => { try { return localStorage.getItem('zg.planet') || ''; } catch { return ''; } });
   const [skew, setSkew] = useState(0);
   const [tick, setTick] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -142,7 +142,7 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
 
   const selectPlanet = useCallback((id: string) => {
     setSelected(id);
-    try { localStorage.setItem('sf.planet', id); } catch { /* ignore */ }
+    try { localStorage.setItem('zg.planet', id); } catch { /* ignore */ }
   }, []);
 
   const planet = useMemo(() => planets.find((p) => p.id === selected) ?? planets[0] ?? null, [planets, selected]);

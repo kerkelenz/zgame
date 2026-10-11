@@ -28,14 +28,14 @@ export function Admin() {
         <div className="row wrap">
           <button className="danger" onClick={() => confirm('End the current season now? The champion is crowned immediately.') && void run(() => post('/admin/season/end'), 'Season ended')}>End season</button>
           <button className="danger" onClick={() => confirm('Reset the universe? Everyone starts over on a new homeworld (accounts, credits, officers and achievements stay).') && void run(() => post('/admin/season/reset'), 'Universe reset')}>Reset universe</button>
-          <span className="muted small">Reset only works after the season has ended. Automatic timing: OGAME_SEASON_DAYS, OGAME_SEASON_RESET_HOURS, OGAME_VICTORY_POINTS.</span>
+          <span className="muted small">Reset only works after the season has ended. Automatic timing: ZGAME_SEASON_DAYS, ZGAME_SEASON_RESET_HOURS, ZGAME_VICTORY_POINTS.</span>
         </div>
       </Card>
       <Card title="Void invasion">
         <div className="row wrap">
           <button className="danger" onClick={() => { const m = prompt('Open the rift in how many minutes?', '10'); if (m !== null) void run(() => post('/admin/invasion/start', { delayMinutes: Number(m) }), 'Invasion announced'); }}>Start an invasion</button>
           <button onClick={() => confirm('End the current invasion now? The Armada withdraws and consolation rewards are paid.') && void run(() => post('/admin/invasion/end'), 'Invasion ended')}>End the current invasion</button>
-          <span className="muted small">Automatic timing: OGAME_INVASION_INTERVAL_HOURS (0 turns them off), OGAME_INVASION_ANNOUNCE_HOURS, OGAME_INVASION_DURATION_HOURS, OGAME_INVASION_STRENGTH (share of the server's combat fleets).</span>
+          <span className="muted small">Automatic timing: ZGAME_INVASION_INTERVAL_HOURS (0 turns them off), ZGAME_INVASION_ANNOUNCE_HOURS, ZGAME_INVASION_DURATION_HOURS, ZGAME_INVASION_STRENGTH (share of the server's combat fleets).</span>
         </div>
       </Card>
       <Card title="Announcement">

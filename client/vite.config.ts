@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-const target = process.env.OGAME_SERVER || 'http://localhost:3000';
+const target = process.env.ZGAME_SERVER || 'http://localhost:3000';
 
 export default defineConfig({
   plugins: [react()],

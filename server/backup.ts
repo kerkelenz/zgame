@@ -1,6 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { env } from './env';
 
 export interface BackupResult { file: string; bytes: number; pruned: string[] }
 
@@ -39,7 +40,7 @@ export function restoreBackup(backup: string, target: string, now = Date.now()):
 
 // CLI: `npm run backup` or `npm run backup -- restore <file>`
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  const source = resolve(process.env.OGAME_DB || process.env.OGAME_SAVE || 'data/world.json');
+  const source = resolve(env('DB') || env('SAVE') || 'data/world.json');
   const [cmd, arg] = process.argv.slice(2);
   try {
     if (cmd === 'restore') {
@@ -47,8 +48,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
       const saved = restoreBackup(resolve(arg), source);
       console.log(`Restored ${arg} to ${source}.${saved ? ` The previous file is kept at ${saved}.` : ''}`);
     } else {
-      const keep = Number(process.env.OGAME_BACKUP_KEEP ?? 14);
-      const r = makeBackup(source, resolve(process.env.OGAME_BACKUP_DIR || join(dirname(source), 'snapshots')), keep);
+      const keep = Number(env('BACKUP_KEEP') ?? 14);
+      const r = makeBackup(source, resolve(env('BACKUP_DIR') || join(dirname(source), 'snapshots')), keep);
       console.log(`Backup written: ${r.file} (${(r.bytes / 1024).toFixed(0)} KiB)${r.pruned.length ? `; removed ${r.pruned.length} old backup(s)` : ''}`);
     }
   } catch (e) {

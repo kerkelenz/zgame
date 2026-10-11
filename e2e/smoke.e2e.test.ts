@@ -125,14 +125,14 @@ describe('using the game', () => {
 
   run('the tech tree highlights what an item needs and opens up', async () => {
     await go('Tech tree');
-    expect(await page.locator('.gcard').count()).toBeGreaterThan(55);
-    expect(await page.locator('.pip').count()).toBeGreaterThan(200);          // every level is a square
-    await page.locator('.gcard', { hasText: 'Fusion Reactor' }).first().click();
+    expect(await page.locator('.gnode').count()).toBeGreaterThan(200);        // every level is its own node
+    expect(await page.locator('.gnode', { hasText: 'Energy Technology' }).count()).toBeGreaterThanOrEqual(1);
+    await page.locator('.gnode', { hasText: 'Fusion Reactor' }).first().click();
     expect(await page.locator('.treeinfo').innerText()).toMatch(/Vespene Extractor to level 5/);
-    expect(await page.locator('.gcard.anc').count()).toBe(3);
-    expect(await page.locator('.gcard.dim').count()).toBeGreaterThan(40);
-    expect(await page.locator('.bedge.back').count()).toBe(3);
-    expect(await page.locator('.bedge').count()).toBeGreaterThan(70);          // the whole map is drawn, not only the selection
+    expect(await page.locator('.gnode.anc').count()).toBe(9);
+    expect(await page.locator('.gnode.dim').count()).toBeGreaterThan(150);
+    expect(await page.locator('.bedge.back').count()).toBeGreaterThan(8);
+    expect(await page.locator('.bedge').count()).toBeGreaterThan(250);         // the whole map is drawn, not only the selection
     // panned by dragging, zoomed with the wheel, no scroll bars
     const tf = () => page.locator('.graph').evaluate((el) => (el as HTMLElement).style.transform);
     const box = (await page.locator('.graphbox').boundingBox())!;
@@ -143,7 +143,7 @@ describe('using the game', () => {
     await page.mouse.move(box.x + box.width / 2 + 40, box.y + 130, { steps: 6 });
     await page.mouse.up();
     expect(await tf()).not.toBe(before);
-    expect(await page.locator('.gcard.sel').count()).toBe(1);               // a drag does not change the selection
+    expect(await page.locator('.gnode.sel').count()).toBe(1);               // a drag does not change the selection
     const panned = await tf();
     await page.mouse.wheel(0, -300);
     expect(await tf()).not.toBe(panned);
@@ -208,7 +208,7 @@ describe('alliance war', () => {
   run('declares a war from the Alliance page, shows the live score and a concession ends it', async () => {
     const mk = async (name: string) => (await api('/register', null, { username: name, password: 'correct-horse-9' })).token as string;
     const ally = await mk('wingman'), foe1 = await mk('rival_one'), foe2 = await mk('rival_two');
-    const mine = await api('/alliance', await page.evaluate(() => localStorage.getItem('sf.token')));
+    const mine = await api('/alliance', await page.evaluate(() => localStorage.getItem('zg.token')));
     await api('/alliance/join', ally, { id: mine.id });
     const made = await api('/alliance/create', foe1, { tag: 'RIV', name: 'The Rivals' });
     await api('/alliance/join', foe2, { id: made.id });
@@ -231,9 +231,20 @@ describe('alliance war', () => {
   });
 });
 
+describe('settings kept from before the rename', () => {
+  run('old sf.* browser settings move to the zg.* names, so nobody is logged out', async () => {
+    const token = await page.evaluate(() => localStorage.getItem('zg.token'));
+    await page.evaluate((t) => { localStorage.removeItem('zg.token'); localStorage.setItem('sf.token', t!); }, token);
+    await page.reload();
+    await page.waitForSelector('header.top');
+    expect(await page.evaluate(() => [localStorage.getItem('sf.token'), localStorage.getItem('zg.token')])).toEqual([null, token]);
+    noErrors();
+  });
+});
+
 describe('signing out and in', () => {
   run('logging out signs the device out on the server, and logging back in works', async () => {
-    const token = await page.evaluate(() => localStorage.getItem('sf.token'));
+    const token = await page.evaluate(() => localStorage.getItem('zg.token'));
     await page.getByRole('button', { name: 'Log out' }).click();
     await page.getByRole('button', { name: 'Log in' }).waitFor();
     const stale = await fetch(server.base + '/api/me', { headers: { authorization: `Bearer ${token}` } });

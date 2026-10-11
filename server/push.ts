@@ -1,5 +1,6 @@
 import webpush from 'web-push';
 import { GameError, type Player, type World } from './world';
+import { env } from './env';
 
 /** Browser push subscriptions (a phone or desktop that installed the app or allowed notifications). */
 export interface PushSub { endpoint: string; keys: { p256dh: string; auth: string }; createdAt: number; label: string }
@@ -20,7 +21,7 @@ export function ensureVapid(w: World): Vapid {
   if (!w.vapid) w.vapid = webpush.generateVAPIDKeys();
   return w.vapid;
 }
-const subject = () => process.env.OGAME_PUSH_SUBJECT || 'mailto:admin@example.com';
+const subject = () => env('PUSH_SUBJECT') || 'mailto:admin@example.com';
 
 /** Only real push-service endpoints over https are accepted; the server will post to whatever is stored here. */
 export function cleanSubscription(raw: unknown): { endpoint: string; keys: { p256dh: string; auth: string } } {

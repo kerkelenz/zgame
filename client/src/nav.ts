@@ -36,8 +36,8 @@ export function visibleNav(features: Features | undefined, showAll: boolean, isA
 const EXTRA: Record<string, string> = { detail: 'planet', profile: 'social' };
 export const groupOfPage = (page: string): string => EXTRA[page] ?? NAV_GROUPS.find((g) => g.items.some((i) => i.id === page))?.id ?? 'planet';
 
-const KEY = 'sf.navCollapsed';
-const ALL_KEY = 'sf.navAll';
+const KEY = 'zg.navCollapsed';
+const ALL_KEY = 'zg.navAll';
 export function loadCollapsed(): Record<string, boolean> {
   try { return JSON.parse(localStorage.getItem(KEY) || '{}') as Record<string, boolean>; } catch { return {}; }
 }

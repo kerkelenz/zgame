@@ -26,9 +26,9 @@ export function FleetPage() {
     (async () => {
       let s = await get('/social');
       try {
-        const old = JSON.parse(localStorage.getItem('sf.presets') || '[]') as { name: string; ships: Record<string, number> }[];
+        const old = JSON.parse(localStorage.getItem('zg.presets') || '[]') as { name: string; ships: Record<string, number> }[];
         for (const p of old) if (!s.presets.some((x: any) => x.name.toLowerCase() === p.name.toLowerCase())) s = await post('/presets', p);
-        if (old.length) localStorage.removeItem('sf.presets');
+        if (old.length) localStorage.removeItem('zg.presets');
       } catch { /* ignore */ }
       setPresets(s.presets);
     })().catch(() => undefined);
