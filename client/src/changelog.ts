@@ -3,6 +3,15 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-k', date: '2026-10-12', title: 'Rules and tidy-ups',
+    items: [
+      'The Space Dock rebuilds 3.5% of a wreck field per level, at most 35% at level 10 (it used to reach 90%).',
+      'Moons can no longer build storage buildings: nothing is mined there.',
+      'The Moon Forge is no longer offered on a planet that already has a moon.',
+      'Bombers switch to hyperspace drive at Hyperspace Drive 8 (base speed 5,000), which was already the case and is now covered by tests.',
+    ],
+  },
+  {
     id: '2026-10-j', date: '2026-10-12', title: 'A friendlier Fleet page',
     items: [
       'Coordinates on the Fleet page are links to the galaxy.',

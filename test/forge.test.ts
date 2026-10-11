@@ -138,6 +138,10 @@ describe('what the player sees', () => {
     expect(planetView(w, ap, T0).forge!.relevant).toBe(false);
     w.debris[key()] = { metal: 10, crystal: 0 };
     expect(planetView(w, ap, T0).forge!.relevant).toBe(true);
+    createMoon(w, ap, T0 + 5);                                                   // a planet that already has a moon is offered no forge
+    expect(planetView(w, ap, T0).forge!.relevant).toBe(false);
+    alice.techs = { graviton: 1 };
+    expect(planetView(w, ap, T0).forge!.relevant).toBe(false);
   });
 
   it('appears in the event list with the moon size', () => {

@@ -56,7 +56,7 @@ export function forgeView(w: World, planet: Planet, player: Player) {
     running: job ? { start: job.start, end: job.end, diameter: job.diameter, debris: job.debris, cost: job.cost } : null,
     hasMoon: hasMoon(w, planet),
     /** worth showing at all: something to forge from, a forge running, or the means to */
-    relevant: !!job || total > 0 || reqs[0].ok,
+    relevant: !!job || (!hasMoon(w, planet) && (total > 0 || reqs[0].ok)),
   };
 }
 

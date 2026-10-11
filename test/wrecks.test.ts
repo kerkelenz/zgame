@@ -256,9 +256,11 @@ describe('Space Dock', () => {
   beforeEach(() => { addWreck(w, bp, { cruiser: 100, battleship: 20 }, T0); });
 
   it('is a planet building with rising repair shares', () => {
-    expect(wreckRepairShare(1)).toBeCloseTo(0.36, 9);
-    expect(wreckRepairShare(5)).toBeCloseTo(0.6, 9);
-    expect(wreckRepairShare(50)).toBe(0.9);
+    expect(wreckRepairShare(0)).toBe(0);
+    expect(wreckRepairShare(1)).toBeCloseTo(0.035, 9);
+    expect(wreckRepairShare(5)).toBeCloseTo(0.175, 9);
+    expect(wreckRepairShare(10)).toBeCloseTo(0.35, 9);                     // the most a dock ever rebuilds
+    expect(wreckRepairShare(50)).toBe(0.35);
     const ctx = detailCtxFrom(planetView(w, bp, T0) as never, bob.techs);
     expect(buildingTable('spaceDock', ctx, 4, 4).rows[0].v.share).toBe(wreckRepairShare(4));
     bp.buildQueue = null;
@@ -268,18 +270,18 @@ describe('Space Dock', () => {
   });
 
   it('rebuilds a share of the wreck over time, for free, then the field is gone', () => {
-    bp.buildings.spaceDock = 5; // 60%
+    bp.buildings.spaceDock = 10; // the most a dock rebuilds: 35%
     bp.fleet = {};
     startRepair(w, bob, bp, T0 + 1000);
     const repair = w.wrecks[bp.id].repair!;
-    expect(repair.ships).toEqual({ cruiser: 60, battleship: 12 });
+    expect(repair.ships).toEqual({ cruiser: 35, battleship: 7 });
     expect(repair.endsAt).toBe(T0 + 1000 + repairSeconds(w) * 1000);
     expect(() => startRepair(w, bob, bp, T0 + 2000)).toThrow(/already under way/);
     const metal = bp.resources.metal;
     updatePlanet(w, bp, repair.endsAt - 1);
     expect(bp.fleet.cruiser).toBeUndefined();
     updatePlanet(w, bp, repair.endsAt);
-    expect(bp.fleet).toEqual({ cruiser: 60, battleship: 12 });
+    expect(bp.fleet).toEqual({ cruiser: 35, battleship: 7 });
     expect(w.wrecks[bp.id]).toBeUndefined();
     expect(bp.resources.metal).toBeGreaterThanOrEqual(metal); // repairs cost nothing
     expect(w.messages.some((m) => m.to === bob.id && m.subject === 'Repairs complete')).toBe(true);
@@ -320,7 +322,7 @@ describe('Space Dock', () => {
     expect(planetView(w, bp, T0).wreck).toMatchObject({ dock: 0, share: 0 });
     bp.buildings.spaceDock = 4;
     const v = planetView(w, bp, T0).wreck!;
-    expect(v.share).toBeCloseTo(0.54, 9);
+    expect(v.share).toBeCloseTo(0.14, 9);
     expect(v.ships).toEqual({ cruiser: 100, battleship: 20 });
     expect(v.repairSeconds).toBe(repairSeconds(w));
     expect(wreckView(w, ap)).toBeNull();

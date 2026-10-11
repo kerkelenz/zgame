@@ -80,11 +80,12 @@ export const UNITS: Record<UnitId, UnitDef> = {
 };
 
 /** buildings a moon may host (plus every moonOnly building); planets may not host moonOnly ones */
-export const MOON_BUILDINGS: BuildingId[] = ['lunarBase', 'sensorPhalanx', 'jumpGate', 'roboticsFactory', 'shipyard', 'missileSilo', 'metalStorage', 'crystalStorage', 'deuteriumTank'];
+export const MOON_BUILDINGS: BuildingId[] = ['lunarBase', 'sensorPhalanx', 'jumpGate', 'roboticsFactory', 'shipyard', 'missileSilo'];   // no mines on a moon, so no storage either
 export const buildingAllowed = (id: BuildingId, moon: boolean) => (moon ? MOON_BUILDINGS.includes(id) : !BUILDINGS[id].moonOnly);
 
 /** share of a wreck field a Space Dock of this level can rebuild */
-export const wreckRepairShare = (level: number) => Math.min(0.9, 0.3 + 0.06 * Math.max(1, level));
+/** 3.5% of a wreck field per Space Dock level, at most 35% (reached at level 10) */
+export const wreckRepairShare = (level: number) => Math.min(0.35, 0.035 * Math.max(0, level));
 
 export const SHIP_IDS = (Object.keys(UNITS) as UnitId[]).filter((k) => UNITS[k].kind === 'ship') as ShipId[];
 /** ships that never leave their planet */

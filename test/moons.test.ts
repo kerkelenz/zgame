@@ -265,3 +265,12 @@ describe('jump gate', () => {
     expect(() => jumpGate(w, alice, am.id, ap.id, { cruiser: 1 }, T0)).toThrow(/your moons/);
   });
 });
+
+describe('what can be built on a moon', () => {
+  it('offers no storage buildings, because nothing is mined there', async () => {
+    const { buildingAllowed } = await import('../shared/data');
+    for (const id of ['metalStorage', 'crystalStorage', 'deuteriumTank', 'metalMine', 'crystalMine', 'deuteriumSynthesizer', 'solarPlant'] as const) expect(buildingAllowed(id, true), id).toBe(false);
+    for (const id of ['lunarBase', 'sensorPhalanx', 'jumpGate', 'roboticsFactory', 'shipyard', 'missileSilo'] as const) expect(buildingAllowed(id, true), id).toBe(true);
+    expect(buildingAllowed('metalStorage', false)).toBe(true);
+  });
+});
