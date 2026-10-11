@@ -45,7 +45,11 @@ export function Items({ kind }: { kind: Kind }) {
           {bBacklog.map((id, i) => (
             <div className="row between" key={i}>
               <span>{i + 1}. {BUILDINGS[id as BuildingId].name}</span>
-              <button onClick={() => void act(() => post(`/planets/${planet.id}/build/unqueue`, { index: i }))}>Remove</button>
+              <span className="row">
+                <button disabled={i === 0} title="Earlier" onClick={() => void act(() => post(`/planets/${planet.id}/build/move`, { index: i, dir: -1 }))}>↑</button>
+                <button disabled={i === bBacklog.length - 1} title="Later" onClick={() => void act(() => post(`/planets/${planet.id}/build/move`, { index: i, dir: 1 }))}>↓</button>
+                <button onClick={() => void act(() => post(`/planets/${planet.id}/build/unqueue`, { index: i }))}>Remove</button>
+              </span>
             </div>
           ))}
         </Card>
@@ -55,7 +59,11 @@ export function Items({ kind }: { kind: Kind }) {
           {rBacklog.map((q, i) => (
             <div className="row between" key={i}>
               <span>{i + 1}. {TECHS[q.id as TechId].name}</span>
-              <button onClick={() => void act(() => post('/research/unqueue', { index: i }))}>Remove</button>
+              <span className="row">
+                <button disabled={i === 0} title="Earlier" onClick={() => void act(() => post('/research/move', { index: i, dir: -1 }))}>↑</button>
+                <button disabled={i === rBacklog.length - 1} title="Later" onClick={() => void act(() => post('/research/move', { index: i, dir: 1 }))}>↓</button>
+                <button onClick={() => void act(() => post('/research/unqueue', { index: i }))}>Remove</button>
+              </span>
             </div>
           ))}
         </Card>

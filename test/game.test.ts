@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
-import { abandonPlanet, queueBuilding, queueResearch, unqueueBuilding, unqueueResearch, cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
+import { abandonPlanet, queueBuilding, queueResearch, unqueueBuilding, unqueueResearch, moveQueuedBuilding, moveQueuedResearch, cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
 import { launchMissiles, processMovements, recallFleet, sendFleet } from '../server/fleet';
 import { createPlanet, playerPoints } from '../server/galaxy';
 import { processRaids, spawnRaid } from '../server/npc';
@@ -608,6 +608,28 @@ describe('queues', () => {
     expect(ap.buildBacklog).toHaveLength(3);
     expect(ap.resources.metal).toBeGreaterThan(before); // the reservation comes back
     expect(() => unqueueBuilding(ap, 9)).toThrow();
+  });
+
+  it('queued entries can be reordered and keep their reservations', () => {
+    ap.resources = { metal: 1e12, crystal: 1e12, deuterium: 1e12 };
+    queueBuilding(w, alice, ap, 'metalMine', T0);
+    queueBuilding(w, alice, ap, 'crystalMine', T0);
+    queueBuilding(w, alice, ap, 'solarPlant', T0);
+    const paid = [...ap.buildPaid!];
+    moveQueuedBuilding(ap, 1, -1);
+    expect(ap.buildBacklog).toEqual(['solarPlant', 'crystalMine']);
+    expect(ap.buildPaid).toEqual([paid[1], paid[0]]);
+    expect(() => moveQueuedBuilding(ap, 0, -1)).toThrow();
+    expect(() => moveQueuedBuilding(ap, 1, 1)).toThrow();
+    processPlayer(w, alice, T0 + 500 * HOUR);
+    expect(ap.buildBacklog).toEqual([]);
+    expect(ap.buildings.solarPlant).toBeGreaterThan(0);
+    alice.techs = { energy: 8 };
+    queueResearch(w, alice, ap, 'energy', T0 + 500 * HOUR);
+    queueResearch(w, alice, ap, 'computer', T0 + 500 * HOUR);
+    queueResearch(w, alice, ap, 'armour', T0 + 500 * HOUR);
+    moveQueuedResearch(alice, 1, -1);
+    expect(alice.researchBacklog.map((r) => r.id)).toEqual(['armour', 'computer']);
   });
 
   it('cancelling the active job starts the next queued one', () => {

@@ -5,7 +5,7 @@ import { BUILDINGS, TECHS, UNITS } from '../shared/data';
 import { bus } from './bus';
 import { authenticate, login, register } from './accounts';
 import * as AL from './alliance';
-import { abandonPlanet, tradeResources, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueBuilding, queueResearch, queueUnits, unqueueBuilding, unqueueResearch } from './economy';
+import { abandonPlanet, tradeResources, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueBuilding, queueResearch, queueUnits, unqueueBuilding, unqueueResearch, moveQueuedBuilding, moveQueuedResearch } from './economy';
 import { flightPlan, jumpGate, launchMissiles, phalanxScan, recallFleet, sendFleet } from './fleet';
 import { colonyCount, galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
@@ -111,6 +111,14 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.post('/planets/:id/build/unqueue', wrap((req) => {
     unqueueBuilding(ownedPlanet(w, req.player!.id, req.params.id), Number(req.body.index));
     return planetView(w, w.planets[req.params.id], now());
+  }));
+  A.post('/planets/:id/build/move', wrap((req) => {
+    moveQueuedBuilding(ownedPlanet(w, req.player!.id, req.params.id), Number(req.body.index), Number(req.body.dir));
+    return planetView(w, w.planets[req.params.id], now());
+  }));
+  A.post('/research/move', wrap((req) => {
+    moveQueuedResearch(req.player!, Number(req.body.index), Number(req.body.dir));
+    return { ok: true };
   }));
   A.post('/research/unqueue', wrap((req) => {
     unqueueResearch(w, req.player!, Number(req.body.index));

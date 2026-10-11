@@ -213,6 +213,23 @@ export function queueBuilding(w: World, player: Player, planet: Planet, id: Buil
   paid.push(cost);
 }
 
+/** Swap a queued entry with its neighbour (dir -1 = earlier, +1 = later). Reservations travel with the entries. */
+function swapIn<T>(list: T[] | undefined, i: number, j: number) {
+  if (!list || i >= list.length || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+}
+export function moveQueuedBuilding(planet: Planet, index: number, dir: number) {
+  const j = index + (dir < 0 ? -1 : 1);
+  if (!planet.buildBacklog?.[index] || j < 0 || j >= planet.buildBacklog.length) throw new GameError('Cannot move that entry');
+  swapIn(planet.buildBacklog, index, j);
+  swapIn(planet.buildPaid, index, j);
+}
+export function moveQueuedResearch(player: Player, index: number, dir: number) {
+  const j = index + (dir < 0 ? -1 : 1);
+  if (!player.researchBacklog?.[index] || j < 0 || j >= player.researchBacklog.length) throw new GameError('Cannot move that entry');
+  swapIn(player.researchBacklog, index, j);
+}
+
 export function unqueueBuilding(planet: Planet, index: number) {
   if (!planet.buildBacklog?.[index]) throw new GameError('No such queue entry');
   planet.buildBacklog.splice(index, 1);
