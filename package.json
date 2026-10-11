@@ -16,7 +16,8 @@
     "balance:new": "tsx server/balance-new.ts",
     "bench": "tsx server/bench.ts",
     "demo": "tsx server/seed-demo.ts && cross-env OGAME_SAVE=data/demo-world.json tsx server/index.ts",
-    "backup": "tsx server/backup.ts"
+    "backup": "tsx server/backup.ts",
+    "e2e": "npm run build && vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
     "express": "^4.21.2",
@@ -34,6 +35,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.0",
     "cross-env": "^10.1.0",
+    "playwright-core": "^1.64.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.7.2",

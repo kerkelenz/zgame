@@ -107,6 +107,8 @@ test/     vitest: formulas & combat, full game flows with a fake clock, HTTP API
 
 Performance: `npm run bench -- 300` builds a 300-commander universe and times the hot paths (a full server tick is ~1 ms, a save ~5 ms, so a small server is nowhere near its limits).
 
+Browser smoke tests: `npm run e2e` builds the client, starts a real server on a private port with a throwaway save, and drives it with the Edge or Chrome already on the machine (via `playwright-core`; no browser download). It registers through the form, opens every page on a desktop and a phone width checking for crashes, console errors and sideways scrolling, and uses the main features. It skips itself when no browser is found and is not part of `npm test`.
+
 `npm run balance:new` prints payback times and multipliers for crawlers, classes, orbit bonuses, the merchant deal, the supply depot and expedition ships (run it after changing any of those constants).
 
 `npm test` runs the suite, `npm run typecheck` runs `tsc`, and `npm run balance -- 72` plays a greedy bot for 72 simulated hours and prints economy milestones (handy when tuning speeds or costs).
