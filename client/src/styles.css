@@ -152,3 +152,8 @@ table.dtable td.cur { background: #f0a93b22; font-weight: 600; }
 .breakdown { margin-bottom: 8px; } .breakdown .row.between { padding: 0; }
 tr.next td { background: #72dd8f14; }
 td .bar { margin: 0 0 3px; }
+
+.tag.vac { color: #6fcbff; border-color: #2c5a78; } .tag.inact { color: #9aa3b8; }
+.online { color: var(--good); font-size: 11px; }
+.alertbar.vacbar { background: #1c3a55; color: #cfe6ff; }
+.settings-section p { margin: 4px 0; }

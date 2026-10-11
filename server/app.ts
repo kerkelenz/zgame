@@ -14,6 +14,7 @@ import { checkProgress, hireOfficer, joinFaction, leaveFaction } from './progres
 import { answerTribute } from './empires';
 import { spawnRaid } from './npc';
 import { rankings } from './rankings';
+import { endVacation, startVacation } from './vacation';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
 
 declare global {
@@ -191,7 +192,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.get('/galaxy/:g/:s', wrap((req) => {
     const g = Number(req.params.g), s = Number(req.params.s);
     if (!inBounds(w, { g, s, p: 1 })) throw new GameError('Out of bounds');
-    return { g, s, slots: galaxyView(w, req.player!, g, s) };
+    return { g, s, slots: galaxyView(w, req.player!, g, s, now()) };
   }));
   A.get('/highscore', wrap(() => {
     const players = rankings(w, true);
@@ -203,6 +204,8 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
   A.get('/command', wrap((req) => commandView(w, req.player!)));
   A.post('/officers/hire', wrap((req) => { hireOfficer(w, req.player!, str(req.body.id)); return commandView(w, req.player!); }));
+  A.post('/vacation/start', wrap((req) => { startVacation(w, req.player!, now()); return meView(w, req.player!, now()); }));
+  A.post('/vacation/end', wrap((req) => { endVacation(w, req.player!, now()); return meView(w, req.player!, now()); }));
   A.get('/history', wrap((req) => req.player!.history));
   A.post('/tribute/:id', wrap((req) => {
     const p = req.player!;

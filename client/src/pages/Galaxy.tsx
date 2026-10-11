@@ -45,17 +45,17 @@ export function Galaxy() {
               <tr key={sl.p} className={pl?.mine ? 'mine' : ''}>
                 <td>{sl.p}</td>
                 <td>{pl ? pl.name : <span className="muted">empty</span>}{sl.moon && <span title={sl.moon.name}> 🌙</span>}</td>
-                <td>{pl ? <>{pl.owner}{pl.npc && <span className={`tag ${pl.npc}`}>{pl.npc}</span>}{pl.protectedFor && <span title="Under protection" className="muted"> (p)</span>}</> : ''}</td>
+                <td>{pl ? <>{pl.owner}{pl.npc && <span className={`tag ${pl.npc}`}>{pl.npc}</span>}{pl.status?.vacation && <span className="tag vac" title="On vacation: cannot be attacked or spied on">v</span>}{pl.status?.activity === 'online' && <span className="online" title="Online now"> ●</span>}{pl.status?.activity === 'inactive' && <span className="tag inact" title="Inactive for a week or more">i</span>}{pl.status?.activity === 'longInactive' && <span className="tag inact" title="Inactive for a month or more">I</span>}{pl.status?.protection === 'weak' && <span className="tag" title="Newbie protection: too weak to attack">n</span>}{pl.status?.protection === 'strong' && <span className="tag" title="Too strong: protected from you">s</span>}</> : ''}</td>
                 <td>{pl?.alliance ? `[${pl.alliance}]` : pl?.faction ? <span className="muted small">{pl.faction}</span> : ''}</td>
                 <td>{sl.debris ? <a onClick={() => go(sl.p, 'recycle')} className="crystal">{fmt(sl.debris.metal)} M / {fmt(sl.debris.crystal)} C</a> : ''}</td>
                 <td className="actions">
                   {!pl && <button onClick={() => go(sl.p, 'colonize')}>Colonize</button>}
                   {pl && !pl.mine && <>
-                    <button onClick={() => go(sl.p, 'espionage')}>Spy</button>
-                    <button onClick={() => go(sl.p, 'attack')}>Attack</button>
+                    <button disabled={pl.protectedFor} title={pl.protectedFor ? 'Protected' : ''} onClick={() => go(sl.p, 'espionage')}>Spy</button>
+                    <button disabled={pl.protectedFor} title={pl.protectedFor ? 'Protected' : ''} onClick={() => go(sl.p, 'attack')}>Attack</button>
                     <button onClick={() => go(sl.p, 'transport')}>Transport</button>
-                    <button onClick={() => go(sl.p, 'hold')}>Defend</button>
-                    {sl.moon && <button onClick={() => go(sl.p, 'attack', true)} title="Target the moon">🌙 Attack</button>}
+                    <button disabled={pl.status?.vacation} title={pl.status?.vacation ? 'On vacation' : ''} onClick={() => go(sl.p, 'hold')}>Defend</button>
+                    {sl.moon && <button disabled={pl.protectedFor} onClick={() => go(sl.p, 'attack', true)} title="Target the moon">🌙 Attack</button>}
                   </>}
                   {pl?.mine && <button onClick={() => go(sl.p, 'deploy')}>Deploy</button>}
                   {pl?.mine && sl.moon && <button onClick={() => go(sl.p, 'deploy', true)}>🌙 Deploy</button>}
@@ -63,6 +63,7 @@ export function Galaxy() {
               </tr>
             );
           })}
+          <tr><td colSpan={6} className="muted small">Flags: <span className="tag vac">v</span> vacation · <span className="tag inact">i</span> inactive 7+ days · <span className="tag inact">I</span> long inactive 28+ days · <span className="tag">n</span> newbie protection · <span className="tag">s</span> too strong for you · <span className="online">●</span> online</td></tr>
           <tr><td>{cfg.positions + 1}</td><td colSpan={4} className="muted">Deep space (expeditions)</td><td className="actions"><button onClick={() => go(cfg.positions + 1, 'expedition')}>Expedition</button></td></tr>
         </tbody>
       </table>

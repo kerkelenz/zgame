@@ -31,7 +31,7 @@ export type Coords = { g: number; s: number; p: number };
 
 export type Mission =
   | 'attack' | 'transport' | 'deploy' | 'espionage' | 'colonize'
-  | 'recycle' | 'expedition' | 'hold' | 'missile';
+  | 'recycle' | 'expedition' | 'hold' | 'missile' | 'destroy';
 
 export interface Requirement { id: BuildingId | TechId; level: number }
 

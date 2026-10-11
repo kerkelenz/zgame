@@ -77,6 +77,7 @@ export function meView(w: World, p: Player, now: number) {
     colonies: colonyCount(w, p),
     unread: w.messages.filter((m) => m.to === p.id && !m.read).length,
     credits: Math.floor(p.credits),
+    vacation: p.vacation,
     faction: p.faction,
     pendingTributes: p.tributes.filter((t) => !t.answered).length,
     objective: (() => { const o = currentObjective(p); return o ? { id: o.id, name: o.name, hint: o.hint, step: OBJECTIVES.indexOf(o) + 1, of: OBJECTIVES.length } : null; })(),

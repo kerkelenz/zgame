@@ -34,6 +34,8 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `OGAME_RAID_INTERVAL_MIN` | 45 | minutes between NPC raid waves (0 = off) |
 | `OGAME_NPC_DENSITY` | 0.3 | share of free slots settled by computer empires when the universe is created (0 = none; an existing save without empires gets them on next start) |
 | `OGAME_RAID_STRENGTH` | 1 | size of raiding fleets: 0.6 relaxed, 1 standard, 1.35 brutal |
+| `OGAME_VACATION_MIN_HOURS` | 48 | minimum vacation stay |
+| `OGAME_INACTIVE_DAYS` / `OGAME_LONG_INACTIVE_DAYS` | 7 / 28 | days away before the i / I flags |
 | `OGAME_MAX_PLAYERS` | 500 | registration closes at this many commanders |
 | `OGAME_TRUST_PROXY` | unset | set to `true` (or a hop count) when behind a reverse proxy so rate limits use the real client IP |
 | `OGAME_GALAXIES`, `OGAME_SYSTEMS`, `OGAME_POSITIONS` | 2 / 40 / 15 | universe size |
@@ -59,6 +61,7 @@ Config is stored in the save on first start; env vars override it on later start
 - **Social** – messages (battle/spy/system reports and player mail), global chat, galaxy browser, highscore for players and alliances, newbie protection.
 - **Details pages** – click any building, research, ship or defense name (including requirement lists) for its own page: what it does at every level (production, energy, storage, speeds, slots, ranges…), the cost and time of each level with your officers and bonuses applied, what you still need, and what it unlocks. Ships and defenses show base vs. tech-boosted stats, rapid fire both ways, and how weapons, shields, armour and drives scale them.
 - **Economy page** – empire income per hour and day, a planet-by-planet table, a breakdown of where each resource comes from (mines, plasma, boosts, energy-shortage losses), the energy picture, storage fill timers and projections, and an upgrade planner that ranks mine and energy upgrades by payback time.
+- **Vacation mode and status flags** – freeze your empire while away (nothing produced, nobody can attack or spy on you; needs a quiet empire and lasts a minimum stay). The Galaxy flags vacation, online/inactive/long-inactive commanders, and newbie vs. too-strong protection.
 - **Empire page** – every planet and moon on one screen: resources, production, construction, ships, storage warnings.
 - **Live UI** – WebSocket push for alerts/messages/chat, interpolated resource counters, countdowns.
 

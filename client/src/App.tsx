@@ -8,6 +8,7 @@ import { Command } from './pages/Command';
 import { Economy } from './pages/Economy';
 import { ItemDetail } from './pages/ItemDetail';
 import { Simulator } from './pages/Simulator';
+import { Settings } from './pages/Settings';
 import { Empire } from './pages/Empire';
 import { Guide } from './pages/Guide';
 import { FleetPage } from './pages/Fleet';
@@ -21,7 +22,7 @@ import { Resources } from './pages/Resources';
 const NAV: [string, string][] = [
   ['overview', 'Overview'], ['empire', 'Empire'], ['economy', 'Economy'], ['resources', 'Resources'], ['buildings', 'Buildings'], ['research', 'Research'],
   ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['fleet', 'Fleet'], ['galaxy', 'Galaxy'],
-  ['alliance', 'Alliance'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['guide', 'Guide'],
+  ['alliance', 'Alliance'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['settings', 'Settings'], ['guide', 'Guide'],
 ];
 
 export function App() {
@@ -53,6 +54,7 @@ export function App() {
       case 'chat': return <Chat />;
       case 'highscore': return <Highscore />;
       case 'guide': return <Guide />;
+      case 'settings': return <Settings />;
       case 'command': return <Command />;
       case 'simulator': return <Simulator />;
       default: return <Overview />;
@@ -81,6 +83,7 @@ export function App() {
         </div>
       </header>
       {offline && <div className="alertbar" style={{ background: '#4a3a1c', cursor: 'default' }}>Connection to the server lost - retrying…</div>}
+      {me.vacation && <div className="alertbar vacbar" onClick={() => setPage('settings')}>🏖 Vacation mode: your empire is frozen and protected. You can leave after {new Date(me.vacation.minUntil).toLocaleString()} - open Settings.</div>}
       {me.pendingTributes > 0 && <div className="alertbar" onClick={() => setPage('command')}>⚠ A hostile empire is demanding tribute - open Command to answer before the deadline</div>}
       {fleets.incoming.length > 0 && (
         <div className="alertbar" onClick={() => setPage('fleet')}>

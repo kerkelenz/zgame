@@ -6,6 +6,7 @@ import { jumpGate, launchMissiles, phalanxScan, processMovements, recallFleet, s
 import { createMoon } from '../server/galaxy';
 import { answerTribute, generateEmpires, npcTick, processTributes } from '../server/empires';
 import { checkProgress } from '../server/progress';
+import { endVacation, startVacation } from '../server/vacation';
 import { processRaids } from '../server/npc';
 import { BUILDING_IDS, SHIP_IDS, TECH_IDS, DEFENSE_IDS } from '../shared/data';
 import { createWorld, GameError, type World } from '../server/world';
@@ -91,7 +92,7 @@ describe('soak', () => {
           const p = pick(players);
           const planet = w.planets[pick(p.planetIds)];
           const moonShot = rng() < 0.25;
-          const act = Math.floor(rng() * 15);
+          const act = Math.floor(rng() * 16);
           try {
             switch (act) {
               case 0: startBuilding(w, p, planet, pick(BUILDING_IDS), now); break;
@@ -117,6 +118,7 @@ describe('soak', () => {
               case 10: cancelBuilding(w, planet, now); break;
               case 13: phalanxScan(w, p, planet.id, w.planets[pick(Object.keys(w.planets))].coords, now); break;
               case 14: jumpGate(w, p, planet.id, w.planets[pick(p.planetIds)].id, { cruiser: 1 + Math.floor(rng() * 5) }, now); break;
+              case 15: p.vacation ? endVacation(w, p, now) : startVacation(w, p, now); break;
               case 12: launchMissiles(w, p, planet.id, w.planets[pick(Object.keys(w.planets))].coords, 1 + Math.floor(rng() * 8), now); break;
               case 11: rng() < 0.5 ? cancelResearch(w, p, now) : processPlayer(w, p, now); break;
             }

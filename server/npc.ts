@@ -45,8 +45,8 @@ const worldsOf = (p: Player, w: World) => p.planetIds.filter((id) => !w.planets[
  */
 export function spawnRaid(w: World, now: number, rng: Rng = Math.random, opts: RaidOptions = {}): Movement | null {
   const pool = opts.targetPlayerId
-    ? [w.players[opts.targetPlayerId]].filter((p): p is Player => !!p && !p.npc)
-    : Object.values(w.players).filter((p) => !p.npc && p.planetIds.length && playerPoints(w, p).total >= w.config.protectionPoints);
+    ? [w.players[opts.targetPlayerId]].filter((p): p is Player => !!p && !p.npc && !p.vacation)
+    : Object.values(w.players).filter((p) => !p.npc && !p.vacation && p.planetIds.length && playerPoints(w, p).total >= w.config.protectionPoints);
   if (!pool.length) return null;
   const target = pool[Math.floor(rng() * pool.length)];
   const homes = worldsOf(target, w);

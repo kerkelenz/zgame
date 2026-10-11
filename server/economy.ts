@@ -7,6 +7,7 @@ import type { BuildingId, Requirement, Res, TechId, UnitId } from '../shared/typ
 import { bus } from './bus';
 import { notifyPlayer } from './messages';
 import { energyBoost, mineBoost, timeFactor } from './perks';
+import { assertActive } from './vacation';
 import { GameError, allianceOf, type Planet, type Player, type World } from './world';
 
 export interface AllianceBonuses { production: number; research: number; logistics: number }
@@ -65,6 +66,7 @@ function accrue(w: World, planet: Planet, from: number, to: number) {
 export function updatePlanet(w: World, planet: Planet, now: number) {
   let t = planet.updatedAt;
   if (now <= t) return;
+  if (w.players[planet.ownerId]?.vacation) { planet.updatedAt = now; return; } // vacation: nothing is produced
   for (let job = planet.buildQueue; job && job.end <= now; job = planet.buildQueue) {
     accrue(w, planet, t, job.end);
     t = job.end;
@@ -162,6 +164,7 @@ function pay(planet: Planet, cost: Res) {
 }
 
 export function startBuilding(w: World, player: Player, planet: Planet, id: BuildingId, now: number) {
+  assertActive(player, 'build');
   updatePlanet(w, planet, now);
   beginBuilding(w, player, planet, id, now);
 }
@@ -170,6 +173,7 @@ export const MAX_BACKLOG = 4;
 
 /** Start now if idle, otherwise line up behind the active job (paid when it starts). */
 export function queueBuilding(w: World, player: Player, planet: Planet, id: BuildingId, now: number) {
+  assertActive(player, 'build');
   updatePlanet(w, planet, now);
   if (!Object.hasOwn(BUILDINGS, id)) throw new GameError('Unknown building');
   if (!planet.buildQueue) return beginBuilding(w, player, planet, id, now);
@@ -210,12 +214,14 @@ export function cancelBuilding(w: World, planet: Planet, now: number) {
 }
 
 export function startResearch(w: World, player: Player, planet: Planet, id: TechId, now: number) {
+  assertActive(player, 'research');
   updatePlanet(w, planet, now);
   beginResearch(w, player, planet, id, now);
 }
 
 /** Start now if idle, otherwise line up behind the active research (paid when it starts). */
 export function queueResearch(w: World, player: Player, planet: Planet, id: TechId, now: number) {
+  assertActive(player, 'research');
   updatePlanet(w, planet, now);
   if (!Object.hasOwn(TECHS, id)) throw new GameError('Unknown technology');
   if (!player.research) return beginResearch(w, player, planet, id, now);
@@ -257,6 +263,7 @@ export function cancelResearch(w: World, player: Player, now: number) {
 }
 
 export function queueUnits(w: World, player: Player, planet: Planet, id: UnitId, count: number, now: number) {
+  assertActive(player, 'build ships or defenses');
   updatePlanet(w, planet, now);
   const def = UNITS[id];
   if (!Object.hasOwn(UNITS, id)) throw new GameError('Unknown unit');
@@ -317,6 +324,7 @@ export function tradeResources(w: World, planet: Planet, give: string, get: stri
   const keys = ['metal', 'crystal', 'deuterium'] as const;
   if (!keys.includes(give as never) || !keys.includes(get as never)) throw new GameError('Unknown resource');
   if (give === get) throw new GameError('Pick two different resources');
+  assertActive(w.players[planet.ownerId], 'trade');
   amount = Math.floor(amount);
   if (!(amount > 0)) throw new GameError('Enter an amount to trade');
   updatePlanet(w, planet, now);

@@ -10,6 +10,7 @@ export interface RankRow extends Points {
   planets: number;
   /** set for computer empires */
   npc: NpcStatus | null;
+  vacation: boolean;
 }
 
 const cache = new WeakMap<World, { at: number; rows: RankRow[] }>();
@@ -23,7 +24,7 @@ export function rankings(w: World, force = false): RankRow[] {
     .filter((p) => p.planetIds.length > 0)
     .map((p) => ({
       id: p.id, username: p.username, alliance: p.allianceId ? w.alliances[p.allianceId]?.tag ?? null : null,
-      faction: p.npc ? p.npc.faction : p.faction, planets: colonyCount(w, p), npc: p.npc?.status ?? null, ...playerPoints(w, p),
+      faction: p.npc ? p.npc.faction : p.faction, planets: colonyCount(w, p), npc: p.npc?.status ?? null, vacation: !!p.vacation, ...playerPoints(w, p),
     }))
     .sort((a, b) => b.total - a.total)
     .map((r, i) => ({ rank: i + 1, ...r }));

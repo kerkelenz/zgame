@@ -1,6 +1,7 @@
 import { buildingPoints, techPoints, unitPoints, lvl } from '../shared/formulas';
 import { BUILDING_IDS, DEFENSE_IDS, SHIP_IDS, TECH_IDS, POS_DIAMETER, fieldsFromDiameter } from '../shared/data';
 import { extraExpeditionSlots } from './perks';
+import { activityOf, type Activity } from './vacation';
 import type { Coords, UnitId } from '../shared/types';
 import { GameError, ck, planetAt, uid, type Planet, type Player, type World } from './world';
 
@@ -115,6 +116,7 @@ export function playerPoints(w: World, p: Player): Points {
 
 export function isProtected(w: World, attacker: Player, target: Player): boolean {
   if (target.npc) return false; // computer empires are always fair game
+  if (target.vacation) return true;
   const a = playerPoints(w, attacker).total, t = playerPoints(w, target).total;
   const { protectionPoints, protectionRatio } = w.config;
   const min = Math.min(a, t), max = Math.max(a, t);
@@ -131,12 +133,15 @@ export interface GalaxySlot {
     mine: boolean; protectedFor: boolean; debris: { metal: number; crystal: number } | null;
     /** computer empire disposition, or null for a commander */
     npc: string | null; faction: string | null;
+    /** flags: vacation (v), activity (online / inactive i / long inactive I), protection (weak = newbie n, strong = s) */
+    status: { vacation: boolean; activity: Activity | null; protection: 'weak' | 'strong' | null };
   };
   debris: { metal: number; crystal: number } | null;
 }
 
-export function galaxyView(w: World, viewer: Player, g: number, s: number): GalaxySlot[] {
+export function galaxyView(w: World, viewer: Player, g: number, s: number, now = Date.now()): GalaxySlot[] {
   const slots: GalaxySlot[] = [];
+  const viewerPts = playerPoints(w, viewer).total;
   const byPos: Record<number, Planet> = {};
   for (const pl of Object.values(w.planets)) if (pl.coords.g === g && pl.coords.s === s) byPos[pl.coords.p] = pl;
   for (let p = 1; p <= w.config.positions; p++) {
@@ -156,6 +161,11 @@ export function galaxyView(w: World, viewer: Player, g: number, s: number): Gala
         npc: owner.npc?.status ?? null,
         faction: owner.npc ? owner.npc.faction : owner.faction,
         protectedFor: owner.id !== viewer.id && isProtected(w, viewer, owner),
+        status: {
+          vacation: !!owner.vacation,
+          activity: owner.npc ? null : activityOf(w, owner, now),
+          protection: owner.id !== viewer.id && !owner.npc && !owner.vacation && isProtected(w, viewer, owner) ? (playerPoints(w, owner).total < viewerPts ? 'weak' : 'strong') : null,
+        },
         debris,
       },
     });

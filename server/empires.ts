@@ -141,6 +141,7 @@ export function generateEmpires(w: World, now = Date.now(), seed = w.rngSeed): n
 const shipTotal = (f: Record<string, number | undefined>) => Object.values(f).reduce<number>((a, b) => a + (b ?? 0), 0);
 const valueOf = (u: Record<string, number | undefined>) => Object.entries(u).reduce((a, [id, n]) => a + totalRes(UNITS[id as UnitId].cost) * (n || 0), 0);
 const humans = (w: World) => Object.values(w.players).filter((p) => !p.npc && p.planetIds.length);
+const awake = (w: World) => humans(w).filter((p) => !p.vacation);
 
 function npcCombatant(npc: Player, planet: Planet | null, fleet: Fleet, withDefenses: boolean): Combatant {
   return {
@@ -275,7 +276,7 @@ export function npcExpansion(w: World, now: number) {
 
 /** Your faction ships you supplies now and then. */
 export function factionAid(w: World, now: number) {
-  for (const p of humans(w)) {
+  for (const p of awake(w)) {
     if (!p.faction || Math.random() > 0.08) continue;
     const worlds = p.planetIds.map((id) => w.planets[id]).filter((x) => x && !x.isMoon);
     const planet = worlds[Math.floor(Math.random() * worlds.length)];
@@ -310,6 +311,7 @@ export const scheduleTribute = (w: World, p: Player, now: number) => { p.nextTri
 /** A strong hostile empire offers to leave you alone for a while - for a price. */
 export function demandTribute(w: World, p: Player, now: number) {
   scheduleTribute(w, p, now);
+  if (p.vacation) return null;
   const pts = playerPoints(w, p).total;
   if (pts < 3000 || p.tributes.some((t) => !t.answered)) return null;
   const pool = empireList(w).filter((n) => n.npc!.status === 'aggressive' && n.planetIds.length && (p.truces[n.id] ?? 0) < now && !(p.faction && n.npc!.faction === p.faction)
@@ -355,7 +357,7 @@ export function answerTribute(w: World, p: Player, id: string, answer: 'pay' | '
 
 /** Expire unanswered demands and schedule the next ones. Cheap: call every tick. */
 export function processTributes(w: World, now: number) {
-  for (const p of humans(w)) {
+  for (const p of awake(w)) {
     if (!p.nextTribute) scheduleTribute(w, p, now);
     for (const rec of p.tributes) {
       if (!rec.answered && rec.deadline <= now) {

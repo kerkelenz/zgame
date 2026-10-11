@@ -9,6 +9,7 @@ import { allianceBonuses, planetCapacity, processPlayer, updatePlanet } from './
 import { colonyCount, createMoon, createPlanet, inBounds, isProtected, maxExpeditions, maxPlanets } from './galaxy';
 import { notifyPlayer } from './messages';
 import { adjustRep } from './progress';
+import { assertActive, onVacation } from './vacation';
 import { cargoMul, debrisShare, expeditionYield, extraFleetSlots, lootShare, shieldMul, spyBonus, spyEvasion, weaponMul } from './perks';
 import { buildNpcFleet, fleetValue } from './npc';
 import { GameError, ck, planetAt, sameAlliance, uid, type Movement, type Planet, type Player, type World } from './world';
@@ -51,6 +52,7 @@ export function flightPlan(w: World, player: Player, ships: Fleet, from: Coords,
 export function sendFleet(w: World, player: Player, req: SendRequest, now: number): Movement {
   const planet = w.planets[req.fromPlanetId];
   if (!planet || planet.ownerId !== player.id) throw new GameError('Not your planet', 403);
+  assertActive(player, 'send fleets');
   updatePlanet(w, planet, now);
 
   const ships: Fleet = {};
@@ -90,6 +92,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
       if (targetOwner.id === player.id) throw new GameError('Cannot attack yourself');
       if (sameAlliance(w, player.id, targetOwner.id)) throw new GameError('Cannot attack an alliance member');
       if (!SHIP_IDS.some((id) => has(id) && UNITS[id].attack > 1)) throw new GameError('Your fleet has no combat ships');
+      if (onVacation(targetOwner)) throw new GameError('That player is on vacation');
       if (isProtected(w, player, targetOwner)) throw new GameError('That player is under newbie protection');
       if (req.joinFleetId) {
         joinLead = w.movements[req.joinFleetId];
@@ -109,10 +112,12 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     case 'hold':
       if (!target || !targetOwner || targetOwner.id === player.id) throw new GameError('Choose an ally\'s planet');
       if (!sameAlliance(w, player.id, targetOwner.id)) throw new GameError('You can only station fleets at alliance members');
+      if (onVacation(targetOwner)) throw new GameError('That player is on vacation');
       break;
     case 'espionage':
       if (!target || !targetOwner || targetOwner.id === player.id) throw new GameError('Choose another player\'s planet');
       if (!has('espionageProbe')) throw new GameError('Espionage needs probes');
+      if (onVacation(targetOwner)) throw new GameError('That player is on vacation');
       if (isProtected(w, player, targetOwner)) throw new GameError('That player is under newbie protection');
       break;
     case 'colonize':
@@ -339,6 +344,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   const spy = w.players[m.ownerId!];
   if (!target) { sendHome(m, at); return; }
   const def = w.players[target.ownerId];
+  if (onVacation(def)) { notifyPlayer(w, spy.id, 'espionage', `Spy mission aborted ${fmt(m.to)}`, 'That player is on vacation.'); sendHome(m, at); return; }
   processPlayer(w, def, at);
   const probes = m.ships.espionageProbe || 0;
   const diff = lvl(spy.techs, 'espionage') - lvl(def.techs, 'espionage');
@@ -419,6 +425,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   if (!target) return abort(`Nothing at ${fmt(lead.to)}.`);
   const defOwner = w.players[target.ownerId];
   // diplomacy may have changed while the fleets were in flight
+  if (onVacation(defOwner)) return abort(`The target at ${fmt(lead.to)} is on vacation - attack called off.`);
   if (group.some((m) => m.ownerId && (m.ownerId === defOwner.id || sameAlliance(w, m.ownerId, defOwner.id)))) return abort(`The target at ${fmt(lead.to)} is now an ally - attack called off.`);
   processPlayer(w, defOwner, at);
   for (const m of group) { const a = attackerOf(m); if (a) processPlayer(w, a, at); }
@@ -604,6 +611,7 @@ export function missileRangeSystems(silo: number) { return Math.max(0, 5 * silo 
 export function launchMissiles(w: World, player: Player, fromPlanetId: string, to: Coords, count: number, now: number): Movement {
   const planet = w.planets[fromPlanetId];
   if (!planet || planet.ownerId !== player.id) throw new GameError('Not your planet', 403);
+  assertActive(player, 'fire missiles');
   updatePlanet(w, planet, now);
   count = Math.floor(count);
   if (!(count >= 1)) throw new GameError('Choose how many missiles to fire');
@@ -614,6 +622,7 @@ export function launchMissiles(w: World, player: Player, fromPlanetId: string, t
   if (!target || !owner) throw new GameError('There is no planet there');
   if (owner.id === player.id) throw new GameError('You cannot fire at yourself');
   if (sameAlliance(w, player.id, owner.id)) throw new GameError('Cannot attack an alliance member');
+  if (onVacation(owner)) throw new GameError('That player is on vacation');
   if (isProtected(w, player, owner)) throw new GameError('That player is under newbie protection');
   if (to.g !== planet.coords.g) throw new GameError('Missiles cannot leave the galaxy');
   const ds = Math.abs(to.s - planet.coords.s);
@@ -640,6 +649,7 @@ function resolveMissiles(w: World, m: Movement, at: number) {
   const attacker = w.players[m.ownerId!];
   if (!target) return;
   const owner = w.players[target.ownerId];
+  if (onVacation(owner)) { notifyPlayer(w, m.ownerId!, 'combat', 'Missile strike fizzled', `${target.name} is on vacation - the warheads were defused.`); return; }
   processPlayer(w, owner, at);
   const launched = m.missiles || 0;
   const abm = target.defenses.antiBallisticMissile || 0;
@@ -693,6 +703,7 @@ export const PHALANX_COST = 5000;
 
 export function phalanxScan(w: World, player: Player, moonId: string, to: Coords, now: number) {
   const moon = w.planets[moonId];
+  assertActive(player, 'scan with the phalanx');
   if (!moon || moon.ownerId !== player.id || !moon.isMoon) throw new GameError('Use one of your moons', 403);
   updatePlanet(w, moon, now);
   const level = lvl(moon.buildings, 'sensorPhalanx');
@@ -717,6 +728,7 @@ export function jumpCooldownMs(w: World, gateLevel: number) { return Math.max(30
 
 export function jumpGate(w: World, player: Player, fromId: string, toId: string, ships: Fleet, now: number) {
   const a = w.planets[fromId], b = w.planets[toId];
+  assertActive(player, 'use the jump gate');
   if (!a || !b || a.ownerId !== player.id || b.ownerId !== player.id || !a.isMoon || !b.isMoon) throw new GameError('Jump gates connect two of your moons', 403);
   if (a.id === b.id) throw new GameError('Choose another moon');
   updatePlanet(w, a, now); updatePlanet(w, b, now);

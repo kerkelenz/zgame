@@ -27,6 +27,11 @@ export interface UniverseConfig {
   npcDensity: number;
   /** multiplies the size of raiding fleets (0.6 relaxed, 1 standard, 1.35 brutal) */
   raidStrength: number;
+  /** vacation mode lasts at least this many real hours */
+  vacationMinHours: number;
+  /** days without a login before a commander shows as inactive (i) and long inactive (I) */
+  inactiveDays: number;
+  longInactiveDays: number;
   /** registration closes at this many commanders */
   maxPlayers: number;
   startResources: { metal: number; crystal: number; deuterium: number };
@@ -48,6 +53,9 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   raidIntervalMin: 45,
   npcDensity: 0.3,
   raidStrength: 1,
+  vacationMinHours: 48,
+  inactiveDays: 7,
+  longInactiveDays: 28,
   maxPlayers: 500,
   startResources: { metal: 1500, crystal: 800, deuterium: 300 },
 };
