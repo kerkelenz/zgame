@@ -2,6 +2,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { bus } from './bus';
 import { dropAlliance, releaseHolds } from './alliance';
 import { notifyPlayer } from './messages';
+import { dropSession } from './accounts';
 import { GameError, type Player, type World } from './world';
 
 const hash = (pw: string, salt: string) => scryptSync(pw, salt, 32).toString('hex');
@@ -20,7 +21,7 @@ export function changePassword(w: World, p: Player, current: string, next: strin
   if (next === current) throw new GameError('Pick a different password');
   p.salt = randomBytes(8).toString('hex');
   p.hash = hash(next, p.salt);
-  for (const [t, id] of Object.entries(w.sessions)) if (id === p.id && t !== keepToken) delete w.sessions[t];
+  for (const [t, id] of Object.entries(w.sessions)) if (id === p.id && t !== keepToken) dropSession(w, t);
 }
 
 export function renameAccount(w: World, p: Player, password: string, name: string, now: number) {
@@ -59,7 +60,7 @@ export function recoverAccount(w: World, username: string, key: string, next: st
   p.salt = randomBytes(8).toString('hex');
   p.hash = hash(next, p.salt);
   p.recovery = undefined; // single use
-  for (const [t, id] of Object.entries(w.sessions)) if (id === p.id) delete w.sessions[t];
+  for (const [t, id] of Object.entries(w.sessions)) if (id === p.id) dropSession(w, t);
   return p;
 }
 
@@ -82,7 +83,7 @@ export function removePlayer(w: World, p: Player) {
   for (const a of Object.values(w.alliances)) a.applications = a.applications.filter((x) => x.playerId !== p.id);
   for (const m of Object.values(w.movements)) if (m.ownerId === p.id) delete w.movements[m.id];
   for (const id of p.planetIds) { delete w.wrecks[id]; delete w.planets[id]; }
-  for (const [t, id] of Object.entries(w.sessions)) if (id === p.id) delete w.sessions[t];
+  for (const [t, id] of Object.entries(w.sessions)) if (id === p.id) dropSession(w, t);
   w.messages = w.messages.filter((m) => m.to !== p.id);
   delete w.players[p.id];
   for (const o of Object.values(w.players)) { o.blocked = o.blocked?.filter((x) => x !== p.id); o.buddies = o.buddies?.filter((x) => x !== p.id); delete o.notes?.[`p:${p.id}`]; }
@@ -111,7 +112,7 @@ function target(w: World, id: string): Player {
 export function ban(w: World, id: string, hours: number | null, reason: string, now: number) {
   const t = target(w, id);
   t.banned = { until: hours && hours > 0 ? now + hours * 3_600_000 : null, reason: reason.slice(0, 200) };
-  for (const [tok, pid] of Object.entries(w.sessions)) if (pid === t.id) delete w.sessions[tok];
+  for (const [tok, pid] of Object.entries(w.sessions)) if (pid === t.id) dropSession(w, tok);
 }
 export function unban(w: World, id: string) { target(w, id).banned = undefined; }
 export function mute(w: World, id: string, hours: number | null, reason: string, now: number) {
@@ -142,4 +143,19 @@ export function adminOverview(w: World, now: number, pointsOf: (p: Player) => nu
       banned: isBanned(p, now) ? p.banned : null, muted: isMuted(p, now) ? p.muted : null,
     })).sort((a, b) => b.lastSeen - a.lastSeen),
   };
+}
+
+/** Admin names from OGAME_ADMINS that nobody has registered yet: whoever registers first would become an admin, so these need a key. */
+export function reservedAdminName(w: World, username: string): boolean {
+  const n = (username || '').trim().toLowerCase();
+  return adminNames().includes(n) && !Object.values(w.players).some((p) => !p.npc && p.username.toLowerCase() === n);
+}
+export function mayRegisterReserved(setupKey: string, ip: string | undefined): boolean {
+  const want = process.env.OGAME_ADMIN_KEY;
+  if (want) {
+    const a = Buffer.from(setupKey || ''), b = Buffer.from(want);
+    return a.length === b.length && timingSafeEqual(a, b);
+  }
+  // without a key only the machine the server runs on may claim the name
+  return !!ip && (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1');
 }

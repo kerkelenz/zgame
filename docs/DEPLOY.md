@@ -12,12 +12,13 @@ You need a machine that is always on (a small VPS is plenty: 1 vCPU and 1 GB RAM
    ```
    DOMAIN=play.example.com
    OGAME_ADMINS=yourname
+   OGAME_ADMIN_KEY=a-long-random-secret
    # optional
    OGAME_SEASON_DAYS=0
    OGAME_MAX_PLAYERS=500
    ```
 
-   `OGAME_ADMINS` is a comma-separated list of usernames that get the Admin page. Register that account first, then it is an admin from the next page load.
+   `OGAME_ADMINS` is a comma-separated list of usernames that get the Admin page. A listed name is **reserved** until it is registered, so a stranger cannot grab it first: register it on the Register tab and type the value of `OGAME_ADMIN_KEY` into the *Admin setup key* box (add a long random `OGAME_ADMIN_KEY=` line to `.env`; without one, only a browser on the server machine itself can claim the name).
 3. Start it: `docker compose up -d --build`
 4. Open `https://play.example.com`. Caddy fetches and renews the certificate on its own.
 
@@ -67,12 +68,22 @@ Everything in the README table can be set as an environment variable. The ones t
 
 | Variable | Why |
 | --- | --- |
-| `OGAME_ADMINS` | who can moderate (ban, mute, announcements) |
+| `OGAME_ADMINS` | who can moderate (ban, mute, announcements); the names are reserved until registered |
+| `OGAME_ADMIN_KEY` | secret that lets you register a reserved admin name remotely |
 | `OGAME_MAX_PLAYERS` | closes registration at this many commanders |
 | `OGAME_TRUST_PROXY` | needed behind any proxy, otherwise everyone shares one rate limit |
 | `OGAME_DB` | SQLite persistence (Docker sets it); without it the server writes `world.json` |
 | `OGAME_SEASON_DAYS`, `OGAME_VICTORY_POINTS` | seasons and an early victory score |
 | `OGAME_BACKUP_KEEP`, `OGAME_BACKUP_DIR` | how many snapshots to keep and where |
+
+## What is protected, and what is not
+
+- Passwords are stored as salted scrypt hashes. Logins expire after 30 days without use, and *Log out* revokes the login on the server.
+- Wrong passwords are throttled per account and per address; registrations and messages are rate limited.
+- Responses carry a strict content security policy and anti-framing headers; the WebSocket accepts no large client frames and at most 8 connections per player.
+- Admin actions are checked on the server against `OGAME_ADMINS`, never against anything the browser sends.
+- The page and API do **not** hide anything from the server operator: the save file contains everything. Treat backups as sensitive.
+- Run it behind HTTPS (the Caddy setup does). The WebSocket takes its login token in the URL, which a proxy may log, so do not share proxy logs.
 
 ## Moving from a JSON save to SQLite
 
@@ -81,6 +92,6 @@ Set `OGAME_DB` and start the server once with `OGAME_SAVE` still pointing at the
 ## Checklist before inviting players
 
 - HTTPS works and `https://your-domain/api/health` answers `{"ok":true,...}`
-- you registered your own account and can open the Admin page
+- you registered your own account (using the admin setup key) and can open the Admin page
 - you made a backup and tried restoring it into a test copy
 - the machine restarts the game by itself after a reboot (`restart: unless-stopped` does this in Docker)

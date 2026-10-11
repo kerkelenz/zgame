@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { resolve } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { DEFAULT_CONFIG, type UniverseConfig } from '../shared/config';
-import { authenticate } from './accounts';
+import { authenticate, pruneSessions } from './accounts';
 import { createApp } from './app';
 import { bus, type PushEvent } from './bus';
 import { processPlayer } from './economy';
@@ -42,13 +42,17 @@ if (hasEmpires(world) && !world.nextNpcTick) world.nextNpcTick = Date.now() + NP
 
 const app = createApp(world, { staticDir: resolve('client/dist') });
 const server = createServer(app);
-const wss = new WebSocketServer({ server, path: '/ws' });
+// the server only pushes; clients never need to send anything, so inbound frames stay tiny
+const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 1024 });
 const sockets = new Map<WebSocket, string>();
 
 wss.on('connection', (ws, req) => {
+  // a bad frame (too big, malformed) raises 'error' on the socket; without a listener Node would treat it as fatal
+  ws.on('error', () => { try { ws.terminate(); } catch { /* already gone */ } });
   const token = new URL(req.url || '', 'http://x').searchParams.get('token') || undefined;
   const player = authenticate(world, token);
   if (!player) { ws.close(4001, 'unauthorized'); return; }
+  if ([...sockets.values()].filter((id) => id === player.id).length >= 8) { ws.close(4002, 'too many connections'); return; }
   sockets.set(ws, player.id);
   ws.on('close', () => sockets.delete(ws));
   ws.send(JSON.stringify({ type: 'hello', data: { now: Date.now() } }));
@@ -88,6 +92,7 @@ function tick() {
   }
 }
 setInterval(tick, 1000);
+setInterval(() => { try { pruneSessions(world); } catch (e) { console.error('session prune failed', e); } }, 3_600_000);
 setInterval(() => {
   if (!dirty) return;
   try { persist(); dirty = false; } catch (e) { console.error('save failed', e); }

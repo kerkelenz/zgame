@@ -35,6 +35,7 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `OGAME_NPC_DENSITY` | 0.3 | share of free slots settled by computer empires when the universe is created (0 = none; an existing save without empires gets them on next start) |
 | `OGAME_RAID_STRENGTH` | 1 | size of raiding fleets: 0.6 relaxed, 1 standard, 1.35 brutal |
 | `OGAME_VACATION_MIN_HOURS` | 48 | minimum vacation stay |
+| `OGAME_ADMIN_KEY` | unset | secret that lets you register a reserved `OGAME_ADMINS` name from another machine (otherwise only the server itself can) |
 | `OGAME_SEASON_DAYS` | 0 | season length in days, then the universe resets (0 = endless) |
 | `OGAME_SEASON_RESET_HOURS` | 24 | grace period between the end of a season and the automatic reset (0 = wait for an admin) |
 | `OGAME_VICTORY_POINTS` | 0 | first commander to reach this many points wins the season early (0 = off) |

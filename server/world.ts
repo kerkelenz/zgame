@@ -236,6 +236,8 @@ export interface World {
   /** battle reports published with a public link */
   shared?: Record<string, { id: string; at: number; subject: string; report: unknown }>;
   sessions: Record<string, string>;
+  /** when each token was last used, so idle sessions can expire */
+  sessionAt?: Record<string, number>;
   nextRaidAt: number;
   /** next computer-empire economy / war tick */
   nextNpcTick?: number;

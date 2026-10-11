@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { BUILDINGS, TECHS, UNITS } from '../shared/data';
 import { bus } from './bus';
-import { authenticate, login, register } from './accounts';
+import { authenticate, login, logout, register } from './accounts';
 import * as AL from './alliance';
 import { abandonPlanet, tradeResources, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueBuilding, queueResearch, queueUnits, unqueueBuilding, unqueueResearch, moveQueuedBuilding, moveQueuedResearch } from './economy';
 import { flightPlan, jumpGate, launchMissiles, phalanxScan, recallFleet, sendFleet } from './fleet';
@@ -32,6 +32,11 @@ declare global {
 }
 
 const hits = new Map<string, number[]>();
+/** the key space (IPs, usernames) is attacker-controlled, so drop stale entries instead of growing forever */
+function sweepHits() {
+  const now = Date.now();
+  for (const [k, arr] of hits) if (!arr.length || now - arr[arr.length - 1] > 86_400_000) hits.delete(k);
+}
 function limited(key: string, max: number, windowMs: number) {
   const now = Date.now();
   const arr = (hits.get(key) || []).filter((t) => now - t < windowMs);
@@ -40,11 +45,27 @@ function limited(key: string, max: number, windowMs: number) {
   return arr.length > max;
 }
 
+/** how many recent events a key has (without adding one) */
+function recent(key: string, windowMs: number) {
+  const now = Date.now();
+  return (hits.get(key) || []).filter((t) => now - t < windowMs).length;
+}
+const record = (key: string) => { const arr = hits.get(key) || []; arr.push(Date.now()); hits.set(key, arr); };
+
 const str = (v: unknown, max = 200) => String(v ?? '').slice(0, max);
 
 export function createApp(w: World, opts: { staticDir?: string; clock?: () => number } = {}) {
   const now = opts.clock ?? Date.now;
   const app = express();
+  const sweeper = setInterval(sweepHits, 10 * 60_000);
+  sweeper.unref();
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'same-origin');
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+    next();
+  });
   // behind a reverse proxy, rate limits must key on the real client address
   if (process.env.OGAME_TRUST_PROXY) app.set('trust proxy', process.env.OGAME_TRUST_PROXY === 'true' ? true : Number(process.env.OGAME_TRUST_PROXY) || process.env.OGAME_TRUST_PROXY);
   app.use(express.json({ limit: '100kb' }));
@@ -70,14 +91,32 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   // ---------------------------------------------------------------- public
   app.post('/api/register', wrap((req) => {
     if (limited('reg:' + req.ip, 10, 60_000) || limited('regday:' + req.ip, 40, 86_400_000)) throw new GameError('Too many attempts, slow down', 429);
-    const { player, token } = register(w, str(req.body.username, 40), str(req.body.password, 200), now());
+    const wanted = str(req.body.username, 40);
+    if (ACC.reservedAdminName(w, wanted) && !ACC.mayRegisterReserved(str(req.body.adminKey, 100), req.ip)) throw new GameError('That name is reserved for an administrator. Enter the admin setup key (OGAME_ADMIN_KEY), or register it on the server machine itself.', 403);
+    const { player, token } = register(w, wanted, str(req.body.password, 200), now());
     bus.push({ to: '*', type: 'refresh' });
     return { token, id: player.id };
   }));
   app.post('/api/login', wrap((req) => {
     if (limited('login:' + req.ip, 20, 60_000)) throw new GameError('Too many attempts, slow down', 429);
-    const { player, token } = login(w, str(req.body.username, 40), str(req.body.password, 200), now());
-    return { token, id: player.id };
+    // per account too, so a password cannot be ground down from many addresses (and one address cannot lock everyone out)
+    // only wrong guesses count, so normal logins are never blocked
+    const who = str(req.body.username, 40).trim().toLowerCase();
+    const k1 = `loginfail:${req.ip}:${who}`, k2 = 'loginfail:' + who;
+    if (recent(k1, 15 * 60_000) >= 8 || recent(k2, 15 * 60_000) >= 40) throw new GameError('Too many failed attempts for this account, try again later', 429);
+    try {
+      const { player, token } = login(w, str(req.body.username, 40), str(req.body.password, 200), now());
+      hits.delete(k1);
+      return { token, id: player.id };
+    } catch (e) {
+      if (e instanceof GameError && e.status === 401) { record(k1); record(k2); }
+      throw e;
+    }
+  }));
+  app.post('/api/logout', wrap((req) => {
+    const h = req.headers.authorization;
+    logout(w, h?.startsWith('Bearer ') ? h.slice(7) : undefined);
+    return { ok: true };
   }));
   app.post('/api/recover', wrap((req) => {
     if (limited('recover:' + req.ip, 8, 60_000)) throw new GameError('Too many attempts, slow down', 429);

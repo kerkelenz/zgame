@@ -177,7 +177,7 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
   const openProfile = useCallback((id: string) => { setProfileFrom((from) => (page === 'profile' ? from : page)); setProfileId(id); setPage('profile'); window.scrollTo({ top: 0 }); }, [page]);
   const closeItem = useCallback(() => setPage(detailFrom), [detailFrom]);
 
-  const logout = useCallback(() => { setToken(''); onLogout(); }, [onLogout]);
+  const logout = useCallback(() => { void post('/logout').catch(() => undefined); setToken(''); onLogout(); }, [onLogout]);
 
   const value: GameCtx = { me, planets, planet, fleets, selectPlanet, refresh, now, act, toasts, toast, page, setPage, detailId, openItem, profileId, profileFrom, openProfile, galaxyAt, showInGalaxy, closeItem, target, setTarget, logout, offline, chatEvents, live };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

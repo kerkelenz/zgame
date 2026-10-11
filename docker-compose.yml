@@ -10,6 +10,7 @@ services:
       OGAME_DB: /data/world.sqlite
       OGAME_TRUST_PROXY: "1"
       OGAME_ADMINS: ${OGAME_ADMINS:-}
+      OGAME_ADMIN_KEY: ${OGAME_ADMIN_KEY:-}
       OGAME_SEASON_DAYS: ${OGAME_SEASON_DAYS:-0}
       OGAME_MAX_PLAYERS: ${OGAME_MAX_PLAYERS:-500}
     volumes:
