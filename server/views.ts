@@ -6,6 +6,7 @@ import { classSpeedBonus, crawlerMul, energyBoost, mineBoost, researchFactor, ti
 import { colonyCount, maxPlanets, playerPoints } from './galaxy';
 import { sameCoords } from '../shared/formulas';
 import { upgradeCost } from './alliance';
+import { isAdmin, isMuted } from './account';
 import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
 import { OFFICERS, OFFICER_MAX, FACTIONS, JOIN_REP, FACTION_BY_ID, CHAR_CLASSES, CLASS_CHANGE_COST } from '../shared/data';
 import { planetAt, type Alliance, type Movement, type Planet, type Player, type World } from './world';
@@ -65,7 +66,7 @@ export function meView(w: World, p: Player, now: number) {
     now,
     player: {
       id: p.id, username: p.username, techs: p.techs, research: p.research, researchBacklog: p.researchBacklog ?? [], officers: p.officers, charClass: p.charClass, allianceId: p.allianceId,
-      points: playerPoints(w, p), stats: p.stats,
+      points: playerPoints(w, p), stats: p.stats, admin: isAdmin(p), muted: isMuted(p, now) ? p.muted : null,
     },
     planets: p.planetIds.map((id) => {
       const pl = w.planets[id];

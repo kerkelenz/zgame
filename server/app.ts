@@ -17,6 +17,8 @@ import { SCORE_CATEGORIES, categoryRows } from './rankings';
 import { profileView } from './profile';
 import { endVacation, startVacation } from './vacation';
 import { startRepair } from './wrecks';
+import * as ACC from './account';
+import { recoverAccount } from './account';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
 
@@ -53,6 +55,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const h = req.headers.authorization;
     const p = authenticate(w, h?.startsWith('Bearer ') ? h.slice(7) : undefined);
     if (!p) return next(new GameError('Not logged in', 401));
+    if (ACC.isBanned(p, now())) return next(new GameError('This account is banned', 403));
     p.lastSeen = now();
     req.player = p;
     next();
@@ -69,8 +72,13 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
   app.post('/api/login', wrap((req) => {
     if (limited('login:' + req.ip, 20, 60_000)) throw new GameError('Too many attempts, slow down', 429);
-    const { player, token } = login(w, str(req.body.username, 40), str(req.body.password, 200));
+    const { player, token } = login(w, str(req.body.username, 40), str(req.body.password, 200), now());
     return { token, id: player.id };
+  }));
+  app.post('/api/recover', wrap((req) => {
+    if (limited('recover:' + req.ip, 8, 60_000)) throw new GameError('Too many attempts, slow down', 429);
+    const p = recoverAccount(w, str(req.body.username, 40), str(req.body.key, 60), str(req.body.password, 200));
+    return { ok: true, username: p.username };
   }));
   app.get('/api/health', wrap(() => ({ ok: true, players: Object.keys(w.players).length })));
 
@@ -90,6 +98,60 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const p = req.player!;
     processPlayer(w, p, now());
     return p.planetIds.map((id) => planetView(w, w.planets[id], now()));
+  }));
+
+  // ---------------------------------------------------------------- account
+  const bearer = (req: Request) => (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : undefined);
+  A.post('/account/password', wrap((req) => {
+    if (limited('pw:' + req.player!.id, 8, 60_000)) throw new GameError('Too many attempts, slow down', 429);
+    ACC.changePassword(w, req.player!, str(req.body.current, 200), str(req.body.next, 200), bearer(req));
+    return { ok: true };
+  }));
+  A.post('/account/rename', wrap((req) => {
+    if (limited('rn:' + req.player!.id, 8, 60_000)) throw new GameError('Too many attempts, slow down', 429);
+    ACC.renameAccount(w, req.player!, str(req.body.password, 200), str(req.body.name, 40), now());
+    bus.push({ to: '*', type: 'refresh' });
+    return meView(w, req.player!, now());
+  }));
+  A.post('/account/recovery-key', wrap((req) => {
+    if (limited('rk:' + req.player!.id, 8, 60_000)) throw new GameError('Too many attempts, slow down', 429);
+    return { key: ACC.createRecoveryKey(req.player!, str(req.body.password, 200)) };
+  }));
+  A.post('/account/delete', wrap((req) => {
+    if (limited('del:' + req.player!.id, 5, 60_000)) throw new GameError('Too many attempts, slow down', 429);
+    ACC.deleteAccount(w, req.player!, str(req.body.password, 200), str(req.body.confirm, 40));
+    return { ok: true };
+  }));
+
+  // ---------------------------------------------------------------- admin
+  const admin = (req: Request) => ACC.requireAdmin(req.player!);
+  A.get('/admin/overview', wrap((req) => { admin(req); return ACC.adminOverview(w, now(), (p) => playerPoints(w, p).total); }));
+  A.post('/admin/ban', wrap((req) => { admin(req); ACC.ban(w, str(req.body.id), req.body.hours ? Number(req.body.hours) : null, str(req.body.reason), now()); return { ok: true }; }));
+  A.post('/admin/unban', wrap((req) => { admin(req); ACC.unban(w, str(req.body.id)); return { ok: true }; }));
+  A.post('/admin/mute', wrap((req) => { admin(req); ACC.mute(w, str(req.body.id), req.body.hours ? Number(req.body.hours) : null, str(req.body.reason), now()); return { ok: true }; }));
+  A.post('/admin/unmute', wrap((req) => { admin(req); ACC.unmute(w, str(req.body.id)); return { ok: true }; }));
+  A.post('/admin/announce', wrap((req) => { admin(req); ACC.announce(w, str(req.body.text, 500)); return { ok: true }; }));
+  A.post('/admin/raid', wrap((req) => {
+    admin(req);
+    const t = w.players[str(req.body.id)];
+    if (!t || t.npc) throw new GameError('No such commander', 404);
+    return { sent: !!spawnRaid(w, now(), Math.random, { targetPlayerId: t.id }) };
+  }));
+  A.post('/admin/gift', wrap((req) => {
+    admin(req);
+    const t = w.players[str(req.body.id)];
+    if (!t || t.npc) throw new GameError('No such commander', 404);
+    const home = w.planets[t.planetIds[0]];
+    for (const k of ['metal', 'crystal', 'deuterium'] as const) home.resources[k] += Math.max(0, Math.min(1e12, Math.floor(Number(req.body[k]) || 0)));
+    return { ok: true };
+  }));
+  A.post('/admin/delete', wrap((req) => {
+    admin(req);
+    const t = w.players[str(req.body.id)];
+    if (!t || t.npc) throw new GameError('No such commander', 404);
+    if (ACC.isAdmin(t)) throw new GameError('Admins cannot be removed here', 403);
+    ACC.removePlayer(w, t);
+    return { ok: true };
   }));
 
   // ---------------------------------------------------------------- planet actions
@@ -266,6 +328,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
   A.post('/messages/send', wrap((req) => {
     const p = req.player!;
+    ACC.assertNotMuted(p, now());
     if (limited('msg:' + p.id, 20, 60_000)) throw new GameError('You are sending messages too fast', 429);
     const to = Object.values(w.players).find((x) => !x.npc && x.username.toLowerCase() === str(req.body.to, 40).toLowerCase());
     if (!to) throw new GameError('No such player', 404);
@@ -281,6 +344,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
   A.post('/chat', wrap((req) => {
     const p = req.player!;
+    ACC.assertNotMuted(p, now());
     if (limited('chat:' + p.id, 15, 15_000)) throw new GameError('Slow down', 429);
     const text = str(req.body.text, 300).trim();
     if (!text) throw new GameError('Empty message');

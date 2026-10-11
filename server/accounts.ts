@@ -1,4 +1,5 @@
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { isBanned } from './account';
 import { createPlanet, findHomeSlot } from './galaxy';
 import { GameError, blankPlayer, uid, type Player, type World } from './world';
 
@@ -18,13 +19,14 @@ export function register(w: World, username: string, password: string, now = Dat
   return { player, token: issueToken(w, player) };
 }
 
-export function login(w: World, username: string, password: string): { player: Player; token: string } {
+export function login(w: World, username: string, password: string, now = Date.now()): { player: Player; token: string } {
   const player = Object.values(w.players).find((p) => !p.npc && p.username.toLowerCase() === (username || '').trim().toLowerCase());
   const bad = new GameError('Invalid username or password', 401);
   if (!player) throw bad;
   const a = Buffer.from(hash(password || '', player.salt), 'hex');
   const b = Buffer.from(player.hash, 'hex');
   if (a.length !== b.length || !timingSafeEqual(a, b)) throw bad;
+  if (isBanned(player, now)) throw new GameError(`This account is banned${player.banned!.until ? ` until ${new Date(player.banned!.until).toLocaleString()}` : ''}: ${player.banned!.reason || 'no reason given'}`, 403);
   return { player, token: issueToken(w, player) };
 }
 

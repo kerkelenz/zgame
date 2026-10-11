@@ -14,6 +14,7 @@ import { Guide } from './pages/Guide';
 import { FleetPage } from './pages/Fleet';
 import { Galaxy } from './pages/Galaxy';
 import { Profile } from './pages/Profile';
+import { Admin } from './pages/Admin';
 import { Highscore } from './pages/Highscore';
 import { Messages } from './pages/Messages';
 import { Overview } from './pages/Overview';
@@ -55,6 +56,7 @@ export function App() {
       case 'chat': return <Chat />;
       case 'highscore': return <Highscore />;
       case 'profile': return <Profile />;
+      case 'admin': return <Admin />;
       case 'guide': return <Guide />;
       case 'settings': return <Settings />;
       case 'command': return <Command />;
@@ -94,7 +96,7 @@ export function App() {
       )}
       <div className="body">
         <nav>
-          {NAV.map(([id, label]) => (
+          {(me.player.admin ? [...NAV, ['admin', 'Admin'] as [string, string]] : NAV).map(([id, label]) => (
             <button key={id} className={page === id ? 'active' : ''} onClick={() => setPage(id)}>
               {label}{id === 'messages' && me.unread > 0 && <b className="badge">{me.unread}</b>}
             </button>

@@ -25,6 +25,11 @@ export interface Player {
   /** `paid` is reserved when queued and refunded if the entry is removed or cannot start */
   researchBacklog: { id: TechId; planetId: string; paid?: Res }[];
   allianceId: string | null;
+  /** account moderation and recovery (optional so old saves load unchanged) */
+  banned?: { until: number | null; reason: string };
+  muted?: { until: number | null; reason: string };
+  recovery?: { salt: string; hash: string };
+  renamedAt?: number;
   planetIds: string[];
   /** expedition statistics etc. */
   stats: PlayerStats;

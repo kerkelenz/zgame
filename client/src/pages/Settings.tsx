@@ -105,9 +105,46 @@ function Alerts() {
   );
 }
 
+function Account() {
+  const { me, act, logout } = useGame();
+  const [cur, setCur] = useState(''); const [next, setNext] = useState('');
+  const [name, setName] = useState(''); const [pw2, setPw2] = useState('');
+  const [pw3, setPw3] = useState(''); const [key, setKey] = useState('');
+  const [pw4, setPw4] = useState(''); const [confirmName, setConfirmName] = useState('');
+  return (
+    <Card title="Account">
+      <div className="settings-section">
+        <h4>Change password</h4>
+        <div className="row wrap"><input type="password" placeholder="Current password" value={cur} onChange={(e) => setCur(e.target.value)} autoComplete="current-password" />
+          <input type="password" placeholder="New password (6+)" value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" />
+          <button disabled={!cur || next.length < 6} onClick={async () => { if (await act(() => post('/account/password', { current: cur, next }), 'Password changed; other devices were signed out')) { setCur(''); setNext(''); } }}>Change</button></div>
+
+        <h4>Rename commander</h4>
+        <p className="small muted">You are <b>{me.player.username}</b>. Names can change once every 7 days; your homeworld is renamed too.</p>
+        <div className="row wrap"><input placeholder="New name" value={name} onChange={(e) => setName(e.target.value)} />
+          <input type="password" placeholder="Password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="current-password" />
+          <button disabled={!name || !pw2} onClick={async () => { if (await act(() => post('/account/rename', { name, password: pw2 }), 'Renamed')) { setName(''); setPw2(''); } }}>Rename</button></div>
+
+        <h4>Recovery key</h4>
+        <p className="small muted">There is no email on file, so a lost password can only be reset with a one-time key. Generate one and keep it somewhere safe; making a new one replaces the old one.</p>
+        <div className="row wrap"><input type="password" placeholder="Password" value={pw3} onChange={(e) => setPw3(e.target.value)} autoComplete="current-password" />
+          <button disabled={!pw3} onClick={async () => { const r = await act(() => post('/account/recovery-key', { password: pw3 })); if (r) { setKey(r.key); setPw3(''); } }}>Generate key</button></div>
+        {key && <p className="good">Your key: <code>{key}</code> <span className="muted small">- shown once.</span></p>}
+
+        <h4>Delete account</h4>
+        <p className="small muted">Removes you, your planets and fleets for good. Hand over alliance leadership first.</p>
+        <div className="row wrap"><input type="password" placeholder="Password" value={pw4} onChange={(e) => setPw4(e.target.value)} autoComplete="current-password" />
+          <input placeholder={`Type ${me.player.username}`} value={confirmName} onChange={(e) => setConfirmName(e.target.value)} />
+          <button className="danger" disabled={!pw4 || confirmName !== me.player.username} onClick={async () => { if (confirm('Delete your account permanently?') && await act(() => post('/account/delete', { password: pw4, confirm: confirmName }), 'Account deleted')) logout(); }}>Delete</button></div>
+      </div>
+    </Card>
+  );
+}
+
 export function Settings() {
   return (
     <Page title="Settings">
+      <Account />
       <Alerts />
       <Vacation />
     </Page>
