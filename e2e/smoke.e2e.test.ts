@@ -283,6 +283,26 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('searching for a player by name opens their profile', async () => {
+    await fetch(server.base + '/api/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'Searchable_Sam', password: 'correct-horse-9' }) });
+    await go('Overview');
+    const box = page.getByLabel('Search players');
+    await box.fill('s');
+    await page.waitForTimeout(400);
+    expect(await page.locator('.psresults').count()).toBe(0);                      // one character is too few
+    await box.fill('searchab');
+    await page.locator('.psresults li', { hasText: 'Searchable_Sam' }).waitFor({ timeout: 10_000 });
+    await box.press('ArrowDown');
+    await box.press('Enter');
+    await page.getByText('← Back').waitFor({ timeout: 10_000 });
+    expect(await page.locator('main h1, main h2').first().textContent()).toBe('Searchable_Sam');
+    expect(await box.inputValue()).toBe('');                                       // the box clears after choosing
+    await box.fill('nobody_called_this');
+    await page.getByText('No commander found').waitFor({ timeout: 10_000 });
+    await box.press('Escape');
+    noErrors();
+  });
+
   run('the galaxy lists the commander\'s own planet and opens its profile', async () => {
     await go('Galaxy');
     await page.locator('table.galaxy').waitFor();

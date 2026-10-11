@@ -4,6 +4,7 @@ import { drawStarfield } from './art';
 import { useGame } from './game';
 import { Countdown, fmt, coordStr } from './ui';
 import { t, useLang } from './i18n';
+import { PlayerSearch } from './PlayerSearch';
 import { isOpen, loadCollapsed, saveCollapsed, setAllGroups, useShowAllPages, visibleNav } from './nav';
 import { Tour } from './Tour';
 import { CHANGELOG, markChangelogSeen, unseenRelease } from './changelog';
@@ -102,6 +103,7 @@ export function App() {
           <span className="deut" title="Vespene Gas"><ResIcon k="deuterium" /> {fmt(live.deuterium)}<small>/{fmt(planet.capacity.deuterium)}</small></span>
           <span className={energy < 0 ? 'bad' : 'energy'} title="Energy balance">⚡ {fmt(energy)}</span>
         </div>
+        <PlayerSearch />
         <div className="who">
           <span className="energy" title="Command Credits" onClick={() => setPage('command')} style={{ cursor: 'pointer' }}>★ {fmt(me.credits)}</span>
           {me.alliance && <span className="tag">[{me.alliance.tag}]</span>} {me.player.username}

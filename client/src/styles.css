@@ -309,3 +309,11 @@ ul.reqlist { list-style: none; padding: 0; margin: 6px 0; } ul.reqlist li { marg
 
 .navtools { display: flex; gap: 4px; margin-bottom: 2px; } .navtools button { flex: 1; font-size: 11px; padding: 3px 4px; white-space: nowrap; border-color: var(--line); color: var(--muted); }
 @media (max-width: 760px) { .navtools { display: none; } }
+
+.psearch { position: relative; margin-left: auto; margin-right: 12px; }
+.psearch input { width: 170px; padding: 5px 9px; }
+.psresults { position: absolute; right: 0; top: calc(100% + 4px); width: 280px; max-height: 340px; overflow-y: auto; margin: 0; padding: 4px; list-style: none; background: #0e1526; border: 1px solid var(--line); border-radius: 8px; z-index: 30; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.psresults li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+.psresults li.on { background: rgba(255, 190, 80, .14); }
+.psresults li.muted { cursor: default; }
+@media (max-width: 760px) { .psearch { margin: 0 8px 0 0; flex: 1; } .psearch input { width: 100%; } .psresults { left: 0; right: auto; width: 100%; } }

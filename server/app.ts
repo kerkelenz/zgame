@@ -10,6 +10,7 @@ import { flightPlan, jumpGate, launchMissiles, phalanxScan, recallFleet, sendFle
 import { colonyCount, galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
 import { cancelForge, startForge } from './forge';
+import { searchPlayers } from './search';
 import { allianceView, commandView, fleetsView, meView, planetView } from './views';
 import { checkProgress, chooseClass, hireOfficer, joinFaction, leaveFaction } from './progress';
 import { answerTribute } from './empires';
@@ -421,6 +422,10 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const g = Number(req.params.g), s = Number(req.params.s);
     if (!inBounds(w, { g, s, p: 1 })) throw new GameError('Out of bounds');
     return { g, s, slots: galaxyView(w, req.player!, g, s, now()), sector: sectorOf(w, g, s, req.player!.allianceId) };
+  }));
+  A.get('/search/players', wrap((req) => {
+    if (limited('psearch:' + req.player!.id, 90, 60_000)) throw new GameError('Searching too fast, wait a moment', 429);
+    return searchPlayers(w, typeof req.query.q === 'string' ? req.query.q.slice(0, 40) : '');
   }));
   A.get('/players/:id', wrap((req) => profileView(w, req.params.id, now())));
   A.get('/highscore', wrap((req) => {
