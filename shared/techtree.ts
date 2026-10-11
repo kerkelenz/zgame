@@ -142,3 +142,78 @@ export const FLOWS: Flow[] = [
     ],
   },
 ];
+
+// ---------------------------------------------------------------- level graph
+
+/** A node of the progression graph: one level of one building or research (units are a single node at level 1). */
+export interface LevelNode { key: string; id: string; level: number; kind: ItemKind; name: string; layer: number; lane: number }
+export interface LevelEdge { from: string; to: string; kind: 'level' | 'needs'; /** the level of the requirement, for 'needs' */ at?: number }
+export interface LevelGraph { nodes: LevelNode[]; edges: LevelEdge[]; lanes: string[]; layers: number; preds: Map<string, string[]>; succs: Map<string, string[]> }
+
+/** levels shown for things nothing else needs beyond this */
+export const MIN_LEVELS_SHOWN = 5;
+export const levelKey = (id: string, level: number) => `${id}@${level}`;
+
+/** how many levels of an item appear in the graph: every level something requires, and at least a few more */
+export function levelsShown(id: string): number {
+  const n = nodeOf(id);
+  if (!n || (n.kind !== 'building' && n.kind !== 'tech')) return 1;
+  let top = 0;
+  for (const o of TREE) for (const r of o.requires) if (r.id === id) top = Math.max(top, r.level);
+  return Math.max(top, MIN_LEVELS_SHOWN);
+}
+
+let cached: LevelGraph | null = null;
+/** The whole progression as a directed graph: Energy 1 -> Energy 2 -> ..., and Energy 3 -> Fusion Reactor 1 where fusion needs Energy 3. Laid out in layers (left to right) and lanes (one per item). */
+export function levelGraph(): LevelGraph {
+  if (cached) return cached;
+  const nodes = new Map<string, LevelNode>();
+  const edges: LevelEdge[] = [];
+  for (const n of TREE) for (let l = 1; l <= levelsShown(n.id); l++) nodes.set(levelKey(n.id, l), { key: levelKey(n.id, l), id: n.id, level: l, kind: n.kind, name: n.name, layer: 0, lane: 0 });
+  for (const n of TREE) {
+    for (let l = 2; l <= levelsShown(n.id); l++) edges.push({ from: levelKey(n.id, l - 1), to: levelKey(n.id, l), kind: 'level' });
+    for (const r of n.requires) edges.push({ from: levelKey(r.id, r.level), to: levelKey(n.id, 1), kind: 'needs', at: r.level });
+  }
+  // layers: an item's first level sits after everything it needs; each next level one step further
+  const layerOf = new Map<string, number>();
+  const layer = (key: string): number => {
+    const got = layerOf.get(key);
+    if (got !== undefined) return got;
+    const [id, lv] = key.split('@');
+    const level = Number(lv);
+    const l = level > 1 ? layer(levelKey(id, level - 1)) + 1 : Math.max(-1, ...(nodeOf(id)?.requires ?? []).map((r) => layer(levelKey(r.id, r.level)))) + 1;
+    layerOf.set(key, l);
+    return l;
+  };
+  for (const n of nodes.values()) n.layer = layer(n.key);
+
+  // lanes: start by step and kind, then pull each lane toward the lanes it connects to to untangle the arrows
+  const lanes = TREE.map((n) => n.id).sort((a, b) => nodeOf(a)!.tier - nodeOf(b)!.tier || nodeOf(a)!.kind.localeCompare(nodeOf(b)!.kind) || nodeOf(a)!.name.localeCompare(nodeOf(b)!.name));
+  const links = new Map<string, Set<string>>(lanes.map((id) => [id, new Set<string>()]));
+  for (const n of TREE) for (const r of n.requires) { links.get(n.id)!.add(r.id); links.get(r.id)!.add(n.id); }
+  for (let pass = 0; pass < 8; pass++) {
+    const pos = new Map(lanes.map((id, i) => [id, i]));
+    const score = new Map(lanes.map((id) => {
+      const ns = [...links.get(id)!];
+      return [id, ns.length ? ns.reduce((s, o) => s + pos.get(o)!, 0) / ns.length : pos.get(id)!] as const;
+    }));
+    lanes.sort((a, b) => (score.get(a)! - score.get(b)!) || (pos.get(a)! - pos.get(b)!));
+  }
+  const laneOf = new Map(lanes.map((id, i) => [id, i]));
+  for (const n of nodes.values()) n.lane = laneOf.get(n.id)!;
+
+  const preds = new Map<string, string[]>(), succs = new Map<string, string[]>();
+  for (const k of nodes.keys()) { preds.set(k, []); succs.set(k, []); }
+  for (const e of edges) { preds.get(e.to)!.push(e.from); succs.get(e.from)!.push(e.to); }
+  cached = { nodes: [...nodes.values()], edges, lanes, layers: Math.max(...[...nodes.values()].map((n) => n.layer)) + 1, preds, succs };
+  return cached;
+}
+
+/** every node reachable by following edges one way: what must come first (`back`) or what it leads to */
+export function reach(g: LevelGraph, key: string, back: boolean): Set<string> {
+  const out = new Set<string>();
+  const next = back ? g.preds : g.succs;
+  const stack = [key];
+  while (stack.length) for (const n of next.get(stack.pop()!) ?? []) if (!out.has(n)) { out.add(n); stack.push(n); }
+  return out;
+}
