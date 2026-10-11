@@ -178,6 +178,21 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('the overview lists fleet events and the list can be hidden', async () => {
+    await go('Overview');
+    await page.getByRole('heading', { name: /^Events/ }).waitFor();
+    expect(await page.locator('main').innerText()).toMatch(/Nothing is moving/);
+    await page.locator('.card', { hasText: 'Events' }).getByRole('button', { name: 'Hide' }).click();
+    expect(await page.locator('main').innerText()).not.toMatch(/Nothing is moving/);
+    await page.reload();
+    await page.waitForSelector('header.top');
+    await go('Overview');
+    expect(await page.locator('main').innerText()).not.toMatch(/Nothing is moving/);          // the choice is remembered
+    await page.locator('.card', { hasText: 'Events' }).getByRole('button', { name: 'Show' }).click();
+    expect(await page.locator('main').innerText()).toMatch(/Nothing is moving/);
+    noErrors();
+  });
+
   run('runs a ready-made build order from the Automation page', async () => {
     await go('Automation');
     await page.locator('.row', { hasText: 'Colony starter' }).getByRole('button', { name: 'Run here' }).click();

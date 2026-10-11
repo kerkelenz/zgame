@@ -283,3 +283,13 @@ ol.steps { margin: 4px 0; padding-left: 20px; } ol.steps li { margin: 2px 0; }
 .pip.need { box-shadow: 0 0 0 2px #ffbe50; color: #fff; font-weight: 700; }
 .goalbar { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px; background: rgba(255, 190, 80, .08); }
 .bedge text { font-size: 11px; font-weight: 700; paint-order: stroke; stroke: #0b0f1a; stroke-width: 3px; }
+
+.events { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.event { display: grid; grid-template-columns: 82px 78px 1fr; gap: 10px; align-items: baseline; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+.event .evtime { font-family: ui-monospace, monospace; color: #e8d65a; }
+.event .evleft { color: var(--muted); }
+.event .evmission { color: var(--muted); }
+.event.ev-own .evtext { color: #7bdc8a; } .event.ev-hostile .evtext { color: #ff7b7b; } .event.ev-friendly .evtext { color: #7fb8ff; }
+.event.projected .evtext { opacity: .65; font-style: italic; }
+.event .plink { color: inherit; }
+@media (max-width: 640px) { .event { grid-template-columns: 1fr; gap: 0; } .event .evtime, .event .evleft { display: inline; } }

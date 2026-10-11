@@ -98,6 +98,7 @@ const TOPICS: Topic[] = [
       <>
         <ul>
           <li>Pick a planet, choose ships, a target and a mission on the <b>Fleet</b> page, or start from a button in the <b>Galaxy</b>. The page shows flight time and fuel before you launch. Flights cost <b>Vespene Gas</b>; a lower speed percentage uses less. You can <b>recall</b> a fleet at any time and it returns after the time it already travelled.</li>
+          <li><b>Events.</b> The <b>Overview</b> lists every fleet movement that concerns you, in the order it will happen, each with its clock time, a countdown, where it comes from, where it goes and its mission. Your own fleets appear in green: the arrival at the target, and below it, in fainter italics, the return flight that will follow. Hostile fleets heading for you or your allies appear in red with who sent them and from where (their ships stay hidden), and friendly deliveries and stationed fleets in blue. Names of players and planets are links to their profile and to the galaxy. Hide collapses the list and the choice is remembered.</li>
           <li><b>Fleet slots</b> limit how many fleets fly at once: 1, plus Computer Technology levels, plus Fleet Admiral ranks, plus class and alliance bonuses. <b>Expeditions</b> have their own slots.</li>
           <li><b>Fleet presets</b> save a ship selection under a name; they follow your account to any device. Bookmarks and recent targets appear as quick buttons above the target box.</li>
         </ul>

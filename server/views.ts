@@ -16,6 +16,7 @@ import { invasionBanner } from './invasion';
 import { contractsView } from './contracts';
 import { featuresOf } from './features';
 import { warsView } from './wars';
+import { fleetEvents } from './events';
 import { ALLIANCE_PERMS } from './world';
 import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
 import { OFFICERS, OFFICER_MAX, FACTIONS, JOIN_REP, FACTION_BY_ID, CHAR_CLASSES, CLASS_CHANGE_COST } from '../shared/data';
@@ -167,5 +168,5 @@ export function fleetsView(w: World, p: Player) {
     }
     if (m.mission === 'hold' && m.phase === 'holding' && m.ownerId !== p.id && myCoords.some((c) => sameCoords(c, m.to))) stationed.push(mv(m, false));
   }
-  return { mine, incoming, stationed, joinable };
+  return { mine, incoming, stationed, joinable, events: fleetEvents(w, p) };
 }

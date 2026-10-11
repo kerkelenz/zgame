@@ -5,6 +5,7 @@ import { post } from '../api';
 import { Art } from '../art';
 import { useGame } from '../game';
 import { Card, Countdown, Page, Progress, coordStr, fmt } from '../ui';
+import { FleetEvents } from './FleetEvents';
 
 export function Overview() {
   const { me, planet, planets, fleets, act, setPage, selectPlanet } = useGame();
@@ -15,6 +16,8 @@ export function Overview() {
   const q = planet.shipyardQueue[0];
   return (
     <Page title={`${planet.name} ${coordStr(planet.coords)}`}>
+      <FleetEvents />
+
       <div className="grid2">
         <Card title="Planet">
           <img className="planetpic" src={Art.planet(planet.id, planet.maxTemp, !!planet.isMoon)} alt="" />
@@ -84,11 +87,6 @@ export function Overview() {
         </Card>
       )}
 
-      <Card title="Fleet movements" right={<button onClick={() => setPage('fleet')}>Fleet</button>}>
-        {fleets.mine.length === 0 ? <p className="muted">All ships are home.</p> : fleets.mine.slice(0, 5).map((m) => (
-          <div key={m.id}>{m.mission} → {coordStr(m.to)} <span className="muted">({m.phase})</span> <Countdown to={m.phase === 'outbound' ? m.arriveAt : m.phase === 'holding' ? m.holdUntil : m.returnAt} /></div>
-        ))}
-      </Card>
 
       {planets.length > 1 && (
         <Card title="Your planets">

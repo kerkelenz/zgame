@@ -22,7 +22,7 @@ describe('the in-game guide', () => {
   });
 
   it('explains the systems players have to know about', () => {
-    for (const topic of ['Vespene Gas', 'Solar Plant', 'Astrophysics', 'Space Dock', 'Crawlers', 'Pathfinders', 'Lunar Base', 'Sensor Phalanx', 'Jump Gate', 'Deathstars', 'wreck field', 'vacation', 'tribute', 'Factions', 'Collector', 'General', 'Discoverer', 'Officers', 'bulletin', 'pact', 'war', 'recovery key', 'hall of fame', 'merchant', 'Gather', 'Supply depot', 'presets', 'Nanite Factory', 'Terraformer', 'Missile Silo']) {
+    for (const topic of ['Vespene Gas', 'Solar Plant', 'Astrophysics', 'Space Dock', 'Crawlers', 'Pathfinders', 'Lunar Base', 'Sensor Phalanx', 'Jump Gate', 'Deathstars', 'wreck field', 'vacation', 'tribute', 'Factions', 'Collector', 'General', 'Discoverer', 'Officers', 'bulletin', 'pact', 'war', 'recovery key', 'hall of fame', 'merchant', 'Gather', 'Supply depot', 'presets', 'Nanite Factory', 'Terraformer', 'Missile Silo', 'Events']) {
       expect(text.toLowerCase(), topic).toContain(topic.toLowerCase());
     }
   });
