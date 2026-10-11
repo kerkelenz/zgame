@@ -14,7 +14,7 @@ describe('the menu', () => {
   it('lists every page exactly once', () => {
     const all = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
     expect(new Set(all).size).toBe(all.length);
-    expect(all).toEqual(expect.arrayContaining(['overview', 'resources', 'buildings', 'research', 'shipyard', 'defense', 'automation', 'fleet', 'galaxy', 'invasion', 'simulator', 'empire', 'economy', 'contracts', 'command', 'alliance', 'territory', 'contacts', 'messages', 'chat', 'highscore', 'settings', 'guide', 'admin']));
+    expect(all).toEqual(expect.arrayContaining(['overview', 'resources', 'buildings', 'research', 'shipyard', 'defense', 'automation', 'fleet', 'galaxy', 'invasion', 'simulator', 'empire', 'economy', 'contracts', 'command', 'alliance', 'territory', 'contacts', 'messages', 'chat', 'highscore', 'settings', 'guide', 'news', 'admin']));
   });
 
   it('has a page behind every entry', () => {
@@ -25,7 +25,7 @@ describe('the menu', () => {
   it('holds back pages until their feature is unlocked', () => {
     const base = ids(none);
     for (const hidden of ['automation', 'territory', 'invasion', 'simulator', 'admin']) expect(base, hidden).not.toContain(hidden);
-    for (const shown of ['overview', 'fleet', 'galaxy', 'contracts', 'alliance', 'messages', 'settings', 'guide']) expect(base, shown).toContain(shown);
+    for (const shown of ['overview', 'fleet', 'galaxy', 'contracts', 'alliance', 'messages', 'settings', 'guide', 'news']) expect(base, shown).toContain(shown);
     expect(ids({ ...none, territory: true })).toContain('territory');
     expect(ids({ ...none, automation: true, invasion: true, simulator: true })).toEqual(expect.arrayContaining(['automation', 'invasion', 'simulator']));
     expect(ids(undefined)).not.toContain('automation');                      // before the first server answer nothing optional shows

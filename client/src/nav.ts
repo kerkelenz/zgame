@@ -21,7 +21,7 @@ export const NAV_GROUPS: NavGroup[] = [
     { id: 'messages', label: 'Messages' }, { id: 'chat', label: 'Chat' }, { id: 'highscore', label: 'Standing' },
   ] },
   { id: 'more', label: 'More', items: [
-    { id: 'settings', label: 'Settings' }, { id: 'guide', label: 'Guide' }, { id: 'admin', label: 'Admin', admin: true },
+    { id: 'settings', label: 'Settings' }, { id: 'guide', label: 'Guide' }, { id: 'news', label: "What's new" }, { id: 'admin', label: 'Admin', admin: true },
   ] },
 ];
 
@@ -33,7 +33,7 @@ export function visibleNav(features: Features | undefined, showAll: boolean, isA
 }
 
 /** pages that are not in the menu belong to the group of the page they were opened from */
-const EXTRA: Record<string, string> = { detail: 'planet', profile: 'social', news: 'more' };
+const EXTRA: Record<string, string> = { detail: 'planet', profile: 'social' };
 export const groupOfPage = (page: string): string => EXTRA[page] ?? NAV_GROUPS.find((g) => g.items.some((i) => i.id === page))?.id ?? 'planet';
 
 const KEY = 'sf.navCollapsed';
