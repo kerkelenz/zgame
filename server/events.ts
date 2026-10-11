@@ -1,6 +1,7 @@
 import { fleetCount } from '../shared/combat';
 import { sameCoords } from '../shared/formulas';
-import type { Coords, Mission } from '../shared/types';
+import { totalRes } from '../shared/formulas';
+import type { Coords, Mission, Res } from '../shared/types';
 import { planetAt, sameAlliance, friendly, type Movement, type Player, type World } from './world';
 
 /**
@@ -25,6 +26,8 @@ export interface FleetEvent {
   /** whose planet the target is, when it is not the viewer's */
   targetOwner: { id: string; name: string } | null;
   ships: number | null;
+  /** resources the fleet carries at this step (a delivery on the way out, loot or salvage on the way home); null when it carries none or the viewer cannot know */
+  cargo: Res | null;
   speedPct: number | null;
 }
 export interface Place { coords: Coords; name: string | null; moon: boolean }
@@ -45,7 +48,8 @@ export function fleetEvents(w: World, viewer: Player): FleetEvent[] {
   };
   const ownerOf = (m: Movement) => ({ id: m.ownerId, name: m.ownerName, alliance: (m.ownerId && w.alliances[w.players[m.ownerId]?.allianceId ?? '']?.tag) || null });
   const targetOwner = (m: Movement) => { const t = planetAt(w, m.to, !!m.toMoon); return t && t.ownerId !== viewer.id ? { id: t.ownerId, name: w.players[t.ownerId]?.username ?? '?' } : null; };
-  const base = (m: Movement, kind: FleetEvent['kind']) => ({ kind, mission: m.mission, owner: ownerOf(m), targetOwner: targetOwner(m), speedPct: m.speedPct });
+  const base = (m: Movement, kind: FleetEvent['kind']) => ({ kind, mission: m.mission, owner: ownerOf(m), targetOwner: targetOwner(m), speedPct: m.speedPct, cargo: null as Res | null });
+  const load = (m: Movement): Res | null => (totalRes(m.cargo) > 0 ? { ...m.cargo } : null);
 
   const out: FleetEvent[] = [];
   for (const m of Object.values(w.movements)) {
@@ -54,15 +58,16 @@ export function fleetEvents(w: World, viewer: Player): FleetEvent[] {
     if (m.ownerId === viewer.id) {
       const ships = fleetCount(m.ships);
       const b = { ...base(m, 'own'), ships };
+      const carried = load(m);
       if (m.phase === 'outbound') {
-        out.push({ ...b, id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest });
+        out.push({ ...b, id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, cargo: carried });
         if (RETURNS.includes(m.mission)) out.push({ ...b, id: `${m.id}:return`, at: m.arriveAt + m.flightMs, step: 'return', projected: true, from: dest, to: home });
       } else if (m.phase === 'holding') {
         const until = m.holdUntil ?? m.arriveAt;
         out.push({ ...b, id: `${m.id}:end`, at: until, step: 'end', projected: false, from: home, to: dest });
         out.push({ ...b, id: `${m.id}:return`, at: until + m.flightMs, step: 'return', projected: true, from: dest, to: home });
       } else {
-        out.push({ ...b, id: `${m.id}:return`, at: m.returnAt ?? m.arriveAt, step: 'return', projected: false, from: dest, to: home });
+        out.push({ ...b, id: `${m.id}:return`, at: m.returnAt ?? m.arriveAt, step: 'return', projected: false, from: dest, to: home, cargo: carried });
       }
       continue;
     }
@@ -71,7 +76,7 @@ export function fleetEvents(w: World, viewer: Player): FleetEvent[] {
     if ((m.mission === 'attack' || m.mission === 'missile' || m.mission === 'destroy') && (towardMe || towardAlly)) {
       out.push({ ...base(m, 'hostile'), id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, ships: null });
     } else if ((m.mission === 'transport' || m.mission === 'hold' || m.mission === 'deploy') && towardMe && m.ownerId && (sameAlliance(w, viewer.id, m.ownerId) || friendly(w, viewer.id, m.ownerId))) {
-      out.push({ ...base(m, 'friendly'), id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, ships: fleetCount(m.ships) });
+      out.push({ ...base(m, 'friendly'), id: `${m.id}:arrive`, at: m.arriveAt, step: 'arrive', projected: false, from: home, to: dest, ships: fleetCount(m.ships), cargo: load(m) });
     }
   }
   return out.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));

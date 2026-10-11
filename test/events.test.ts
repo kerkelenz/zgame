@@ -58,6 +58,27 @@ describe('the fleet event list', () => {
     expect(fleetEvents(w, bob).every((e) => e.kind === 'own')).toBe(true);
   });
 
+  it('says how many resources a fleet is carrying: the delivery on the way out, the loot on the way home', () => {
+    const t = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { smallCargo: 2 }, mission: 'transport', cargo: { metal: 1200, crystal: 300 } }, T0);
+    const out = fleetEvents(w, alice);
+    expect(out.find((e) => e.id === `${t.id}:arrive`)!.cargo).toEqual({ metal: 1200, crystal: 300, deuterium: 0 });
+    expect(out.find((e) => e.id === `${t.id}:return`)!.cargo).toBeNull();                 // it comes back empty
+    // a fleet that is already flying home with loot
+    w.movements[t.id].phase = 'returning'; w.movements[t.id].returnAt = T0 + 1000; w.movements[t.id].cargo = { metal: 5000, crystal: 0, deuterium: 250 };
+    expect(fleetEvents(w, alice).find((e) => e.id === `${t.id}:return`)!.cargo).toEqual({ metal: 5000, crystal: 0, deuterium: 250 });
+    // nothing on board: no cargo at all
+    const plain = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { cruiser: 1 }, mission: 'attack' }, T0);
+    expect(fleetEvents(w, alice).find((e) => e.id === `${plain.id}:arrive`)!.cargo).toBeNull();
+  });
+
+  it('shows what an ally is delivering to you, but never what a hostile fleet carries', () => {
+    AL.createAlliance(w, alice, 'AAA', 'Alpha'); AL.joinAlliance(w, bob, alice.allianceId!);
+    const gift = sendFleet(w, bob, { fromPlanetId: bp.id, to: ap.coords, ships: { smallCargo: 2 }, mission: 'transport', cargo: { metal: 777 } }, T0);
+    expect(fleetEvents(w, alice).find((e) => e.id === `${gift.id}:arrive`)!.cargo).toEqual({ metal: 777, crystal: 0, deuterium: 0 });
+    const raid = sendFleet(w, cara, { fromPlanetId: cp.id, to: ap.coords, ships: { cruiser: 2 }, mission: 'attack' }, T0);
+    expect(fleetEvents(w, alice).find((e) => e.id === `${raid.id}:arrive`)!.cargo).toBeNull();
+  });
+
   it('shows friendly deliveries, but not other commanders\' business', () => {
     AL.createAlliance(w, alice, 'AAA', 'Alpha'); AL.joinAlliance(w, bob, alice.allianceId!);
     const gift = sendFleet(w, bob, { fromPlanetId: bp.id, to: ap.coords, ships: { smallCargo: 2 }, mission: 'transport', cargo: { metal: 500 } }, T0);

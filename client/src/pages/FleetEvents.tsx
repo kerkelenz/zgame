@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGame } from '../game';
-import { Card, Countdown, coordStr } from '../ui';
+import { ResIcon } from '../ResIcon';
+import { Card, Countdown, coordStr, fmt } from '../ui';
 
 const MISSION: Record<string, string> = {
   attack: 'Attack', transport: 'Transport', deploy: 'Deploy', espionage: 'Espionage', colonize: 'Colonize', recycle: 'Recycle debris',
@@ -30,16 +31,26 @@ export function FleetEvents() {
   const who = (e: any) => <><Owner e={e} />{e.owner.alliance ? ` [${e.owner.alliance}]` : ''}</>;
   const target = (e: any) => (e.mission === 'expedition' ? <>deep space {coordStr(e.to.coords)}</> : e.mission === 'recycle' ? <>the debris field at <Place p={e.to} /></> : e.mission === 'colonize' ? <>the position <Place p={e.to} /></> : <Place p={e.to} />);
 
+  /** what the fleet is carrying: each resource with its picture, and the total */
+  const carry = (e: any) => {
+    if (!e.cargo) return null;
+    const keys = (['metal', 'crystal', 'deuterium'] as const).filter((k) => e.cargo[k] > 0);
+    const total = keys.reduce((s, k) => s + e.cargo[k], 0);
+    return (
+      <span className="cargo"> carrying {keys.map((k) => <span key={k} className={k === 'metal' ? 'metal' : k === 'crystal' ? 'crystal' : 'deut'}> <ResIcon k={k} size={13} />{fmt(e.cargo[k])}</span>)}{keys.length > 1 ? <span className="muted"> ({fmt(total)} in all)</span> : null}</span>
+    );
+  };
+
   const text = (e: any) => {
     const mission = <span className="evmission">Mission: {MISSION[e.mission] ?? e.mission}</span>;
     const n = e.ships != null ? ` (${e.ships} ship${e.ships === 1 ? '' : 's'})` : '';
     if (e.kind === 'own') {
-      if (e.step === 'arrive') return <>Your fleet{n} from <Place p={e.from} /> reaches {target(e)}. {mission}</>;
+      if (e.step === 'arrive') return <>Your fleet{n} from <Place p={e.from} /> reaches {target(e)}{carry(e)}. {mission}</>;
       if (e.step === 'end') return <>Your fleet{n} leaves <Place p={e.to} /> after holding there and heads home. {mission}</>;
-      return <>Your fleet{n} returns from <Place p={e.from} fallback="deep space" /> to <Place p={e.to} />. {mission}</>;
+      return <>Your fleet{n} returns from <Place p={e.from} fallback="deep space" /> to <Place p={e.to} />{carry(e)}. {mission}</>;
     }
     if (e.kind === 'hostile') return <>Hostile fleet of {who(e)} from <Place p={e.from} fallback="deep space" /> reaches {e.targetOwner ? <><a className="plink" onClick={() => openProfile(e.targetOwner.id)}>{e.targetOwner.name}</a>&apos;s planet </> : 'your planet '}<Place p={e.to} />. {mission}</>;
-    return <>Fleet of {who(e)}{n} from <Place p={e.from} /> reaches <Place p={e.to} />. {mission}</>;
+    return <>Fleet of {who(e)}{n} from <Place p={e.from} /> reaches <Place p={e.to} />{carry(e)}. {mission}</>;
   };
 
   const rows = all ? events : events.slice(0, SHOWN);
