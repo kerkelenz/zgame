@@ -148,6 +148,14 @@ export const GENERAL_FAST_SHIPS: string[] = ['lightFighter', 'heavyFighter', 'cr
 export const TRADE_VALUE = { metal: 1, crystal: 1.5, deuterium: 3 } as const;
 export const TRADE_FEE = 0.12;
 export const TRADE_FEE_COLLECTOR = 0.08;
+/** Every day the merchant picks one trade he will do for a token cut, up to a daily allowance per commander. */
+export const DEAL_FEE = 0.02;
+export const dailyDeal = (day: number): { give: keyof typeof TRADE_VALUE; get: keyof typeof TRADE_VALUE } => {
+  const pairs: [keyof typeof TRADE_VALUE, keyof typeof TRADE_VALUE][] = [['metal', 'crystal'], ['crystal', 'metal'], ['metal', 'deuterium'], ['deuterium', 'metal'], ['crystal', 'deuterium'], ['deuterium', 'crystal']];
+  const h = Math.imul(day ^ 0x9e3779b1, 2654435761) >>> 0;
+  const [give, get] = pairs[h % pairs.length];
+  return { give, get };
+};
 export const tradeQuote = (give: keyof typeof TRADE_VALUE, get: keyof typeof TRADE_VALUE, amount: number, fee = TRADE_FEE) =>
   Math.floor((Math.max(0, amount) * TRADE_VALUE[give]) / TRADE_VALUE[get] * (1 - fee));
 

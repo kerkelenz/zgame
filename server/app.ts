@@ -19,6 +19,7 @@ import { endVacation, startVacation } from './vacation';
 import { startRepair } from './wrecks';
 import * as ACC from './account';
 import * as SOC from './social';
+import { gatherResources } from './logistics';
 import { recoverAccount } from './account';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
@@ -80,6 +81,12 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     if (limited('recover:' + req.ip, 8, 60_000)) throw new GameError('Too many attempts, slow down', 429);
     const p = recoverAccount(w, str(req.body.username, 40), str(req.body.key, 60), str(req.body.password, 200));
     return { ok: true, username: p.username };
+  }));
+  app.get('/api/shared/:id', wrap((req) => {
+    if (limited('shared:' + req.ip, 60, 60_000)) throw new GameError('Slow down', 429);
+    const s = w.shared?.[req.params.id];
+    if (!s) throw new GameError('That report is not shared (or was removed)', 404);
+    return s;
   }));
   app.get('/api/health', wrap(() => ({ ok: true, players: Object.keys(w.players).length })));
 
@@ -255,6 +262,13 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
 
   // ---------------------------------------------------------------- fleets
   A.get('/fleets', wrap((req) => fleetsView(w, req.player!)));
+  A.post('/empire/gather', wrap((req) => {
+    const p = req.player!;
+    if (limited('gather:' + p.id, 10, 60_000)) throw new GameError('Slow down', 429);
+    const r = gatherResources(w, p, str(req.body.toPlanetId), Number(req.body.percent), Array.isArray(req.body.resources) ? req.body.resources.map(String) : [], now());
+    bus.push({ to: p.id, type: 'refresh' });
+    return r;
+  }));
   A.post('/fleets/plan', wrap((req) => {
     const p = req.player!;
     const planet = ownedPlanet(w, p.id, str(req.body.fromPlanetId));
@@ -341,6 +355,17 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.post('/messages/clear', wrap((req) => {
     w.messages = w.messages.filter((m) => m.to !== req.player!.id);
     return { ok: true };
+  }));
+  A.post('/messages/:id/share', wrap((req) => {
+    const m = w.messages.find((x) => x.id === req.params.id && x.to === req.player!.id);
+    if (!m || (m.kind !== 'combat' && m.kind !== 'raid') || !m.data || !(m.data as { attackers?: unknown }).attackers) throw new GameError('Only battle reports can be shared');
+    if (limited('share:' + req.player!.id, 20, 3_600_000)) throw new GameError('You are sharing too many reports', 429);
+    const shared = (w.shared ||= {});
+    const id = 'r' + uid(5);
+    shared[id] = { id, at: now(), subject: m.subject, report: m.data };
+    const ids = Object.keys(shared);
+    if (ids.length > 500) for (const old of ids.sort((x, y) => shared[x].at - shared[y].at).slice(0, ids.length - 500)) delete shared[old];
+    return { id };
   }));
   A.post('/messages/send', wrap((req) => {
     const p = req.player!;

@@ -7,6 +7,7 @@ import { colonyCount, maxPlanets, playerPoints } from './galaxy';
 import { sameCoords } from '../shared/formulas';
 import { upgradeCost } from './alliance';
 import { isAdmin, isMuted } from './account';
+import { merchantDeal } from './economy';
 import { permsOf } from './alliance';
 import { ALLIANCE_PERMS } from './world';
 import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
@@ -75,7 +76,7 @@ export function meView(w: World, p: Player, now: number) {
     now,
     player: {
       id: p.id, username: p.username, techs: p.techs, research: p.research, researchBacklog: p.researchBacklog ?? [], officers: p.officers, charClass: p.charClass, allianceId: p.allianceId,
-      points: playerPoints(w, p), stats: p.stats, admin: isAdmin(p), muted: isMuted(p, now) ? p.muted : null,
+      points: playerPoints(w, p), stats: p.stats, deal: merchantDeal(w, p, now), admin: isAdmin(p), muted: isMuted(p, now) ? p.muted : null,
     },
     planets: p.planetIds.map((id) => {
       const pl = w.planets[id];

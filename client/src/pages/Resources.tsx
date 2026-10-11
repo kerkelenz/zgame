@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { post } from '../api';
 import { TRADE_FEE, TRADE_FEE_COLLECTOR, tradeQuote } from '../../../shared/data';
 import { useGame } from '../game';
-import { Card, Page, fmt } from '../ui';
+import { Card, Countdown, Page, fmt } from '../ui';
 
 const SOURCES: [string, string][] = [
   ['metalMine', 'Metal Mine'], ['crystalMine', 'Crystal Mine'], ['deuteriumSynthesizer', 'Deuterium Synthesizer'],
@@ -17,7 +17,12 @@ export function Resources() {
   const [give, setGive] = useState<'metal' | 'crystal' | 'deuterium'>('metal');
   const [get, setGet] = useState<'metal' | 'crystal' | 'deuterium'>('crystal');
   const [amount, setAmount] = useState(10000);
+  const [gather, setGather] = useState({ pct: 90, res: ['metal', 'crystal'] as string[] });
+  const [gatherRes, setGatherRes] = useState<any>(null);
   const fee = me.player.charClass === 'collector' ? TRADE_FEE_COLLECTOR : TRADE_FEE;
+  const deal = me.player.deal;
+  const cheap = give === me.player.deal.give && get === me.player.deal.get ? Math.min(amount, me.player.deal.left) : 0;
+  const quote = give === get ? 0 : (cheap ? tradeQuote(give, get, cheap, me.player.deal.fee) : 0) + (amount - cheap > 0 ? tradeQuote(give, get, amount - cheap, fee) : 0);
   return (
     <Page title="Resources">
       <Card title="Hourly production">
@@ -34,15 +39,33 @@ export function Resources() {
       </Card>
       <Card title="Travelling merchant">
         <p className="muted small">Swaps resources at 3 metal : 2 crystal : 1 deuterium and keeps a {Math.round(fee * 100)}% cut{fee < TRADE_FEE ? ' (Collector rate)' : ''}. Works on {planet.name}'s stock.</p>
+        <p className="small"><b>Today's deal:</b> <span className="good">{deal.give} → {deal.get}</span> at just {Math.round(deal.fee * 100)}% for up to {fmt(deal.left)} {deal.give} more today (resets <Countdown to={deal.resetsAt} />).{give === deal.give && get === deal.get ? ' ✔ selected' : ''}
+          <button className="link" onClick={() => { setGive(deal.give); setGet(deal.get); setAmount(Math.min(Math.floor(planet.resources[deal.give]), deal.left)); }}>use it</button></p>
         <div className="row wrap">
           <label>Give<select value={give} onChange={(e) => setGive(e.target.value as typeof give)}>{(['metal', 'crystal', 'deuterium'] as const).map((k) => <option key={k} value={k}>{k}</option>)}</select></label>
           <input type="number" min={0} value={amount} onChange={(e) => setAmount(Math.max(0, Number(e.target.value)))} />
           <button onClick={() => setAmount(Math.floor(planet.resources[give]))}>all</button>
           <label>Get<select value={get} onChange={(e) => setGet(e.target.value as typeof get)}>{(['metal', 'crystal', 'deuterium'] as const).map((k) => <option key={k} value={k}>{k}</option>)}</select></label>
-          <b>{give === get ? '–' : fmt(tradeQuote(give, get, amount, fee))}</b>
+          <b>{give === get ? '-' : fmt(quote)}</b>
           <button className="primary" disabled={give === get || amount <= 0} onClick={() => void act(() => post(`/planets/${planet.id}/trade`, { give, get, amount }), 'Trade done')}>Trade</button>
         </div>
       </Card>
+      {me.planets.filter((x: any) => x.id !== planet.id).length > 0 && (
+        <Card title="Gather from the rest of your empire">
+          <p className="muted small">Every other planet with cargo ships loads them with this share of its stock (keeping fuel) and flies it to {planet.name} as a normal transport mission.</p>
+          <div className="row wrap">
+            {(['metal', 'crystal', 'deuterium'] as const).map((k) => <label key={k} className="row"><input type="checkbox" checked={gather.res.includes(k)} onChange={(e) => setGather({ ...gather, res: e.target.checked ? [...gather.res, k] : gather.res.filter((x) => x !== k) })} /> {k}</label>)}
+            <select value={gather.pct} onChange={(e) => setGather({ ...gather, pct: Number(e.target.value) })}>{[100, 90, 75, 50, 25].map((v) => <option key={v} value={v}>{v}%</option>)}</select>
+            <button className="primary" disabled={!gather.res.length} onClick={async () => { const r = await act(() => post('/empire/gather', { toPlanetId: planet.id, percent: gather.pct, resources: gather.res })); if (r) setGatherRes(r); }}>Send transports</button>
+          </div>
+          {gatherRes && (
+            <div className="small">
+              {gatherRes.sent.map((s: any) => <div key={s.fromPlanetId} className="good">{s.from}: {fmt(s.cargo.metal)} M · {fmt(s.cargo.crystal)} C · {fmt(s.cargo.deuterium)} D on the way</div>)}
+              {gatherRes.skipped.map((s: any) => <div key={s.fromPlanetId} className="muted">{s.from}: skipped ({s.reason})</div>)}
+            </div>
+          )}
+        </Card>
+      )}
       <Card title="Production settings">
         <table className="kv">
           <tbody>

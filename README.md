@@ -70,6 +70,8 @@ Config is stored in the save on first start; env vars override it on later start
 - **Accounts and admin** – change password, rename (weekly), delete account, and a one-time recovery key for lost passwords (no email needed). Set `OGAME_ADMINS=name1,name2` to get an Admin page: ban/mute (timed or permanent), announcements, send a raid, gift resources, remove a commander.
 - **Contacts and galaxy tools** – buddy list with presence, block list, private notes on commanders and coordinates, system bookmarks, recent targets, a spy-report archive (latest report per planet), inactive/protected filters in the Galaxy, and a Report button that feeds the admin queue.
 - **Alliance depth** – custom ranks with individual permissions, a bulletin board with pinned posts, mass messages, and diplomacy: non-aggression pacts (neither alliance can attack the other) and war declarations (flagged in the Galaxy).
+- **Battle reports and expeditions** – every report has a round-by-round census and a public share link. Expeditions last 1-4 hours (+30% finds per extra hour, a wider black hole), recyclers add +25% resource finds and can salvage wreckage, probes scout and shrink pirate fleets 25%, and ancient data caches speed up your running research.
+- **Merchant daily deal and empire gather** – each day the merchant does one trade at a 2% cut up to a daily allowance; a one-click Gather sends cargo ships from all your planets to the current one.
 - **Empire page** – every planet and moon on one screen: resources, production, construction, ships, storage warnings.
 - **Live UI** – WebSocket push for alerts/messages/chat, interpolated resource counters, countdowns.
 

@@ -46,6 +46,8 @@ export interface CombatResult {
   attackers: CombatantResult[];
   defenders: CombatantResult[];
   debris: { metal: number; crystal: number };
+  /** unit counts alive on each side at the start and after every round, for round-by-round replays */
+  roundLog: { a: Partial<Record<UnitId, number>>; d: Partial<Record<UnitId, number>> }[];
 }
 
 interface Unit {
@@ -89,6 +91,12 @@ export function simulateCombat(attackers: Combatant[], defenders: Combatant[], r
   });
 
   const alive = (side: number) => units.filter((u) => u.side === side && !u.dead);
+  const census = () => {
+    const a: Partial<Record<UnitId, number>> = {}, d: Partial<Record<UnitId, number>> = {};
+    for (const u of units) { const bag = u.side === 0 ? a : d; bag[u.id] = (bag[u.id] || 0) + 1; }
+    return { a, d };
+  };
+  const roundLog = [census()];
   let rounds = 0;
   for (let round = 0; round < 6; round++) {
     const a = alive(0), d = alive(1);
@@ -123,6 +131,7 @@ export function simulateCombat(attackers: Combatant[], defenders: Combatant[], r
     }
     units = units.filter((u) => !u.dead);
     for (const u of units) u.shield = u.shieldMax;
+    roundLog.push(census());
   }
 
   const remA = units.filter((u) => u.side === 0).length;
@@ -165,6 +174,7 @@ export function simulateCombat(attackers: Combatant[], defenders: Combatant[], r
     attackers: build(0),
     defenders: build(1),
     debris: { metal: Math.floor(debrisM), crystal: Math.floor(debrisC) },
+    roundLog,
   };
 }
 

@@ -30,6 +30,8 @@ export interface Player {
   muted?: { until: number | null; reason: string };
   recovery?: { salt: string; hash: string };
   renamedAt?: number;
+  /** how much of today's merchant deal allowance has been used */
+  dealUsed?: { day: number; amount: number };
   /** social tools (all optional so old saves load unchanged) */
   blocked?: string[];
   buddies?: string[];
@@ -227,6 +229,8 @@ export interface World {
   messages: Message[];
   chat: ChatMsg[];
   reports?: PlayerReport[];
+  /** battle reports published with a public link */
+  shared?: Record<string, { id: string; at: number; subject: string; report: unknown }>;
   sessions: Record<string, string>;
   nextRaidAt: number;
   /** next computer-empire economy / war tick */

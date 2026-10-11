@@ -1,4 +1,4 @@
-import { ALLIANCE_UPGRADES, BUILDINGS, TECHS, UNITS, buildingAllowed, tradeQuote } from '../shared/data';
+import { ALLIANCE_UPGRADES, BUILDINGS, DEAL_FEE, TECHS, UNITS, buildingAllowed, dailyDeal, tradeQuote } from '../shared/data';
 import {
   buildingCost, buildingTime, canAfford, production, researchTime, scaleRes, storageCapacity,
   subRes, addRes, techCost, unitTime, lvl,
@@ -375,6 +375,15 @@ export function abandonPlanet(w: World, player: Player, planet: Planet, name: st
 }
 
 /** Travelling merchant: swaps resources at a fixed 3:2:1 rate, keeping a 12% cut. */
+const DAY_MS = 86_400_000;
+/** Today's cheap trade and what is left of this commander's allowance (500k per speed point, e.g. 10M at x20). */
+export function merchantDeal(w: World, p: Player, now: number) {
+  const day = Math.floor(now / DAY_MS);
+  const cap = 500_000 * Math.max(1, w.config.economySpeed);
+  const used = p.dealUsed?.day === day ? p.dealUsed.amount : 0;
+  return { ...dailyDeal(day), fee: DEAL_FEE, cap, used, left: Math.max(0, cap - used), day, resetsAt: (day + 1) * DAY_MS };
+}
+
 export function tradeResources(w: World, planet: Planet, give: string, get: string, amount: number, now: number): number {
   const keys = ['metal', 'crystal', 'deuterium'] as const;
   if (!keys.includes(give as never) || !keys.includes(get as never)) throw new GameError('Unknown resource');
@@ -385,8 +394,12 @@ export function tradeResources(w: World, planet: Planet, give: string, get: stri
   updatePlanet(w, planet, now);
   const g = give as (typeof keys)[number], t = get as (typeof keys)[number];
   if (planet.resources[g] < amount) throw new GameError(`Not enough ${g} on ${planet.name}`);
-  const out = tradeQuote(g, t, amount, tradeFee(w.players[planet.ownerId]));
+  const owner = w.players[planet.ownerId];
+  const deal = merchantDeal(w, owner, now);
+  const cheap = deal.give === g && deal.get === t ? Math.min(amount, deal.left) : 0;
+  const out = (cheap ? tradeQuote(g, t, cheap, DEAL_FEE) : 0) + (amount - cheap > 0 ? tradeQuote(g, t, amount - cheap, tradeFee(owner)) : 0);
   if (out <= 0) throw new GameError('That is too small a load for the merchant to bother with');
+  if (cheap) owner.dealUsed = { day: deal.day, amount: deal.used + cheap };
   planet.resources[g] -= amount;
   planet.resources[t] += out;
   return out;

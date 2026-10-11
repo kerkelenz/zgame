@@ -1,4 +1,4 @@
-import { UNITS, SHIP_IDS, DEFENSE_IDS, BUILDING_IDS, TECH_IDS, isShip, isStationary } from '../shared/data';
+import { TECHS, UNITS, SHIP_IDS, DEFENSE_IDS, BUILDING_IDS, TECH_IDS, isShip, isStationary } from '../shared/data';
 import {
   addRes, cargoCapacity, canAfford, distance, flightSeconds, fleetSpeed, fuelUse, lvl, sameCoords, subRes, totalRes, zeroRes,
 } from '../shared/formulas';
@@ -171,7 +171,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     id: uid(), ownerId: player.id, ownerName: player.username, mission, phase: 'outbound',
     from: { ...planet.coords }, fromPlanetId: planet.id, to: { ...to }, ships, cargo, toMoon: toMoon || undefined,
     speedPct, departAt: now, arriveAt: now + plan.secs * 1000, flightMs: plan.secs * 1000,
-    holdHours: mission === 'hold' ? Math.min(48, Math.max(0.1, Number(req.holdHours) || 1)) : undefined,
+    holdHours: mission === 'hold' ? Math.min(48, Math.max(0.1, Number(req.holdHours) || 1)) : mission === 'expedition' ? Math.min(4, Math.max(1, Math.round(Number(req.holdHours) || 1))) : undefined,
   };
   if (joinLead) {
     // arrive together with the leader; the return trip still takes the natural flight time
@@ -540,7 +540,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
     summarize(Object.fromEntries(Object.entries(before).map(([k, v]) => [k, (v || 0) - (after[k] || 0) + (rebuilt[k] || 0)])));
   const names = group.map((m) => m.ownerName).join(' + ');
   const report = {
-    coords: lead.to, planet: target.name, rounds: res.rounds, winner: res.winner, debris: res.debris, loot, bounty,
+    coords: lead.to, planet: target.name, rounds: res.rounds, winner: res.winner, debris: res.debris, loot, bounty, roundLog: res.roundLog,
     attackers: res.attackers.map((a) => ({ name: a.name, before: a.before, after: a.after, lost: a.lost })),
     defenders: res.defenders.map((d) => ({ name: d.name, before: d.before, after: d.after, lost: d.lost, rebuilt: d.rebuilt })),
   };
@@ -614,14 +614,18 @@ function resolveExpedition(w: World, m: Movement, at: number) {
   const owner = w.players[m.ownerId!];
   owner.stats.expeditions++;
   const value = fleetValue(m.ships); // what the fleet is worth: sets the size of pirates
-  const yieldMul = expeditionYield(owner); // Geologist / Discoverer: scales everything you find
+  // staying out longer finds more but risks more; recyclers salvage, probes scout ahead of the pirates
+  const hours = m.holdHours ?? 1;
+  const salvagers = (m.ships.recycler || 0) > 0;
+  const scouts = (m.ships.espionageProbe || 0) > 0;
+  const yieldMul = expeditionYield(owner) * (1 + 0.3 * (hours - 1)); // Geologist / Discoverer: scales everything you find
   let r = Math.random();
   // Discoverers dodge half of the nasty surprises (pirates, black holes)
   if (dodgesBadLuck(owner) && ((r >= 0.68 && r < 0.77) || (r >= 0.9 && r < 0.95)) && Math.random() < 0.5) r = 0.1;
   const free = Math.max(0, cargoFor(owner, m.ships) - totalRes(m.cargo));
   let title = 'Expedition: nothing found';
   let text = 'Your fleet drifted through empty space and found nothing of interest.';
-  let hold = 3_600_000 / w.config.fleetSpeed;
+  let hold = (hours * 3_600_000) / w.config.fleetSpeed;
 
   if (Math.random() < 0.15) {
     // deep space sometimes pays in Command Credits instead of cargo
@@ -630,10 +634,30 @@ function resolveExpedition(w: World, m: Movement, at: number) {
     title = 'Expedition: command gear salvaged';
     text = `The crew stripped intact command gear from a derelict and sold it on the way home: ${num(cc)} Command Credits.`;
   } else if (r < 0.3) {
-    // nothing
+    const s = Math.random();
+    if (s < 0.2) {
+      // an ancient data cache: speeds up the research in progress, or sells for credits
+      if (owner.research) {
+        const left = Math.max(0, owner.research.end - at);
+        owner.research.end -= Math.floor(left * 0.15);
+        title = 'Expedition: technology fragment';
+        text = `Your crew recovered a fragment of ancient research. ${TECHS[owner.research.id].name} will finish ${Math.round(left * 0.15 / 60000)} minutes sooner.`;
+      } else {
+        const cc = Math.round(30 * yieldMul);
+        owner.credits += cc;
+        title = 'Expedition: ancient data cache';
+        text = `A sealed data cache was worth ${num(cc)} Command Credits to collectors.`;
+      }
+    } else if (s < 0.4 && salvagers) {
+      const amount = Math.min(free, Math.floor((2000 + value * 0.03) * yieldMul * (0.5 + Math.random()) * Math.sqrt(w.config.economySpeed)));
+      const kind = Math.random() < 0.5 ? 'metal' : 'crystal';
+      m.cargo[kind] += amount;
+      title = 'Expedition: wreckage salvaged';
+      text = `Your recyclers stripped an ancient hulk and loaded ${num(amount)} ${kind}.`;
+    }
   } else if (r < 0.58) {
     const kind = (['metal', 'crystal', 'deuterium'] as const)[Math.floor(Math.random() * 3)];
-    const amount = Math.min(free, Math.floor((3000 + value * 0.04) * yieldMul * (0.5 + Math.random()) * Math.sqrt(w.config.economySpeed)));
+    const amount = Math.min(free, Math.floor((3000 + value * 0.04) * yieldMul * (salvagers ? 1.25 : 1) * (0.5 + Math.random()) * Math.sqrt(w.config.economySpeed)));
     m.cargo[kind] += amount;
     title = 'Expedition: resources found';
     text = `Your fleet discovered a rich asteroid cluster and loaded ${num(amount)} ${kind}.`;
@@ -645,7 +669,7 @@ function resolveExpedition(w: World, m: Movement, at: number) {
     title = 'Expedition: derelict ships';
     text = fleetCount(added) ? `A drifting fleet agreed to join you: ${summarize(added)}.` : 'You found only scrap.';
   } else if (r < 0.77) {
-    const budget = Math.max(4000, value * (0.3 + Math.random() * 0.4));
+    const budget = Math.max(4000, value * (0.3 + Math.random() * 0.4)) * (scouts ? 0.75 : 1);
     const pirates = buildNpcFleet(budget, Math.random);
     const rng = makeRng(Math.floor(Math.random() * 2 ** 31));
     const res = simulateCombat([combatant(w, owner, m.ownerName, m.ships)], [combatant(w, null, 'Space pirates', pirates)], rng);
@@ -662,7 +686,7 @@ function resolveExpedition(w: World, m: Movement, at: number) {
     m.flightMs = Math.floor(m.flightMs * 0.5);
     title = 'Expedition: tailwind';
     text = 'A solar wind accelerated your fleet - the return trip will be much faster.';
-  } else if (r < 0.95) {
+  } else if (r < 0.95 + 0.01 * (hours - 1)) {
     delete w.movements[m.id];
     notifyPlayer(w, owner.id, 'expedition', 'Expedition: lost', 'Contact with your fleet was lost near a black hole. Nothing returned.');
     return;

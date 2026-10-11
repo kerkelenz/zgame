@@ -199,6 +199,13 @@ export function FleetPage() {
                   </select>
                 </label>
               )}
+              {mission === 'expedition' && (
+                <label>Stay out
+                  <select value={Math.min(4, Math.max(1, Math.round(holdHours)))} onChange={(e) => setHoldHours(Number(e.target.value))} title="Longer trips find +30% per extra hour but risk the black hole more. Recyclers help salvage, probes scout for pirates.">
+                    {[1, 2, 3, 4].map((h) => <option key={h} value={h}>{h} h</option>)}
+                  </select>
+                </label>
+              )}
               {mission === 'hold' && <label>Hold (hours)<input type="number" className="sm" min={0.1} max={48} step={0.5} value={holdHours} onChange={(e) => setHoldHours(Number(e.target.value))} /></label>}
               <label className="row"><input type="checkbox" checked={toMoon} onChange={(e) => setToMoon(e.target.checked)} /> target the moon</label>
               {mission === 'expedition' && <button type="button" onClick={() => setTo({ ...to, p: me.config.positions + 1 })}>Set deep space slot</button>}

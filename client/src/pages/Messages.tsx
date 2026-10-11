@@ -24,7 +24,18 @@ function SpyReport({ d }: { d: any }) {
   );
 }
 
-function BattleReport({ d }: { d: any }) {
+export function Rounds({ log }: { log?: { a: Record<string, number>; d: Record<string, number> }[] }) {
+  if (!log || log.length < 2) return null;
+  const line = (bag: Record<string, number>) => Object.entries(bag).filter(([, n]) => n).map(([k, n]) => `${fmt(n)} ${name(k)}`).join(', ') || 'wiped out';
+  return (
+    <table className="table rounds">
+      <thead><tr><th>Round</th><th>Attackers left</th><th>Defenders left</th></tr></thead>
+      <tbody>{log.map((r, i) => <tr key={i}><td>{i === 0 ? 'Start' : i}</td><td>{line(r.a)}</td><td>{line(r.d)}</td></tr>)}</tbody>
+    </table>
+  );
+}
+
+export function BattleReport({ d }: { d: any }) {
   const side = (title: string, list: any[]) => (
     <div>
       <h4>{title}</h4>
@@ -40,6 +51,7 @@ function BattleReport({ d }: { d: any }) {
     <>
       <p>{d.winner === 'attacker' ? 'Attacker won' : d.winner === 'defender' ? 'Defender won' : 'Draw'} after {d.rounds} rounds at {coordStr(d.coords)}.</p>
       <div className="grid2">{side('Attackers', d.attackers)}{side('Defenders', d.defenders)}</div>
+      <Rounds log={d.roundLog} />
       {(d.loot?.metal || d.loot?.crystal || d.loot?.deuterium) ? <p>Loot: {fmt(d.loot.metal)} M, {fmt(d.loot.crystal)} C, {fmt(d.loot.deuterium)} D</p> : null}
       {(d.debris?.metal || d.debris?.crystal) ? <p>Debris: {fmt(d.debris.metal)} M, {fmt(d.debris.crystal)} C</p> : null}
       {d.bounty ? <p className="metal">Raider bounty: {fmt(d.bounty)}</p> : null}
@@ -93,6 +105,14 @@ export function Messages() {
               <div className="msgbody">
                 {m.kind === 'espionage' && m.data?.resources ? <SpyReport d={m.data} /> : null}
                 {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers ? <BattleReport d={m.data} /> : <p style={{ whiteSpace: 'pre-wrap' }}>{m.body}</p>}
+                {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers && (
+                  <button onClick={async () => {
+                    const r = await act(() => post(`/messages/${m.id}/share`));
+                    if (!r) return;
+                    const url = `${location.origin}${location.pathname}?report=${r.id}`;
+                    try { await navigator.clipboard.writeText(url); toast('Link copied: ' + url); } catch { prompt('Share this link', url); }
+                  }}>Share link</button>
+                )}
                 <button onClick={async () => { await del(`/messages/${m.id}`); setOpen(null); await load(); }}>Delete</button>
                 {m.kind === 'player' && m.from && <button onClick={() => setTo(m.from)}>Reply</button>}
               </div>
