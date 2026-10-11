@@ -69,7 +69,7 @@ Config is stored in the save on first start; env vars override it on later start
 - **Alerts outside the game** – when a fleet, raid or missile is heading for you (or an ally), or a tribute is demanded, get a push on Discord (webhook) or your phone (ntfy.sh topic), or a browser notification. Per-event switches, only-when-away by default, rate-limited; addresses are allowlisted (no arbitrary URLs) and masked in the UI.
 - **Character classes** – pick Collector (+15% mines, +10% energy, bigger cargo ships, cheaper merchant), General (+2 fleet slots, -25% fuel, faster combat ships, more debris) or Discoverer (+1 expedition slot, +50% finds, fewer ambushes, faster research, bigger colonies). First pick is free; changing costs Command Credits.
 - **Moon destruction and wreck fields** – send Deathstars on a *Destroy moon* mission: the chance is (100 - sqrt(diameter)) x sqrt(Deathstars) %, and the shock wave can tear the Deathstars apart (sqrt(diameter)/2 %). Defenders whose lost ships are worth enough get a wreck field; a Space Dock rebuilds a share of it for free (30% + 6% per level, max 90%) before it drifts away.
-- **Position bonuses and Crawlers** – orbits 1-3 pay +40/30/20% crystal and orbits 6-10 pay up to +35% metal. Crawlers (planet-only, stay home, fragile) add +0.1% to every mine each, up to 6 per mine level and +50% overall (Collectors: x1.5). The Economy page shows both as their own slices.
+- **Position bonuses and Crawlers** – orbits 1-3 pay +40/30/20% crystal and orbits 6-10 pay up to +35% metal. Crawlers (planet-only, stay home, fragile) add +0.1% to every mine each, up to 6 per mine level and +50% overall (Collectors: x1.25), and each working crawler draws 6 energy. The Economy page shows both as their own slices.
 - **Standing categories and commander profiles** – switch the highscore between total, economy, research, fleet, defense and activity rankings (battles won, destroyed, plundered, recycled, expeditions, raids repelled, moons destroyed). Click any name (Standing or Galaxy) for a public profile: rank in every category, points breakdown, record, class, faction, alliance, achievements and a history chart. Resources, fleets and queues stay private.
 - **Accounts and admin** – change password, rename (weekly), delete account, and a one-time recovery key for lost passwords (no email needed). Set `OGAME_ADMINS=name1,name2` to get an Admin page: ban/mute (timed or permanent), announcements, send a raid, gift resources, remove a commander.
 - **Contacts and galaxy tools** – buddy list with presence, block list, private notes on commanders and coordinates, system bookmarks, recent targets, a spy-report archive (latest report per planet), inactive/protected filters in the Galaxy, and a Report button that feeds the admin queue.
@@ -99,6 +99,8 @@ test/     vitest: formulas & combat, full game flows with a fake clock, HTTP API
 ```
 
 Performance: `npm run bench -- 300` builds a 300-commander universe and times the hot paths (a full server tick is ~1 ms, a save ~5 ms, so a small server is nowhere near its limits).
+
+`npm run balance:new` prints payback times and multipliers for crawlers, classes, orbit bonuses, the merchant deal, the supply depot and expedition ships (run it after changing any of those constants).
 
 `npm test` runs the suite, `npm run typecheck` runs `tsc`, and `npm run balance -- 72` plays a greedy bot for 72 simulated hours and prints economy milestones (handy when tuning speeds or costs).
 

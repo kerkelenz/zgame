@@ -96,8 +96,8 @@ export const POSITION_BONUS: Record<number, { metal?: number; crystal?: number }
   1: { crystal: 0.4 }, 2: { crystal: 0.3 }, 3: { crystal: 0.2 },
   6: { metal: 0.17 }, 7: { metal: 0.23 }, 8: { metal: 0.35 }, 9: { metal: 0.23 }, 10: { metal: 0.17 },
 };
-/** Crawlers: +0.1% output of every mine each, at most 6 working per mine level (sum of the three), at most +50% in total. Collectors multiply both by 1.5. */
-export const CRAWLER = { perUnit: 0.001, perMineLevel: 6, cap: 0.5 };
+/** Crawlers: +0.1% output of every mine each, at most 6 working per mine level (sum of the three), at most +50% in total, and each working one draws 6 energy. Collectors multiply the bonus and the cap by 1.25. */
+export const CRAWLER = { perUnit: 0.001, perMineLevel: 6, cap: 0.5, /** energy each working crawler draws, so they compete with the mines for power */ energy: 6 };
 export const crawlerBonus = (count: number, mineLevels: number, mul = 1) => Math.min(Math.min(count, CRAWLER.perMineLevel * mineLevels) * CRAWLER.perUnit * mul, CRAWLER.cap * mul);
 
 export const DEFENSE_IDS = (Object.keys(UNITS) as UnitId[]).filter((k) => UNITS[k].kind === 'defense') as DefenseId[];
@@ -137,7 +137,7 @@ export const OFFICER_MAX = 3;
 export interface CharClassDef { id: CharClass; name: string; tag: string; perks: string[] }
 /** Pick one: the first choice is free, changing later costs Command Credits. */
 export const CHAR_CLASSES: CharClassDef[] = [
-  { id: 'collector', name: 'Collector', tag: 'Economy: the empire builder.', perks: ['+15% output from every mine', '+10% energy production', '+25% cargo on Small and Large Cargo ships', 'The merchant keeps 8% instead of 12%', 'Crawlers are 50% more effective'] },
+  { id: 'collector', name: 'Collector', tag: 'Economy: the empire builder.', perks: ['+15% output from every mine', '+10% energy production', '+25% cargo on Small and Large Cargo ships', 'The merchant keeps 8% instead of 12%', 'Crawlers are 25% more effective'] },
   { id: 'general', name: 'General', tag: 'War: the fleet commander.', perks: ['+2 fleet slots', '25% less fuel on every flight', '+25% flight speed for combat ships and recyclers', '+3% more debris from battles'] },
   { id: 'discoverer', name: 'Discoverer', tag: 'Exploration: the pathfinder.', perks: ['+1 expedition slot', '+50% resources and ships found on expeditions', 'Half as many pirate ambushes and black holes', '+10% research speed', 'New colonies are 10% bigger'] },
 ];

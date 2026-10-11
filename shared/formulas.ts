@@ -1,4 +1,4 @@
-import { BUILDINGS, POSITION_BONUS, TECHS, UNITS, crawlerBonus } from './data';
+import { BUILDINGS, CRAWLER, POSITION_BONUS, TECHS, UNITS, crawlerBonus } from './data';
 import type { BuildingId, Coords, Fleet, Res, ShipId, TechId, UnitId } from './types';
 
 export type Levels<K extends string> = Partial<Record<K, number>>;
@@ -70,7 +70,7 @@ export interface ProductionDetail {
   /** free income that needs no mine (not on moons) */
   basic: { metal: number; crystal: number };
   mine: { metal: MineBreakdown; crystal: MineBreakdown; deuterium: MineBreakdown };
-  energy: { solar: number; fusion: number; satellites: number; boosts: number; usedMetal: number; usedCrystal: number; usedDeuterium: number };
+  energy: { solar: number; fusion: number; satellites: number; boosts: number; usedMetal: number; usedCrystal: number; usedDeuterium: number; usedCrawlers: number };
 }
 export interface Production {
   /** per hour at current efficiency */
@@ -90,10 +90,14 @@ export function production(i: ProductionInput): Production {
     20 * sp * Math.pow(1.1, sp) * s('solarPlant') +
     30 * fu * Math.pow(1.05 + 0.01 * et, fu) * s('fusionReactor') +
     i.satellites * Math.max(0, Math.floor((i.maxTemp + 140) / 6)) * s('solarSatellite')) * (i.energyBoost ?? 1));
+  // crawlers beyond what the mines can use are idle and draw nothing
+  const workingCrawlers = Math.min(i.crawlers ?? 0, CRAWLER.perMineLevel * (m + c + d));
+  const crawlerEnergy = workingCrawlers * CRAWLER.energy;
   const energyUsed =
     10 * m * Math.pow(1.1, m) * s('metalMine') +
     10 * c * Math.pow(1.1, c) * s('crystalMine') +
-    20 * d * Math.pow(1.1, d) * s('deuteriumSynthesizer');
+    20 * d * Math.pow(1.1, d) * s('deuteriumSynthesizer') +
+    crawlerEnergy;
   const efficiency = energyUsed <= 0 ? 1 : Math.min(1, Math.max(0, energyProduced / energyUsed));
   const ab = (1 + (i.allianceBonus ?? 0)) * (i.boost ?? 1);
   const sp_ = i.speed;
@@ -122,7 +126,7 @@ export function production(i: ProductionInput): Production {
     mine: { metal: mM, crystal: mC, deuterium: mD },
     energy: {
       solar: solarE, fusion: fusionE, satellites: satE, boosts: energyProduced - (solarE + fusionE + satE),
-      usedMetal: 10 * m * Math.pow(1.1, m) * s('metalMine'), usedCrystal: 10 * c * Math.pow(1.1, c) * s('crystalMine'), usedDeuterium: 20 * d * Math.pow(1.1, d) * s('deuteriumSynthesizer'),
+      usedMetal: 10 * m * Math.pow(1.1, m) * s('metalMine'), usedCrystal: 10 * c * Math.pow(1.1, c) * s('crystalMine'), usedDeuterium: 20 * d * Math.pow(1.1, d) * s('deuteriumSynthesizer'), usedCrawlers: crawlerEnergy,
     },
   };
   return { metal, crystal, deuterium: deuterium - fusionDeutUse, energyProduced, energyUsed, efficiency, fusionDeutUse, detail };

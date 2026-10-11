@@ -57,6 +57,29 @@ describe('position bonuses', () => {
   });
 });
 
+describe('crawler energy upkeep', () => {
+  it('each working crawler draws energy, idle surplus crawlers do not', () => {
+    const base = planetProduction(w, p);
+    p.fleet.crawler = 100;
+    const r = planetProduction(w, p);
+    expect(r.energyUsed - base.energyUsed).toBeCloseTo(100 * CRAWLER.energy, 6);
+    expect(r.detail.energy.usedCrawlers).toBe(600);
+    const cap = CRAWLER.perMineLevel * (20 + 18 + 10);
+    p.fleet.crawler = cap + 500;
+    expect(planetProduction(w, p).detail.energy.usedCrawlers).toBe(cap * CRAWLER.energy);
+  });
+  it('can starve the mines when there is not enough power, which is the trade-off', () => {
+    p.buildings.solarPlant = 1;
+    while (planetProduction(w, p).efficiency < 1) p.buildings.solarPlant++; // the smallest plant that powers the mines alone
+    const before = planetProduction(w, p);
+    expect(before.efficiency).toBe(1);
+    p.fleet.crawler = 250;
+    const after = planetProduction(w, p);
+    expect(after.efficiency).toBeLessThan(before.efficiency);
+    expect(after.energyUsed).toBeGreaterThan(before.energyUsed);
+  });
+});
+
 describe('crawlers', () => {
   it('cost resources, need a shipyard and drives, and only work on planets', () => {
     p.buildings.shipyard = 4;
@@ -84,13 +107,13 @@ describe('crawlers', () => {
     expect(planetProduction(w, p).detail.mine.metal.crawlers).toBeCloseTo(planetProduction(w, p).detail.mine.metal.raw * crawlerBonus(10_000, 48), 6);
   });
 
-  it('Collectors get 50% more out of them', () => {
+  it('Collectors get 25% more out of them', () => {
     p.fleet.crawler = 100;
     const plain = planetProduction(w, p).detail.mine.metal.crawlers;
     chooseClass(a, 'collector');
     const col = planetProduction(w, p);
     // the class also raises the mine boost, so compare the crawler share of raw output
-    expect(col.detail.mine.metal.crawlers / col.detail.mine.metal.raw).toBeCloseTo(0.15, 6);
+    expect(col.detail.mine.metal.crawlers / col.detail.mine.metal.raw).toBeCloseTo(0.125, 6);
     expect(plain / col.detail.mine.metal.raw).toBeCloseTo(0.1, 6);
   });
 

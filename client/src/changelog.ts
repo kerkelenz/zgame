@@ -11,6 +11,7 @@ export const CHANGELOG: Release[] = [
       'Expeditions last 1-4 hours; recyclers and probes now matter; ancient data caches speed up research.',
       'The merchant has a daily cheap deal, and Gather pulls resources from all planets in one click.',
       'Pictures for metal, crystal and Vespene Gas in the top bar, costs and resource pages.',
+      'Balance: crawlers now draw energy and Collectors get +25% (not +50%) from them.',
       'Command Credit supply depot, Pathfinder expedition ship, Joint Command alliance upgrade (+fleet slots) and fleet presets that follow you between devices.',
       'Seasons with a hall of fame and optional victory score.',
       'Account settings: change password, rename, recovery key, delete account.',

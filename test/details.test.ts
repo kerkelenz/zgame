@@ -62,7 +62,7 @@ describe('the context mirrors the server', () => {
       expect(m.boosts).toBeGreaterThan(0); // officer + faction + alliance
     }
     expect(d.energy.solar + d.energy.fusion + d.energy.satellites + d.energy.boosts).toBeCloseTo(p.energyProduced, 6);
-    expect(d.energy.usedMetal + d.energy.usedCrystal + d.energy.usedDeuterium).toBeCloseTo(p.energyUsed, 6);
+    expect(d.energy.usedMetal + d.energy.usedCrystal + d.energy.usedDeuterium + d.energy.usedCrawlers).toBeCloseTo(p.energyUsed, 6);
   });
 });
 

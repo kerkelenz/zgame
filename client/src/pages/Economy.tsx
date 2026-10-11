@@ -146,11 +146,12 @@ export function Economy() {
           <div>
             <h4>Used by mines: {fmt(eco.energy.used)}</h4>
             <Stack total={Math.max(eco.energy.used, 1)} parts={[
-              { label: 'Metal mine', v: d.energy.usedMetal, cls: 'seg-basic' }, { label: 'Crystal mine', v: d.energy.usedCrystal, cls: 'seg-mine' }, { label: 'Vespene extractor', v: d.energy.usedDeuterium, cls: 'seg-plasma' }]} />
+              { label: 'Metal mine', v: d.energy.usedMetal, cls: 'seg-basic' }, { label: 'Crystal mine', v: d.energy.usedCrystal, cls: 'seg-mine' }, { label: 'Vespene extractor', v: d.energy.usedDeuterium, cls: 'seg-plasma' }, { label: 'Crawlers', v: d.energy.usedCrawlers, cls: 'seg-crawl' }]} />
             <div className="legend">
               <span><i className="seg-basic" /><ItemLink id="metalMine" /> <b>{fmt(d.energy.usedMetal)}</b></span>
               <span><i className="seg-mine" /><ItemLink id="crystalMine" /> <b>{fmt(d.energy.usedCrystal)}</b></span>
               <span><i className="seg-plasma" /><ItemLink id="deuteriumSynthesizer" /> <b>{fmt(d.energy.usedDeuterium)}</b></span>
+              {d.energy.usedCrawlers > 0.5 && <span><i className="seg-crawl" />Crawlers <b>{fmt(d.energy.usedCrawlers)}</b></span>}
             </div>
           </div>
         </div>

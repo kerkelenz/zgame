@@ -56,7 +56,7 @@ export function Guide() {
           <li>The <b>travelling merchant</b> swaps resources at 3 : 2 : 1 with a 12% cut (8% for Collectors). Each day he does one pair at only 2% up to a daily allowance - the Resources page shows today's deal.</li>
           <li>The <b>Supply depot</b> in Command spends Command Credits on production crates and on halving the time left on your current build or research.</li>
           <li><b>Gather</b> (Resources page) sends loaded cargo ships from all your other planets to the one you are viewing.</li>
-          <li>Orbit matters: positions 1-3 give extra crystal, 6-10 extra metal (up to +35% at position 8). <b>Crawlers</b> (planet-only, fragile) add +0.1% to every mine each, up to +50%.</li>
+          <li>Orbit matters: positions 1-3 give extra crystal, 6-10 extra metal (up to +35% at position 8). <b>Crawlers</b> (planet-only, fragile) add +0.1% to every mine each, up to +50%, but every working crawler draws 6 energy - build power for them or the mines slow down.</li>
         </ul>
       </Card>
       <Card title="Moons, wreck fields and the Space Dock">

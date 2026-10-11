@@ -13,6 +13,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "balance": "tsx server/balance-sim.ts",
+    "balance:new": "tsx server/balance-new.ts",
     "bench": "tsx server/bench.ts",
     "demo": "tsx server/seed-demo.ts && cross-env OGAME_SAVE=data/demo-world.json tsx server/index.ts",
     "backup": "tsx server/backup.ts"
