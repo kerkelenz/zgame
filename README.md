@@ -103,11 +103,13 @@ Performance: `npm run bench -- 300` builds a 300-commander universe and times th
 
 ## Not implemented (ideas)
 
-Premium currency, moon destruction (Deathstar vs moon).
+A player-to-player market, scored alliance wars, translations beyond the menus, and automatic start of queued jobs once affordable.
 
 ## Hosting
 
+The full guide is in [docs/DEPLOY.md](docs/DEPLOY.md): Docker with automatic HTTPS (`docker compose up -d`), plain Node, backups and restores, and a checklist before inviting players.
+
 ```bash
-docker build -t stellar-frontier .
-docker run -p 3000:3000 -v stellar-data:/data stellar-frontier
+npm run backup                              # snapshot the save (JSON or SQLite) into data/snapshots, keeping the newest 14
+npm run backup -- restore <snapshot file>   # put one back (stop the server first)
 ```

@@ -1,0 +1,50 @@
+# Stellar Frontier behind Caddy, which gets and renews an HTTPS certificate automatically.
+#   1. point a DNS name at this machine and open ports 80 and 443
+#   2. put your settings in .env (see docs/DEPLOY.md), at least  DOMAIN=play.example.com  and  OGAME_ADMINS=yourname
+#   3. docker compose up -d
+services:
+  game:
+    build: .
+    restart: unless-stopped
+    environment:
+      OGAME_DB: /data/world.sqlite
+      OGAME_TRUST_PROXY: "1"
+      OGAME_ADMINS: ${OGAME_ADMINS:-}
+      OGAME_SEASON_DAYS: ${OGAME_SEASON_DAYS:-0}
+      OGAME_MAX_PLAYERS: ${OGAME_MAX_PLAYERS:-500}
+    volumes:
+      - game-data:/data
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - game
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  # nightly snapshot of the database into the same volume (keeps 14)
+  backup:
+    build: .
+    restart: unless-stopped
+    environment:
+      OGAME_DB: /data/world.sqlite
+      OGAME_BACKUP_KEEP: "14"
+    volumes:
+      - game-data:/data
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["while true; do sleep 86400; npx tsx server/backup.ts; done"]
+
+volumes:
+  game-data:
+  caddy-data:
+  caddy-config:

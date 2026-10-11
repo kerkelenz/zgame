@@ -1,0 +1,10 @@
+{$DOMAIN} {
+	encode zstd gzip
+	# WebSockets (/ws) and the API go to the game; Caddy handles TLS and upgrades the connection itself
+	reverse_proxy game:3000
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy same-origin
+	}
+}
