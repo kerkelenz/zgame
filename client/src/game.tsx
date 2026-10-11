@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Coords, Mission } from '../../shared/types';
 import { ApiError, get, getToken, post, setToken } from './api';
+import { playCue } from './sound';
 
 export const BROWSER_NOTIFY_KEY = 'sf.browserNotify';
 /** a desktop notification while the tab is in the background (opt-in in Settings) */
@@ -75,6 +76,7 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
 
   const toast = useCallback((text: string, kind: Toast['kind'] = 'info') => {
     const id = ++toastId.current;
+    if (kind === 'alert') playCue('alert'); else if (kind === 'error') playCue('error'); else if (/^New message/.test(text)) playCue('message'); else if (/done|complete|level \d+/i.test(text)) playCue('done');
     setToasts((t) => [...t.slice(-4), { id, text, kind }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === 'alert' ? 9000 : 4500);
   }, []);

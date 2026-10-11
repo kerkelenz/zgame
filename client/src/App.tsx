@@ -1,7 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { drawStarfield } from './art';
 import { useGame } from './game';
 import { fmt, coordStr } from './ui';
+import { t, useLang } from './i18n';
+import { Tour } from './Tour';
+import { CHANGELOG, markChangelogSeen, unseenRelease } from './changelog';
 import { Alliance } from './pages/Alliance';
 import { Chat } from './pages/Chat';
 import { Command } from './pages/Command';
@@ -29,6 +32,8 @@ const NAV: [string, string][] = [
 ];
 
 export function App() {
+  useLang();
+  const [whatsNew, setWhatsNew] = useState(unseenRelease());
   const g = useGame();
   const stars = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -38,6 +43,9 @@ export function App() {
     return () => window.removeEventListener('resize', draw);
   }, []);
   const { me, planet, planets, page, setPage, live, toasts, fleets, offline } = g;
+  // unread messages and hostile fleets show in the browser tab title
+  const unread = me?.unread ?? 0, hostile = fleets.incoming.length;
+  useEffect(() => { document.title = `${hostile ? '⚠ ' : ''}${unread ? `(${unread}) ` : ''}Stellar Frontier`; }, [unread, hostile]);
   if (!me || !planet) return <div className="loading">Loading universe…</div>;
 
   const page_ = (() => {
@@ -71,6 +79,7 @@ export function App() {
   return (
     <div className="shell">
       <canvas id="stars" ref={stars} aria-hidden="true" />
+      <Tour />
       <header className="top">
         <div className="brand">Stellar Frontier</div>
         <select value={planet.id} onChange={(e) => g.selectPlanet(e.target.value)}>
@@ -85,9 +94,10 @@ export function App() {
         <div className="who">
           <span className="energy" title="Command Credits" onClick={() => setPage('command')} style={{ cursor: 'pointer' }}>★ {fmt(me.credits)}</span>
           {me.alliance && <span className="tag">[{me.alliance.tag}]</span>} {me.player.username}
-          <button className="link" onClick={g.logout}>Log out</button>
+          <button className="link" onClick={g.logout}>{t('common.logout', 'Log out')}</button>
         </div>
       </header>
+      {whatsNew && <div className="alertbar newsbar" onClick={() => { markChangelogSeen(); setWhatsNew(false); setPage('guide'); }}>✨ New: {CHANGELOG[0].title} - click to see what changed</div>}
       {offline && <div className="alertbar" style={{ background: '#4a3a1c', cursor: 'default' }}>Connection to the server lost - retrying…</div>}
       {me.vacation && <div className="alertbar vacbar" onClick={() => setPage('settings')}>🏖 Vacation mode: your empire is frozen and protected. You can leave after {new Date(me.vacation.minUntil).toLocaleString()} - open Settings.</div>}
       {me.pendingTributes > 0 && <div className="alertbar" onClick={() => setPage('command')}>⚠ A hostile empire is demanding tribute - open Command to answer before the deadline</div>}
@@ -100,7 +110,7 @@ export function App() {
         <nav>
           {(me.player.admin ? [...NAV, ['admin', 'Admin'] as [string, string]] : NAV).map(([id, label]) => (
             <button key={id} className={page === id ? 'active' : ''} onClick={() => setPage(id)}>
-              {label}{id === 'messages' && me.unread > 0 && <b className="badge">{me.unread}</b>}
+              {t(`nav.${id}`, label)}{id === 'messages' && me.unread > 0 && <b className="badge">{me.unread}</b>}
             </button>
           ))}
         </nav>

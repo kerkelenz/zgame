@@ -166,3 +166,32 @@ label.check input { width: auto; }
 .rank-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
 .rank-tile { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--line, #2a3350); border-radius: 6px; }
 .rank-tile b { font-size: 1.3em; }
+
+/* ---- welcome tour, what's new ---- */
+.tour { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; padding: 16px; background: rgba(5, 8, 16, .55); }
+.tourbox { width: min(460px, 100%); background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; padding: 14px 16px; box-shadow: 0 8px 40px rgba(0,0,0,.6); }
+.tourbox h3 { margin: 2px 0 6px; color: var(--accent); }
+.newsbar { background: #2f2a4a; }
+
+/* ---- phones ---- */
+@media (max-width: 760px) {
+  html { -webkit-text-size-adjust: 100%; }
+  input, select, textarea { font-size: 16px; } /* stops iOS zooming into fields */
+  button { min-height: 36px; }
+  .top { flex-wrap: wrap; }
+  .top .brand { display: none; }
+  .top select { max-width: 100%; flex: 1 1 100%; }
+  .top .res { flex-wrap: wrap; flex: 1 1 100%; }
+  .top .who { flex: 1 1 100%; justify-content: space-between; }
+  nav { position: sticky; top: 0; z-index: 5; padding: 6px; }
+  nav button { padding: 8px 10px; }
+  .grid2, .items, .charts, .rank-grid, .cols { grid-template-columns: minmax(0, 1fr) !important; }
+  .card, main > * { min-width: 0; max-width: 100%; }
+  .planetpic { max-width: 100%; height: auto; }
+  .row.wrap, .row { flex-wrap: wrap; }
+  .login form, .login .card { width: min(340px, 92vw); }
+  .tour { align-items: stretch; padding: 8px; }
+  .tourbox { align-self: flex-end; }
+  .alertbar { font-size: 13px; padding: 6px 10px; }
+  .card { padding: 10px; }
+}

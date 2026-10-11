@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { get, post } from '../api';
 import { BROWSER_NOTIFY_KEY, useGame } from '../game';
 import { Card, Countdown, Page, when } from '../ui';
+import { LANGS, getLang, setLang, t, useLang } from '../i18n';
+import { playCue, setSound, soundOn } from '../sound';
 
 function Vacation() {
   const { me, act, now } = useGame();
@@ -105,6 +107,24 @@ function Alerts() {
   );
 }
 
+function Interface() {
+  useLang();
+  const [sound, setS] = useState(soundOn());
+  return (
+    <Card title="Interface">
+      <div className="settings-section">
+        <label className="row">{t('common.language', 'Language')}
+          <select value={getLang()} onChange={(e) => setLang(e.target.value)}>{Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+        </label>
+        <p className="small muted">Menus, the login page and the tour are translated; everything else stays in English for now.</p>
+        <label className="check"><input type="checkbox" checked={sound} onChange={(e) => { setSound(e.target.checked); setS(e.target.checked); if (e.target.checked) playCue('done', true); }} /> <b>{t('common.sound', 'Sound cues')}</b> <span className="muted small">- a short tone for messages, finished jobs and attack alerts</span></label>
+        {sound && <div className="row"><button onClick={() => playCue('alert', true)}>Test alert</button><button onClick={() => playCue('message', true)}>Test message</button></div>}
+        <button className="link" onClick={() => { try { localStorage.removeItem('sf.tourDone'); } catch { /* ignore */ } location.reload(); }}>Replay the welcome tour</button>
+      </div>
+    </Card>
+  );
+}
+
 function Account() {
   const { me, act, logout } = useGame();
   const [cur, setCur] = useState(''); const [next, setNext] = useState('');
@@ -144,6 +164,7 @@ function Account() {
 export function Settings() {
   return (
     <Page title="Settings">
+      <Interface />
       <Account />
       <Alerts />
       <Vacation />

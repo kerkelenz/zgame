@@ -1,8 +1,19 @@
+import { CHANGELOG, markChangelogSeen } from '../changelog';
 import { Card, Page } from '../ui';
+import { useEffect } from 'react';
 
 export function Guide() {
+  useEffect(() => { markChangelogSeen(); }, []);
   return (
     <Page title="Guide">
+      <Card title="What's new">
+        {CHANGELOG.map((r) => (
+          <div key={r.id}>
+            <h4>{r.title} <span className="muted small">{r.date}</span></h4>
+            <ul className="notes">{r.items.map((x) => <li key={x}>{x}</li>)}</ul>
+          </div>
+        ))}
+      </Card>
       <Card title="Getting started">
         <ol>
           <li>Build <b>Metal Mine</b>, <b>Crystal Mine</b> and a <b>Solar Plant</b> first. Mines need energy - if the energy balance (top bar) goes negative, production drops.</li>
