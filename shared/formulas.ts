@@ -59,11 +59,20 @@ export interface ProductionInput {
   /** multiplies energy production (officers) */
   energyBoost?: number;
 }
+/** Where one resource's mine output comes from, per hour. potential = raw + plasma + boosts; total = potential - lostToEnergy. */
+export interface MineBreakdown { raw: number; plasma: number; boosts: number; potential: number; lostToEnergy: number; total: number }
+export interface ProductionDetail {
+  /** free income that needs no mine (not on moons) */
+  basic: { metal: number; crystal: number };
+  mine: { metal: MineBreakdown; crystal: MineBreakdown; deuterium: MineBreakdown };
+  energy: { solar: number; fusion: number; satellites: number; boosts: number; usedMetal: number; usedCrystal: number; usedDeuterium: number };
+}
 export interface Production {
   /** per hour at current efficiency */
   metal: number; crystal: number; deuterium: number;
   energyProduced: number; energyUsed: number; efficiency: number;
   fusionDeutUse: number;
+  detail: ProductionDetail;
 }
 
 export function production(i: ProductionInput): Production {
@@ -84,11 +93,32 @@ export function production(i: ProductionInput): Production {
   const ab = (1 + (i.allianceBonus ?? 0)) * (i.boost ?? 1);
   const sp_ = i.speed;
   const basic = i.noBasic ? 0 : 1;
-  const metal = (basic * 30 * sp_ + 30 * m * Math.pow(1.1, m) * s('metalMine') * efficiency * (1 + 0.01 * pl) * sp_ * ab);
-  const crystal = (basic * 15 * sp_ + 20 * c * Math.pow(1.1, c) * s('crystalMine') * efficiency * (1 + 0.0066 * pl) * sp_ * ab);
-  const deuterium = 10 * d * Math.pow(1.1, d) * (1.44 - 0.004 * i.maxTemp) * s('deuteriumSynthesizer') * efficiency * (1 + 0.0033 * pl) * sp_ * ab;
+  const rawM = 30 * m * Math.pow(1.1, m) * s('metalMine') * sp_;
+  const rawC = 20 * c * Math.pow(1.1, c) * s('crystalMine') * sp_;
+  const rawD = 10 * d * Math.pow(1.1, d) * (1.44 - 0.004 * i.maxTemp) * s('deuteriumSynthesizer') * sp_;
+  const mine = (raw: number, plasmaPct: number): MineBreakdown => {
+    const plasma = raw * plasmaPct;
+    const boosts = raw * (1 + plasmaPct) * (ab - 1);
+    const potential = raw + plasma + boosts;
+    return { raw, plasma, boosts, potential, lostToEnergy: potential * (1 - efficiency), total: potential * efficiency };
+  };
+  const mM = mine(rawM, 0.01 * pl), mC = mine(rawC, 0.0066 * pl), mD = mine(rawD, 0.0033 * pl);
+  const metal = basic * 30 * sp_ + mM.total;
+  const crystal = basic * 15 * sp_ + mC.total;
+  const deuterium = mD.total;
   const fusionDeutUse = 10 * fu * Math.pow(1.1, fu) * s('fusionReactor') * sp_;
-  return { metal, crystal, deuterium: deuterium - fusionDeutUse, energyProduced, energyUsed, efficiency, fusionDeutUse };
+  const solarE = 20 * sp * Math.pow(1.1, sp) * s('solarPlant');
+  const fusionE = 30 * fu * Math.pow(1.05 + 0.01 * et, fu) * s('fusionReactor');
+  const satE = i.satellites * Math.max(0, Math.floor((i.maxTemp + 140) / 6)) * s('solarSatellite');
+  const detail: ProductionDetail = {
+    basic: { metal: basic * 30 * sp_, crystal: basic * 15 * sp_ },
+    mine: { metal: mM, crystal: mC, deuterium: mD },
+    energy: {
+      solar: solarE, fusion: fusionE, satellites: satE, boosts: energyProduced - (solarE + fusionE + satE),
+      usedMetal: 10 * m * Math.pow(1.1, m) * s('metalMine'), usedCrystal: 10 * c * Math.pow(1.1, c) * s('crystalMine'), usedDeuterium: 20 * d * Math.pow(1.1, d) * s('deuteriumSynthesizer'),
+    },
+  };
+  return { metal, crystal, deuterium: deuterium - fusionDeutUse, energyProduced, energyUsed, efficiency, fusionDeutUse, detail };
 }
 
 export const COORD_KEY = (c: Coords) => `${c.g}:${c.s}:${c.p}`;

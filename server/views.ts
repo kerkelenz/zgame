@@ -1,6 +1,7 @@
 import { ALLIANCE_UPGRADES } from '../shared/data';
 import { allianceBonuses, maxFields, planetCapacity, planetProduction, updatePlanet, usedFields } from './economy';
 import { activeSlots } from './fleet';
+import { energyBoost, mineBoost, timeFactor } from './perks';
 import { colonyCount, maxPlanets, playerPoints } from './galaxy';
 import { sameCoords } from '../shared/formulas';
 import { upgradeCost } from './alliance';
@@ -22,6 +23,17 @@ export function planetView(w: World, planet: Planet, now: number) {
       energyProduced: prod.energyProduced, energyUsed: prod.energyUsed, efficiency: prod.efficiency,
     },
     settings: planet.settings,
+    /** the multipliers behind this planet's numbers, so the client can reproduce them exactly (details pages, economy planner) */
+    detail: (() => {
+      const owner = w.players[planet.ownerId], ab = allianceBonuses(w, owner), c = w.config;
+      return {
+        allianceProduction: ab.production, allianceResearch: ab.research, boost: mineBoost(owner), energyBoost: energyBoost(owner), timeFactor: timeFactor(owner),
+        speeds: {
+          production: c.economySpeed * c.productionBoost, construction: c.economySpeed * c.constructionBoost, research: c.economySpeed * c.researchBoost,
+          shipyard: c.economySpeed * c.shipyardBoost, storage: Math.max(1, c.economySpeed) * c.storageBoost, fleet: c.fleetSpeed,
+        },
+      };
+    })(),
     buildQueue: planet.buildQueue, buildBacklog: planet.buildBacklog ?? [], shipyardQueue: planet.shipyardQueue,
     fleet: planet.fleet, defenses: planet.defenses, updatedAt: planet.updatedAt,
   };
