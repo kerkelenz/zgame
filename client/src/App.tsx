@@ -5,6 +5,8 @@ import { fmt, coordStr } from './ui';
 import { Alliance } from './pages/Alliance';
 import { Chat } from './pages/Chat';
 import { Command } from './pages/Command';
+import { Economy } from './pages/Economy';
+import { ItemDetail } from './pages/ItemDetail';
 import { Simulator } from './pages/Simulator';
 import { Empire } from './pages/Empire';
 import { Guide } from './pages/Guide';
@@ -17,7 +19,7 @@ import { Items } from './pages/Items';
 import { Resources } from './pages/Resources';
 
 const NAV: [string, string][] = [
-  ['overview', 'Overview'], ['empire', 'Empire'], ['resources', 'Resources'], ['buildings', 'Buildings'], ['research', 'Research'],
+  ['overview', 'Overview'], ['empire', 'Empire'], ['economy', 'Economy'], ['resources', 'Resources'], ['buildings', 'Buildings'], ['research', 'Research'],
   ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['fleet', 'Fleet'], ['galaxy', 'Galaxy'],
   ['alliance', 'Alliance'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['guide', 'Guide'],
 ];
@@ -37,6 +39,8 @@ export function App() {
   const page_ = (() => {
     switch (page) {
       case 'empire': return <Empire />;
+      case 'economy': return <Economy />;
+      case 'detail': return <ItemDetail />;
       case 'resources': return <Resources />;
       case 'buildings': return <Items kind="building" />;
       case 'research': return <Items kind="tech" />;

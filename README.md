@@ -57,6 +57,8 @@ Config is stored in the save on first start; env vars override it on later start
 - **Co-op** – alliances (open/application), ranks, shared bank with grants, alliance upgrades (+mine output, −research time, +fleet speed for every member), allied fleets that fight alongside a defender, joint (ACS) attacks that arrive together and split the loot, allied alerts when a member is attacked, alliance chat.
 - **PvE** – periodic NPC raid waves aimed at players; defenders (and allied holders) split a bounty when raiders are crushed. Expeditions can find resources, ships, pirates or a black hole.
 - **Social** – messages (battle/spy/system reports and player mail), global chat, galaxy browser, highscore for players and alliances, newbie protection.
+- **Details pages** – click any building, research, ship or defense name (including requirement lists) for its own page: what it does at every level (production, energy, storage, speeds, slots, ranges…), the cost and time of each level with your officers and bonuses applied, what you still need, and what it unlocks. Ships and defenses show base vs. tech-boosted stats, rapid fire both ways, and how weapons, shields, armour and drives scale them.
+- **Economy page** – empire income per hour and day, a planet-by-planet table, a breakdown of where each resource comes from (mines, plasma, boosts, energy-shortage losses), the energy picture, storage fill timers and projections, and an upgrade planner that ranks mine and energy upgrades by payback time.
 - **Empire page** – every planet and moon on one screen: resources, production, construction, ships, storage warnings.
 - **Live UI** – WebSocket push for alerts/messages/chat, interpolated resource counters, countdowns.
 

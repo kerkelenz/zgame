@@ -1,23 +1,12 @@
 import type { ReactNode } from 'react';
-import { BUILDINGS, TECHS } from '../../shared/data';
+import { nameOf } from '../../shared/effects';
 import { lvl } from '../../shared/formulas';
+import { BUILDINGS } from '../../shared/data';
 import type { Requirement, Res } from '../../shared/types';
 import { useGame } from './game';
 
-export const fmt = (n: number) => {
-  n = Math.floor(n);
-  if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + 'B';
-  if (Math.abs(n) >= 1e7) return (n / 1e6).toFixed(1) + 'M';
-  return n.toLocaleString('en-US');
-};
-
-export function fmtDur(ms: number) {
-  let s = Math.max(0, Math.ceil(ms / 1000));
-  const d = Math.floor(s / 86400); s -= d * 86400;
-  const h = Math.floor(s / 3600); s -= h * 3600;
-  const m = Math.floor(s / 60); s -= m * 60;
-  return (d ? `${d}d ` : '') + (h || d ? `${h}h ` : '') + (m || h || d ? `${m}m ` : '') + `${s}s`;
-}
+import { fmt, fmtDur } from '../../shared/format';
+export { fmt, fmtDur };
 
 export const coordStr = (c: { g: number; s: number; p: number }) => `[${c.g}:${c.s}:${c.p}]`;
 export const when = (t: number) => new Date(t).toLocaleString();
@@ -47,10 +36,16 @@ export function Cost({ cost, have }: { cost: Res; have?: Res }) {
 export function unmet(reqs: Requirement[], buildings: Record<string, number | undefined>, techs: Record<string, number | undefined>) {
   return reqs.filter((r) => (r.id in BUILDINGS ? lvl(buildings, r.id) : lvl(techs, r.id)) < r.level);
 }
+/** An item name that opens its details page. */
+export function ItemLink({ id, children }: { id: string; children?: ReactNode }) {
+  const { openItem } = useGame();
+  return <a className="itemlink" title="Show details" onClick={(e) => { e.preventDefault(); openItem(id); }}>{children ?? nameOf(id)}</a>;
+}
+
 export function ReqList({ reqs }: { reqs: Requirement[] }) {
   return (
     <span className="reqs">
-      Needs: {reqs.map((r, i) => <span key={r.id}>{i ? ', ' : ''}{(BUILDINGS as any)[r.id]?.name ?? (TECHS as any)[r.id]?.name} {r.level}</span>)}
+      Needs: {reqs.map((r, i) => <span key={r.id}>{i ? ', ' : ''}<ItemLink id={r.id} /> {r.level}</span>)}
     </span>
   );
 }

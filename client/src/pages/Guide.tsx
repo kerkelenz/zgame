@@ -20,6 +20,13 @@ export function Guide() {
           <li>Use <b>Chat</b> (global and alliance) to coordinate.</li>
         </ul>
       </Card>
+      <Card title="Understanding your economy">
+        <ul>
+          <li>Click <b>any item name</b> (in Buildings, Research, Shipyard, or in a requirement list) for its <b>details page</b>: what each level gives you, what it costs, and what it unlocks.</li>
+          <li>The <b>Economy</b> page shows where your income comes from, when stores fill, and ranks upgrades by how fast they pay for themselves.</li>
+          <li>Watch the energy efficiency: past a point extra mine levels give less, because the planet cannot power them. The mine details pages show this level by level.</li>
+        </ul>
+      </Card>
       <Card title="Empires, factions and Command">
         <ul>
           <li><b>Computer empires</b> fill the galaxy. <i>Inactive</i> ones never spend - spy on them and take their stockpile. <i>Aggressive</i> ones raid you; a grudge from your own raids can turn any empire hostile.</li>

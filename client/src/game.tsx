@@ -20,6 +20,10 @@ interface GameCtx {
   toast: (text: string, kind?: Toast['kind']) => void;
   page: string;
   setPage: (p: string) => void;
+  /** the building / research / unit whose details page is open */
+  detailId: string | null;
+  openItem: (id: string) => void;
+  closeItem: () => void;
   target: Target | null;
   setTarget: (t: Target | null) => void;
   logout: () => void;
@@ -43,6 +47,8 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [page, setPage] = useState('overview');
   const [target, setTarget] = useState<Target | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detailFrom, setDetailFrom] = useState('overview');
   const [offline, setOffline] = useState(false);
   const [chatEvents, setChatEvents] = useState<any[]>([]);
   const toastId = useRef(0);
@@ -136,8 +142,16 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
     if (due) setTimeout(refresh, 800);
   }, [tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const openItem = useCallback((id: string) => {
+    setDetailFrom((from) => (page === 'detail' ? from : page));
+    setDetailId(id);
+    setPage('detail');
+    window.scrollTo({ top: 0 });
+  }, [page]);
+  const closeItem = useCallback(() => setPage(detailFrom), [detailFrom]);
+
   const logout = useCallback(() => { setToken(''); onLogout(); }, [onLogout]);
 
-  const value: GameCtx = { me, planets, planet, fleets, selectPlanet, refresh, now, act, toasts, toast, page, setPage, target, setTarget, logout, offline, chatEvents, live };
+  const value: GameCtx = { me, planets, planet, fleets, selectPlanet, refresh, now, act, toasts, toast, page, setPage, detailId, openItem, closeItem, target, setTarget, logout, offline, chatEvents, live };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

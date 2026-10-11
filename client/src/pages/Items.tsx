@@ -7,7 +7,7 @@ import type { BuildingId, TechId, UnitId } from '../../../shared/types';
 import { post } from '../api';
 import { Art } from '../art';
 import { useGame } from '../game';
-import { Card, Cost, Countdown, Page, Progress, ReqList, fmtDur, unmet, fmt } from '../ui';
+import { Card, Cost, Countdown, ItemLink, Page, Progress, ReqList, fmtDur, unmet, fmt } from '../ui';
 
 type Kind = 'building' | 'tech' | 'ship' | 'defense';
 const TITLES: Record<Kind, string> = { building: 'Buildings', tech: 'Research', ship: 'Shipyard', defense: 'Defense' };
@@ -84,7 +84,7 @@ export function Items({ kind }: { kind: Kind }) {
           const missing = unmet(d.requires, planet.buildings, techs);
           const ok = !missing.length && (buildQ ? bBacklog.length < MAXQ : canAfford(have, cost)) && planet.usedFields + bBacklog.length < planet.fields;
           return (
-            <Card key={id} title={<>{d.name} <span className="lvl">{level}</span></>}>
+            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{level}</span></>}>
               <div className="cardtop"><img className="icon" src={Art.icon('building', id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
               <div>Next: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
               {missing.length > 0 && <ReqList reqs={missing} />}
@@ -104,7 +104,7 @@ export function Items({ kind }: { kind: Kind }) {
           const energyOk = !d.energyReq || planet.production.energyProduced >= d.energyReq * 3 ** level;
           const ok = !missing.length && energyOk && (researchQ ? rBacklog.length < MAXQ : canAfford(have, cost));
           return (
-            <Card key={id} title={<>{d.name} <span className="lvl">{level}</span></>}>
+            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{level}</span></>}>
               <div className="cardtop"><img className="icon" src={Art.icon('tech', id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
               <div>Next: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
               {d.energyReq && <div className="small" style={{ color: planet.production.energyProduced >= d.energyReq * 3 ** level ? 'var(--good)' : 'var(--bad)' }}>Needs {fmt(d.energyReq * 3 ** level)} energy production on this planet (this one makes {fmt(planet.production.energyProduced)})</div>}
@@ -128,7 +128,7 @@ export function Items({ kind }: { kind: Kind }) {
           ));
           const ok = !missing.length && canAfford(have, total) && shipyard > 0;
           return (
-            <Card key={id} title={<>{d.name} <span className="lvl">{fmt(owned)}</span></>}>
+            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{fmt(owned)}</span></>}>
               <div className="cardtop"><img className="icon" src={Art.icon((kind === 'ship' ? 'ship' : 'defense'), id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
               <div className="stats">
                 <span>⚔ {fmt(d.attack)}</span><span>🛡 {fmt(d.shield)}</span><span>❤ {fmt(d.hull)}</span>
