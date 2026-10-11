@@ -11,6 +11,7 @@ import { notifyPlayer } from './messages';
 import { adjustRep } from './progress';
 import { externalNotify } from './external';
 import { assertActive, onVacation } from './vacation';
+import { addWreck } from './wrecks';
 import { cargoFor, classSpeedFor, colonyFieldsMul, debrisShare, dodgesBadLuck, expeditionYield, extraFleetSlots, fuelFactor, lootShare, shieldMul, spyBonus, spyEvasion, weaponMul } from './perks';
 import { buildNpcFleet, fleetValue } from './npc';
 import { GameError, ck, planetAt, sameAlliance, uid, type Movement, type Planet, type Player, type World } from './world';
@@ -81,7 +82,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     if (slots.expUsed >= slots.expMax) throw new GameError('No free expedition slots');
   } else if (slots.used >= slots.max) throw new GameError('No free fleet slots (research Computer Technology)');
 
-  if (toMoon && !['attack', 'transport', 'deploy', 'hold', 'espionage'].includes(mission)) throw new GameError('That mission cannot target a moon');
+  if (toMoon && !['attack', 'destroy', 'transport', 'deploy', 'hold', 'espionage'].includes(mission)) throw new GameError('That mission cannot target a moon');
   const target = planetAt(w, to, toMoon);
   const targetOwner = target ? w.players[target.ownerId] : null;
   const has = (id: ShipId) => (ships[id] || 0) > 0;
@@ -102,6 +103,17 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
         if (!sameCoords(joinLead.to, to)) throw new GameError('The joined attack targets a different planet');
         if (Object.values(w.movements).filter((x) => x.acsId === joinLead!.id).length >= 4) throw new GameError('The attack group is full');
       }
+      break;
+    }
+    case 'destroy': {
+      if (!toMoon) throw new GameError('Choose a moon as the target');
+      if (!target || !targetOwner) throw new GameError('There is no moon there');
+      if (!has('deathstar')) throw new GameError('Only Deathstars can destroy a moon');
+      if (targetOwner.id === player.id) throw new GameError('Cannot attack yourself');
+      if (sameAlliance(w, player.id, targetOwner.id)) throw new GameError('Cannot attack an alliance member');
+      if (onVacation(targetOwner)) throw new GameError('That player is on vacation');
+      if (isProtected(w, player, targetOwner)) throw new GameError('That player is under newbie protection');
+      if (req.joinFleetId) throw new GameError('A moon strike cannot join a joint attack');
       break;
     }
     case 'transport':
@@ -168,7 +180,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   }
   w.movements[m.id] = m;
 
-  if (mission === 'attack' && targetOwner) {
+  if ((mission === 'attack' || mission === 'destroy') && targetOwner) {
     notifyPlayer(w, targetOwner.id, 'system', 'Hostile fleet detected', `${player.username} is attacking ${target!.name} ${fmt(to)}. ETA ${new Date(m.arriveAt).toLocaleTimeString()}.`);
     bus.push({ to: targetOwner.id, type: 'alert', data: `Hostile fleet inbound to ${target!.name}` });
     for (const mem of targetOwner.allianceId ? w.alliances[targetOwner.allianceId]?.members ?? [] : []) {
@@ -262,7 +274,8 @@ function land(w: World, m: Movement, at: number, dest?: Planet) {
 function arrive(w: World, m: Movement, at: number) {
   const target = planetAt(w, m.to, !!m.toMoon);
   switch (m.mission) {
-    case 'attack': {
+    case 'attack':
+    case 'destroy': {
       if (m.acsId) {
         const lead = w.movements[m.acsId];
         if (lead && lead.phase === 'outbound') return resolveAttack(w, lead, at);
@@ -457,6 +470,36 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   const newMoon = maybeCreateMoon(w, target, res.debris, at);
   const leadPlayer = attackerOf(lead);
 
+  // wreck field: a share of the defender's destroyed ships can be rebuilt by a Space Dock
+  let wreckFormed = 0;
+  if (!target.isMoon && !defOwner.npc) {
+    const shipsLost: Fleet = {};
+    for (const id of SHIP_IDS) {
+      if (id === 'solarSatellite') continue;
+      const n = (res.defenders[0].before[id] || 0) - (res.defenders[0].after[id] || 0);
+      if (n > 0) shipsLost[id] = n;
+    }
+    wreckFormed = addWreck(w, target, shipsLost, at);
+  }
+
+  // moon destruction: after the battle the surviving Deathstars fire together (retail odds)
+  let moonVerdict = '';
+  let moonGone = false;
+  const destroyers = group.filter((m) => m.mission === 'destroy');
+  if (target.isMoon && destroyers.length) {
+    const ds = destroyers.reduce((s, m) => s + (m.ships.deathstar || 0), 0);
+    if (ds > 0) {
+      const d = target.diameter ?? 3000;
+      const clamp = (v: number) => Math.max(0, Math.min(100, v));
+      const pDestroy = clamp((100 - Math.sqrt(d)) * Math.sqrt(ds)), pRip = clamp(Math.sqrt(d) / 2);
+      moonGone = Math.random() * 100 < pDestroy;
+      const rip = Math.random() * 100 < pRip;
+      moonVerdict = `The Deathstars fired their gravity pulse: ${moonGone ? 'the moon broke apart!' : 'the moon held.'} (${Math.round(pDestroy)}% chance)\n` +
+        (rip ? `The shock wave tore ${ds} Deathstar(s) apart. (${Math.round(pRip)}% risk)` : `The Deathstars survived the shock wave. (${Math.round(pRip)}% risk)`);
+      if (rip) for (const m of destroyers) delete m.ships.deathstar;
+    } else moonVerdict = 'No Deathstar survived the battle, so the moon was spared.';
+  }
+
   // loot: bounded by the survivors' combined free cargo, split by each fleet's share of it
   let loot: Res = zeroRes();
   const lootBy: Record<string, Res> = {};
@@ -506,7 +549,9 @@ function resolveAttack(w: World, lead: Movement, at: number) {
     (totalRes(loot) ? `Loot: ${num(loot.metal)} metal, ${num(loot.crystal)} crystal, ${num(loot.deuterium)} deuterium.\n` : '') +
     (res.debris.metal || res.debris.crystal ? `Debris field: ${num(res.debris.metal)} metal, ${num(res.debris.crystal)} crystal.\n` : '') +
     (bounty ? `Raider bounty: ${num(bounty)} resources shared among defenders.\n` : '') +
-    (newMoon ? 'The debris condensed into a moon!' : '');
+    (newMoon ? 'The debris condensed into a moon!\n' : '') +
+    (wreckFormed ? `A wreck field formed (${num(wreckFormed)} resources of ships) - a Space Dock can rebuild part of it.\n` : '') +
+    moonVerdict;
 
   const involved = new Set<string>();
   for (const m of group) if (m.ownerId) involved.add(m.ownerId);
@@ -538,6 +583,26 @@ function resolveAttack(w: World, lead: Movement, at: number) {
     if (!m.ownerId || !fleetCount(m.ships)) delete w.movements[m.id];
     else { sendHome(m, at); m.acsId = undefined; }
   }
+
+  if (moonGone) {
+    for (const m of destroyers) { const a = attackerOf(m); if (a) a.stats.moonsDestroyed++; }
+    const where = `${target.name} ${fmt(lead.to)}`;
+    destroyMoon(w, target, at);
+    notifyPlayer(w, defOwner.id, 'combat', 'Your moon was destroyed', `${names} destroyed ${where}. Everything on it is lost.`);
+    for (const m of destroyers) if (m.ownerId) notifyPlayer(w, m.ownerId, 'combat', 'Moon destroyed', `Your Deathstars destroyed ${where}.`);
+  }
+}
+
+/** A moon breaks apart: everything on it is lost and stationed fleets head home. */
+export function destroyMoon(w: World, moon: Planet, at: number) {
+  for (const m of Object.values(w.movements)) {
+    if (m.toMoon && m.phase === 'holding' && sameCoords(m.to, moon.coords)) { m.phase = 'returning'; m.returnAt = at + m.flightMs; }
+  }
+  delete w.wrecks[moon.id];
+  const owner = w.players[moon.ownerId];
+  if (owner) owner.planetIds = owner.planetIds.filter((id) => id !== moon.id);
+  delete w.planets[moon.id];
+  bus.push({ to: '*', type: 'refresh' });
 }
 
 // ---------------------------------------------------------------- expeditions

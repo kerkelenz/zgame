@@ -4,7 +4,7 @@ export type BuildingId =
   | 'metalMine' | 'crystalMine' | 'deuteriumSynthesizer' | 'solarPlant' | 'fusionReactor'
   | 'roboticsFactory' | 'naniteFactory' | 'shipyard' | 'researchLab'
   | 'metalStorage' | 'crystalStorage' | 'deuteriumTank' | 'missileSilo'
-  | 'lunarBase' | 'sensorPhalanx' | 'jumpGate' | 'terraformer';
+  | 'lunarBase' | 'sensorPhalanx' | 'jumpGate' | 'terraformer' | 'spaceDock';
 
 export type TechId =
   | 'energy' | 'laser' | 'ion' | 'hyperspace' | 'plasma'

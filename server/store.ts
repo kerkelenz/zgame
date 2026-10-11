@@ -10,6 +10,7 @@ export function loadWorld(file: string, overrides: Partial<UniverseConfig> = {})
       if (!w || typeof w !== 'object' || !w.players || !w.planets) throw new Error('not a world file');
       // new config keys added since the save get defaults; explicit overrides win
       w.config = { ...DEFAULT_CONFIG, ...w.config, ...overrides };
+      w.wrecks ??= {};
       for (const p of Object.values(w.players)) migratePlayer(p);
       return w;
     } catch (e) {

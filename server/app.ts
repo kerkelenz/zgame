@@ -15,6 +15,7 @@ import { answerTribute } from './empires';
 import { spawnRaid } from './npc';
 import { rankings } from './rankings';
 import { endVacation, startVacation } from './vacation';
+import { startRepair } from './wrecks';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
 
@@ -152,6 +153,11 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const p = req.player!;
     const out = tradeResources(w, ownedPlanet(w, p.id, req.params.id), str(req.body.give), str(req.body.get), Number(req.body.amount), now());
     return { out, planet: planetView(w, w.planets[req.params.id], now()) };
+  }));
+  A.post('/planets/:id/wreck/repair', wrap((req) => {
+    const p = req.player!;
+    startRepair(w, p, ownedPlanet(w, p.id, req.params.id), now());
+    return planetView(w, w.planets[req.params.id], now());
   }));
   A.post('/planets/:id/rename', wrap((req) => {
     const planet = ownedPlanet(w, req.player!.id, req.params.id);

@@ -54,14 +54,14 @@ export interface Player {
 
 export interface PlayerStats {
   raidsRepelled: number; battlesWon: number; battlesLost: number; expeditions: number;
-  destroyed: number; plundered: number; harvested: number; ipmKills: number;
+  destroyed: number; plundered: number; harvested: number; ipmKills: number; moonsDestroyed: number;
 }
 export interface Tribute { id: string; npc: string; want: Res; deadline: number; answered: false | 'paid' | 'refused' | 'ignored' }
 export interface HistoryPoint { t: number; points: number; rank: number; fleet: number }
 export type NpcStatus = 'inactive' | 'active' | 'aggressive';
 export interface NpcInfo { status: NpcStatus; seedPoints: number; faction: FactionId | null }
 
-export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0, destroyed: 0, plundered: 0, harvested: 0, ipmKills: 0 });
+export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0, destroyed: 0, plundered: 0, harvested: 0, ipmKills: 0, moonsDestroyed: 0 });
 
 export function blankPlayer(id: string, username: string, now: number, extra: Partial<Player> = {}): Player {
   return {
@@ -178,6 +178,12 @@ export interface ChatMsg { id: string; channel: 'global' | 'alliance'; allianceI
 
 export interface Debris { metal: number; crystal: number }
 
+/** Wreckage over a planet after a big battle: the owner's Space Dock can rebuild a share of the ships. */
+export interface Wreck {
+  planetId: string; ownerId: string; ships: Fleet; value: number; createdAt: number; expiresAt: number;
+  repair?: { endsAt: number; ships: Fleet };
+}
+
 export interface World {
   version: 1;
   config: UniverseConfig;
@@ -186,6 +192,8 @@ export interface World {
   planets: Record<string, Planet>;
   movements: Record<string, Movement>;
   debris: Record<string, Debris>;
+  /** wreck fields by planet id */
+  wrecks: Record<string, Wreck>;
   alliances: Record<string, Alliance>;
   messages: Message[];
   chat: ChatMsg[];
@@ -206,6 +214,7 @@ export function createWorld(config: Partial<UniverseConfig> = {}, now = Date.now
     planets: {},
     movements: {},
     debris: {},
+    wrecks: {},
     alliances: {},
     messages: [],
     chat: [],

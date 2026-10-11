@@ -66,6 +66,16 @@ export function Overview() {
         {q && <div className="job"><div>Shipyard: <b>{q.remaining}× {UNITS[q.id as keyof typeof UNITS].name}</b> remaining</div></div>}
       </Card>
 
+      {planet.wreck && (
+        <Card title="Wreck field">
+          <p className="muted small">Ships lost defending this planet. {planet.wreck.dock ? `Your Space Dock (level ${planet.wreck.dock}) can rebuild ${Math.round(planet.wreck.share * 100)}% of them for free.` : 'Build a Space Dock to rebuild a share of them.'} Drifts away <Countdown to={planet.wreck.expiresAt} />.</p>
+          <p>{Object.entries(planet.wreck.ships).map(([id, n]) => `${fmt(n as number)}× ${UNITS[id as keyof typeof UNITS].name}`).join(', ')}</p>
+          {planet.wreck.repair
+            ? <p>Repairing {Object.entries(planet.wreck.repair.ships).map(([id, n]) => `${fmt(n as number)}× ${UNITS[id as keyof typeof UNITS].name}`).join(', ')} - done <Countdown to={planet.wreck.repair.endsAt} /></p>
+            : <button className="primary" disabled={!planet.wreck.dock} onClick={() => void act(() => post(`/planets/${planet.id}/wreck/repair`), 'Repairs started')}>Start repairs ({Math.round(planet.wreck.repairSeconds / 60)} min)</button>}
+        </Card>
+      )}
+
       <Card title="Fleet movements" right={<button onClick={() => setPage('fleet')}>Fleet</button>}>
         {fleets.mine.length === 0 ? <p className="muted">All ships are home.</p> : fleets.mine.slice(0, 5).map((m) => (
           <div key={m.id}>{m.mission} → {coordStr(m.to)} <span className="muted">({m.phase})</span> <Countdown to={m.phase === 'outbound' ? m.arriveAt : m.phase === 'holding' ? m.holdUntil : m.returnAt} /></div>

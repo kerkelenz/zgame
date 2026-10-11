@@ -2,7 +2,7 @@
  * What an item does at each level, computed from the same formulas the server runs.
  * Pure functions: the client renders them as "details" pages, tests compare them to the engine.
  */
-import { BUILDINGS, GENERAL_FAST_SHIPS, TECHS, UNITS, isShip } from './data';
+import { BUILDINGS, GENERAL_FAST_SHIPS, TECHS, UNITS, isShip, wreckRepairShare } from './data';
 import {
   buildingCost, buildingTime, production, researchTime, shipSpeed, storageCapacity, techCost, unitTime, lvl,
   type Levels, type ProductionInput,
@@ -123,6 +123,11 @@ const EFFECTS: Partial<Record<BuildingId, Effect>> = {
     columns: [{ key: 'fields', label: 'Extra building fields', fmt: 'int', delta: true }],
     at: (L) => ({ fields: 5 * L }),
     notes: ['The Terraformer itself does not use up a field.'],
+  },
+  spaceDock: {
+    columns: [{ key: 'share', label: 'Share of a wreck field rebuilt', fmt: 'pct', delta: true, hint: 'of the ships you lost defending this planet' }],
+    at: (L) => ({ share: wreckRepairShare(L) }),
+    notes: ['A wreck field forms when a battle destroys a lot of your ships; it drifts away after a few days. Repairs take time but cost nothing.', 'Only on planets, not moons.'],
   },
   lunarBase: {
     columns: [{ key: 'fields', label: 'Moon building fields', fmt: 'int', delta: true, hint: '1 base field + 3 per level' }],

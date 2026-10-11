@@ -27,6 +27,10 @@ export interface UniverseConfig {
   npcDensity: number;
   /** multiplies the size of raiding fleets (0.6 relaxed, 1 standard, 1.35 brutal) */
   raidStrength: number;
+  /** a battle leaves a repairable wreck field when the defender loses at least this much (metal + crystal) in ships */
+  wreckMinValue: number;
+  /** hours a wreck field stays before it drifts away */
+  wreckHours: number;
   /** vacation mode lasts at least this many real hours */
   vacationMinHours: number;
   /** days without a login before a commander shows as inactive (i) and long inactive (I) */
@@ -53,6 +57,8 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   raidIntervalMin: 45,
   npcDensity: 0.3,
   raidStrength: 1,
+  wreckMinValue: 100_000,
+  wreckHours: 72,
   vacationMinHours: 48,
   inactiveDays: 7,
   longInactiveDays: 28,

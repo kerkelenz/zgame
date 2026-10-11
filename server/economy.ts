@@ -67,6 +67,7 @@ export function updatePlanet(w: World, planet: Planet, now: number) {
   let t = planet.updatedAt;
   if (now <= t) return;
   if (w.players[planet.ownerId]?.vacation) { planet.updatedAt = now; return; } // vacation: nothing is produced
+  settleWreck(w, planet, now);
   for (let job = planet.buildQueue; job && job.end <= now; job = planet.buildQueue) {
     accrue(w, planet, t, job.end);
     t = job.end;
@@ -112,6 +113,21 @@ function processShipyard(w: World, planet: Planet, now: number) {
       notifyPlayer(w, planet.ownerId, 'system', 'Production complete', `${j.total}× ${u.name} finished on ${planet.name}.`);
     } else break;
   }
+}
+
+/** a finished repair returns its ships; an untouched wreck field eventually drifts away */
+function settleWreck(w: World, planet: Planet, now: number) {
+  const wreck = w.wrecks?.[planet.id];
+  if (!wreck) return;
+  if (wreck.repair) {
+    if (wreck.repair.endsAt > now) return;
+    for (const [id, n] of Object.entries(wreck.repair.ships)) planet.fleet[id as keyof typeof planet.fleet] = (planet.fleet[id as keyof typeof planet.fleet] || 0) + (n || 0);
+    const count = Object.values(wreck.repair.ships).reduce((a, b) => a + (b || 0), 0);
+    delete w.wrecks[planet.id];
+    notifyPlayer(w, planet.ownerId, 'system', 'Repairs complete', `The Space Dock on ${planet.name} rebuilt ${count} ships from the wreck field.`);
+    return;
+  }
+  if (wreck.expiresAt <= now) delete w.wrecks[planet.id];
 }
 
 export function processPlayer(w: World, player: Player, now: number) {
@@ -314,6 +330,7 @@ export function abandonPlanet(w: World, player: Player, planet: Planet, name: st
     if (m.mission === 'hold' && m.phase === 'holding' && here) throw new GameError('Allied fleets are stationed here - ask them to leave first');
   }
   updatePlanet(w, planet, now);
+  delete w.wrecks[planet.id];
   for (const moon of Object.values(w.planets)) if (moon.parentId === planet.id) { player.planetIds = player.planetIds.filter((id) => id !== moon.id); delete w.planets[moon.id]; }
   player.planetIds = player.planetIds.filter((id) => id !== planet.id);
   delete w.planets[planet.id];

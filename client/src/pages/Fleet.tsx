@@ -7,7 +7,7 @@ import { useGame } from '../game';
 import { Card, Countdown, Page, coordStr, fmt, fmtDur } from '../ui';
 
 const MISSIONS: [Mission, string][] = [
-  ['attack', 'Attack'], ['transport', 'Transport'], ['deploy', 'Deploy'], ['hold', 'Defend ally (hold)'],
+  ['attack', 'Attack'], ['destroy', 'Destroy moon (Deathstars)'], ['transport', 'Transport'], ['deploy', 'Deploy'], ['hold', 'Defend ally (hold)'],
   ['espionage', 'Espionage'], ['colonize', 'Colonize'], ['recycle', 'Recycle debris'], ['expedition', 'Expedition'],
 ];
 
@@ -52,7 +52,7 @@ export function FleetPage() {
   }, [JSON.stringify(chosen), to.g, to.s, to.p, speedPct, planet.id]);
 
   const send = async () => {
-    const r = await act(() => post('/fleets/send', { fromPlanetId: planet.id, to, ships: chosen, mission, speedPct, cargo, holdHours, toMoon, joinFleetId: mission === 'attack' && joinId ? joinId : undefined }), 'Fleet dispatched');
+    const r = await act(() => post('/fleets/send', { fromPlanetId: planet.id, to, ships: chosen, mission, speedPct, cargo, holdHours, toMoon: toMoon || mission === 'destroy', joinFleetId: mission === 'attack' && joinId ? joinId : undefined }), 'Fleet dispatched');
     setJoinId('');
     if (r) { setShips({}); setCargo({ metal: 0, crystal: 0, deuterium: 0 }); }
   };

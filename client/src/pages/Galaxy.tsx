@@ -56,6 +56,7 @@ export function Galaxy() {
                     <button onClick={() => go(sl.p, 'transport')}>Transport</button>
                     <button disabled={pl.status?.vacation} title={pl.status?.vacation ? 'On vacation' : ''} onClick={() => go(sl.p, 'hold')}>Defend</button>
                     {sl.moon && <button disabled={pl.protectedFor} onClick={() => go(sl.p, 'attack', true)} title="Target the moon">🌙 Attack</button>}
+                    {sl.moon && <button className="danger" disabled={pl.protectedFor || pl.status?.vacation} onClick={() => go(sl.p, 'destroy', true)} title="Needs Deathstars. Bigger fleets raise the odds; the shock wave can destroy them.">🌙 Destroy</button>}
                   </>}
                   {pl?.mine && <button onClick={() => go(sl.p, 'deploy')}>Deploy</button>}
                   {pl?.mine && sl.moon && <button onClick={() => go(sl.p, 'deploy', true)}>🌙 Deploy</button>}

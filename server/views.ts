@@ -1,6 +1,7 @@
 import { ALLIANCE_UPGRADES } from '../shared/data';
 import { allianceBonuses, maxFields, planetCapacity, planetProduction, updatePlanet, usedFields } from './economy';
 import { activeSlots } from './fleet';
+import { wreckView } from './wrecks';
 import { classSpeedBonus, energyBoost, mineBoost, researchFactor, timeFactor } from './perks';
 import { colonyCount, maxPlanets, playerPoints } from './galaxy';
 import { sameCoords } from '../shared/formulas';
@@ -34,6 +35,7 @@ export function planetView(w: World, planet: Planet, now: number) {
         },
       };
     })(),
+    wreck: wreckView(w, planet),
     buildQueue: planet.buildQueue, buildBacklog: planet.buildBacklog ?? [], shipyardQueue: planet.shipyardQueue,
     fleet: planet.fleet, defenses: planet.defenses, updatedAt: planet.updatedAt,
   };
@@ -127,7 +129,7 @@ export function fleetsView(w: World, p: Player) {
   const joinable: (ReturnType<typeof mv> & { targetName: string })[] = [];
   for (const m of Object.values(w.movements)) {
     if (m.ownerId === p.id) mine.push(mv(m, true));
-    if ((m.mission === 'attack' || m.mission === 'missile') && m.phase === 'outbound' && m.ownerId !== p.id) {
+    if ((m.mission === 'attack' || m.mission === 'missile' || m.mission === 'destroy') && m.phase === 'outbound' && m.ownerId !== p.id) {
       const hitMe = myCoords.some((c) => sameCoords(c, m.to));
       const hitAlly = allyCoords.find((a) => sameCoords(a.c, m.to));
       if (hitMe) incoming.push({ ...mv(m, false), ships: {}, target: 'you', ally: false });
