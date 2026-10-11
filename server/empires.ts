@@ -17,7 +17,7 @@ import { colonyCount, createPlanet, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
 import { rankings } from './rankings';
 import { shieldMul, weaponMul } from './perks';
-import { GameError, blankPlayer, planetAt, uid, type Movement, type NpcStatus, type Planet, type Player, type World } from './world';
+import { GameError, blankPlayer, ck, planetAt, uid, type Movement, type NpcStatus, type Planet, type Player, type World } from './world';
 
 export const NPC_TICK_MS = 20 * 60_000;
 
@@ -240,7 +240,7 @@ export function npcWars(w: World, now: number) {
     addDebris(w, target.coords, res.debris.metal, res.debris.crystal);
     let loot = 0;
     if (res.winner === 'attacker') for (const k of KEYS) { const take = target.resources[k] * 0.5; target.resources[k] -= take; base.resources[k] += take; loot += take; }
-    const moon = maybeCreateMoon(w, target, res.debris, now);
+    const moon = maybeCreateMoon(w, target, w.debris[ck(target.coords)] ?? res.debris, now);
     if (headlines > 0 && reportNews(w, npc, defOwner, target, res.winner, res.debris.metal + res.debris.crystal, loot, !!moon)) headlines--;
   }
 }

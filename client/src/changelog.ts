@@ -5,6 +5,8 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-f', date: '2026-10-11', title: 'Alliance wars',
     items: [
+      'Moons: a battle over a planet without a moon now gives a flat 20% chance (once the debris field holds 100,000 resources; less below that), and debris left by earlier battles counts toward it.',
+      'The Overview shows a planet and its moon side by side, and the planet list keeps each moon next to its planet.',
       'Tech tree connections are now grid-style lines that only run up, down or sideways through the gaps between cards, never over or behind a card; lines leaving the same card share a trunk.',
       'The Overview has an Events list of every fleet movement that concerns you in time order: your fleets going out and the return flight still to come, hostile fleets heading for you or your allies (who, from where, when) and friendly deliveries, each with a clock time and countdown.',
       'Recyclers can now collect the debris field above your own planets and moons (it used to say "You are already there").',

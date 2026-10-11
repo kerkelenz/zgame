@@ -495,7 +495,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   });
   group.forEach((m, i) => { m.ships = onlyShips(res.attackers[i].after); });
   addDebris(w, lead.to, res.debris.metal, res.debris.crystal);
-  const newMoon = maybeCreateMoon(w, target, res.debris, at);
+  const newMoon = maybeCreateMoon(w, target, w.debris[ck(lead.to)] ?? res.debris, at);
   const leadPlayer = attackerOf(lead);
 
   // wreck field: a share of the defender's destroyed ships can be rebuilt by a Space Dock
@@ -819,13 +819,17 @@ function resolveMissiles(w: World, m: Movement, at: number) {
 
 // ---------------------------------------------------------------- moons
 
-/** 1% moon chance per 100k debris (max 20%); only planets that have no moon yet. */
-export function maybeCreateMoon(w: World, target: Planet, debris: { metal: number; crystal: number }, at: number): Planet | null {
+/** A moon over a planet forms with a 20% chance after a battle once the debris field above it (including what earlier battles left) holds 100,000 resources; smaller fields give a proportionally smaller chance. */
+export const MOON = { fullAt: 100_000, chance: 0.2 };
+export const moonChance = (field: { metal: number; crystal: number }) => Math.min(MOON.chance, ((field.metal + field.crystal) / MOON.fullAt) * MOON.chance);
+
+/** Only planets that have no moon yet. `field` is the whole debris field above the planet after the battle, old debris included. */
+export function maybeCreateMoon(w: World, target: Planet, field: { metal: number; crystal: number }, at: number): Planet | null {
   if (target.isMoon) return null;
   if (Object.values(w.planets).some((p) => p.parentId === target.id)) return null;
-  const chance = Math.min(20, Math.floor((debris.metal + debris.crystal) / 100_000));
-  if (chance <= 0 || Math.random() * 100 >= chance) return null;
-  const moon = createMoon(w, target, at, chance / 100);
+  const chance = moonChance(field);
+  if (chance <= 0 || Math.random() >= chance) return null;
+  const moon = createMoon(w, target, at, chance);
   notifyPlayer(w, target.ownerId, 'system', 'A moon formed!', `The wreckage above ${target.name} ${fmt(target.coords)} condensed into a moon. Build a Lunar Base to make it usable.`);
   return moon;
 }

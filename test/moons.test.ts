@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
 import { abandonPlanet, maxFields, planetProduction, queueUnits, startBuilding } from '../server/economy';
-import { jumpGate, maybeCreateMoon, phalanxScan, processMovements, sendFleet } from '../server/fleet';
+import { jumpGate, maybeCreateMoon, moonChance, phalanxScan, processMovements, sendFleet } from '../server/fleet';
 import { colonyCount, createMoon, createPlanet } from '../server/galaxy';
 import { spawnRaid } from '../server/npc';
+import { planetView } from '../server/views';
 import { createWorld, planetAt, type Planet, type Player, type World } from '../server/world';
 
 const T0 = 1_700_000_000_000;
@@ -33,19 +34,45 @@ beforeEach(() => {
 });
 
 describe('moon creation', () => {
-  it('forms with probability 1% per 100k debris, once per planet', () => {
+  it('has a 20% chance once the debris field holds 100k, a smaller one below that', () => {
+    expect(moonChance({ metal: 60_000, crystal: 40_000 })).toBeCloseTo(0.2);
+    expect(moonChance({ metal: 9e6, crystal: 9e6 })).toBeCloseTo(0.2);               // never more
+    expect(moonChance({ metal: 25_000, crystal: 0 })).toBeCloseTo(0.05);
+    expect(moonChance({ metal: 0, crystal: 0 })).toBe(0);
+  });
+
+  it('forms when the roll beats the chance, once per planet', () => {
     const fresh = createPlanet(w, alice, { g: 1, s: 20, p: 6 }, { now: T0 });
-    const spy = vi.spyOn(Math, 'random').mockReturnValue(0);
-    expect(maybeCreateMoon(w, fresh, { metal: 50_000, crystal: 20_000 }, T0)).toBeNull(); // < 100k
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0.19);
+    expect(maybeCreateMoon(w, fresh, { metal: 0, crystal: 0 }, T0)).toBeNull();            // no debris, no moon
     const moon = maybeCreateMoon(w, fresh, { metal: 300_000, crystal: 200_000 }, T0);
     expect(moon?.isMoon).toBe(true);
     expect(moon?.coords).toEqual(fresh.coords);
     expect(moon?.parentId).toBe(fresh.id);
-    expect(maybeCreateMoon(w, fresh, { metal: 9e6, crystal: 9e6 }, T0)).toBeNull(); // already has one
-    spy.mockReturnValue(0.99);
+    expect(maybeCreateMoon(w, fresh, { metal: 9e6, crystal: 9e6 }, T0)).toBeNull();         // already has one
+    spy.mockReturnValue(0.21);
     const other = createPlanet(w, alice, { g: 1, s: 21, p: 6 }, { now: T0 });
-    expect(maybeCreateMoon(w, other, { metal: 300_000, crystal: 200_000 }, T0)).toBeNull(); // unlucky roll
+    expect(maybeCreateMoon(w, other, { metal: 300_000, crystal: 200_000 }, T0)).toBeNull();  // unlucky roll (21% > 20%)
     spy.mockRestore();
+  });
+
+  it('counts debris from earlier battles: a small battle over a big old field can make a moon', () => {
+    const bp2 = createPlanet(w, bob, { g: 1, s: 7, p: 3 }, { now: T0 });          // a planet without a moon yet
+    bp2.fleet = { lightFighter: 2 };
+    w.debris['1:7:3'] = { metal: 900_000, crystal: 300_000 };                      // left by earlier battles
+    ap.fleet = { cruiser: 30 };
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0.19);                    // any roll under 20% succeeds
+    const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp2.coords, ships: { cruiser: 30 }, mission: 'attack' }, T0);
+    processMovements(w, m.arriveAt);
+    spy.mockRestore();
+    const moon = Object.values(w.planets).find((p) => p.parentId === bp2.id && p.isMoon);
+    expect(moon).toBeTruthy();
+    expect(w.messages.some((x) => x.to === bob.id && x.subject === 'A moon formed!')).toBe(true);
+  });
+
+  it('the planet view tells the client which planet a moon belongs to, so the Overview can show them side by side', () => {
+    expect(planetView(w, am, T0).parentId).toBe(ap.id);
+    expect(planetView(w, ap, T0).parentId).toBeNull();
   });
 
   it('moons do not count as colonies and are found by planetAt only when asked', () => {

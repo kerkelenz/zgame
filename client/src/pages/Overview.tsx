@@ -14,13 +14,24 @@ export function Overview() {
   const b = planet.buildQueue;
   const r = me.player.research;
   const q = planet.shipyardQueue[0];
+  // a planet and its moon are shown together, whichever of the two is selected
+  const parentPlanet = planet.isMoon ? planets.find((x) => x.id === planet.parentId) ?? planet : planet;
+  const moon = planet.isMoon ? planet : planets.find((x) => x.parentId === planet.id);
+  const ordered = planets.filter((x) => !x.isMoon).flatMap((x) => [x, ...planets.filter((y) => y.parentId === x.id)]);
   return (
     <Page title={`${planet.name} ${coordStr(planet.coords)}`}>
       <FleetEvents />
 
       <div className="grid2">
         <Card title="Planet">
-          <img className="planetpic" src={Art.planet(planet.id, planet.maxTemp, !!planet.isMoon)} alt="" />
+          <div className="bodies">
+            {[parentPlanet, moon].filter((b): b is typeof planet => !!b).map((b) => (
+              <button key={b.id} className={`celestial ${b.isMoon ? 'moon' : ''} ${b.id === planet.id ? 'on' : ''}`} onClick={() => selectPlanet(b.id)} title={b.isMoon ? 'Show the moon' : 'Show the planet'}>
+                <img src={Art.planet(b.id, b.maxTemp, !!b.isMoon)} alt="" />
+                <span>{b.isMoon ? '🌙 ' : ''}{b.name}</span>
+              </button>
+            ))}
+          </div>
           <table className="kv">
             <tbody>
               {planet.diameter && <tr><td>Diameter</td><td>{fmt(planet.diameter)} km</td></tr>}
@@ -90,7 +101,7 @@ export function Overview() {
 
       {planets.length > 1 && (
         <Card title="Your planets">
-          <div className="chips">{planets.map((p) => <button key={p.id} className={p.id === planet.id ? 'active' : ''} onClick={() => selectPlanet(p.id)}>{p.isMoon ? '🌙 ' : ''}{p.name} {coordStr(p.coords)}</button>)}</div>
+          <div className="chips">{ordered.map((p) => <button key={p.id} className={p.id === planet.id ? 'active' : ''} onClick={() => selectPlanet(p.id)}>{p.isMoon ? '🌙 ' : ''}{p.name} {coordStr(p.coords)}</button>)}</div>
         </Card>
       )}
     </Page>

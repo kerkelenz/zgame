@@ -26,7 +26,7 @@ export function planetView(w: World, planet: Planet, now: number) {
   updatePlanet(w, planet, now);
   const prod = planetProduction(w, planet);
   return {
-    id: planet.id, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon,
+    id: planet.id, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon, parentId: planet.parentId ?? null,
     jumpReadyAt: planet.jumpReadyAt ?? 0,
     maxTemp: planet.maxTemp, isHome: planet.isHome, buildings: planet.buildings, resources: planet.resources,
     capacity: planetCapacity(w, planet),
