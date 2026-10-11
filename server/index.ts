@@ -10,6 +10,9 @@ import { processMovements } from './fleet';
 import { processRaids } from './npc';
 import { checkProgress } from './progress';
 import { processSeason } from './season';
+import { existsSync } from 'node:fs';
+import { SqlStore } from './sqlstore';
+import { createWorld, type World } from './world';
 import { loadWorld, saveWorld } from './store';
 import { NPC_TICK_MS, generateEmpires, hasEmpires, npcTick, processTributes } from './empires';
 
@@ -22,7 +25,15 @@ for (const k of Object.keys(DEFAULT_CONFIG) as (keyof UniverseConfig)[]) {
 
 const PORT = num('PORT', 3000);
 const SAVE_FILE = resolve(process.env.OGAME_SAVE || 'data/world.json');
-const world = loadWorld(SAVE_FILE, overrides);
+// OGAME_DB=data/world.sqlite switches persistence to SQLite (only changed rows are written); an existing JSON save is imported on first start
+const DB_FILE = process.env.OGAME_DB ? resolve(process.env.OGAME_DB) : null;
+const sql = DB_FILE ? new SqlStore(DB_FILE) : null;
+let world: World;
+if (sql) {
+  if (sql.isEmpty() && existsSync(SAVE_FILE)) { world = loadWorld(SAVE_FILE, overrides); const r = sql.save(world); console.log(`Imported ${SAVE_FILE} into ${DB_FILE} (${r.total} rows).`); }
+  else world = sql.isEmpty() ? createWorld(overrides) : sql.load(overrides);
+} else world = loadWorld(SAVE_FILE, overrides);
+const persist = () => (sql ? void sql.save(world) : saveWorld(SAVE_FILE, world));
 if (world.config.npcDensity > 0 && !hasEmpires(world)) {
   const n = generateEmpires(world);
   console.log(`Settled ${n} computer empires.`);
@@ -79,17 +90,17 @@ function tick() {
 setInterval(tick, 1000);
 setInterval(() => {
   if (!dirty) return;
-  try { saveWorld(SAVE_FILE, world); dirty = false; } catch (e) { console.error('save failed', e); }
+  try { persist(); dirty = false; } catch (e) { console.error('save failed', e); }
 }, 10_000);
 
 function shutdown() {
-  try { saveWorld(SAVE_FILE, world); } catch { /* ignore */ }
+  try { persist(); } catch { /* ignore */ }
   process.exit(0);
 }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 server.listen(PORT, () => {
-  console.log(`OGame clone server on http://localhost:${PORT}  (save: ${SAVE_FILE})`);
+  console.log(`OGame clone server on http://localhost:${PORT}  (save: ${DB_FILE ?? SAVE_FILE})`);
   console.log(`Universe: ${world.config.galaxies}x${world.config.systems}x${world.config.positions}, economy x${world.config.economySpeed}, fleet x${world.config.fleetSpeed}`);
 });

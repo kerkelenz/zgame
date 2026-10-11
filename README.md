@@ -77,6 +77,7 @@ Config is stored in the save on first start; env vars override it on later start
 - **Merchant daily deal and empire gather** – each day the merchant does one trade at a 2% cut up to a daily allowance; a one-click Gather sends cargo ships from all your planets to the current one.
 - **Polish** – phone-friendly layout, a welcome tour, an in-game What's new, optional sound cues, unread/hostile counters in the browser tab title, and menus/login in English, German, Spanish and French (other screens fall back to English).
 - **Seasons** – optional time limit and/or victory score. When a season ends the champion gets Command Credits and an achievement, the top 10 enter the hall of fame (Standing page), and after a grace period the universe resets: new homeworlds and computer empires, while accounts, credits, officers, class, achievements and alliances carry over.
+- **SQLite persistence (optional)** – set `OGAME_DB=data/world.sqlite` and every player, planet, fleet and message becomes its own row; autosaves write only rows that changed. An existing JSON save is imported automatically on the first start. Uses Node's built-in `node:sqlite`, so there is nothing to install.
 - **Empire page** – every planet and moon on one screen: resources, production, construction, ships, storage warnings.
 - **Live UI** – WebSocket push for alerts/messages/chat, interpolated resource counters, countdowns.
 
