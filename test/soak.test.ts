@@ -7,9 +7,10 @@ import { createMoon } from '../server/galaxy';
 import { answerTribute, generateEmpires, npcTick, processTributes } from '../server/empires';
 import { checkProgress } from '../server/progress';
 import { startRepair } from '../server/wrecks';
+import { runAutomation, setRules, startPlan } from '../server/automation';
 import { endVacation, startVacation } from '../server/vacation';
 import { processRaids } from '../server/npc';
-import { BUILDING_IDS, SHIP_IDS, TECH_IDS, DEFENSE_IDS } from '../shared/data';
+import { BUILDING_IDS, BUILD_ORDER_TEMPLATES, SHIP_IDS, TECH_IDS, DEFENSE_IDS } from '../shared/data';
 import { createWorld, GameError, type World } from '../server/world';
 import { makeRng } from '../shared/combat';
 
@@ -97,7 +98,7 @@ describe('soak', () => {
           const p = pick(players);
           const planet = w.planets[pick(p.planetIds)];
           const moonShot = rng() < 0.25;
-          const act = Math.floor(rng() * 17);
+          const act = Math.floor(rng() * 19);
           try {
             switch (act) {
               case 0: startBuilding(w, p, planet, pick(BUILDING_IDS), now); break;
@@ -125,6 +126,8 @@ describe('soak', () => {
               case 14: jumpGate(w, p, planet.id, w.planets[pick(p.planetIds)].id, { cruiser: 1 + Math.floor(rng() * 5) }, now); break;
               case 15: p.vacation ? endVacation(w, p, now) : startVacation(w, p, now); break;
               case 16: startRepair(w, p, planet, now); break;
+              case 17: startPlan(w, p, planet, { template: pick(BUILD_ORDER_TEMPLATES).id }, now); break;
+              case 18: setRules(p, { energy: rng() < 0.5, storage: rng() < 0.5, defense: { on: rng() < 0.5, unit: pick(['rocketLauncher', 'lightLaser', 'gaussCannon']), count: 1 + Math.floor(rng() * 40), maxSharePct: 5 + Math.floor(rng() * 50) } }); break;
               case 12: launchMissiles(w, p, planet.id, w.planets[pick(Object.keys(w.planets))].coords, 1 + Math.floor(rng() * 8), now); break;
               case 11: rng() < 0.5 ? cancelResearch(w, p, now) : processPlayer(w, p, now); break;
             }
@@ -142,7 +145,7 @@ describe('soak', () => {
             const open = q.tributes.find((t) => !t.answered);
             if (open && rng() < 0.5) { try { answerTribute(w, q, open.id, rng() < 0.5 ? 'pay' : 'refuse', now); } catch (e) { if (!(e instanceof GameError)) throw e; } }
           }
-          for (const q of players) processPlayer(w, q, now);
+          for (const q of players) { processPlayer(w, q, now); runAutomation(w, q, now); }
           if (step % 25 === 0) invariants(w);
         }
         invariants(w);

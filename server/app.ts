@@ -22,6 +22,7 @@ import * as SOC from './social';
 import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { buyItem, shopView } from './shop';
+import * as AUTO from './automation';
 import { recoverAccount } from './account';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
@@ -197,6 +198,16 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     void salt; void hash; void recovery;
     return { player: safe, planets: t.planetIds.map((id) => w.planets[id]), movements: Object.values(w.movements).filter((m) => m.ownerId === t.id) };
   }));
+  A.get('/automation', wrap((req) => AUTO.automationView(w, req.player!)));
+  A.post('/automation/orders', wrap((req) => { AUTO.saveOrder(req.player!, str(req.body.name, 30), req.body.steps); return AUTO.automationView(w, req.player!); }));
+  A.post('/automation/orders/remove', wrap((req) => { AUTO.removeOrder(req.player!, str(req.body.id)); return AUTO.automationView(w, req.player!); }));
+  A.post('/automation/start', wrap((req) => {
+    const p = req.player!;
+    AUTO.startPlan(w, p, ownedPlanet(w, p.id, str(req.body.planetId)), { orderId: req.body.orderId ? str(req.body.orderId) : undefined, template: req.body.template ? str(req.body.template) : undefined }, now());
+    return AUTO.automationView(w, p);
+  }));
+  A.post('/automation/stop', wrap((req) => { const p = req.player!; AUTO.stopPlan(p, ownedPlanet(w, p.id, str(req.body.planetId)), now()); return AUTO.automationView(w, p); }));
+  A.post('/automation/rules', wrap((req) => { AUTO.setRules(req.player!, req.body || {}); return AUTO.automationView(w, req.player!); }));
   A.get('/spy-archive', wrap((req) => SOC.spyArchiveView(w, req.player!)));
   A.post('/report', wrap((req) => { SOC.reportPlayer(w, req.player!, str(req.body.id), str(req.body.reason, 300), now()); return { ok: true }; }));
 

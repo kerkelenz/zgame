@@ -21,6 +21,7 @@ import { Profile } from './pages/Profile';
 import { Admin } from './pages/Admin';
 import { Contacts } from './pages/Contacts';
 import { WhatsNew } from './pages/WhatsNew';
+import { Automation } from './pages/Automation';
 import { Highscore } from './pages/Highscore';
 import { Messages } from './pages/Messages';
 import { Overview } from './pages/Overview';
@@ -29,7 +30,7 @@ import { Resources } from './pages/Resources';
 
 const NAV: [string, string][] = [
   ['overview', 'Overview'], ['empire', 'Empire'], ['economy', 'Economy'], ['resources', 'Resources'], ['buildings', 'Buildings'], ['research', 'Research'],
-  ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['fleet', 'Fleet'], ['galaxy', 'Galaxy'],
+  ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['automation', 'Automation'], ['fleet', 'Fleet'], ['galaxy', 'Galaxy'],
   ['alliance', 'Alliance'], ['contacts', 'Contacts'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['settings', 'Settings'], ['guide', 'Guide'],
 ];
 
@@ -70,6 +71,7 @@ export function App() {
       case 'admin': return <Admin />;
       case 'contacts': return <Contacts />;
       case 'news': return <WhatsNew />;
+      case 'automation': return <Automation />;
       case 'guide': return <Guide />;
       case 'settings': return <Settings />;
       case 'command': return <Command />;

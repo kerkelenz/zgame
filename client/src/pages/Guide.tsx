@@ -13,7 +13,7 @@ const TOPICS: Topic[] = [
         <p>You are a commander with one homeworld in a shared galaxy. You mine resources, research technology, build ships and defenses, expand to new planets, and trade blows - or favours - with other commanders and with computer-run empires. Everything keeps running while you are away, so the game is about planning: queue work, protect yourself, and check in.</p>
         <ul>
           <li><b>Overview</b> is your planet at a glance with the current <b>objective</b> that teaches the game step by step. <b>Empire</b> shows all your planets together. <b>Economy</b> explains your income.</li>
-          <li><b>Resources, Buildings, Research, Shipyard, Defense</b> run the selected planet (pick it in the top bar). <b>Fleet</b> and <b>Galaxy</b> are where ships move.</li>
+          <li><b>Resources, Buildings, Research, Shipyard, Defense</b> run the selected planet (pick it in the top bar). <b>Automation</b> does routine work for you. <b>Fleet</b> and <b>Galaxy</b> are where ships move.</li>
           <li><b>Alliance, Contacts, Messages, Chat, Standing</b> are the social side; <b>Command</b> holds your class, officers, factions and achievements; <b>Settings</b> holds your account, alerts and vacation mode.</li>
           <li>Click <b>any item name</b> (a building, technology, ship or defense, here or in a requirement list) to open its <b>details page</b>: what each level gives, what it costs, and what it unlocks. The <b>Simulator</b> predicts a battle before you fly it.</li>
         </ul>
@@ -41,6 +41,18 @@ const TOPICS: Topic[] = [
         <li><b>Queues.</b> Each of buildings and research can queue four jobs behind the running one. A queued job is <b>paid for and reserved the moment you queue it</b> and refunded if you remove it, so it can never fail later for lack of resources. Use the arrows to reorder. If an item is already being upgraded or queued, its card shows the <i>later</i> level and that level's real price; the button only enables when you can afford exactly what you will get.</li>
         <li>Requirements are shown on every card; a requirement you meet turns green. Some buildings are moon-only and some planet-only.</li>
         <li>Research projects that need a minimum energy output say so on their card.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'automation', title: 'Automation: build orders and rules',
+    body: (
+      <ul>
+        <li>A <b>build order</b> is a list of steps, each meaning <i>raise this building or technology to level N</i>. Run one on a planet (the one selected in the top bar) and the server works through it while you are away: it starts the next building and the next research as soon as you can afford them, in the order you wrote them. Buildings and research run side by side.</li>
+        <li>It never drops a step: if you cannot pay yet, it waits. If a step needs something you do not have, the missing building or technology is <b>added automatically</b> before it. It will not touch a queue you filled by hand - it waits for it to clear - and it pauses while you are on vacation.</li>
+        <li>The Automation page offers <b>ready-made orders</b> (an economy opener, a science start, a colony starter). Copy one into the editor to change it, or build your own from scratch and save up to twelve. A running order shows every step with a tick when it is reached, and a status line saying what it is doing or waiting for. <b>Stop</b> ends it at any time.</li>
+        <li><b>Rules</b> react to events. <i>Keep the lights on</i> builds a Solar Plant on a planet that runs short of energy. <i>Never cap out</i> upgrades a storage building when a resource reaches 90% of its limit. <i>Dig in when attacked</i> queues defenses of a type you choose when a hostile fleet is heading for one of your planets - once per fleet, never more than your count, and never spending more than the percentage of that planet's stock you set. Rules only start work when the planet has no building in progress.</li>
+        <li>The log on the Automation page lists everything the server did for you.</li>
       </ul>
     ),
   },

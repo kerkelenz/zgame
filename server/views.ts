@@ -1,3 +1,5 @@
+import { lvl } from '../shared/formulas';
+import type { BuildingId, TechId } from '../shared/types';
 import { ALLIANCE_UPGRADES } from '../shared/data';
 import { allianceBonuses, maxFields, planetCapacity, planetProduction, updatePlanet, usedFields } from './economy';
 import { activeSlots } from './fleet';
@@ -41,6 +43,7 @@ export function planetView(w: World, planet: Planet, now: number) {
       };
     })(),
     wreck: wreckView(w, planet),
+    plan: planet.plan ? { name: planet.plan.name, status: planet.plan.status, steps: planet.plan.steps.length, left: planet.plan.steps.filter((s) => (s.kind === 'building' ? lvl(planet.buildings, s.id as BuildingId) : lvl(w.players[planet.ownerId].techs, s.id as TechId)) < s.level).length } : null,
     buildQueue: planet.buildQueue, buildBacklog: planet.buildBacklog ?? [], shipyardQueue: planet.shipyardQueue,
     fleet: planet.fleet, defenses: planet.defenses, updatedAt: planet.updatedAt,
   };

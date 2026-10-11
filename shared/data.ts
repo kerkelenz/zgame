@@ -146,6 +146,24 @@ export const CLASS_CHANGE_COST = 2000;
 export const GENERAL_FAST_SHIPS: string[] = ['lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'battlecruiser', 'bomber', 'destroyer', 'deathstar', 'recycler'];
 
 /** Travelling merchant: swaps resources at a fixed 3:2:1 rate, keeping a cut. */
+/** Ready-made build orders. Each step raises a building (on the planet it runs on) or a technology to a level. */
+export const BUILD_ORDER_TEMPLATES: { id: string; name: string; desc: string; steps: { kind: 'building' | 'tech'; id: string; level: number }[] }[] = [
+  { id: 'opener', name: 'Economy opener', desc: 'Mines and power up to the first research lab.', steps: [
+    { kind: 'building', id: 'metalMine', level: 4 }, { kind: 'building', id: 'crystalMine', level: 3 }, { kind: 'building', id: 'solarPlant', level: 4 },
+    { kind: 'building', id: 'metalMine', level: 8 }, { kind: 'building', id: 'crystalMine', level: 6 }, { kind: 'building', id: 'solarPlant', level: 8 },
+    { kind: 'building', id: 'deuteriumSynthesizer', level: 4 }, { kind: 'building', id: 'roboticsFactory', level: 2 }, { kind: 'building', id: 'researchLab', level: 1 },
+    { kind: 'building', id: 'metalMine', level: 10 }, { kind: 'building', id: 'crystalMine', level: 8 }, { kind: 'building', id: 'solarPlant', level: 10 },
+  ] },
+  { id: 'science', name: 'Science start', desc: 'A lab and the first technologies every commander needs.', steps: [
+    { kind: 'building', id: 'researchLab', level: 3 }, { kind: 'tech', id: 'energy', level: 2 }, { kind: 'tech', id: 'combustionDrive', level: 3 },
+    { kind: 'tech', id: 'computer', level: 3 }, { kind: 'tech', id: 'espionage', level: 2 }, { kind: 'tech', id: 'energy', level: 4 },
+  ] },
+  { id: 'colony', name: 'Colony starter', desc: 'Gets a new colony producing and able to build ships.', steps: [
+    { kind: 'building', id: 'solarPlant', level: 5 }, { kind: 'building', id: 'metalMine', level: 5 }, { kind: 'building', id: 'crystalMine', level: 4 },
+    { kind: 'building', id: 'roboticsFactory', level: 2 }, { kind: 'building', id: 'shipyard', level: 2 }, { kind: 'building', id: 'metalStorage', level: 2 },
+  ] },
+];
+
 /** how each resource is shown to players (the internal key stays `deuterium`) */
 export const RES_NAME = { metal: 'metal', crystal: 'crystal', deuterium: 'vespene gas' } as const;
 export const resName = (k: string): string => (RES_NAME as Record<string, string>)[k] ?? k;

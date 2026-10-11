@@ -10,6 +10,7 @@ import { processMovements } from './fleet';
 import { processRaids } from './npc';
 import { checkProgress } from './progress';
 import { processSeason } from './season';
+import { runAutomation } from './automation';
 import { existsSync } from 'node:fs';
 import { SqlStore } from './sqlstore';
 import { createWorld, type World } from './world';
@@ -84,7 +85,7 @@ function tick() {
     if (world.nextNpcTick && now >= world.nextNpcTick) npcTick(world, now);
     processTributes(world, now);
     processSeason(world, now);
-    for (const p of Object.values(world.players)) processPlayer(world, p, now);
+    for (const p of Object.values(world.players)) { processPlayer(world, p, now); runAutomation(world, p, now); }
     if (now - lastProgress > 5000) { lastProgress = now; for (const p of Object.values(world.players)) checkProgress(world, p, now); }
     dirty = true;
   } catch (e) {

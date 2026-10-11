@@ -30,6 +30,12 @@ export interface Player {
   muted?: { until: number | null; reason: string };
   recovery?: { salt: string; hash: string };
   renamedAt?: number;
+  /** saved build orders, automation rules and what the rules did recently */
+  buildOrders?: BuildOrder[];
+  autoRules?: AutoRules;
+  autoLog?: { at: number; text: string }[];
+  /** incoming fleets the defense rule has already reacted to */
+  autoSeen?: Record<string, number>;
   /** saved fleet compositions, shared across devices */
   presets?: { id: string; name: string; ships: Fleet }[];
   /** how much of today's merchant deal allowance has been used */
@@ -103,6 +109,10 @@ export function migratePlayer(p: Player) {
 }
 export const isNpc = (p: Player | null | undefined): p is Player & { npc: NpcInfo } => !!p?.npc;
 
+export interface BuildStep { kind: 'building' | 'tech'; id: string; level: number }
+export interface BuildOrder { id: string; name: string; steps: BuildStep[] }
+export interface AutoRules { energy: boolean; storage: boolean; defense: { on: boolean; unit: string; count: number; maxSharePct: number } }
+
 export interface Planet {
   id: string;
   ownerId: string;
@@ -124,6 +134,8 @@ export interface Planet {
   buildQueue: BuildJob | null;
   /** buildings waiting behind the active job; paid for when they start */
   buildBacklog: BuildingId[];
+  /** a build order running here: every step is "raise this to level N", started whenever it is affordable */
+  plan?: { name: string; steps: BuildStep[]; status: string; startedAt: number; added: number };
   /** resources already reserved for each buildBacklog entry (same index) */
   buildPaid?: Res[];
   shipyardQueue: ShipyardJob[];
