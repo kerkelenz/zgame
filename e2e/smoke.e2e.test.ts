@@ -324,6 +324,12 @@ describe('using the game', () => {
     await box.fill('nobody_called_this');
     await page.getByText('No commander found').waitFor({ timeout: 10_000 });
     await box.press('Escape');
+    // a server that does not know the search yet says so instead of just claiming nobody exists
+    await page.route('**/api/search/players*', (route) => route.fulfill({ status: 404, json: { error: 'Not found' } }));
+    await box.fill('anything');
+    await page.getByText(/Search failed: Not found \(the server may need a restart\)/).waitFor({ timeout: 10_000 });
+    await page.unroute('**/api/search/players*');
+    await box.fill('');
     noErrors();
   });
 

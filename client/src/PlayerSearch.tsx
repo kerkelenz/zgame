@@ -13,16 +13,17 @@ export function PlayerSearch() {
   const [open, setOpen] = useState(false);
   const [cur, setCur] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
   const box = useRef<HTMLDivElement>(null);
   const seq = useRef(0);
 
   useEffect(() => {
     const term = q.trim();
-    if (term.length < 2) { setHits([]); setBusy(false); return; }
+    if (term.length < 2) { setHits([]); setBusy(false); setError(''); return; }
     setBusy(true);
     const id = ++seq.current;
     const timer = setTimeout(() => {
-      get(`/search/players?q=${encodeURIComponent(term)}`).then((r: Hit[]) => { if (id === seq.current) { setHits(r); setCur(0); setBusy(false); } }).catch(() => { if (id === seq.current) { setHits([]); setBusy(false); } });
+      get(`/search/players?q=${encodeURIComponent(term)}`).then((r: Hit[]) => { if (id === seq.current) { setHits(r); setCur(0); setBusy(false); setError(''); } }).catch((e) => { if (id === seq.current) { setHits([]); setBusy(false); setError(e?.message || 'Search failed'); } });
     }, 180);
     return () => clearTimeout(timer);
   }, [q]);
@@ -54,7 +55,7 @@ export function PlayerSearch() {
               <span className="muted small">{fmt(h.points)} pts</span>
             </li>
           ))}
-          {!hits.length && <li className="muted">{busy ? 'Searching…' : 'No commander found'}</li>}
+          {!hits.length && <li className="muted">{busy ? 'Searching…' : error ? `Search failed: ${error}${/not found/i.test(error) ? ' (the server may need a restart)' : ''}` : 'No commander found'}</li>}
         </ul>
       )}
     </div>
