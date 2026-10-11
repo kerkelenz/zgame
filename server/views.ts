@@ -12,6 +12,7 @@ import { isAdmin, isMuted } from './account';
 import { merchantDeal } from './economy';
 import { permsOf } from './alliance';
 import { seasonBanner } from './season';
+import { invasionBanner } from './invasion';
 import { contractsView } from './contracts';
 import { ALLIANCE_PERMS } from './world';
 import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
@@ -80,6 +81,7 @@ export function meView(w: World, p: Player, now: number) {
   return {
     now,
     season: seasonBanner(w, now),
+    invasion: invasionBanner(w),
     contractsClaimable: contractsView(w, p, now).claimable,
     player: {
       id: p.id, username: p.username, techs: p.techs, research: p.research, researchBacklog: p.researchBacklog ?? [], officers: p.officers, charClass: p.charClass, allianceId: p.allianceId,

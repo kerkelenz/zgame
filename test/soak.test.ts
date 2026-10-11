@@ -9,6 +9,7 @@ import { checkProgress } from '../server/progress';
 import { startRepair } from '../server/wrecks';
 import { runAutomation, setRules, startPlan } from '../server/automation';
 import { processSectors } from '../server/sectors';
+import { processInvasion } from '../server/invasion';
 import { endVacation, startVacation } from '../server/vacation';
 import { processRaids } from '../server/npc';
 import { BUILDING_IDS, BUILD_ORDER_TEMPLATES, SHIP_IDS, TECH_IDS, DEFENSE_IDS } from '../shared/data';
@@ -18,6 +19,10 @@ import { makeRng } from '../shared/combat';
 const T0 = 1_700_000_000_000;
 
 function invariants(w: World) {
+  if (w.invasion) {
+    for (const [id, n] of Object.entries(w.invasion.fleet)) expect(Number.isInteger(n) && (n as number) >= 0, `boss ${id}=${n}`).toBe(true);
+    for (const [pid, c] of Object.entries(w.invasion.contrib)) { expect(Number.isFinite(c.damage) && c.damage >= 0, `damage of ${pid}`).toBe(true); expect(Number.isFinite(c.lost) && c.lost >= 0).toBe(true); }
+  }
   for (const [k, h] of Object.entries(w.sectors ?? {})) {
     expect(w.alliances[h.allianceId], `sector ${k} held by a missing alliance`).toBeTruthy();
     expect(k).toMatch(/^\d+:\d+$/);
@@ -116,7 +121,7 @@ describe('soak', () => {
                 const join = pick(Object.values(w.movements).filter((m) => m.mission === 'attack' && m.ownerId));
                 sendFleet(w, p, {
                   fromPlanetId: planet.id, to: target, ships,
-                  mission: pick(['attack', 'transport', 'deploy', 'hold', 'espionage', 'colonize', 'recycle', 'expedition', 'destroy'] as const),
+                  mission: pick(['attack', 'transport', 'deploy', 'hold', 'espionage', 'colonize', 'recycle', 'expedition', 'destroy', 'invade'] as const),
                   speedPct: 10 * (1 + Math.floor(rng() * 10)), cargo: { metal: Math.floor(rng() * 5000), crystal: Math.floor(rng() * 5000) }, holdHours: rng() * 3,
                   joinFleetId: rng() < 0.3 ? join?.id : undefined, toMoon: moonShot,
                 }, now);
@@ -146,6 +151,7 @@ describe('soak', () => {
           if (w.nextNpcTick && now >= w.nextNpcTick) npcTick(w, now);
           processTributes(w, now);
           processSectors(w, now);
+          processInvasion(w, now);
           for (const q of players) {
             checkProgress(w, q, now);
             const open = q.tributes.find((t) => !t.answered);

@@ -21,6 +21,7 @@ import { Profile } from './pages/Profile';
 import { Admin } from './pages/Admin';
 import { Contacts } from './pages/Contacts';
 import { WhatsNew } from './pages/WhatsNew';
+import { Invasion } from './pages/Invasion';
 import { Territory } from './pages/Territory';
 import { Contracts } from './pages/Contracts';
 import { Automation } from './pages/Automation';
@@ -32,7 +33,7 @@ import { Resources } from './pages/Resources';
 
 const NAV: [string, string][] = [
   ['overview', 'Overview'], ['empire', 'Empire'], ['economy', 'Economy'], ['resources', 'Resources'], ['buildings', 'Buildings'], ['research', 'Research'],
-  ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['automation', 'Automation'], ['fleet', 'Fleet'], ['galaxy', 'Galaxy'], ['territory', 'Territory'],
+  ['shipyard', 'Shipyard'], ['defense', 'Defense'], ['automation', 'Automation'], ['fleet', 'Fleet'], ['invasion', 'Invasion'], ['galaxy', 'Galaxy'], ['territory', 'Territory'],
   ['alliance', 'Alliance'], ['contacts', 'Contacts'], ['contracts', 'Contracts'], ['command', 'Command'], ['simulator', 'Simulator'], ['messages', 'Messages'], ['chat', 'Chat'], ['highscore', 'Standing'], ['settings', 'Settings'], ['guide', 'Guide'],
 ];
 
@@ -73,6 +74,7 @@ export function App() {
       case 'admin': return <Admin />;
       case 'contacts': return <Contacts />;
       case 'news': return <WhatsNew />;
+      case 'invasion': return <Invasion />;
       case 'territory': return <Territory />;
       case 'contracts': return <Contracts />;
       case 'automation': return <Automation />;
@@ -108,6 +110,7 @@ export function App() {
       </header>
       {me.season?.ended && <div className="alertbar newsbar" onClick={() => setPage('highscore')}>🏆 Season {me.season.number} is over - champion {me.season.ended.winnerName ?? 'nobody'}.{me.season.ended.resetAt ? <> The universe resets in <Countdown to={me.season.ended.resetAt} />.</> : ' Waiting for an admin to reset.'}</div>}
       {!me.season?.ended && me.season?.endsAt && me.season.endsAt - Date.now() < 7 * 86_400_000 && <div className="alertbar newsbar" onClick={() => setPage('highscore')}>🏁 Season {me.season.number} ends in <Countdown to={me.season.endsAt} /></div>}
+      {me.invasion && <div className="alertbar invbar" onClick={() => setPage('invasion')}>{me.invasion.phase === 'announced' ? <>☄ Void invasion: the rift at {coordStr(me.invasion.rift)} opens in <Countdown to={me.invasion.startsAt} /> - click to prepare</> : <>☄ The Void Armada is at {coordStr(me.invasion.rift)} - the front needs every fleet it can get. Retreats in <Countdown to={me.invasion.endsAt} /></>}</div>}
       {whatsNew && <div className="alertbar newsbar" onClick={() => { markChangelogSeen(); setWhatsNew(false); setPage('news'); }}>✨ New: {CHANGELOG[0].title} - click to see what changed</div>}
       {offline && <div className="alertbar" style={{ background: '#4a3a1c', cursor: 'default' }}>Connection to the server lost - retrying…</div>}
       {me.vacation && <div className="alertbar vacbar" onClick={() => setPage('settings')}>🏖 Vacation mode: your empire is frozen and protected. You can leave after {new Date(me.vacation.minUntil).toLocaleString()} - open Settings.</div>}

@@ -30,6 +30,8 @@ export interface Player {
   muted?: { until: number | null; reason: string };
   recovery?: { salt: string; hash: string };
   renamedAt?: number;
+  /** devices that receive push notifications */
+  pushSubs?: import('./push').PushSub[];
   /** today's and this week's contracts, and the claim streak */
   contracts?: import('./contracts').ContractBook;
   /** saved build orders, automation rules and what the rules did recently */
@@ -84,13 +86,15 @@ export interface PlayerStats {
   destroyed: number; plundered: number; harvested: number; ipmKills: number; moonsDestroyed: number;
   /** counters that contracts are measured against */
   buildingsDone: number; researchDone: number; shipsBuilt: number; spyReports: number; delivered: number;
+  /** Void invasions fought in (and won, with a real share of the damage), and total damage dealt to the Armada */
+  invasionsWon: number; voidDamage: number;
 }
 export interface Tribute { id: string; npc: string; want: Res; deadline: number; answered: false | 'paid' | 'refused' | 'ignored' }
 export interface HistoryPoint { t: number; points: number; rank: number; fleet: number }
 export type NpcStatus = 'inactive' | 'active' | 'aggressive';
 export interface NpcInfo { status: NpcStatus; seedPoints: number; faction: FactionId | null }
 
-export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0, destroyed: 0, plundered: 0, harvested: 0, ipmKills: 0, moonsDestroyed: 0, buildingsDone: 0, researchDone: 0, shipsBuilt: 0, spyReports: 0, delivered: 0 });
+export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0, destroyed: 0, plundered: 0, harvested: 0, ipmKills: 0, moonsDestroyed: 0, buildingsDone: 0, researchDone: 0, shipsBuilt: 0, spyReports: 0, delivered: 0, invasionsWon: 0, voidDamage: 0 });
 
 export function blankPlayer(id: string, username: string, now: number, extra: Partial<Player> = {}): Player {
   return {
@@ -116,6 +120,20 @@ export const isNpc = (p: Player | null | undefined): p is Player & { npc: NpcInf
 export interface BuildStep { kind: 'building' | 'tech'; id: string; level: number }
 export interface BuildOrder { id: string; name: string; steps: BuildStep[] }
 export interface AutoRules { energy: boolean; storage: boolean; defense: { on: boolean; unit: string; count: number; maxSharePct: number } }
+
+/** A Void Armada event: one shared boss fleet every commander fights together. */
+export interface Invasion {
+  number: number;
+  phase: 'announced' | 'active';
+  announcedAt: number; startsAt: number; endsAt: number;
+  rift: Coords;
+  /** weapons, shielding and armour of the Armada */
+  level: number;
+  startFleet: Fleet; fleet: Fleet; startValue: number;
+  nextEngageAt: number; round: number;
+  contrib: Record<string, { damage: number; lost: number; battles: number }>;
+}
+export interface InvasionRecord { number: number; result: 'won' | 'lost'; startedAt: number; endedAt: number; startValue: number; rounds: number; top: { name: string; damage: number }[]; topAlliance: { tag: string; damage: number } | null }
 
 export interface Planet {
   id: string;
@@ -247,6 +265,12 @@ export interface World {
   messages: Message[];
   chat: ChatMsg[];
   reports?: PlayerReport[];
+  /** the server's push identity (generated once) */
+  vapid?: import('./push').Vapid;
+  invasion?: Invasion;
+  invasionCount?: number;
+  nextInvasionAt?: number;
+  invasionHistory?: InvasionRecord[];
   /** which alliance holds which system ("g:s") */
   sectors?: Record<string, { allianceId: string; since: number }>;
   season?: import('./season').SeasonState;

@@ -7,7 +7,7 @@ import { useGame } from '../game';
 import { Card, Countdown, Page, coordStr, fmt, fmtDur } from '../ui';
 
 const MISSIONS: [Mission, string][] = [
-  ['attack', 'Attack'], ['destroy', 'Destroy moon (Deathstars)'], ['transport', 'Transport'], ['deploy', 'Deploy'], ['hold', 'Defend ally (hold)'],
+  ['attack', 'Attack'], ['invade', 'Join the invasion front (Void Armada)'], ['destroy', 'Destroy moon (Deathstars)'], ['transport', 'Transport'], ['deploy', 'Deploy'], ['hold', 'Defend ally (hold)'],
   ['espionage', 'Espionage'], ['colonize', 'Colonize'], ['recycle', 'Recycle debris'], ['expedition', 'Expedition'],
 ];
 
@@ -194,7 +194,7 @@ export function FleetPage() {
               </label>
               <label>Mission
                 <select value={mission} onChange={(e) => setMission(e.target.value as Mission)}>
-                  {MISSIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+                  {MISSIONS.filter(([id]) => id !== 'invade' || me.invasion?.phase === 'active').map(([id, label]) => <option key={id} value={id}>{label}</option>)}
                 </select>
               </label>
               <label>Speed

@@ -67,6 +67,8 @@ function allow(player: Player, category: Category, now: number): boolean {
   return true;
 }
 
+import { pushToPlayer } from './push';
+
 const TAGS: Record<Category, string> = { attacks: 'rotating_light', allies: 'handshake', tribute: 'moneybag', completions: 'white_check_mark', messages: 'envelope' };
 
 function deliver(channel: 'discord' | 'ntfy', url: string, category: Category, title: string, body: string): Promise<{ ok: boolean; status: number }> {
@@ -88,9 +90,11 @@ export function externalNotify(w: World, playerId: string, category: Category, t
   const p = w.players[playerId];
   if (!p || p.npc) return;
   const n = p.notify;
-  if (!n || (!n.discord && !n.ntfy) || !n.events[category]) return;
+  const hasPush = !!p.pushSubs?.length;
+  if (!n || (!n.discord && !n.ntfy && !hasPush) || !n.events[category]) return;
   if (n.onlyWhenAway && now - p.lastSeen < AWAY_MS) return;
   if (!allow(p, category, now)) return;
+  if (hasPush) void pushToPlayer(w, p, { title, body, tag: category }).catch(() => undefined);
   for (const channel of ['discord', 'ntfy'] as const) {
     const url = n[channel];
     if (!url) continue;

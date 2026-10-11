@@ -13,7 +13,7 @@ const TOPICS: Topic[] = [
         <p>You are a commander with one homeworld in a shared galaxy. You mine resources, research technology, build ships and defenses, expand to new planets, and trade blows - or favours - with other commanders and with computer-run empires. Everything keeps running while you are away, so the game is about planning: queue work, protect yourself, and check in.</p>
         <ul>
           <li><b>Overview</b> is your planet at a glance with the current <b>objective</b> that teaches the game step by step. <b>Empire</b> shows all your planets together. <b>Economy</b> explains your income.</li>
-          <li><b>Resources, Buildings, Research, Shipyard, Defense</b> run the selected planet (pick it in the top bar). <b>Automation</b> does routine work for you and <b>Contracts</b> pays you for the things you do anyway. <b>Fleet</b> and <b>Galaxy</b> are where ships move; <b>Territory</b> shows which alliance holds which system.</li>
+          <li><b>Resources, Buildings, Research, Shipyard, Defense</b> run the selected planet (pick it in the top bar). <b>Automation</b> does routine work for you and <b>Contracts</b> pays you for the things you do anyway. <b>Fleet</b> and <b>Galaxy</b> are where ships move; <b>Territory</b> shows which alliance holds which system and <b>Invasion</b> is where the whole server fights the Void.</li>
           <li><b>Alliance, Contacts, Messages, Chat, Standing</b> are the social side; <b>Command</b> holds your class, officers, factions and achievements; <b>Settings</b> holds your account, alerts and vacation mode.</li>
           <li>Click <b>any item name</b> (a building, technology, ship or defense, here or in a requirement list) to open its <b>details page</b>: what each level gives, what it costs, and what it unlocks. The <b>Simulator</b> predicts a battle before you fly it.</li>
         </ul>
@@ -198,6 +198,18 @@ const TOPICS: Topic[] = [
     ),
   },
   {
+    id: 'invasion', title: 'Void invasions',
+    body: (
+      <ul>
+        <li>Every few days a <b>Void Armada</b> opens a rift in deep space. Everyone is told hours ahead (a bar across the top and a message), with the rift's coordinates. When it opens the Armada stays for a day, then withdraws if it is not destroyed.</li>
+        <li>Send combat fleets with the mission <b>Join the invasion front</b> (on the Fleet page, or from the button on the Invasion page). A fleet that reaches the rift waits there. Every 30 minutes <b>every fleet at the rift fights the Armada as one force</b>, in a normal six-round battle with your technologies. Survivors stay for the next engagement until you <b>recall</b> them or the event ends; fleets that are wiped out are lost.</li>
+        <li><b>Coordinate.</b> The Armada is built to match the strength of the whole server (about 15% of everyone's combined points, in ships) and fights with higher technology each wave. A battle is decisive: a fleet clearly weaker than the Armada is destroyed while barely scratching it, so combine forces and arrive <i>before the same engagement</i>. The Invasion page shows the combined force at the front against the Armada, and the countdown to the next engagement. The Armada also rebuilds 5% of its starting fleet before each engagement, so a trickle of damage never wins.</li>
+        <li><b>Rewards.</b> Damage is credited to each commander by their share of the firepower at the front. If the Armada is destroyed, a pool of Command Credits (600 plus 100 per participant, up to 3,000) is split by damage share, everyone who fought gets at least 25, and anyone with a real share earns the <b>Void Slayer</b> achievement. If it withdraws, a third of that pool is shared as a consolation. Top commanders and alliances are listed, and earlier waves are kept on the Invasion page.</li>
+        <li>You receive one rolling report per round at the front (it replaces the previous one) with the round-by-round battle, and a final message with your damage and credits.</li>
+      </ul>
+    ),
+  },
+  {
     id: 'territory', title: 'Territory: holding systems',
     body: (
       <ul>
@@ -235,6 +247,7 @@ const TOPICS: Topic[] = [
       <ul>
         <li><b>Settings</b> hold your account: change password, rename (once every 7 days; your homeworld is renamed too) and delete. Make a <b>recovery key</b> - there is no email reset, and a key is the only way back in if you forget your password. Logins expire after 30 days without use, and <b>Log out</b> signs that device out.</li>
         <li><b>Alerts outside the game.</b> Add a Discord webhook or an ntfy topic (a free phone app) and choose what to be told about: attacks, raids and missiles aimed at you, allies under attack, tribute demands, finished construction, research, ships and objectives, and private messages. You can limit alerts to when you are away. Browser notifications, sound cues, the tab title (unread messages and incoming fleets) and a language choice are in Settings too.</li>
+        <li><b>Install the app and push notifications.</b> Settings offers <b>Install the app</b> (or your browser's Install / Add to Home Screen) so the game opens like an app, and <b>Turn on for this device</b> to get a notification on that phone or computer when you are attacked, an ally needs help, tribute is demanded or something finishes - even with the game closed. Each device is turned on separately; the same alert categories and the "only when I am away" switch apply as for Discord and ntfy. On an iPhone or iPad the game must first be added to the Home Screen (Share, then Add to Home Screen). Push needs a secure (https) connection.</li>
         <li><b>Vacation mode</b> freezes your empire and makes you untouchable while you are away: nothing is produced, built or researched and nobody can attack or spy on you. To start, your empire must be quiet (no fleets in flight, no queues, no hostile fleets heading for you, no allied fleets stationed with you). It lasts at least 48 hours and you cannot do anything until you end it.</li>
         <li>The <b>welcome tour</b> can be replayed from Settings.</li>
       </ul>
@@ -248,6 +261,7 @@ const ADMIN: Topic = {
     <ul>
       <li>The <b>Admin</b> page lists every commander. <b>Ban</b> and <b>Mute</b> take an optional number of hours (blank is permanent) and a reason the player sees. <b>Raid</b> sends a computer-empire raid, <b>Inspect</b> shows a commander's full state (without password data), <b>Remove</b> deletes them, and you can <b>gift resources</b> to a homeworld.</li>
       <li><b>Announcement</b> messages every commander and pops a notice for anyone online. <b>Player reports</b> sent from profiles queue up until you resolve them.</li>
+      <li><b>Void invasion:</b> start one by hand (you choose how many minutes until the rift opens) or end the current one early; waves otherwise come on their own schedule.</li>
       <li><b>Season:</b> end the current season (crowns the champion and fills the hall of fame), then reset the universe. Admins cannot be banned, muted or removed from this page.</li>
     </ul>
   ),

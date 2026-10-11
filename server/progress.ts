@@ -61,6 +61,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'missileer', name: 'Missileer', desc: 'Destroy defenses with an interplanetary strike.', reward: 150, test: (_w, p) => p.stats.ipmKills >= 1 },
   { id: 'moonbreaker', name: 'Moonbreaker', desc: 'Destroy a moon with your Deathstars.', reward: 300, test: (_w, p) => p.stats.moonsDestroyed >= 1 },
   { id: 'diplomat', name: 'Diplomat', desc: 'Join a faction.', reward: 200, test: (_w, p) => !!p.faction },
+  { id: 'voidslayer', name: 'Void Slayer', desc: 'Help destroy a Void Armada.', reward: 250, test: (_w, p) => p.stats.invasionsWon >= 1 },
   { id: 'topTen', name: 'Top Ten', desc: 'Reach the top 10 of the highscore.', reward: 500, test: (w, p) => rankOf(w, p.id) <= 10 },
 ];
 

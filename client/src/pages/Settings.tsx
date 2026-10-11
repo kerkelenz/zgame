@@ -4,6 +4,7 @@ import { BROWSER_NOTIFY_KEY, useGame } from '../game';
 import { Card, Countdown, Page, when } from '../ui';
 import { LANGS, getLang, setLang, t, useLang } from '../i18n';
 import { playCue, setSound, soundOn } from '../sound';
+import { canInstall, disablePush, enablePush, installApp, isIos, isStandalone, onInstallChange, pushSupported, thisDeviceSubscription } from '../pwa';
 
 function Vacation() {
   const { me, act, now } = useGame();
@@ -107,6 +108,51 @@ function Alerts() {
   );
 }
 
+function AppAndPush() {
+  const { act, toast } = useGame();
+  const [info, setInfo] = useState<any>(null);
+  const [here, setHere] = useState<string | null>(null);
+  const [installable, setInstallable] = useState(canInstall());
+  const [busy, setBusy] = useState(false);
+  const supported = pushSupported();
+  const refresh = async () => { setInfo(await get('/push')); setHere((await thisDeviceSubscription())?.endpoint ?? null); };
+  useEffect(() => { void refresh().catch(() => undefined); return onInstallChange(() => setInstallable(canInstall())); }, []);
+  const run = async (fn: () => Promise<unknown>, ok: string) => {
+    setBusy(true);
+    try { await fn(); toast(ok); await refresh(); } catch (e) { toast((e as Error).message, 'error'); } finally { setBusy(false); }
+  };
+  const thisOn = !!here && !!info?.devices.some((d: any) => d.full === here);
+  return (
+    <Card title="Install the app and push notifications">
+      <div className="settings-section">
+        <p className="small muted">Add Stellar Frontier to your home screen or desktop like an app, and get a notification on that device when you are attacked, an ally needs help, tribute is demanded or something finishes - even with the game closed. The categories and the "only when I am away" option under <b>Alerts</b> apply here too.</p>
+        {isStandalone() ? <p className="good small">You are using the installed app.</p>
+          : installable ? <div className="row"><button className="primary" onClick={() => void installApp()}>Install the app</button></div>
+          : isIos() ? <p className="small">On iPhone or iPad: open the Share menu in Safari and choose <b>Add to Home Screen</b>, then open the game from the new icon - iOS only allows push notifications for installed apps.</p>
+          : <p className="small muted">Your browser's menu offers <b>Install</b> or <b>Add to home screen</b> once the page has been open for a moment.</p>}
+        {!supported ? <p className="bad small">This browser cannot receive push notifications{isIos() && !isStandalone() ? ' until the game is added to the home screen' : ''}.</p> : (
+          <>
+            <div className="row wrap">
+              {thisOn
+                ? <button disabled={busy} onClick={() => void run(disablePush, 'Push turned off on this device')}>Turn off on this device</button>
+                : <button className="primary" disabled={busy} onClick={() => void run(enablePush, 'Push turned on for this device')}>Turn on for this device</button>}
+              <button disabled={busy || !info?.devices.length} onClick={() => void act(() => post('/push/test'), 'Test sent - it should arrive in a moment')}>Send a test</button>
+            </div>
+            {info?.devices.length > 0 && (
+              <ul className="notes small">
+                {info.devices.map((d: any) => (
+                  <li key={d.full}>{d.label}{d.full === here ? ' (this device)' : ''} <span className="muted">since {when(d.createdAt)}</span>{' '}
+                    <button className="link" onClick={() => void run(async () => { await post('/push/unsubscribe', { endpoint: d.full }); if (d.full === here) await disablePush().catch(() => undefined); }, 'Device removed')}>remove</button></li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 function Interface() {
   useLang();
   const { setPage } = useGame();
@@ -168,6 +214,7 @@ export function Settings() {
     <Page title="Settings">
       <Interface />
       <Account />
+      <AppAndPush />
       <Alerts />
       <Vacation />
     </Page>

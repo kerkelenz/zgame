@@ -74,7 +74,12 @@ Everything in the README table can be set as an environment variable. The ones t
 | `OGAME_TRUST_PROXY` | needed behind any proxy, otherwise everyone shares one rate limit |
 | `OGAME_DB` | SQLite persistence (Docker sets it); without it the server writes `world.json` |
 | `OGAME_SEASON_DAYS`, `OGAME_VICTORY_POINTS` | seasons and an early victory score |
+| `OGAME_PUSH_SUBJECT` | a contact (`mailto:you@example.com`) that push services see; set a real one so they can reach you about abuse |
 | `OGAME_BACKUP_KEEP`, `OGAME_BACKUP_DIR` | how many snapshots to keep and where |
+
+## Installable app and push notifications
+
+Browsers only allow service workers and push on **https** (or localhost), so both need the HTTPS setup above. Players install the game from the browser menu or Settings, and turn on notifications per device in Settings. The server keeps its push identity (VAPID keys) in the save file, so it survives restarts and backups; if you ever delete it, devices simply have to turn notifications on again. Push services (Google, Mozilla, Apple, Microsoft) deliver the messages; your server only needs outbound https access to them.
 
 ## What is protected, and what is not
 

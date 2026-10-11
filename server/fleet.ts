@@ -73,8 +73,13 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   const to = req.to;
   const toMoon = !!req.toMoon;
   const expedition = mission === 'expedition';
-  if (!inBounds(w, to, expedition)) throw new GameError('Invalid destination');
-  if (expedition !== (to.p === w.config.positions + 1)) throw new GameError(expedition ? 'Expeditions must target deep space (position ' + (w.config.positions + 1) + ')' : 'Invalid destination');
+  const invade = mission === 'invade';
+  if (!inBounds(w, to, expedition || invade)) throw new GameError('Invalid destination');
+  if (invade) {
+    const inv = w.invasion;
+    if (!inv || inv.phase !== 'active') throw new GameError('There is no invasion to fight right now');
+    if (!sameCoords(to, inv.rift)) throw new GameError(`The Void rift is at ${fmt(inv.rift)}`);
+  } else if (expedition !== (to.p === w.config.positions + 1)) throw new GameError(expedition ? 'Expeditions must target deep space (position ' + (w.config.positions + 1) + ')' : 'Invalid destination');
   if (sameCoords(to, planet.coords) && toMoon === !!planet.isMoon) throw new GameError('You are already there');
 
   const slots = activeSlots(w, player);
@@ -90,6 +95,9 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   let joinLead: Movement | undefined;
 
   switch (mission) {
+    case 'invade':
+      if (!SHIP_IDS.some((id) => has(id) && UNITS[id].attack > 1)) throw new GameError('Your fleet has no combat ships');
+      break;
     case 'attack': {
       if (!target || !targetOwner) throw new GameError('There is no planet there');
       if (targetOwner.id === player.id) throw new GameError('Cannot attack yourself');
@@ -156,7 +164,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     crystal: Math.max(0, Math.floor(req.cargo?.crystal || 0)),
     deuterium: Math.max(0, Math.floor(req.cargo?.deuterium || 0)),
   };
-  if (mission === 'attack' || mission === 'espionage') { cargo.metal = cargo.crystal = cargo.deuterium = 0; }
+  if (mission === 'attack' || mission === 'espionage' || mission === 'invade' || mission === 'destroy') { cargo.metal = cargo.crystal = cargo.deuterium = 0; }
   const cap = cargoFor(player, ships);
   if (totalRes(cargo) > cap) throw new GameError(`Cargo exceeds capacity (${num(cap)})`);
   const need = addRes(cargo, { metal: 0, crystal: 0, deuterium: plan.fuel });
@@ -314,6 +322,19 @@ function arrive(w: World, m: Movement, at: number) {
       bus.push({ to: target.ownerId, type: 'refresh' });
       return;
     }
+    case 'invade': {
+      const inv = w.invasion;
+      if (!inv || inv.phase !== 'active') {
+        notifyPlayer(w, m.ownerId!, 'combat', 'The Void is gone', 'The invasion ended before your fleet arrived. It is returning.');
+        sendHome(m, at);
+        return;
+      }
+      m.phase = 'holding';
+      m.holdUntil = inv.endsAt;
+      notifyPlayer(w, m.ownerId!, 'combat', 'Fleet at the front', `${fleetCount(m.ships)} ships joined the fight at the Void rift ${fmt(m.to)}. They engage the Armada together with every other fleet there, every ${w.config.invasionEngageMinutes} minutes, until you recall them.`);
+      bus.push({ to: m.ownerId!, type: 'refresh' });
+      return;
+    }
     case 'missile': return resolveMissiles(w, m, at);
     case 'colonize': return resolveColonize(w, m, at);
     case 'recycle': return resolveRecycle(w, m, at);
@@ -402,7 +423,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
 
 // ---------------------------------------------------------------- combat
 
-function combatant(w: World, player: Player | null, name: string, fleet: Fleet, defenses?: Defenses): Combatant {
+export function combatant(w: World, player: Player | null, name: string, fleet: Fleet, defenses?: Defenses): Combatant {
   return {
     owner: player?.id ?? null, name,
     weapons: lvl(player?.techs, 'weapons'), shielding: lvl(player?.techs, 'shielding'), armour: lvl(player?.techs, 'armour'),

@@ -213,3 +213,5 @@ label.row { flex-direction: row; align-items: center; gap: 6px; color: var(--tex
 .sector.contested::after { content: '⚔'; position: absolute; top: -5px; right: -3px; font-size: 11px; }
 .sector.mine { box-shadow: 0 0 0 2px var(--accent); }
 .sector-banner { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.invbar { background: #3d1f33; }

@@ -42,6 +42,17 @@ export interface UniverseConfig {
   seasonResetHours: number;
   /** the first commander to reach this many points wins early (0 = disabled) */
   victoryPoints: number;
+  /** hours between Void invasions (0 = none) */
+  invasionIntervalHours: number;
+  /** hours of warning before an invasion arrives, and how long it lasts */
+  invasionAnnounceHours: number;
+  invasionDurationHours: number;
+  /** minutes between engagements at the front */
+  invasionEngageMinutes: number;
+  /** boss strength as a share of every commander's combined points (as resource value) */
+  invasionStrength: number;
+  /** no invasions until this many commanders have started playing */
+  invasionMinPlayers: number;
   /** registration closes at this many commanders */
   maxPlayers: number;
   startResources: { metal: number; crystal: number; deuterium: number };
@@ -65,6 +76,12 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   raidStrength: 1,
   wreckMinValue: 100_000,
   wreckHours: 72,
+  invasionIntervalHours: 72,
+  invasionAnnounceHours: 12,
+  invasionDurationHours: 24,
+  invasionEngageMinutes: 30,
+  invasionStrength: 0.15,
+  invasionMinPlayers: 2,
   seasonDays: 0,
   seasonResetHours: 24,
   victoryPoints: 0,

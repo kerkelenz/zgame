@@ -5,6 +5,8 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-d', date: '2026-10-10', title: 'Automation and more',
     items: [
+      'Install the game as an app and get push notifications on your phone or desktop (Settings), using the same alert categories as Discord and ntfy.',
+      'Void invasions: a shared boss fleet opens a rift in deep space; every fleet at the front fights together and rewards follow the damage each commander does.',
       'Territory: alliances hold systems by out-weighing rivals there, earn a production bonus for every member, and fight over a sector map.',
       'Contracts: three daily and two weekly jobs that pay Command Credits, with a daily streak and an all-dailies bonus.',
       'Automation page: build orders that raise buildings and research in sequence on a planet (with automatic prerequisites), plus rules that keep energy up, avoid full storage and build defenses when a fleet is heading for you.',

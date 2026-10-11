@@ -6,7 +6,10 @@ import { getToken } from './api';
 import { GameProvider } from './game';
 import { Login } from './pages/Login';
 import { SharedReport } from './pages/SharedReport';
+import { registerServiceWorker } from './pwa';
 import './styles.css';
+
+registerServiceWorker();
 
 function Root() {
   const shared = new URLSearchParams(location.search).get('report');

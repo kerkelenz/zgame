@@ -23,7 +23,9 @@ import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { buyItem, shopView } from './shop';
 import * as AUTO from './automation';
+import { addSubscription, pushToPlayer, pushView, removeSubscription } from './push';
 import { sectorOf, sectorsView, territoryCount } from './sectors';
+import { announceInvasion, finish as finishInvasion, invasionView } from './invasion';
 import { claimContract, contractsView } from './contracts';
 import { recoverAccount } from './account';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
@@ -76,7 +78,9 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   const wrap = (fn: (req: Request, res: Response) => unknown) => (req: Request, res: Response, next: NextFunction) => {
     try {
       const out = fn(req, res);
-      if (out !== undefined && !res.headersSent) res.json(out);
+      if (out && typeof (out as Promise<unknown>).then === 'function') {
+        (out as Promise<unknown>).then((v) => { if (v !== undefined && !res.headersSent) res.json(v); }, next);
+      } else if (out !== undefined && !res.headersSent) res.json(out);
     } catch (e) { next(e); }
   };
   const auth = (req: Request, _res: Response, next: NextFunction) => {
@@ -216,6 +220,32 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     return { ...r, view: contractsView(w, req.player!, now()), credits_total: Math.floor(req.player!.credits) };
   }));
   A.get('/sectors', wrap((req) => sectorsView(w, req.player!.allianceId)));
+  A.get('/invasion', wrap((req) => invasionView(w, req.player!.id, now())));
+  A.post('/admin/invasion/start', wrap((req) => {
+    ACC.requireAdmin(req.player!);
+    const mins = req.body.delayMinutes === undefined ? 10 : Math.max(0, Math.min(72 * 60, Number(req.body.delayMinutes) || 0));
+    announceInvasion(w, now(), mins * 60_000);
+    return invasionView(w, req.player!.id, now());
+  }));
+  A.post('/admin/invasion/end', wrap((req) => {
+    ACC.requireAdmin(req.player!);
+    if (!w.invasion) throw new GameError('There is no invasion');
+    finishInvasion(w, now(), 'lost');
+    return invasionView(w, req.player!.id, now());
+  }));
+  A.get('/push', wrap((req) => pushView(w, req.player!)));
+  A.post('/push/subscribe', wrap((req) => {
+    if (limited('pushsub:' + req.player!.id, 10, 60_000)) throw new GameError('Slow down', 429);
+    addSubscription(req.player!, req.body.subscription, str(req.body.label, 60), now());
+    return pushView(w, req.player!);
+  }));
+  A.post('/push/unsubscribe', wrap((req) => { removeSubscription(req.player!, str(req.body.endpoint, 600)); return pushView(w, req.player!); }));
+  A.post('/push/test', wrap(async (req) => {
+    const p = req.player!;
+    if (limited('pushtest:' + p.id, 5, 60_000)) throw new GameError('Slow down', 429);
+    if (!p.pushSubs?.length) throw new GameError('No device is subscribed yet');
+    return pushToPlayer(w, p, { title: 'Stellar Frontier', body: 'Push notifications work on this device.', tag: 'test' });
+  }));
   A.get('/spy-archive', wrap((req) => SOC.spyArchiveView(w, req.player!)));
   A.post('/report', wrap((req) => { SOC.reportPlayer(w, req.player!, str(req.body.id), str(req.body.reason, 300), now()); return { ok: true }; }));
 
