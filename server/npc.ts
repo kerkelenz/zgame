@@ -35,6 +35,22 @@ export function fleetValue(f: Fleet): number {
   return t;
 }
 
+/**
+ * How hard raids hit. A raid is sized from what stands on the attacked planet, not from how much a commander has invested overall (most of
+ * which sits in mines and research and cannot fight): a good defense beats it, a neglected one does not. Points only set a small floor so a
+ * defenseless planet still gets visitors. New accounts are raided gently and the strength rises to full over their first week.
+ */
+export const RAID = {
+  /** the raid is this multiple of the value defending the planet (ships and defenses) */
+  vsDefense: [0.6, 1.3] as const,
+  /** the floor, as a share of everything invested (points x 1000), with computer empires and with generic raiders */
+  floorEmpire: [0.03, 0.07] as const,
+  floorGeneric: [0.02, 0.05] as const,
+  /** account age: no more than this share of full strength on day one, rising linearly to full at `fullAfterDays` */
+  youngShare: 0.3, fullAfterDays: 7,
+};
+export const raidRamp = (ageMs: number) => Math.min(1, RAID.youngShare + (1 - RAID.youngShare) * Math.max(0, ageMs / 86_400_000 - 1) / (RAID.fullAfterDays - 1));
+
 export interface RaidOptions { targetPlayerId?: string; sourceNpcId?: string }
 
 const worldsOf = (p: Player, w: World) => p.planetIds.filter((id) => !w.planets[id]?.isMoon);
@@ -74,12 +90,12 @@ export function spawnRaid(w: World, now: number, rng: Rng = Math.random, opts: R
     // scaled to whatever actually defends the target, so raids stay a real threat as defenses grow
     const unit = (id: string) => UNITS[id as keyof typeof UNITS];
     const defVal = [planet.fleet, planet.defenses].reduce((s, bucket) => s + Object.entries(bucket).reduce((a, [id, n]) => a + (unit(id).missile ? 0 : totalRes(unit(id).cost) * (n || 0)), 0), 0);
-    const budget = Math.max(pts * 1000 * (0.12 + rng() * 0.16), defVal * (1.1 + rng() * 1.3)) * w.config.raidStrength;
+    const budget = Math.max(pts * 1000 * (RAID.floorEmpire[0] + rng() * (RAID.floorEmpire[1] - RAID.floorEmpire[0])), defVal * (RAID.vsDefense[0] + rng() * (RAID.vsDefense[1] - RAID.vsDefense[0]))) * w.config.raidStrength * raidRamp(now - target.createdAt);
     ships = buyUnits({ metal: budget * 0.6, crystal: budget * 0.3, deuterium: budget * 0.1 }, RAID_MIX[Math.min(3, tierOf(pts * 2))]) as Fleet;
     const lootable = totalRes(planet.resources) / 2;
     ships.largeCargo = (ships.largeCargo || 0) + Math.ceil(lootable / 25000);
   } else {
-    const budget = Math.max(6000, pts * 1000 * (0.06 + rng() * 0.1)) * w.config.raidStrength;
+    const budget = Math.max(6000, pts * 1000 * (RAID.floorGeneric[0] + rng() * (RAID.floorGeneric[1] - RAID.floorGeneric[0]))) * w.config.raidStrength * raidRamp(now - target.createdAt);
     ships = buildNpcFleet(budget, rng);
   }
   if (!Object.keys(ships).length) return null;

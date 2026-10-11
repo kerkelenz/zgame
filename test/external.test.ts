@@ -106,6 +106,8 @@ describe('what triggers an alert', () => {
     AL.createAlliance(w, alice, 'TEAM', 'The Team');
     AL.joinAlliance(w, bob, alice.allianceId!);
     bob.notify.ntfy = NTFY; bob.lastSeen = 0;
+    bob.createdAt = T0 - 30 * 86_400_000;                           // an established account: raids at full strength
+    w.planets[bob.planetIds[0]].defenses = { rocketLauncher: 200 };
     const ap = w.planets[alice.planetIds[0]]; ap.fleet = { battleship: 100 };
     spawnRaid(w, T0, () => 0, { targetPlayerId: bob.id });
     await flush();

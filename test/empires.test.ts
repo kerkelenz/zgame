@@ -170,6 +170,7 @@ describe('raids from empires', () => {
 
   it('grow with the target\'s defenses and the configured strength', () => {
     prepare();
+    alice.createdAt = T0 - 30 * 86_400_000;                         // an established account: raids at full strength
     addEmpire('Warlord', 'aggressive', { g: 1, s: 9, p: 3 }, { points: 3000 });
     const size = (m: any) => Object.values(m.ships as Record<string, number>).reduce((a, b) => a + b, 0);
     ap.defenses = {};

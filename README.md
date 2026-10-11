@@ -34,7 +34,7 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `ZGAME_PROTECTION_POINTS` | 200 | players under this can't attack or be attacked |
 | `ZGAME_RAID_INTERVAL_MIN` | 45 | minutes between NPC raid waves (0 = off) |
 | `ZGAME_NPC_DENSITY` | 0.3 | share of free slots settled by computer empires when the universe is created (0 = none; an existing save without empires gets them on next start) |
-| `ZGAME_RAID_STRENGTH` | 1 | size of raiding fleets: 0.6 relaxed, 1 standard, 1.35 brutal |
+| `ZGAME_RAID_STRENGTH` | 1 | size of raiding fleets: 0.6 relaxed, 1 standard, 1.35 brutal. A raid is 0.6-1.3x the value defending the target planet (with a floor of 3-7% of the commander's invested points), times this setting, and is scaled down for accounts younger than a week |
 | `ZGAME_VACATION_MIN_HOURS` | 48 | minimum vacation stay |
 | `ZGAME_INVASION_INTERVAL_HOURS` | 72 | hours between Void invasions (0 = none); also `ZGAME_INVASION_ANNOUNCE_HOURS` (12), `ZGAME_INVASION_DURATION_HOURS` (24), `ZGAME_INVASION_ENGAGE_MINUTES` (30), `ZGAME_INVASION_STRENGTH` (0.35), `ZGAME_INVASION_MIN_PLAYERS` (2) |
 | `ZGAME_WAR_HOURS` | 48 | length of an alliance war in hours (0 = wars switched off) |

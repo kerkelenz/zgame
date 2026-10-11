@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-k', date: '2026-10-12', title: 'Rules and tidy-ups',
     items: [
+      'Raids are much weaker: a raid is sized from what defends the planet it targets (0.6 to 1.3 times its value) instead of from your total points, and new accounts are raided gently, rising to full strength over the first week.',
       'Every building, research, ship and defense has a short explanation on its details page, the change at the next level is coloured (green good, red costs), and ships have a Special features box with rapid fire and engine changes such as the switch of the Bomber to hyperspace drive at level 8.',
       'Battle reports in your messages show the result only, with a Full battle report button that opens a window with every round: shots, damage, what the enemy shields absorbed, what reached hulls and what was destroyed. The shared link shows the same full report.',
       'Battle reports say whether a moon formed and what the chance was; if no moon formed it shows the chance the debris field gave.',
