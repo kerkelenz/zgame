@@ -5,7 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-f', date: '2026-10-11', title: 'Alliance wars',
     items: [
-      'A Tech tree page: a progression map in which every building and research level is its own node, with arrows joining each item to the levels it needs (point at a node to light its whole chain), plus a path-to-get-there list; the map pans by dragging (mouse or touch) and zooms with the wheel or a pinch, plus a Production and effects view of what boosts what.',
+      'A Tech tree page: a progression map in which every building and research level is its own node, with arrows joining each item to the levels it needs (point at a node to light its whole chain); the map is a live physics simulation you can drag nodes around in, plus a path-to-get-there list; the map pans by dragging (mouse or touch) and zooms with the wheel or a pinch, plus a Production and effects view of what boosts what.',
       'Wars are now scored contests: 48 hours, points for the value of enemy units your side destroys and for every system you hold. The higher score wins.',
       'The winner earns a share of the losses of the enemy for the alliance bank and Command Credits for the fighters; conceding ends a war at once.',
       'The release notes page is now in the menu (under More), always one click away.',

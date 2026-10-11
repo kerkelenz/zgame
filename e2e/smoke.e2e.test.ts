@@ -138,15 +138,37 @@ describe('using the game', () => {
     const box = (await page.locator('.graphbox').boundingBox())!;
     expect(await page.locator('.graphbox').evaluate((el) => getComputedStyle(el).overflow)).toBe('hidden');
     const before = await tf();
-    await page.mouse.move(box.x + box.width / 2, box.y + 60);
+    const empty = await page.locator('.graphbox').evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      for (let y = r.bottom - 10; y > r.top + 10; y -= 14) for (let x = r.left + 10; x < r.right - 10; x += 14) {
+        const hit = document.elementFromPoint(x, y);
+        if (hit === el || hit?.tagName.toLowerCase() === 'svg') return { x, y };
+      }
+      return null;
+    });
+    expect(empty, 'an empty spot to grab').toBeTruthy();
+    await page.mouse.move(empty!.x, empty!.y);
     await page.mouse.down();
-    await page.mouse.move(box.x + box.width / 2 + 40, box.y + 130, { steps: 6 });
+    await page.mouse.move(empty!.x + 40, empty!.y - 30, { steps: 6 });
     await page.mouse.up();
     expect(await tf()).not.toBe(before);
     expect(await page.locator('.gnode.sel').count()).toBe(1);               // a drag does not change the selection
     const panned = await tf();
     await page.mouse.wheel(0, -300);
     expect(await tf()).not.toBe(panned);
+    // the map is a physics simulation: dragging a node moves it and pulls its neighbours, and it settles again
+    const at = (key: string) => page.locator(`[data-key="${key}"]`).evaluate((el) => (el as HTMLElement).style.transform);
+    await page.getByRole('button', { name: 'Clear' }).click();
+    const nb = (await page.locator('[data-key="energy@2"]').boundingBox())!;
+    const neighbour = await at('energy@3');
+    await page.mouse.move(nb.x + nb.width / 2, nb.y + nb.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(nb.x + nb.width / 2 + 10, nb.y + nb.height / 2 + 150, { steps: 8 });
+    await page.waitForTimeout(300);
+    await page.mouse.up();
+    expect(await at('energy@2')).not.toMatch(/^translate\(NaN/);
+    expect(await at('energy@3')).not.toBe(neighbour);                         // the chain followed
+    await expect.poll(() => page.getByTestId('physics-state').innerText(), { timeout: 15_000 }).toBe('settled');
     await page.getByRole('button', { name: 'Production and effects' }).click();
     expect(await page.locator('main').innerText()).toMatch(/Raised by/);
     noErrors();

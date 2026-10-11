@@ -260,7 +260,7 @@ ol.steps { margin: 4px 0; padding-left: 20px; } ol.steps li { margin: 2px 0; }
 
 .graphbox:active { cursor: grabbing; } .graph.glide { transition: transform .35s ease; } .gcard { touch-action: none; }
 
-.gnode { position: absolute; box-sizing: border-box; z-index: 1; padding: 0 6px; font-size: 11.5px; line-height: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; background: #121a2b; border: 1px solid var(--line); border-left-width: 3px; border-radius: 5px; }
+.gnode { position: absolute; left: 0; top: 0; will-change: transform; box-sizing: border-box; z-index: 1; padding: 0 6px; font-size: 11.5px; line-height: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; background: #121a2b; border: 1px solid var(--line); border-left-width: 3px; border-radius: 5px; }
 .gnode b { display: inline-block; min-width: 13px; color: var(--accent); }
 .gnode.building { border-left-color: #d9a441; } .gnode.tech { border-left-color: #a88bff; } .gnode.ship { border-left-color: #55b7ff; } .gnode.defense { border-left-color: #ff6b8a; }
 .gnode.done { background: rgba(60, 160, 100, .28); border-color: #2e5a3c; }
@@ -270,3 +270,5 @@ ol.steps { margin: 4px 0; padding-left: 20px; } ol.steps li { margin: 2px 0; }
 .gnode.dim { opacity: .22; } .gnode.anc { background: #2a2314; opacity: 1; } .gnode.desc { background: #12263a; opacity: 1; }
 .gnode.sel { outline: 2px solid var(--accent); z-index: 2; opacity: 1; }
 .bedge.level path { stroke-width: 1.2; opacity: .45; }
+
+.graph .edges { overflow: visible; position: absolute; left: 0; top: 0; }
