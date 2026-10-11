@@ -181,8 +181,11 @@ export function usedFields(planet: Planet): number {
   return n;
 }
 
-function pay(planet: Planet, cost: Res) {
-  if (!canAfford(planet.resources, cost)) throw new GameError('Not enough resources');
+function pay(planet: Planet, cost: Res, what = '') {
+  if (!canAfford(planet.resources, cost)) {
+    const short = (['metal', 'crystal', 'deuterium'] as const).filter((k) => planet.resources[k] < cost[k]).map((k) => `${Math.ceil(cost[k] - planet.resources[k]).toLocaleString('en-US')} ${resName(k)}`);
+    throw new GameError(`Not enough resources${what ? ` for ${what}` : ''} - short by ${short.join(', ')}`);
+  }
   planet.resources = subRes(planet.resources, cost);
 }
 
@@ -206,7 +209,7 @@ export function queueBuilding(w: World, player: Player, planet: Planet, id: Buil
   if (id !== 'terraformer' && usedFields(planet) + backlog.length >= maxFields(planet)) throw new GameError('No free fields left on this planet');
   const level = lvl(planet.buildings, id) + 1 + (planet.buildQueue?.id === id ? 1 : 0) + backlog.filter((b) => b === id).length;
   const cost = buildingCost(id, level);
-  pay(planet, cost); // reserved now, so a queued job can never fail for lack of resources later
+  pay(planet, cost, `${BUILDINGS[id].name} level ${level}`); // reserved now, so a queued job can never fail for lack of resources later
   const paid = (planet.buildPaid ||= []);
   while (paid.length < backlog.length) paid.push({ metal: 0, crystal: 0, deuterium: 0 }); // legacy entries carry no reservation
   backlog.push(id);
@@ -247,7 +250,7 @@ function beginBuilding(w: World, player: Player, planet: Planet, id: BuildingId,
   if (id === 'researchLab' && player.research) throw new GameError('Cannot upgrade the lab while research is running');
   const level = lvl(planet.buildings, id) + 1;
   const cost = prepaid && (prepaid.metal || prepaid.crystal || prepaid.deuterium) ? prepaid : buildingCost(id, level);
-  if (cost !== prepaid) pay(planet, cost);
+  if (cost !== prepaid) pay(planet, cost, `${def.name} level ${level}`);
   const secs = buildingTime(cost, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.constructionBoost, timeFactor(player));
   planet.buildQueue = { id, level, start: now, end: now + secs * 1000, cost };
 }
@@ -275,8 +278,9 @@ export function queueResearch(w: World, player: Player, planet: Planet, id: Tech
   if (!player.research) return beginResearch(w, player, planet, id, now);
   const backlog = (player.researchBacklog ||= []);
   if (backlog.length >= MAX_BACKLOG) throw new GameError(`Queue is full (${MAX_BACKLOG})`);
-  const cost = techCost(id, lvl(player.techs, id) + 1 + (player.research?.id === id ? 1 : 0) + backlog.filter((b) => b.id === id).length);
-  pay(planet, cost);
+  const lv = lvl(player.techs, id) + 1 + (player.research?.id === id ? 1 : 0) + backlog.filter((b) => b.id === id).length;
+  const cost = techCost(id, lv);
+  pay(planet, cost, `${TECHS[id].name} level ${lv}`);
   backlog.push({ id, planetId: planet.id, paid: cost });
 }
 
@@ -300,7 +304,7 @@ function beginResearch(w: World, player: Player, planet: Planet, id: TechId, now
     if (planetProduction(w, planet).energyProduced < need) throw new GameError(`Needs ${Math.round(need).toLocaleString('en-US')} energy production on this planet`);
   }
   const cost = prepaid ?? techCost(id, level);
-  if (!prepaid) pay(planet, cost);
+  if (!prepaid) pay(planet, cost, `${def.name} level ${level}`);
   const secs = researchTime(cost, lvl(planet.buildings, 'researchLab'), w.config.economySpeed * w.config.researchBoost, allianceBonuses(w, player).research, timeFactor(player) * researchFactor(player));
   player.research = { id, level, start: now, end: now + secs * 1000, cost, planetId: planet.id };
 }

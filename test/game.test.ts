@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
+import { buildingCost } from '../shared/formulas';
 import { abandonPlanet, queueBuilding, queueResearch, unqueueBuilding, unqueueResearch, moveQueuedBuilding, moveQueuedResearch, cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
 import { launchMissiles, processMovements, recallFleet, sendFleet } from '../server/fleet';
 import { createPlanet, playerPoints } from '../server/galaxy';
@@ -608,6 +609,19 @@ describe('queues', () => {
     expect(ap.buildBacklog).toHaveLength(3);
     expect(ap.resources.metal).toBeGreaterThan(before); // the reservation comes back
     expect(() => unqueueBuilding(ap, 9)).toThrow();
+  });
+
+  it('queueing what is already being upgraded is priced at the later level, and the error says what is missing', () => {
+    ap.buildings = { roboticsFactory: 4, metalMine: 5 };
+    const lvl6 = buildingCost('metalMine', 6), lvl7 = buildingCost('metalMine', 7);
+    ap.resources = { metal: lvl6.metal + lvl7.metal - 1, crystal: 1e6, deuterium: 1e6 };
+    queueBuilding(w, alice, ap, 'metalMine', T0);                 // runs: level 6
+    expect(ap.buildQueue!.level).toBe(6);
+    expect(() => queueBuilding(w, alice, ap, 'metalMine', T0)).toThrow(/Metal Mine level 7 - short by 1 metal/);
+    ap.resources.metal += 1;
+    queueBuilding(w, alice, ap, 'metalMine', T0);                 // waits: level 7, paid now
+    expect(ap.buildPaid![0]).toEqual(lvl7);
+    expect(ap.resources.metal).toBe(0);
   });
 
   it('queued entries can be reordered and keep their reservations', () => {

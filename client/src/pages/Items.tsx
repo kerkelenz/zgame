@@ -87,15 +87,18 @@ export function Items({ kind }: { kind: Kind }) {
       <div className="items">
         {kind === 'building' && BUILDING_IDS.filter((id) => buildingAllowed(id, !!planet.isMoon)).map((id) => {
           const d = BUILDINGS[id];
-          const level = lvl(planet.buildings, id);
+          const built = lvl(planet.buildings, id);
+          // an upgrade already running or waiting in the queue moves the next level up
+          const pending = (buildQ?.id === id ? 1 : 0) + bBacklog.filter((x) => x === id).length;
+          const level = built + pending;
           const cost = buildingCost(id, level + 1);
           const secs = buildingTime(cost, robotics, nanite, cfg.economySpeed * cfg.constructionBoost, timeFactor);
           const missing = unmet(d.requires, planet.buildings, techs);
           const ok = !missing.length && (!buildQ || bBacklog.length < MAXQ) && canAfford(have, cost) && planet.usedFields + bBacklog.length < planet.fields;
           return (
-            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{level}</span></>}>
+            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{built}{pending > 0 && <span className="muted"> +{pending}</span>}</span></>}>
               <div className="cardtop"><img className="icon" src={Art.icon('building', id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
-              <div>Next: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
+              <div>{pending > 0 ? `Level ${level + 1}` : 'Next'}: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
               {missing.length > 0 && <ReqList reqs={missing} />}
               <button className="primary" disabled={!ok} onClick={() => void act(() => post(`/planets/${planet.id}/build`, { id }), `${d.name} upgrade started`)}>
                 {buildQ ? 'Add to queue' : level === 0 ? 'Build' : `Upgrade to ${level + 1}`}
@@ -106,14 +109,16 @@ export function Items({ kind }: { kind: Kind }) {
 
         {kind === 'tech' && TECH_IDS.map((id) => {
           const d = TECHS[id];
-          const level = lvl(techs, id);
+          const done = lvl(techs, id);
+          const pendingT = (researchQ?.id === id ? 1 : 0) + rBacklog.filter((x) => x.id === id).length;
+          const level = done + pendingT;
           const cost = techCost(id, level + 1);
           const secs = researchTime(cost, lab, cfg.economySpeed * cfg.researchBoost, me.allianceBonuses.research, timeFactor * researchFactor);
           const missing = unmet(d.requires, planet.buildings, techs);
           const energyOk = !d.energyReq || planet.production.energyProduced >= d.energyReq * 3 ** level;
           const ok = !missing.length && energyOk && (!researchQ || rBacklog.length < MAXQ) && canAfford(have, cost);
           return (
-            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{level}</span></>}>
+            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{done}{pendingT > 0 && <span className="muted"> +{pendingT}</span>}</span></>}>
               <div className="cardtop"><img className="icon" src={Art.icon('tech', id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
               <div>Next: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
               {d.energyReq && <div className="small" style={{ color: planet.production.energyProduced >= d.energyReq * 3 ** level ? 'var(--good)' : 'var(--bad)' }}>Needs {fmt(d.energyReq * 3 ** level)} energy production on this planet (this one makes {fmt(planet.production.energyProduced)})</div>}

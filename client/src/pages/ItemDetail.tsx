@@ -113,7 +113,12 @@ export function ItemDetail() {
     const to = Math.min(80, Math.max(cur + more, 10));
     const table = isB ? buildingTable(id as BuildingId, ctx, from, to) : techTable(id as TechId, ctx, from, to);
     const prevEffects = from <= 1 ? (isB ? buildingEffectsAt(id as BuildingId, 0, ctx) : techEffectsAt(id as TechId, 0, ctx)) : (isB ? buildingEffectsAt(id as BuildingId, from - 1, ctx) : techEffectsAt(id as TechId, from - 1, ctx));
-    const next = table.rows.find((r) => r.level === cur + 1) ?? (isB ? buildingTable(id as BuildingId, ctx, cur + 1, cur + 1) : techTable(id as TechId, ctx, cur + 1, cur + 1)).rows[0];
+    // an upgrade already running or queued moves the next purchasable level up
+    const pend = isB
+      ? (planet.buildQueue?.id === id ? 1 : 0) + (planet.buildBacklog ?? []).filter((x: string) => x === id).length
+      : (me.player.research?.id === id ? 1 : 0) + (me.player.researchBacklog ?? []).filter((x: { id: string }) => x.id === id).length;
+    const nextLevel = cur + 1 + pend;
+    const next = table.rows.find((r) => r.level === nextLevel) ?? (isB ? buildingTable(id as BuildingId, ctx, nextLevel, nextLevel) : techTable(id as TechId, ctx, nextLevel, nextLevel)).rows[0];
     const reqs = requirementStatus(def.requires, ctx);
     const missing = reqs.filter((r) => !r.met);
     const queueFull = isB ? (planet.buildBacklog?.length ?? 0) >= 4 : (me.player.researchBacklog?.length ?? 0) >= 4;
@@ -138,7 +143,7 @@ export function ItemDetail() {
         </Card>
 
         <div className="grid2">
-          <Card title={`Next: level ${cur + 1}`}>
+          <Card title={`Next: level ${nextLevel}`}>
             <table className="kv"><tbody>
               <tr><td>Cost</td><td><Cost cost={next.cost} have={have} /></td></tr>
               <tr><td>Time</td><td>{fmtDur(next.seconds * 1000)}</td></tr>
@@ -148,7 +153,7 @@ export function ItemDetail() {
               })}
             </tbody></table>
             <div className="row">
-              <button className="primary" disabled={!ok} onClick={run}>{busy ? 'Add to queue' : cur === 0 ? (isB ? 'Build' : 'Research') : isB ? `Upgrade to ${cur + 1}` : `Research level ${cur + 1}`}</button>
+              <button className="primary" disabled={!ok} onClick={run}>{busy ? 'Add to queue' : cur === 0 ? (isB ? 'Build' : 'Research') : isB ? `Upgrade to ${nextLevel}` : `Research level ${nextLevel}`}</button>
               {!legal && <span className="bad small">{planet.isMoon ? 'Cannot be built on a moon.' : 'Moon-only building.'}</span>}
               {legal && !ok && missing.length === 0 && energyOk && fieldsOk && !busy && !canAfford(have, next.cost) && <span className="bad small">Not enough resources on {planet.name}.</span>}
               {!energyOk && <span className="bad small">Not enough energy production on this planet.</span>}
