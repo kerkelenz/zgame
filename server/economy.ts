@@ -1,7 +1,7 @@
 import { ALLIANCE_UPGRADES, BUILDINGS, DEAL_FEE, TECHS, UNITS, buildingAllowed, dailyDeal, resName, tradeQuote } from '../shared/data';
 import {
   buildingCost, buildingTime, canAfford, production, researchTime, scaleRes, storageCapacity,
-  subRes, addRes, techCost, unitTime, lvl,
+  subRes, addRes, techCost, totalRes, unitTime, lvl,
 } from '../shared/formulas';
 import type { BuildingId, Requirement, Res, TechId, UnitId } from '../shared/types';
 import { bus } from './bus';
@@ -9,7 +9,7 @@ import { notifyPlayer } from './messages';
 import { territoryBonus } from './sectors';
 import { crawlerMul, energyBoost, mineBoost, researchFactor, timeFactor, tradeFee } from './perks';
 import { assertActive } from './vacation';
-import { GameError, allianceOf, type Planet, type Player, type World } from './world';
+import { GameError, allianceOf, type BuildJob, type Planet, type Player, type World } from './world';
 
 export interface AllianceBonuses { production: number; research: number; logistics: number; command: number }
 
@@ -78,6 +78,13 @@ export function updatePlanet(w: World, planet: Planet, now: number) {
     t = job.end;
     planet.buildings[job.id] = job.level;
     planet.buildQueue = null;
+    if (job.down) {
+      if (job.refund) planet.resources = addRes(planet.resources, job.refund);
+      notifyPlayer(w, planet.ownerId, 'system', 'Demolition complete', `${BUILDINGS[job.id].name} on ${planet.name} was taken down to level ${job.level}${job.refund ? ` and returned ${Math.round(totalRes(job.refund)).toLocaleString('en-US')} resources` : ''}.`);
+      bus.push({ to: planet.ownerId, type: 'toast', data: `${BUILDINGS[job.id].name} demolished to level ${job.level} on ${planet.name}` });
+      startNextBuilding(w, planet, t);
+      continue;
+    }
     const ownerP = w.players[planet.ownerId];
     if (ownerP) ownerP.stats.buildingsDone++;
     notifyPlayer(w, planet.ownerId, 'system', `Construction complete`, `${BUILDINGS[job.id].name} on ${planet.name} is now level ${job.level}.`);
@@ -184,7 +191,7 @@ export function maxFields(planet: Planet): number {
 export function usedFields(planet: Planet): number {
   let n = 0;
   for (const v of Object.values(planet.buildings)) n += v || 0;
-  if (planet.buildQueue) n += 1;
+  if (planet.buildQueue && !planet.buildQueue.down) n += 1;          // a building going up will take a field; one coming down already gave it back
   return n;
 }
 
@@ -260,6 +267,38 @@ function beginBuilding(w: World, player: Player, planet: Planet, id: BuildingId,
   if (cost !== prepaid) pay(planet, cost, `${def.name} level ${level}`);
   const secs = buildingTime(cost, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.constructionBoost, timeFactor(player));
   planet.buildQueue = { id, level, start: now, end: now + secs * 1000, cost };
+}
+
+/** Taking a building down one level: half the time it took to build that level, and 30% of its price comes back at the end. */
+export const DEMOLISH = { timeShare: 0.5, refundShare: 0.3 };
+
+/**
+ * Demolish one level of a building. It uses the build slot of the planet, so nothing else can be queued there meanwhile and the queue has
+ * to be empty to start. A level may not go if the fields or silo slots it provides are in use.
+ */
+export function startDemolition(w: World, player: Player, planet: Planet, id: BuildingId, now: number): BuildJob {
+  assertActive(player, 'demolish');
+  updatePlanet(w, planet, now);
+  if (!Object.hasOwn(BUILDINGS, id)) throw new GameError('Unknown building');
+  const have = lvl(planet.buildings, id);
+  if (have < 1) throw new GameError(`There is no ${BUILDINGS[id].name} to demolish`);
+  if (planet.buildQueue || planet.buildBacklog?.length) throw new GameError('Finish or cancel the building queue on this planet first');
+  if (id === 'researchLab' && player.research) throw new GameError('Cannot take the lab down while research is running');
+  if ((id === 'shipyard' || id === 'naniteFactory') && planet.shipyardQueue.length) throw new GameError('Empty the shipyard queue first');
+  // the fields this level provides must not be in use
+  const fieldsLost = id === 'terraformer' ? 5 : id === 'lunarBase' && planet.isMoon ? 3 : 0;
+  if (fieldsLost && usedFields(planet) - 1 > maxFields(planet) - fieldsLost) throw new GameError(`The ${fieldsLost} fields this level gives are in use: demolish other buildings first`);
+  if (id === 'missileSilo') {
+    const slots = (u: string) => (u === 'interplanetaryMissile' ? 2 : 1);
+    const stored = Object.entries(planet.defenses).reduce((s, [k, n]) => s + (UNITS[k as UnitId].missile ? slots(k) * (n || 0) : 0), 0);
+    if (stored > 10 * (have - 1)) throw new GameError('The missiles stored in the silo would no longer fit: fire or remove some first');
+  }
+  const price = buildingCost(id, have);
+  const secs = buildingTime(price, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.constructionBoost, timeFactor(player)) * DEMOLISH.timeShare;
+  const job: BuildJob = { id, level: have - 1, start: now, end: now + secs * 1000, cost: { metal: 0, crystal: 0, deuterium: 0 }, down: true, refund: scaleRes(price, DEMOLISH.refundShare) };
+  job.refund = { metal: Math.floor(job.refund!.metal), crystal: Math.floor(job.refund!.crystal), deuterium: Math.floor(job.refund!.deuterium) };
+  planet.buildQueue = job;
+  return job;
 }
 
 export function cancelBuilding(w: World, planet: Planet, now: number) {

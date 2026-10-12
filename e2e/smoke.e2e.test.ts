@@ -421,7 +421,8 @@ describe('using the game', () => {
     await go('Messages');
     // the subject line: a name and a coordinate, both links; clicking the coordinate opens the galaxy at that system
     const first = page.locator('.msg').first();
-    expect(await first.locator('.msghead a.plink').count()).toBe(2);
+    await first.waitFor();
+    await expect.poll(() => first.locator('.msghead a.plink').count(), { timeout: 10_000 }).toBe(2);        // the name list loads a moment after the page
     expect(await first.locator('.msghead a.plink', { hasText: '[2:9:3]' }).count()).toBe(1);
     await first.locator('.msghead a.plink', { hasText: '[2:9:3]' }).click();
     await page.locator('table.galaxy').waitFor();
@@ -431,7 +432,7 @@ describe('using the game', () => {
     await go('Messages');
     await page.locator('.msg').first().locator('.msghead').click();
     const links = page.locator('.msg').first().locator('.msgbody a.plink');
-    expect(await links.count()).toBe(3);                                                // the name and two coordinates
+    await expect.poll(() => links.count(), { timeout: 10_000 }).toBe(3);                                                // the name and two coordinates
     await links.first().click();
     await page.getByText('← Back').waitFor();
     expect(await page.locator('main h1, main h2').first().textContent()).toBe(name);
@@ -444,6 +445,26 @@ describe('using the game', () => {
     expect(await report.locator('a.plink', { hasText: '[1:4:7]' }).count()).toBe(1);
     expect(await report.locator('a.plink', { hasText: name }).count()).toBeGreaterThanOrEqual(1);
     await page.unroute('**/api/messages');
+    noErrors();
+  });
+
+  run('a building level can be demolished from the Buildings page and the details page', async () => {
+    await go('Buildings');
+    const card = page.locator('.items .card', { hasText: 'Solar Plant' }).first();
+    // make sure there is a level to take down (the test world builds in seconds)
+    await expect.poll(async () => (await card.innerText()).match(/Solar Plant\s*(\d+)/)?.[1] ?? '0', { timeout: 5000 }).toMatch(/\d/);
+    if ((await card.innerText()).match(/Solar Plant\s*(\d+)/)?.[1] === '0') {
+      await card.getByRole('button').first().click();
+      await expect.poll(async () => (await page.locator('.items .card', { hasText: 'Solar Plant' }).first().innerText()).match(/Solar Plant\s*(\d+)/)?.[1], { timeout: 15_000 }).not.toBe('0');
+    }
+    page.once('dialog', (d) => void d.accept());
+    await page.locator('.items .card', { hasText: 'Solar Plant' }).first().getByRole('button', { name: 'Demolish a level' }).click();
+    await page.locator('.toast', { hasText: 'demolition started' }).waitFor({ timeout: 10_000 });
+    // the details page offers it too
+    await page.locator('.items .card a.itemlink', { hasText: 'Solar Plant' }).first().click();
+    await page.getByRole('heading', { name: 'Solar Plant' }).first().waitFor();
+    expect(await page.locator('main').innerText()).toMatch(/Demolish level \d+|returns about 30%/);
+    await page.getByRole('button', { name: '← Back' }).click();
     noErrors();
   });
 

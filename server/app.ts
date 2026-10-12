@@ -6,7 +6,7 @@ import { cargoFor } from './perks';
 import { bus } from './bus';
 import { authenticate, login, logout, register } from './accounts';
 import * as AL from './alliance';
-import { abandonPlanet, tradeResources, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueBuilding, queueResearch, queueUnits, unqueueBuilding, unqueueResearch, moveQueuedBuilding, moveQueuedResearch } from './economy';
+import { abandonPlanet, tradeResources, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueBuilding, queueResearch, queueUnits, startDemolition, unqueueBuilding, unqueueResearch, moveQueuedBuilding, moveQueuedResearch } from './economy';
 import { flightPlan, jumpGate, launchMissiles, phalanxScan, recallFleet, sendFleet } from './fleet';
 import { colonyCount, galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
@@ -294,6 +294,11 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.post('/planets/:id/build', wrap((req) => {
     const p = req.player!;
     queueBuilding(w, p, ownedPlanet(w, p.id, req.params.id), str(req.body.id) as never, now());
+    return planetView(w, w.planets[req.params.id], now());
+  }));
+  A.post('/planets/:id/demolish', wrap((req) => {
+    const p = req.player!;
+    startDemolition(w, p, ownedPlanet(w, p.id, req.params.id), str(req.body.id) as never, now());
     return planetView(w, w.planets[req.params.id], now());
   }));
   A.post('/planets/:id/build/cancel', wrap((req) => {

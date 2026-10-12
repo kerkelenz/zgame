@@ -57,8 +57,9 @@ export function Items({ kind }: { kind: Kind }) {
   return (
     <Page title={TITLES[kind]}>
       {kind === 'building' && buildQ && (
-        <Card title="Under construction" right={<button onClick={() => void act(() => post(`/planets/${planet.id}/build/cancel`), 'Cancelled')}>Cancel</button>}>
-          <div className="job"><div>{BUILDINGS[buildQ.id as BuildingId].name} → level {buildQ.level} · <Countdown to={buildQ.end} /></div><Progress from={buildQ.start} to={buildQ.end} /></div>
+        <Card title={buildQ.down ? 'Being demolished' : 'Under construction'} right={<button onClick={() => void act(() => post(`/planets/${planet.id}/build/cancel`), 'Cancelled')}>Cancel</button>}>
+          <div className="job"><div>{buildQ.down ? 'Demolishing' : ''} {BUILDINGS[buildQ.id as BuildingId].name} → level {buildQ.level} · <Countdown to={buildQ.end} /></div><Progress from={buildQ.start} to={buildQ.end} />
+            {buildQ.down && buildQ.refund && <div className="muted small">Returns <Cost cost={buildQ.refund} /> when it is done.</div>}</div>
         </Card>
       )}
       {kind === 'building' && bBacklog.length > 0 && (
@@ -127,6 +128,12 @@ export function Items({ kind }: { kind: Kind }) {
               <button className="primary" disabled={!ok} onClick={() => void act(() => post(`/planets/${planet.id}/build`, { id }), `${d.name} upgrade started`)}>
                 {buildQ ? 'Add to queue' : level === 0 ? 'Build' : `Upgrade to ${level + 1}`}
               </button>
+              {built > 0 && (
+                <button className="link demolish" disabled={!!buildQ || bBacklog.length > 0} title={buildQ || bBacklog.length ? 'Finish or cancel the building queue first' : `Take one level down: half the build time, and 30% of that level's price comes back`}
+                  onClick={() => confirm(`Demolish one level of ${d.name} on ${planet.name}? It drops to level ${built - 1}. Half of the build time, and about 30% of that level's price comes back.`) && void act(() => post(`/planets/${planet.id}/demolish`, { id }), `${d.name}: demolition started`)}>
+                  Demolish a level
+                </button>
+              )}
             </Card>
           );
         })}

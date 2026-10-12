@@ -339,3 +339,5 @@ table.rounds { font-size: 12.5px; width: 100%; margin-bottom: 10px; } table.roun
 .specials li.good { border-left-color: #5fd28a; } .specials li.bad { border-left-color: #ff6b6b; } .specials li.warn { border-left-color: #f0b04a; } .specials li.info { border-left-color: #55b7ff; }
 .chg { margin-left: 8px; font-size: 12px; font-weight: 700; } .chg.good { color: #5fd28a; } .chg.bad { color: #ff7b7b; }
 table.compact td, table.compact th { padding: 3px 8px; text-align: center; } td.next { outline: 1px solid var(--accent); }
+
+.demolish { color: var(--muted); font-size: 12px; align-self: flex-start; } .demolish:hover { color: #ff7b7b; }

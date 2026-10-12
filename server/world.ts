@@ -8,7 +8,8 @@ import { defaultNotify, type NotifySettings } from './external';
 
 export const uid = (n = 6) => randomBytes(n).toString('hex');
 
-export interface BuildJob { id: BuildingId; level: number; start: number; end: number; cost: Res }
+/** `down` marks a demolition: `level` is the level the building drops to, nothing is paid up front and `refund` comes back when it finishes */
+export interface BuildJob { id: BuildingId; level: number; start: number; end: number; cost: Res; down?: boolean; refund?: Res }
 export interface ResearchJob { id: TechId; level: number; start: number; end: number; cost: Res; planetId: string }
 export interface ShipyardJob { id: UnitId; total: number; remaining: number; unitMs: number; start: number; unitCost: Res }
 

@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-k', date: '2026-10-12', title: 'Rules and tidy-ups',
     items: [
+      'Buildings can be demolished one level at a time, on planets and moons: Demolish a level on the card or details page. It takes half the build time, returns about 30% of the price of that level and frees a building field.',
       'Coordinates, commander names and planet names are working links everywhere: in messages (subject and text), battle reports, spy reports, the alliance page and its log and bulletin, chat, the Fleet page, the phalanx scan, Contacts, profiles and the top bar. A coordinate or planet opens the galaxy there, a name opens the profile.',
       'Raids are much weaker: a raid is sized from what defends the planet it targets (0.6 to 1.3 times its value) instead of from your total points, and new accounts are raided gently, rising to full strength over the first week.',
       'Every building, research, ship and defense has a short explanation on its details page, the change at the next level is coloured (green good, red costs), and ships have a Special features box with rapid fire and engine changes such as the switch of the Bomber to hyperspace drive at level 8.',

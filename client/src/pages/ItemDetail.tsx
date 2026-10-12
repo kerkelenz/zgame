@@ -174,6 +174,15 @@ export function ItemDetail() {
               {!energyOk && <span className="bad small">Not enough energy production on this planet.</span>}
               {!fieldsOk && <span className="bad small">No free fields.</span>}
             </div>
+            {isB && cur > 0 && (
+              <div className="row">
+                <button className="danger" disabled={busy || ((planet.buildBacklog?.length ?? 0) > 0)} title={busy ? 'Finish or cancel the building queue first' : undefined}
+                  onClick={() => confirm(`Demolish one level of ${def.name} on ${planet.name}? It drops to level ${cur - 1}. Half of the build time, and about 30% of that level's price comes back.`) && void act(() => post(`/planets/${planet.id}/demolish`, { id }), `${def.name}: demolition started`)}>
+                  Demolish level {cur}
+                </button>
+                <span className="muted small">Takes half the build time and returns about 30% of that level's price. It frees a building field. Needs an empty building queue.</span>
+              </div>
+            )}
           </Card>
           <Card title="Requirements"><Requirements id={id} ctx={ctx} /></Card>
         </div>
