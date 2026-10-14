@@ -625,7 +625,6 @@ main { overflow-anchor: none; }
 @keyframes zg-drift { from { background-position: 40% 50%; } to { background-position: 60% 50%; } }
 @keyframes zg-glow { 0%, 100% { box-shadow: 0 0 6px rgba(240, 169, 59, .25); } 50% { box-shadow: 0 0 16px rgba(240, 169, 59, .55); } }
 @keyframes zg-sheen { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
-@keyframes zg-orbit { to { transform: rotate(360deg); } }
 @keyframes zg-bump { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
 @keyframes zg-spark { 0% { transform: translate(0, 0) scale(.4); opacity: 1; } 100% { transform: translate(var(--dx, 24px), var(--dy, -30px)) scale(1.2); opacity: 0; } }
 @keyframes zg-dot { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
@@ -652,13 +651,6 @@ html[data-motion="full"] .pchip.on { animation: zg-glow 3.4s ease-in-out infinit
 html[data-motion="full"] .bar > div { position: relative; overflow: hidden; }
 html[data-motion="full"] .bar > div::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .28), transparent); animation: zg-sheen 2.2s linear infinite; }
 
-/* a moon circling its planet, in the hero */
-.orbit { display: none; }
-html[data-motion="full"] .orbit { display: inline-block; position: relative; width: 72px; height: 72px; flex-shrink: 0; }
-html[data-motion="full"] .orbit > img { position: absolute; left: 20px; top: 20px; width: 32px; height: 32px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 10px rgba(255, 255, 255, .18); }
-html[data-motion="full"] .orbiter { position: absolute; inset: 0; animation: zg-orbit 16s linear infinite; }
-html[data-motion="full"] .orbiter img { position: absolute; left: 30px; top: 0; width: 14px; height: 14px; border-radius: 50%; object-fit: cover; animation: zg-orbit 16s linear infinite reverse; }
-@media (max-width: 640px) { html[data-motion="full"] .orbit { display: none; } }
 
 /* a level that rises pops as well as glows; achievements and objectives throw a few sparks */
 html[data-motion="full"] .flash { display: inline-block; animation: zg-flash 1.2s ease-out 2, zg-bump .55s ease-out; }
@@ -683,3 +675,21 @@ html[data-motion="full"] .toast.celebrate::after { right: 20px; --dx: 34px; --dy
 html[data-motion="full"] .lane .laneship { transition: left 1s linear; }
 html[data-motion="full"] .lane.hold .laneship { animation: zg-hold 2s ease-in-out infinite; }
 html:not([data-motion="full"]) .lane .lanetrail { display: none; }
+
+/* the banner is a canvas: the other body of the planet and its moon, big, now and then flies past in front of the picture as if in orbit */
+.flyby { display: none; }
+html[data-motion="full"] .flyby { display: block; position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+html[data-motion="full"] .herotop, html[data-motion="full"] .herostats { position: relative; z-index: 1; }
+.flywrap { position: absolute; left: -16%; top: 70%; width: 14%; min-width: 56px; aspect-ratio: 1; margin: -7% 0 0 -7%; opacity: 0; filter: drop-shadow(0 0 14px rgba(190, 210, 255, .35)); animation: zg-flyby 64s ease-in-out 5s infinite both; }
+.flywrap img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.flywrap::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 30% 28%, rgba(255, 255, 255, .1), transparent 45%, rgba(2, 4, 12, .5) 100%); }
+@keyframes zg-flyby {
+  0% { left: -16%; top: 70%; transform: scale(.5); opacity: 0; }
+  2% { opacity: 1; }
+  8% { top: 56%; transform: scale(.85); }
+  14% { left: 48%; top: 44%; transform: scale(1.4); }
+  20% { top: 52%; transform: scale(.95); }
+  26% { left: 112%; top: 66%; transform: scale(.5); opacity: 1; }
+  27% { opacity: 0; }
+  100% { left: 112%; top: 66%; opacity: 0; }
+}

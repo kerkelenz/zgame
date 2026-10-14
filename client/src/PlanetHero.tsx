@@ -25,6 +25,7 @@ export function PlanetHero() {
   const base = planet.isMoon ? planets.find((x) => x.id === planet.parentId) ?? planet : planet;
   const moon = planet.isMoon ? planet : planets.find((x) => x.parentId === planet.id);
   const bodies = [base, moon].filter((b): b is typeof planet => !!b);
+  const other = planet.isMoon ? base : moon ?? base;          // the body that is not on show flies past the one that is
   const role = ROLES.find((r) => r.id === planet.role);
   const desc = (planet.isMoon ? MOON_LOOKS : PLANET_LOOKS)[planet.look as string];
   const bonus = !planet.isMoon && POSITION_BONUS[planet.coords.p];
@@ -33,6 +34,11 @@ export function PlanetHero() {
 
   return (
     <section className={`hero${planet.isMoon ? ' moonhero' : ''}`} style={{ backgroundImage: `url(${Art.banner(planet.id, planet.maxTemp, !!planet.isMoon)})` }} aria-label={`${planet.name}, ${lookName(planet.look, !!planet.isMoon)}`}>
+      {bodies.length > 1 && (
+        <span className="flyby" aria-hidden="true" key={planet.id}>
+          <span className="flywrap"><img src={Art.planet(other.id, other.maxTemp, !!other.isMoon)} alt="" /></span>
+        </span>
+      )}
       <div className="herotop">
         <div className="herotitle">
           <span className="herokind">{lookName(planet.look, !!planet.isMoon)}{role && <span className="herorole">{role.label}</span>}{planet.lifeform && LIFEFORMS[planet.lifeform as LifeformId] && <span className="herorole" title="The people of this planet">{LIFEFORMS[planet.lifeform as LifeformId].name}</span>}</span>
@@ -40,7 +46,6 @@ export function PlanetHero() {
         </div>
         {bodies.length > 1 && (
           <div className="herobodies" role="group" aria-label="Planet and moon">
-            <span className="orbit" aria-hidden="true"><img src={Art.planet(base.id, base.maxTemp, false)} alt="" /><span className="orbiter"><img src={Art.planet(moon!.id, moon!.maxTemp, true)} alt="" /></span></span>
             {bodies.map((b) => (
               <button key={b.id} className={`herobody${b.id === planet.id ? ' on' : ''}`} onClick={() => selectPlanet(b.id)} aria-pressed={b.id === planet.id} title={b.isMoon ? 'Show the moon' : 'Show the planet'}>
                 <img src={Art.planet(b.id, b.maxTemp, !!b.isMoon)} alt="" /><span>{b.isMoon ? 'Moon' : 'Planet'}</span>
