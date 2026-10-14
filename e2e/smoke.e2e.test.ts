@@ -343,8 +343,8 @@ describe('using the game', () => {
     await page.waitForSelector('header.top');
     await go('Buildings');
     await page.getByText(/Whole queue, including the running job: about/).waitFor({ timeout: 10_000 });
-    expect(await page.locator('main').innerText()).toMatch(/1\. Crystal Mine\s*·\s*\d/);
-    expect(await page.locator('main').innerText()).toMatch(/2\. Solar Plant\s*·\s*\d/);
+    expect(await page.locator('main').innerText()).toMatch(/1\.\s+Crystal Mine\s*·\s*\d/);
+    expect(await page.locator('main').innerText()).toMatch(/2\.\s+Solar Plant\s*·\s*\d/);
     const total = await page.locator('.qtotal b').first().innerText();
     expect(total).toMatch(/\d/);
     expect(total).toMatch(/m|h|s/);
@@ -467,7 +467,9 @@ describe('using the game', () => {
       await expect.poll(async () => (await page.locator('.items .card', { hasText: 'Solar Plant' }).first().innerText()).match(/Solar Plant\s*(\d+)/)?.[1], { timeout: 15_000 }).not.toBe('0');
     }
     page.once('dialog', (d) => void d.accept());
-    await page.locator('.items .card', { hasText: 'Solar Plant' }).first().getByRole('button', { name: 'Demolish a level' }).click();
+    const demolish = page.locator('.items .card', { hasText: 'Solar Plant' }).first().getByRole('button', { name: 'Demolish a level' });
+    await expect.poll(() => demolish.isEnabled(), { timeout: 25_000 }).toBe(true);                  // earlier tests may still have a building running
+    await demolish.click();
     await page.locator('.toast', { hasText: 'demolition started' }).waitFor({ timeout: 10_000 });
     // the details page offers it too
     await page.locator('.items .card a.itemlink', { hasText: 'Solar Plant' }).first().click();
@@ -656,6 +658,68 @@ describe('using the game', () => {
   });
 });
 
+describe('advice, planners and alliance tools', () => {
+  run('the Overview offers a role, and the Empire page shows it as a badge', async () => {
+    await go('Overview');
+    await page.getByLabel('What this planet is for').selectOption('mining');
+    await expect.poll(() => page.getByLabel('What this planet is for').inputValue()).toBe('mining');
+    await go('Empire');
+    await page.locator('table.table .tag', { hasText: 'Mining' }).first().waitFor({ timeout: 10_000 });
+    noErrors();
+  });
+
+  run('Share this planet gives a link that opens a public card', async () => {
+    await go('Overview');
+    let url = '';
+    page.once('dialog', (d) => { url = d.defaultValue(); void d.accept(); });       // the clipboard is not always allowed: the page then shows the link
+    await page.getByRole('button', { name: /Share this (planet|moon)/ }).click();
+    await expect.poll(async () => url || (await page.locator('.toast', { hasText: 'Link copied' }).textContent().catch(() => '')) || '', { timeout: 10_000 }).toMatch(/\?report=p/);
+    const link = url || ((await page.locator('.toast', { hasText: 'Link copied' }).textContent()) ?? '').replace(/^.*?(http\S+).*$/, '$1');
+    const card = await ctx.newPage();
+    await card.goto(link);
+    await card.getByText('Buildings', { exact: true }).waitFor({ timeout: 10_000 });
+    expect(await card.locator('.card').innerText()).toMatch(/pilot_one/);
+    await card.close();
+    noErrors();
+  });
+
+  run('the Shipyard has a planner and the Defense page a defense advisor', async () => {
+    await go('Shipyard');
+    await page.getByRole('heading', { name: 'Planner' }).waitFor();
+    expect(await page.locator('main').innerText()).toMatch(/In all/);
+    await go('Defense');
+    await page.getByRole('heading', { name: 'Defense advisor' }).waitFor();
+    await page.getByRole('button', { name: /^Check / }).click();
+    await page.getByText('Small raid').waitFor({ timeout: 30_000 });
+    expect(await page.locator('main').innerText()).toMatch(/Large raid[\s\S]*(Holds|Could go either way|Falls)/);
+    noErrors();
+  });
+
+  run('an alliance plans an operation and shows its activity feed', async () => {
+    await go('Alliance');
+    await page.getByRole('heading', { name: 'Operations' }).waitFor();
+    await page.getByLabel('Operation name').fill('Dawn strike');
+    await page.getByRole('button', { name: 'Plan it' }).click();
+    await page.getByText('Dawn strike').first().waitFor({ timeout: 10_000 });
+    expect(await page.locator('main').innerText()).toMatch(/0 signed up/);
+    await page.getByRole('heading', { name: 'Activity' }).waitFor();
+    await page.getByLabel('Filter the feed').selectOption('help');
+    noErrors();
+  });
+
+  run('the tech tree cards can be walked with the arrow keys', async () => {
+    await go('Tech tree');
+    await page.locator('.icard').first().waitFor();
+    const first = page.locator('.icard').first();
+    await first.focus();
+    const before = await page.evaluate(() => document.activeElement?.id);
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(() => page.evaluate(() => document.activeElement?.id)).not.toBe(before);
+    expect(await page.locator('.icard[aria-label*="ready to start"], .icard[aria-label*="locked"], .icard[aria-label*="you have it"]').count()).toBeGreaterThan(20);
+    noErrors();
+  });
+});
+
 describe('alliance war', () => {
   const api = async (path: string, token: string | null, body?: unknown) => {
     const r = await fetch(server.base + '/api' + path, { method: body ? 'POST' : 'GET', headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
@@ -733,6 +797,8 @@ describe('the admin', () => {
     await page.getByText('Commanders').first().waitFor({ timeout: 10_000 });
     expect(await page.locator('main').innerText()).toMatch(/pilot_one/);
     expect(await page.getByRole('button', { name: 'Start an invasion' }).count()).toBe(1);
+    await page.getByRole('heading', { name: 'Server health' }).waitFor();
+    expect(await page.locator('main').innerText()).toMatch(/Tick \(last \d+\)[\s\S]*Recent errors/);
     noErrors();
   });
 });
