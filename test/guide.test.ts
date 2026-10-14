@@ -1,8 +1,9 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BUILDINGS, TECHS } from '../shared/data';
 
-const src = readFileSync('client/src/pages/Guide.tsx', 'utf8');
+/** the guide page and every topic file next to it (client/src/guide) */
+const src = ['client/src/pages/Guide.tsx', ...readdirSync('client/src/guide').filter((f) => f.endsWith('.tsx')).map((f) => 'client/src/guide/' + f)].map((f) => readFileSync(f, 'utf8')).join(String.fromCharCode(10));
 /** the visible words of the guide: the text between JSX tags, plus the section titles */
 const text = [...src.matchAll(/>([^<>{}]+)</g)].map((m) => m[1]).concat([...src.matchAll(/title: '([^']+)'/g)].map((m) => m[1])).join(' ').replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ');
 

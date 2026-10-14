@@ -26,6 +26,8 @@ beforeEach(() => {
   AL.createAlliance(w, a1, 'AAA', 'Alpha'); AL.joinAlliance(w, a2, a1.allianceId!);
   AL.createAlliance(w, b1, 'BBB', 'Bravo'); AL.joinAlliance(w, b2, b1.allianceId!);
   A = a1.allianceId!; B = b1.allianceId!;
+  // registration drops every home on a random free spot; a home that lands in a system a test uses would add influence nobody expects (this made the suite fail now and then)
+  [a1, a2, b1, b2].forEach((p, i) => { w.planets[p.planetIds[0]].coords = { g: 2, s: 40, p: i + 1 }; });
 });
 
 describe('influence', () => {
