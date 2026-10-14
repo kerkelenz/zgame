@@ -45,7 +45,7 @@ export function Admin() {
         <div className="row wrap">
           <button className="danger" onClick={() => { const m = prompt('Open the rift in how many minutes?', '10'); if (m !== null) void run(() => post('/admin/invasion/start', { delayMinutes: Number(m) }), 'Invasion announced'); }}>Start an invasion</button>
           <button onClick={() => confirm('End the current invasion now? The Armada withdraws and consolation rewards are paid.') && void run(() => post('/admin/invasion/end'), 'Invasion ended')}>End the current invasion</button>
-          <span className="muted small">Automatic timing: ZGAME_INVASION_INTERVAL_HOURS (0 turns them off), ZGAME_INVASION_ANNOUNCE_HOURS, ZGAME_INVASION_DURATION_HOURS, ZGAME_INVASION_STRENGTH (share of the server's combat fleets).</span>
+          <span className="muted small">Automatic timing: ZGAME_INVASION_INTERVAL_HOURS (0 turns them off), ZGAME_INVASION_ANNOUNCE_HOURS, ZGAME_INVASION_DURATION_HOURS, ZGAME_INVASION_STRENGTH (share of the server's combat fleets, each commander counted at no more than three times the median fleet).</span>
         </div>
       </Card>
       <Card title="Announcement">

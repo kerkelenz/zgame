@@ -46,6 +46,7 @@ describe('waves', () => {
   });
 
   it('the whole invasion is no bigger than the single Armada used to be, and each wave is bigger than the one before', () => {
+    w.config.invasionStrength = 20;                                   // a big Armada, so that rounding the ships off barely shows
     const inv = announceInvasion(w, T0, 0);
     const vals = inv.waves!.map((x) => x.value);
     for (let i = 1; i < vals.length; i++) expect(vals[i]).toBeGreaterThan(vals[i - 1]);

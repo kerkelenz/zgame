@@ -14,13 +14,15 @@ const HOUR = 3_600_000, MIN = 60_000;
 /** what the classic Armada is made of, by share of its value (the mothership wave uses the same mix) */
 const MIX: [ShipId, number][] = [['lightFighter', 0.15], ['heavyFighter', 0.10], ['cruiser', 0.25], ['battleship', 0.20], ['battlecruiser', 0.15], ['destroyer', 0.15]];
 const MIN_BUDGET = 1_000_000, MAX_BUDGET = 2_000_000_000;
+/** a commander's fleet counts for at most this many times the median combat fleet when the Armada is sized */
+export const CAP_MEDIANS = 3;
 
 /**
  * Rewards: a pool of Command Credits split by contribution in four jobs, weighted: damage at the front, aliens destroyed at home, supplies
  * delivered, waves scouted. A job nobody did does not count, its weight goes to the others; fight alone and the old damage-only split results.
  * `relief` is the share of the ships lost at the front that comes back as resources (half of it when the Armada withdrew).
  */
-export const REWARD = { base: 600, perParticipant: 100, cap: 3000, floor: 25, lossDivisor: 3, minShare: 0.005, weights: { damage: 0.5, home: 0.2, supply: 0.2, scout: 0.1 }, relief: 0.15 };
+export const REWARD = { base: 600, perParticipant: 100, cap: 3000, floor: 25, lossDivisor: 3, minShare: 0.005, weights: { damage: 0.35, home: 0.25, supply: 0.25, scout: 0.15 }, relief: 0.15 };
 
 const shipValue = (id: ShipId) => UNITS[id].cost.metal + UNITS[id].cost.crystal;
 
@@ -41,8 +43,13 @@ function combatFleetValue(w: World, playerId: string, flights: Map<string, Movem
  */
 export function bossBudget(w: World): number {
   const flights = movementsByOwner(w);
-  let ships = 0;
-  for (const p of Object.values(w.players)) if (!p.npc && p.planetIds.length) ships += combatFleetValue(w, p.id, flights);
+  const fleets: number[] = [];
+  for (const p of Object.values(w.players)) if (!p.npc && p.planetIds.length) { const v = combatFleetValue(w, p.id, flights); if (v > 0) fleets.push(v); }
+  // one huge fleet must not size the Armada for everyone: no commander counts for more than CAP_MEDIANS times the median of those who have a fleet
+  const sorted = [...fleets].sort((a, b) => a - b);
+  const median = sorted.length ? (sorted[Math.floor((sorted.length - 1) / 2)] + sorted[Math.floor(sorted.length / 2)]) / 2 : 0;
+  const cap = Math.max(MIN_BUDGET, median * CAP_MEDIANS);
+  const ships = fleets.reduce((s, v) => s + Math.min(v, cap), 0);
   return Math.min(MAX_BUDGET, Math.max(MIN_BUDGET, ships * w.config.invasionStrength));
 }
 
@@ -298,6 +305,49 @@ const top = (w: World, viewerId: string, get: (c: Contribution) => number, n = 5
   return { total: Math.round(total), rows: rows.slice(0, n).map((r, i) => ({ rank: i + 1, id: r.id, name: w.players[r.id].username, value: Math.round(r.v), share: total > 0 ? r.v / total : 0, you: r.id === viewerId })) };
 };
 
+/**
+ * Can the fleets win? An estimate by fighting the Armada's present fleet a few times: with what is waiting at the rift now, and with that plus
+ * every combat ship the viewer has at home. Cached for a while, since the fights are not free.
+ */
+const meterCache = new Map<string, { at: number; value: unknown }>();
+export function strengthMeter(w: World, viewerId: string, now: number) {
+  const inv = w.invasion;
+  if (!inv || inv.phase !== 'active' || !Object.keys(inv.fleet).length) return null;
+  const held = Object.values(w.movements).filter((m) => m.mission === 'invade' && m.phase === 'holding' && m.ownerId && w.players[m.ownerId]);
+  const viewer = w.players[viewerId];
+  const home: Fleet = {};
+  if (viewer) for (const id of viewer.planetIds) { const pl = w.planets[id]; if (pl && !pl.isMoon) for (const [sid, n] of Object.entries(onlyShips(pl.fleet))) if (n && UNITS[sid as ShipId].attack > 1 && !isStationary(sid)) home[sid as ShipId] = (home[sid as ShipId] || 0) + n; }
+  const sig = `${inv.number}:${inv.waveIndex}:${inv.round}:${fleetValue(inv.fleet)}:${held.map((m) => m.id + fleetValue(m.ships)).join(',')}:${viewerId}:${fleetValue(home)}`;
+  const hit = meterCache.get(sig);
+  if (hit && now - hit.at < 60_000) return hit.value as ReturnType<typeof compute>;
+  const value = compute();
+  meterCache.set(sig, { at: now, value });
+  if (meterCache.size > 200) meterCache.delete(meterCache.keys().next().value as string);
+  return value;
+
+  function chance(sides: ReturnType<typeof combatant>[]): number {
+    if (!sides.length) return 0;
+    let wins = 0;
+    const N = 6;
+    for (let i = 0; i < N; i++) {
+      const res = simulateCombat(sides.map((s) => ({ ...s, fleet: { ...s.fleet } })), [bossCombatant(inv!)], makeRng(7000 + i * 131 + inv!.round));
+      if (res.winner === 'attacker') wins++;
+    }
+    return wins / N;
+  }
+  function compute() {
+    const heldSides = held.map((m) => combatant(w, w.players[m.ownerId!], m.ownerName, m.ships));
+    const mineSide = viewer && fleetValue(home) > 0 ? [combatant(w, viewer, viewer.username, home)] : [];
+    return {
+      field: Math.round(fleetValue(inv!.fleet)),
+      held: { value: Math.round(held.reduce((t, m) => t + fleetValue(m.ships), 0)), commanders: new Set(held.map((m) => m.ownerId)).size },
+      mineHome: Math.round(fleetValue(home)),
+      chanceHeld: chance(heldSides),
+      chanceWithMine: chance([...heldSides, ...mineSide]),
+    };
+  }
+}
+
 export function invasionView(w: World, viewerId: string, now: number) {
   const inv = w.invasion;
   const history = w.invasionHistory ?? [];
@@ -349,6 +399,7 @@ export function invasionView(w: World, viewerId: string, now: number) {
         return { fleets: at.length, commanders: new Set(at.map((m) => m.ownerId)).size, value: at.reduce((s, m) => s + fleetValue(m.ships), 0) };
       })(),
       total: Math.round(total),
+      meter: strengthMeter(w, viewerId, now),
     },
     now,
   };

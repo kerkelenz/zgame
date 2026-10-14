@@ -82,6 +82,13 @@ export function Invasion() {
                 {inv.boss.onField && (inv.combined.value >= inv.boss.value * 1.2 ? <span className="good">That is enough to destroy it in one engagement.</span> : inv.combined.value >= inv.boss.value * 0.5 ? <span className="bad">That will hurt it but not finish it: bring more, together.</span> : <span className="bad">Far too weak: a fleet this small only dies.</span>)}
               </p>
             )}
+            {inv.meter && (
+              <p className="small" data-testid="meter">
+                <b>Can we win?</b> With what waits at the rift now, about <b className={inv.meter.chanceHeld >= 0.8 ? 'good' : 'bad'}>{pct(inv.meter.chanceHeld)}</b> to destroy what is on the field ({fmt(inv.meter.field)} of ships) in the next engagement.
+                {inv.meter.mineHome > 0 ? <> If you also sent every combat ship you have at home ({fmt(inv.meter.mineHome)}), about <b className={inv.meter.chanceWithMine >= 0.8 ? 'good' : 'bad'}>{pct(inv.meter.chanceWithMine)}</b>.</> : <> You have no combat ships at home to add.</>}
+                {inv.meter.chanceWithMine < 0.8 && <span className="muted"> Every fleet at the rift fights as one, so more commanders arriving before the engagement raise the chance; supplies repair the front and scouting and home defense still earn their share.</span>}
+              </p>
+            )}
           </Card>
 
           {intel && (
