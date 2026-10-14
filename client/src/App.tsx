@@ -22,6 +22,7 @@ import { NotificationBell } from './NotificationBell';
 import { IdleChip } from './AdviceCard';
 import { markChangelogSeen, unseenRelease } from './changelog';
 import { AlertStrip } from './AlertStrip';
+import { useCountUp } from './motion';
 import { ResourceBar } from './ResourceBar';
 import { EncounterDialog } from './EncounterDialog';
 import { Alliance } from './pages/Alliance';
@@ -97,6 +98,7 @@ export function App() {
   useEffect(() => { document.title = `${hostile ? '⚠ ' : ''}${unread ? `(${unread}) ` : ''}Zgame`; }, [unread, hostile]);
   const myId = me?.player.id;
   useEffect(() => { if (myId) loadTutorial(myId); }, [myId]);
+  const credits = useCountUp(me?.credits ?? 0);        // before the early return below: hooks must run in the same order every render
   if (!me || !planet) return <div className="loading">Loading universe…</div>;
 
   const page_ = (() => {
@@ -135,7 +137,6 @@ export function App() {
     }
   })();
 
-  const energy = planet.production.energyProduced - planet.production.energyUsed;
   return (
     <div className="shell">
       <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to the page</a>
@@ -149,7 +150,7 @@ export function App() {
         <IdleChip />
         <NotificationBell />
         <div className="who">
-          <span className="energy" title="Command Credits" onClick={() => setPage('command')} style={{ cursor: 'pointer' }}>★ {fmt(me.credits)}</span>
+          <span className="energy" title="Command Credits" onClick={() => setPage('command')} style={{ cursor: 'pointer' }}>★ {fmt(credits)}</span>
           {me.alliance && <span className="tag">[{me.alliance.tag}]</span>} <PlayerLink id={me.player.id} name={me.player.username} />
           <button className="link" onClick={g.logout}>{t('common.logout', 'Log out')}</button>
         </div>
@@ -170,7 +171,7 @@ export function App() {
       </div>
       <MobileBar />
       <div className="toasts" role="status" aria-live="polite">
-        {toasts.map((t) => <div key={t.id} className={`toast ${t.kind}`}><Linkify text={t.text} />{t.action && <button className="link toastact" onClick={t.action.run}>{t.action.label}</button>}</div>)}
+        {toasts.map((t) => <div key={t.id} className={`toast ${t.kind}${/^(Achievement|Objective complete|Monument)/.test(t.text) ? ' celebrate' : ''}`}><Linkify text={t.text} />{t.action && <button className="link toastact" onClick={t.action.run}>{t.action.label}</button>}</div>)}
       </div>
     </div>
   );

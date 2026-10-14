@@ -659,6 +659,21 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('the Animation setting switches the motion off and the choice survives a reload', async () => {
+    await go('Settings');
+    const motion = page.getByLabel('Animation', { exact: true });
+    await motion.waitFor();
+    await motion.selectOption('off');
+    expect(await page.evaluate("document.documentElement.dataset.motion")).toBe('off');
+    await page.reload();
+    await page.waitForSelector('header.top');
+    expect(await page.evaluate("document.documentElement.dataset.motion")).toBe('off');
+    await go('Settings');
+    await page.getByLabel('Animation', { exact: true }).selectOption('full');
+    expect(await page.evaluate("document.documentElement.dataset.motion")).toBe('full');
+    noErrors();
+  });
+
   run('Ctrl+K jumps to any item, and g then a letter opens a page', async () => {
     await page.keyboard.press('Control+k');
     await page.locator('.palette input').waitFor();

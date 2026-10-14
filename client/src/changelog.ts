@@ -3,6 +3,14 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-ze', date: '2026-10-25', title: 'More motion',
+    items: [
+      'Pages and cards fade in, the planet banners drift slowly, the selected planet glows, progress bars shimmer, a moon circles its planet on the Overview, Command Credits count up, a level that rises pops, and achievements and objectives throw a few sparks.',
+      'Every fleet of yours, and every hostile fleet on its way, is a ship gliding along a line from its planet to its target on the Fleet page, turning round on the way home.',
+      'A new Animation choice in Settings: Full, Reduced (quick fades only) or Off. It starts from your device setting.',
+    ],
+  },
+  {
     id: '2026-10-zd', date: '2026-10-24', title: 'Lifeforms and the Reaper',
     items: [
       'New Lifeform tab under Build: settle each planet with Humans, Rock-tal, Mechas or Kaelesh (the first choice is free) and raise their five structures with resources, for more of a resource, bigger stores, shorter building, research or ship times, more building fields or a safer stock on that planet.',

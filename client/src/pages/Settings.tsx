@@ -7,6 +7,7 @@ import { playCue, setSound, soundOn } from '../sound';
 import { setShowAllPages, useShowAllPages } from '../nav';
 import { canInstall, disablePush, enablePush, installApp, isIos, isStandalone, onInstallChange, pushSupported, thisDeviceSubscription } from '../pwa';
 import { NumInput } from '../NumInput';
+import { setMotion, useMotion, type Motion } from '../motion';
 import { startTutorial } from '../tutorialSteps';
 import { getProbes, setProbes } from '../prefs';
 
@@ -166,6 +167,7 @@ function Interface() {
   const [probes, setProbesState] = useState(getProbes());
   const { me, act, refresh } = useGame();
   const savePref = async (k: 'quietCompletions' | 'worldNews', v: boolean) => { await act(() => post('/prefs', { [k]: v })); await refresh(); };
+  const motion = useMotion();
   return (
     <Card title="Interface">
       <div className="settings-section">
@@ -173,6 +175,12 @@ function Interface() {
           <select value={getLang()} onChange={(e) => setLang(e.target.value)}>{Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
         </label>
         <p className="small muted">Menus, the login page and the tour are translated; everything else stays in English for now.</p>
+        <label className="row"><b>Animation</b>
+          <select value={motion} onChange={(e) => setMotion(e.target.value as Motion)} aria-label="Animation">
+            <option value="full">Full</option><option value="reduced">Reduced</option><option value="off">Off</option>
+          </select>
+          <span className="muted small">- Full moves the banners, glows and fleets and fades pages in; Reduced keeps only quick fades; Off stands still. It starts from your device's own setting and is remembered on this device.</span>
+        </label>
         <label className="check"><input type="checkbox" checked={sound} onChange={(e) => { setSound(e.target.checked); setS(e.target.checked); if (e.target.checked) playCue('done', true); }} /> <b>{t('common.sound', 'Sound cues')}</b> <span className="muted small">- a short tone for messages, finished jobs and attack alerts</span></label>
         {sound && <div className="row"><button onClick={() => playCue('alert', true)}>Test alert</button><button onClick={() => playCue('message', true)}>Test message</button></div>}
         <label className="check"><input type="checkbox" checked={showAll} onChange={(e) => setShowAllPages(e.target.checked)} /> <b>Show every page in the menu</b> <span className="muted small">- Automation, Territory, Invasion and the Simulator normally appear once they are useful to you</span></label>

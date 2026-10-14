@@ -40,6 +40,7 @@ export function PlanetHero() {
         </div>
         {bodies.length > 1 && (
           <div className="herobodies" role="group" aria-label="Planet and moon">
+            <span className="orbit" aria-hidden="true"><img src={Art.planet(base.id, base.maxTemp, false)} alt="" /><span className="orbiter"><img src={Art.planet(moon!.id, moon!.maxTemp, true)} alt="" /></span></span>
             {bodies.map((b) => (
               <button key={b.id} className={`herobody${b.id === planet.id ? ' on' : ''}`} onClick={() => selectPlanet(b.id)} aria-pressed={b.id === planet.id} title={b.isMoon ? 'Show the moon' : 'Show the planet'}>
                 <img src={Art.planet(b.id, b.maxTemp, !!b.isMoon)} alt="" /><span>{b.isMoon ? 'Moon' : 'Planet'}</span>

@@ -9,6 +9,7 @@ import { useGame } from '../game';
 import { NumInput } from '../NumInput';
 import { getProbes } from '../prefs';
 import { IntelText } from './FleetEvents';
+import { FlightLane } from '../FlightLane';
 import { Card, CoordLink, coordStr, Countdown, fmt, fmtDur, Page, PlanetLink, PlayerLink, ItemIcon, Empty } from '../ui';
 
 const MISSIONS: [Mission, string][] = [
@@ -94,6 +95,7 @@ export function FleetPage() {
         <Card title="⚠ Hostile fleets inbound">
           {fleets.incoming.map((f) => (
             <div key={f.id} className="bad">
+              {f.departAt && f.arriveAt && <FlightLane m={{ phase: 'outbound', departAt: f.departAt, arriveAt: f.arriveAt }} hostile />}
               {f.ownerId ? <a className="plink" onClick={() => openProfile(f.ownerId!)}>{f.ownerName}</a> : f.ownerName}{f.ownerAlliance ? ` [${f.ownerAlliance}]` : ''} from <a className="plink" onClick={() => showInGalaxy(f.from)}>{f.fromName ? `${f.fromMoon ? '🌙 ' : ''}${f.fromName} ` : ''}{coordStr(f.from)}</a> → {f.targetOwnerId ? <><a className="plink" onClick={() => openProfile(f.targetOwnerId!)}>{f.targetOwner}</a> (<a className="plink" onClick={() => showInGalaxy(f.to)}>{f.targetName}</a>)</> : f.target} at <a className="plink" onClick={() => showInGalaxy(f.to)}>{coordStr(f.to)}</a> · arrives in <Countdown to={f.arriveAt} /><IntelText intel={f.intel} count={f.shipCount} types={f.shipTypes} fleet={f.fleet} />
               {f.ally && <span className="muted"> — send a "Defend ally" fleet to help!</span>}
               {!f.ally && me.alliance && <> <button className="link" disabled={f.helpAsked} title="Tell your alliance a hostile fleet is coming and ask for hold fleets" onClick={() => void act(() => post('/alliance/help', { fleetId: f.id }), 'Your alliance has been asked for help')}>{f.helpAsked ? 'Help asked' : 'Ask allies for help'}</button></>}
@@ -110,6 +112,7 @@ export function FleetPage() {
           <div className="row between fleetrow" key={m.id}>
             <div>
               <b>{m.mission}</b> <CoordLink c={m.from} /> → <CoordLink c={m.to} /> <span className="muted">({m.phase})</span> · <Countdown to={phaseTime(m)} />
+              {m.mission !== 'missile' && m.mission !== 'expedition' && <FlightLane m={m} />}
               <div className="muted small">{m.missiles ? `${m.missiles} interplanetary missile(s)` : shipList(m.ships)}{m.cargo && m.cargo.metal + m.cargo.crystal + m.cargo.deuterium > 0 ? ` · cargo ${fmt(m.cargo.metal)}M ${fmt(m.cargo.crystal)}C ${fmt(m.cargo.deuterium)}D` : ''}</div>
             </div>
             {m.phase !== 'returning' && m.mission !== 'missile' && <button onClick={() => confirm('Recall this fleet? It turns around at once and cannot be sent on again from where it is.') && void act(() => post(`/fleets/${m.id}/recall`), 'Recalled')}>Recall</button>}

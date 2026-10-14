@@ -95,7 +95,7 @@ export function Galaxy() {
       })()}
       <table className="galaxy">
         <thead><tr><th>#</th><th>Planet</th><th>Commander</th><th>Alliance</th><th>Debris</th><th>Actions</th></tr></thead>
-        <tbody>
+        <tbody key={`${g}:${s}`}>
           {data?.slots.filter((sl: any) => {
             const pl = sl.planet;
             if (!pl || pl.mine) return !(onlyInactive || hideProtected || onlyOutposts) || !!pl;

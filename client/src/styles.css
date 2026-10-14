@@ -419,9 +419,8 @@ img.itemicon { vertical-align: middle; border-radius: 4px; object-fit: cover; ma
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .skip { position: absolute; left: -999px; top: 6px; z-index: 100; padding: 6px 12px; background: var(--panel2); border: 1px solid var(--accent); border-radius: 6px; }
 .skip:focus { left: 8px; }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
-}
+html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after { animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
 
 /* ---- hands-on tutorial ---- */
 .tut { position: fixed; inset: 0; z-index: 70; pointer-events: none; }
@@ -570,7 +569,7 @@ tr.picked td { background: #2fa0ff18; }
 .skeleton i { display: block; height: 54px; border-radius: 10px; background: linear-gradient(90deg, var(--panel2) 0%, #1b2744 50%, var(--panel2) 100%); background-size: 200% 100%; animation: skel 1.4s ease-in-out infinite; }
 .skeleton i:first-child { height: 90px; } .skeleton i:last-child { width: 70%; }
 @keyframes skel { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
-@media (prefers-reduced-motion: reduce) { .skeleton i { animation: none; } }
+html:not([data-motion="full"]) .skeleton i { animation: none; }
 .empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 10px; border: 1px dashed var(--line); border-radius: 10px; text-align: center; color: var(--muted); }
 .empty p { margin: 0; }
 
@@ -617,3 +616,70 @@ main { overflow-anchor: none; }
 .pfolded .parrow { padding: 2px 8px; min-height: 28px; }
 .pstrip .spacer { flex: 1; }
 .pwrap .pstrip { padding-right: 34px; }
+
+/* ---- motion: entrances, drifts, glows and flights. Full does all of it, Reduced only quick fades, Off nothing (see motion.ts) ---- */
+@keyframes zg-fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes zg-slidein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes zg-slidedown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes zg-pop { from { opacity: 0; transform: scale(.96) translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes zg-drift { from { background-position: 40% 50%; } to { background-position: 60% 50%; } }
+@keyframes zg-glow { 0%, 100% { box-shadow: 0 0 6px rgba(240, 169, 59, .25); } 50% { box-shadow: 0 0 16px rgba(240, 169, 59, .55); } }
+@keyframes zg-sheen { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes zg-orbit { to { transform: rotate(360deg); } }
+@keyframes zg-bump { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes zg-spark { 0% { transform: translate(0, 0) scale(.4); opacity: 1; } 100% { transform: translate(var(--dx, 24px), var(--dy, -30px)) scale(1.2); opacity: 0; } }
+@keyframes zg-dot { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes zg-hold { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.25); } }
+
+html[data-motion="reduced"] .page, html[data-motion="reduced"] .items > .card, html[data-motion="reduced"] .modal, html[data-motion="reduced"] .alertstrip { animation: zg-fadein .15s ease-out both; }
+html[data-motion="full"] .page { animation: zg-slidein .28s ease-out both; }
+html[data-motion="full"] .items > .card { animation: zg-slidein .34s ease-out both; animation-delay: calc(var(--i, 0) * 28ms); }
+.items > .card:nth-child(2) { --i: 1; } .items > .card:nth-child(3) { --i: 2; } .items > .card:nth-child(4) { --i: 3; } .items > .card:nth-child(5) { --i: 4; } .items > .card:nth-child(6) { --i: 5; }
+.items > .card:nth-child(7) { --i: 6; } .items > .card:nth-child(8) { --i: 7; } .items > .card:nth-child(9) { --i: 8; } .items > .card:nth-child(10) { --i: 9; } .items > .card:nth-child(n+11) { --i: 10; }
+html[data-motion="full"] .modal { animation: zg-pop .2s ease-out both; }
+html[data-motion="full"] .alertstrip { animation: zg-slidedown .25s ease-out both; }
+html[data-motion="full"] .galaxy tbody tr { animation: zg-fadein .3s ease-out both; }
+html[data-motion="full"] .galaxy .online { animation: zg-dot 2.2s ease-in-out infinite; }
+
+/* buttons answer a press, tabs and cards ease between states */
+html:not([data-motion="off"]) button, html:not([data-motion="off"]) .subtab, html:not([data-motion="off"]) .pchip { transition: transform .08s ease-out, background-color .15s, border-color .15s, box-shadow .2s, color .15s; }
+html[data-motion="full"] button:not(:disabled):active { transform: scale(.97); }
+html[data-motion="full"] .pchip:hover { transform: translateY(-1px); }
+
+/* the banners drift slowly, the selected planet breathes, running jobs shimmer */
+html[data-motion="full"] .hero { background-size: 118% auto; background-position: 50% 50%; animation: zg-drift 50s ease-in-out infinite alternate; }
+html[data-motion="full"] .pchip.on { animation: zg-glow 3.4s ease-in-out infinite; }
+html[data-motion="full"] .bar > div { position: relative; overflow: hidden; }
+html[data-motion="full"] .bar > div::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .28), transparent); animation: zg-sheen 2.2s linear infinite; }
+
+/* a moon circling its planet, in the hero */
+.orbit { display: none; }
+html[data-motion="full"] .orbit { display: inline-block; position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+html[data-motion="full"] .orbit > img { position: absolute; left: 20px; top: 20px; width: 32px; height: 32px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 10px rgba(255, 255, 255, .18); }
+html[data-motion="full"] .orbiter { position: absolute; inset: 0; animation: zg-orbit 16s linear infinite; }
+html[data-motion="full"] .orbiter img { position: absolute; left: 30px; top: 0; width: 14px; height: 14px; border-radius: 50%; object-fit: cover; animation: zg-orbit 16s linear infinite reverse; }
+@media (max-width: 640px) { html[data-motion="full"] .orbit { display: none; } }
+
+/* a level that rises pops as well as glows; achievements and objectives throw a few sparks */
+html[data-motion="full"] .flash { display: inline-block; animation: zg-flash 1.2s ease-out 2, zg-bump .55s ease-out; }
+html[data-motion="full"] .toast.celebrate { position: relative; overflow: visible; animation: zg-toast .25s ease-out, zg-glow 1.1s ease-out 2; }
+html[data-motion="full"] .toast.celebrate::before, html[data-motion="full"] .toast.celebrate::after { content: '✦'; position: absolute; top: 4px; color: var(--accent); pointer-events: none; animation: zg-spark 1.1s ease-out both; }
+html[data-motion="full"] .toast.celebrate::before { left: 14px; --dx: -26px; --dy: -34px; }
+html[data-motion="full"] .toast.celebrate::after { right: 20px; --dx: 34px; --dy: -30px; animation-delay: .12s; }
+
+/* a fleet on its way: a ship that glides along the line between the two planets */
+.lane { position: relative; height: 20px; margin: 4px 6px 2px; }
+.lane .lanetrack { position: absolute; left: 0; right: 0; top: 9px; height: 2px; background: repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 12px); }
+.lane .laneend { position: absolute; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.lane .laneend.start { left: -4px; } .lane .laneend.end { right: -4px; background: var(--accent); }
+.lane.hostile .laneend.end { background: var(--bad); }
+.lane .laneship { position: absolute; top: 0; transform: translateX(-50%); line-height: 20px; color: var(--accent); }
+.lane.hostile .laneship { color: var(--bad); }
+.lane .laneglyph { display: inline-block; font-size: 13px; }
+.lane.back .laneglyph { transform: rotate(180deg); }
+.lane .lanetrail { position: absolute; right: 50%; top: 9px; width: 56px; height: 2px; background: linear-gradient(90deg, transparent, currentColor); opacity: .7; }
+.lane.back .lanetrail { right: auto; left: 50%; transform: scaleX(-1); }
+.lane.hold .lanetrail { display: none; }
+html[data-motion="full"] .lane .laneship { transition: left 1s linear; }
+html[data-motion="full"] .lane.hold .laneship { animation: zg-hold 2s ease-in-out infinite; }
+html:not([data-motion="full"]) .lane .lanetrail { display: none; }

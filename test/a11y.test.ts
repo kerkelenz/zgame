@@ -32,7 +32,10 @@ describe('accessibility basics in the stylesheet and the shell', () => {
   const css = readFileSync('client/src/styles.css', 'utf8');
   const app = readFileSync('client/src/App.tsx', 'utf8');
   it('respects reduced motion, shows keyboard focus and announces pop-ups', () => {
-    expect(css).toMatch(/prefers-reduced-motion: reduce/);
+    // the device's reduced-motion setting is the default of the Animation choice, and the styles stand still when it is off or reduced
+    expect(readFileSync('client/src/motion.ts', 'utf8')).toMatch(/prefers-reduced-motion: reduce/);
+    expect(css).toMatch(/data-motion="off"/);
+    expect(css).toMatch(/data-motion="reduced"/);
     expect(css).toMatch(/:focus-visible/);
     expect(app).toMatch(/aria-live="polite"/);
     expect(app).toMatch(/Skip to the page/);
