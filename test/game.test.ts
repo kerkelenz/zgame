@@ -268,6 +268,7 @@ describe('fleets', () => {
   });
 
   it('espionage returns a report with detail depending on probes', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);                           // the probes are not shot down
     ap.fleet = { espionageProbe: 10 };
     bp.fleet = {};
     const m = sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { espionageProbe: 10 }, mission: 'espionage' }, T0);

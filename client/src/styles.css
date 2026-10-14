@@ -676,20 +676,10 @@ html[data-motion="full"] .lane .laneship { transition: left 1s linear; }
 html[data-motion="full"] .lane.hold .laneship { animation: zg-hold 2s ease-in-out infinite; }
 html:not([data-motion="full"]) .lane .lanetrail { display: none; }
 
-/* the banner is a canvas: the other body of the planet and its moon, big, now and then flies past in front of the picture as if in orbit */
+/* the banner is a canvas: the other body of the planet and its moon, big, now and then crosses in front of the picture as if in orbit (Flyby.tsx moves it) */
 .flyby { display: none; }
 html[data-motion="full"] .flyby { display: block; position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 html[data-motion="full"] .herotop, html[data-motion="full"] .herostats { position: relative; z-index: 1; }
-.flywrap { position: absolute; left: -16%; top: 70%; width: 14%; min-width: 56px; aspect-ratio: 1; margin: -7% 0 0 -7%; opacity: 0; filter: drop-shadow(0 0 14px rgba(190, 210, 255, .35)); animation: zg-flyby 64s ease-in-out 5s infinite both; }
-.flywrap img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
-.flywrap::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 30% 28%, rgba(255, 255, 255, .1), transparent 45%, rgba(2, 4, 12, .5) 100%); }
-@keyframes zg-flyby {
-  0% { left: -16%; top: 70%; transform: scale(.5); opacity: 0; }
-  2% { opacity: 1; }
-  8% { top: 56%; transform: scale(.85); }
-  14% { left: 48%; top: 44%; transform: scale(1.4); }
-  20% { top: 52%; transform: scale(.95); }
-  26% { left: 112%; top: 66%; transform: scale(.5); opacity: 1; }
-  27% { opacity: 0; }
-  100% { left: 112%; top: 66%; opacity: 0; }
-}
+.flywrap { position: absolute; left: 0; top: 0; width: 56px; height: 56px; opacity: 0; will-change: transform, opacity; filter: drop-shadow(0 0 16px rgba(170, 195, 255, .32)); }
+.flywrap img { width: 100%; height: 100%; display: block; user-select: none; }
+.flywrap::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, .08), transparent 46%, rgba(2, 4, 12, .5) 100%); }

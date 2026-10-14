@@ -3,6 +3,7 @@ import { POSITION_BONUS } from '../../shared/data';
 import { LIFEFORMS, type LifeformId } from '../../shared/lifeforms';
 import { ROLES } from '../../shared/roles';
 import { Art } from './art';
+import { Flyby } from './Flyby';
 import { useGame } from './game';
 import { EnergyIcon, ResIcon } from './ResIcon';
 import { fmt } from './ui';
@@ -34,11 +35,7 @@ export function PlanetHero() {
 
   return (
     <section className={`hero${planet.isMoon ? ' moonhero' : ''}`} style={{ backgroundImage: `url(${Art.banner(planet.id, planet.maxTemp, !!planet.isMoon)})` }} aria-label={`${planet.name}, ${lookName(planet.look, !!planet.isMoon)}`}>
-      {bodies.length > 1 && (
-        <span className="flyby" aria-hidden="true" key={planet.id}>
-          <span className="flywrap"><img src={Art.planet(other.id, other.maxTemp, !!other.isMoon)} alt="" /></span>
-        </span>
-      )}
+      {bodies.length > 1 && <Flyby key={planet.id} src={Art.sprite(other.id, other.maxTemp, !!other.isMoon)} />}
       <div className="herotop">
         <div className="herotitle">
           <span className="herokind">{lookName(planet.look, !!planet.isMoon)}{role && <span className="herorole">{role.label}</span>}{planet.lifeform && LIFEFORMS[planet.lifeform as LifeformId] && <span className="herorole" title="The people of this planet">{LIFEFORMS[planet.lifeform as LifeformId].name}</span>}</span>

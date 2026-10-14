@@ -42,3 +42,37 @@ describe('where a fleet is on its way', () => {
     expect(flightProgress(back, 20_000).frac).toBe(0);
   });
 });
+
+describe('the fly-past of the other body across the banner', () => {
+  it('is away at first, then crosses once a minute or so and is away in between', async () => {
+    const { FLYBY, flybyPose } = await import('../client/src/motion');
+    expect(flybyPose(0)).toBeNull();
+    expect(flybyPose(FLYBY.delayMs - 1)).toBeNull();
+    expect(flybyPose(FLYBY.delayMs + FLYBY.crossMs / 2)).not.toBeNull();
+    expect(flybyPose(FLYBY.delayMs + FLYBY.crossMs + 500)).toBeNull();
+    expect(flybyPose(FLYBY.delayMs + FLYBY.periodMs + FLYBY.crossMs / 2)).not.toBeNull();
+  });
+  it('goes from off the left edge to off the right edge, biggest and highest in the middle, fading in and out', async () => {
+    const { FLYBY, flybyPose } = await import('../client/src/motion');
+    const at = (u: number) => flybyPose(FLYBY.delayMs + u * FLYBY.crossMs - (u === 0 ? -1 : 0))!;
+    const start = at(0.001), mid = at(0.5), end = at(0.999);
+    expect(start.x).toBeLessThan(0);
+    expect(end.x).toBeGreaterThan(1);
+    expect(mid.x).toBeCloseTo(0.5, 2);
+    expect(mid.scale).toBeGreaterThan(start.scale * 2);
+    expect(mid.y).toBeLessThan(start.y);
+    expect(start.opacity).toBeLessThan(0.05);
+    expect(mid.opacity).toBe(1);
+    expect(end.opacity).toBeLessThan(0.05);
+  });
+  it('moves at a steady pace with no jumps from one frame to the next', async () => {
+    const { FLYBY, flybyPose } = await import('../client/src/motion');
+    let prev = flybyPose(FLYBY.delayMs + 100)!, maxStep = 0;
+    for (let t = FLYBY.delayMs + 116; t < FLYBY.delayMs + FLYBY.crossMs - 100; t += 16) {
+      const p = flybyPose(t)!;
+      maxStep = Math.max(maxStep, Math.abs(p.x - prev.x), Math.abs(p.y - prev.y), Math.abs(p.scale - prev.scale));
+      prev = p;
+    }
+    expect(maxStep).toBeLessThan(0.004);                                       // a 1000 px banner moves at most a few pixels per frame
+  });
+});

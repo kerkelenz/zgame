@@ -7,6 +7,8 @@
  *                                     sub-folders), work out which item each belongs to from its file name, shrink it and save it as
  *                                     client/src/assets/art/<id>.webp; the folder is left untouched
  *   npm run art -- optimize           shrink pictures already in client/src/assets/art that are larger than needed
+ *   npm run art -- sprites            cut every planet and moon picture out of its space background into <id>.sprite.webp (a round picture with a soft edge on a
+ *                                     transparent background), for the bodies that fly across the Overview banner; run again after adding pictures
  * The game picks the files up on the next build.
  */
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -24,7 +26,8 @@ const MAX_SIDE = 768;
 const BANNER_WIDTH = 1400;
 const isBanner = (id: string) => /^(planet|moon)banner-/.test(id);
 const THUMB = /\.thumb\.webp$/i;
-const have = () => new Set(readdirSync(dir).filter((f) => IMG.test(f) && !THUMB.test(f)).map((f) => f.replace(/\.[a-z]+$/i, '')));
+const SPRITE = /.sprite.webp$/i;
+const have = () => new Set(readdirSync(dir).filter((f) => IMG.test(f) && !THUMB.test(f) && !SPRITE.test(f)).map((f) => f.replace(/\.[a-z]+$/i, '')));
 const items = artItems();
 const [cmd = 'status', arg] = process.argv.slice(2);
 
@@ -67,7 +70,7 @@ async function ingest(from: string) {
 
 async function optimize() {
   let before = 0, after = 0, n = 0, thumbs = 0;
-  for (const f of readdirSync(dir).filter((x) => IMG.test(x) && !THUMB.test(x))) {
+  for (const f of readdirSync(dir).filter((x) => IMG.test(x) && !THUMB.test(x) && !SPRITE.test(x))) {
     const p = join(dir, f);
     let src = readFileSync(p);
     const meta = await sharp(src).metadata();
@@ -86,6 +89,39 @@ async function optimize() {
   console.log(n ? `${n} shrunk, ${kb(before)} -> ${kb(after)}` : 'nothing to shrink', `; ${thumbs} small copies made`);
 }
 
+/**
+ * A round cut-out of a planet or moon: the sphere is found from how far, along sixteen rays from the middle, the picture is brighter than space,
+ * the square around it is cropped and everything outside the circle fades to transparent.
+ */
+async function cutOut(src: Buffer): Promise<Buffer> {
+  const { data, info } = await sharp(src).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const W = info.width, H = info.height, cx = W / 2, cy = H / 2;
+  const lum = (x: number, y: number) => { const i = (Math.round(y) * W + Math.round(x)) * 3; return 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2]; };
+  const radii: number[] = [];
+  for (let k = 0; k < 16; k++) {
+    const a = (k / 16) * Math.PI * 2;
+    let last = 0;
+    for (let r = Math.round(W * 0.03); r < W / 2 - 1; r++) if (lum(cx + Math.cos(a) * r, cy + Math.sin(a) * r) > 38) last = r;
+    radii.push(last);
+  }
+  radii.sort((x, y) => x - y);
+  const r = Math.min(W / 2, Math.max(W * 0.3, radii[8] * 0.99));                // the middle ray: ignores a station or a ring that sticks out
+  const size = Math.round(2 * r), left = Math.max(0, Math.round(cx - r)), top = Math.max(0, Math.round(cy - r));
+  const OUT = 320;
+  const crop = await sharp(src).extract({ left, top, width: Math.min(size, W - left), height: Math.min(size, H - top) }).resize(OUT, OUT, { fit: 'cover' }).ensureAlpha().toBuffer();
+  const mask = Buffer.from(`<svg width="${OUT}" height="${OUT}"><defs><radialGradient id="g"><stop offset="93%" stop-color="#fff" stop-opacity="1"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><circle cx="${OUT / 2}" cy="${OUT / 2}" r="${OUT / 2}" fill="url(#g)"/></svg>`);
+  return sharp(crop).composite([{ input: mask, blend: 'dest-in' }]).webp({ quality: 86, alphaQuality: 92 }).toBuffer();
+}
+async function sprites() {
+  let n = 0;
+  for (const f of readdirSync(dir).filter((x) => /^(planet|moon)-[a-z]+.webp$/i.test(x))) {
+    const out = join(dir, f.replace(/.webp$/i, '.sprite.webp'));
+    writeFileSync(out, await cutOut(readFileSync(join(dir, f))));
+    n++;
+  }
+  console.log(`${n} sprites made`);
+}
+
 const show = (list: typeof items) => list.forEach((i, n) => console.log(`\n${n + 1}. save as ${i.id}.png   (${i.kind}: ${i.name})\n${i.prompt}`));
 
 if (cmd === 'ingest') {
@@ -93,6 +129,8 @@ if (cmd === 'ingest') {
   await ingest(arg);
 } else if (cmd === 'optimize') {
   await optimize();
+} else if (cmd === 'sprites') {
+  await sprites();
 } else if (cmd === 'next') {
   const missing = items.filter((i) => !have().has(i.id));
   console.log(`${items.length - missing.length}/${items.length} done, ${missing.length} to go`);

@@ -4,7 +4,7 @@
  *     Art.overrides['metalMine'] = 'https://.../mine.png'
  *     Art.overrides['planet:<planetId>'] = 'data:image/png;base64,...'
  */
-import { artFile, artThumb } from './artFiles';
+import { artFile, artSprite, artThumb } from './artFiles';
 import { legacyMoonLook, legacyPlanetLook, moonArtId, moonBannerId, planetArtId, planetBannerId } from '../../shared/artlist';
 
 type Kind = 'building' | 'tech' | 'ship' | 'defense';
@@ -45,6 +45,11 @@ export const Art = {
   /** the banner for a look the server named (other commanders' worlds, reports), or nothing when there is none */
   bannerOfLook(look: string | null | undefined, isMoon: boolean): string | undefined {
     return look ? artFile(isMoon ? moonBannerId(look) : planetBannerId(look)) ?? undefined : undefined;
+  },
+  /** the cut-out picture of a world (see `npm run art -- sprites`), or its round picture when it has none */
+  sprite(id: string, tempMax: number, isMoon: boolean): string {
+    const look = lookOf(id, tempMax, isMoon);
+    return artSprite(isMoon ? moonArtId(look) : planetArtId(look)) ?? this.planet(id, tempMax, isMoon);
   },
   icon(kind: Kind, id: string, name: string): string {
     if (this.overrides[id]) return this.overrides[id];

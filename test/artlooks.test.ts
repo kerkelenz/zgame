@@ -28,7 +28,7 @@ describe('planet and moon pictures', () => {
   it('every item that has a file is a known item, and every look has its picture', () => {
     const dir = 'client/src/assets/art';
     if (!existsSync(dir)) return;
-    for (const f of readdirSync(dir).filter((x) => /\.webp$/.test(x) && !/\.thumb\.webp$/.test(x))) {
+    for (const f of readdirSync(dir).filter((x) => /\.webp$/.test(x) && !/\.(thumb|sprite)\.webp$/.test(x))) {
       expect(ids, f).toContain(f.replace(/\.webp$/, ''));
       if (!/^(planet|moon)banner-/.test(f)) expect(existsSync(`${dir}/${f.replace(/\.webp$/, '.thumb.webp')}`), `${f} needs its small copy: npm run art -- optimize`).toBe(true);   // the wide banners have none
     }

@@ -3,12 +3,16 @@ const files = import.meta.glob('./assets/art/*.{png,webp,jpg,jpeg}', { eager: tr
 
 const byId: Record<string, string> = {};
 const thumbById: Record<string, string> = {};
+const spriteById: Record<string, string> = {};
 for (const [path, url] of Object.entries(files)) {
   const name = path.slice(path.lastIndexOf('/') + 1).replace(/.[a-z]+$/i, '');
-  if (name.endsWith('.thumb')) thumbById[name.slice(0, -6)] = url; else byId[name] = url;
+  if (name.endsWith('.thumb')) thumbById[name.slice(0, -6)] = url; else if (name.endsWith('.sprite')) spriteById[name.slice(0, -7)] = url; else byId[name] = url;
 }
 
 /** the full-size picture (details pages) */
 export const artFile = (id: string): string | undefined => byId[id];
 /** the small square copy for icons and lists, or the full picture when there is no small one */
 export const artThumb = (id: string): string | undefined => thumbById[id] ?? byId[id];
+
+/** a planet or moon cut out of its background (round, transparent edge), for bodies that move across a picture */
+export const artSprite = (id: string): string | undefined => spriteById[id];

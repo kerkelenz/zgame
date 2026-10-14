@@ -60,3 +60,26 @@ export function flightProgress(m: FlightLike, now: number): { frac: number; dir:
   }
   return { frac: clamp((now - m.departAt) / Math.max(1, m.arriveAt - m.departAt)), dir: 'out' };
 }
+
+/** how often and how long the other body of a planet and its moon crosses the banner */
+export const FLYBY = { periodMs: 66_000, delayMs: 4_000, crossMs: 22_000 };
+const smooth = (x: number) => { const t = Math.min(1, Math.max(0, x)); return t * t * (3 - 2 * t); };
+/**
+ * Where the flying body is `elapsedMs` after the banner appeared, or null while it is away. It goes round half a circle seen from the side at a
+ * steady pace: across the banner from left to right (x and y as shares of the banner), bigger and a little higher at the near point in the middle,
+ * fading in and out beyond the edges.
+ */
+export function flybyPose(elapsedMs: number): { x: number; y: number; scale: number; opacity: number } | null {
+  const since = elapsedMs - FLYBY.delayMs;
+  if (since < 0) return null;
+  const u = (since % FLYBY.periodMs) / FLYBY.crossMs;
+  if (u >= 1) return null;
+  const theta = Math.PI + u * Math.PI;                       // from the far left round the near side to the far right
+  const near = -Math.sin(theta);                             // 0 at both ends, 1 in the middle
+  return {
+    x: 0.5 + 0.64 * Math.cos(theta),
+    y: 0.64 - 0.2 * near,
+    scale: 0.6 + 0.8 * near,
+    opacity: smooth(u / 0.1) * smooth((1 - u) / 0.1),
+  };
+}

@@ -76,7 +76,7 @@ describe('outposts: strength', () => {
 
 describe('outposts: clearing and rebuilding', () => {
   const tier1 = () => {
-    generateOutposts(w, T0);
+    generateOutposts(w, T0, 1234);                                              // a fixed seed: one world in a hundred has no tier 1 outpost
     const o = w.outposts!.find((x) => x.tier === 1)!;
     return { o, pl: w.planets[o.planetId] };
   };
@@ -105,7 +105,7 @@ describe('outposts: clearing and rebuilding', () => {
     expect(Object.keys(pl.fleet).length + Object.keys(pl.defenses).length).toBeGreaterThan(0);
   });
   it('a failed attack pays nothing and leaves it standing', () => {
-    generateOutposts(w, T0);
+    generateOutposts(w, T0, 1234);
     const o = w.outposts!.find((x) => x.tier === 1)!, pl = w.planets[o.planetId];
     ap.fleet = { lightFighter: 3, smallCargo: 1 };
     const credits = alice.credits;

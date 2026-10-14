@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { register } from '../server/accounts';
 import { SCOUT, SUPPLY, convoyRisk, creditStrike, deliverSupply, repairFront, spawnStrikes, strikeTargets } from '../server/alien';
 import { processMovements, sendFleet } from '../server/fleet';
@@ -339,7 +339,9 @@ describe('supply convoys', () => {
     expect(w.movements[m.id].ships.cruiser).toBe(55);
     expect(inv.supply.metal).toBe(0);
   });
+  afterEach(() => { vi.restoreAllMocks(); });
   it('an engagement uses the pool: what was lost last time comes back', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.93);                                   // the dice of the fight are fixed, so a win with losses stays a win with losses
     const inv = open();
     const n = Math.ceil((inv.startValue * 0.9) / 27000);                              // a fleet nearly the size of the wave: it wins, with losses
     pa.fleet = { cruiser: n };
