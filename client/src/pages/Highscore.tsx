@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { get } from '../api';
 import { useGame } from '../game';
-import { Card, Countdown, Page, fmt, when } from '../ui';
+import { Card, Countdown, Page, fmt, when, Loading } from '../ui';
 
 interface Pt { t: number; v: number }
 
@@ -48,7 +48,7 @@ export function Highscore() {
   const [season, setSeason] = useState<any>(null);
   useEffect(() => { void get('/history').then(setHistory); void get('/season').then(setSeason); }, []);
   useEffect(() => { void get(`/highscore?cat=${cat}`).then(setData); }, [cat]);
-  if (!data) return <Page title="Standing"><p className="muted">Loading…</p></Page>;
+  if (!data) return <Page title="Standing"><Loading /></Page>;
 
   const rows: any[] = data.players;
   const meIdx = rows.findIndex((r) => r.id === me.player.id);

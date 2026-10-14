@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Countdown, Page, fmt } from '../ui';
+import { Card, Countdown, Page, fmt, Loading } from '../ui';
 
 export function ContractRow({ c, onClaim }: { c: any; onClaim: (id: string) => void }) {
   const pct = Math.min(100, Math.round((c.progress / c.target) * 100));
@@ -31,7 +31,7 @@ export function Contracts() {
     toast(`+${r.credits + r.bonus} Command Credits${r.bonus ? ` (including the ${r.bonus} all-dailies bonus)` : ''}`);
     setD(r.view);
   };
-  if (!d) return <Page title="Contracts"><p className="muted">Loading…</p></Page>;
+  if (!d) return <Page title="Contracts"><Loading /></Page>;
   return (
     <Page title="Contracts">
       <p className="muted">Short jobs that pay Command Credits. Do the things you would do anyway, then claim. Unclaimed contracts are replaced when the timer runs out.</p>

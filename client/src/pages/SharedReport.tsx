@@ -3,7 +3,7 @@ import { BUILDINGS, TECHS, UNITS } from '../../../shared/data';
 import { missingSteps, type OrderStep } from '../../../shared/orders';
 import { ROLES } from '../../../shared/roles';
 import { get, getToken, post } from '../api';
-import { fmt, when } from '../ui';
+import { fmt, when, Loading } from '../ui';
 import { BattleReport } from './Messages';
 
 const nameOf = (id: string) => (BUILDINGS as any)[id]?.name ?? (TECHS as any)[id]?.name ?? (UNITS as any)[id]?.name ?? id;
@@ -70,7 +70,7 @@ export function SharedReport({ id }: { id: string }) {
       <div className="card" style={{ maxWidth: 760 }}>
         <h1>Zgame</h1>
         {err && <div className="error">{err}</div>}
-        {!r && !err && <p className="muted">Loading…</p>}
+        {!r && !err && <Loading />}
         {r && <>
           <h3>{r.subject}</h3>
           <p className="muted small">Shared {when(r.at)}</p>

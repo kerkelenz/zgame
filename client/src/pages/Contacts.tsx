@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, CoordLink, Page, PlanetLink, PlayerLink, coordStr, fmt, when } from '../ui';
+import { Card, CoordLink, Page, PlanetLink, PlayerLink, coordStr, fmt, when, Loading } from '../ui';
 
 const ACT: Record<string, string> = { online: 'online', active: 'active', inactive: 'inactive 7d+', longInactive: 'inactive 28d+' };
 
@@ -13,7 +13,7 @@ export function Contacts() {
   const load = useCallback(async () => { setD(await get('/social')); setSpy(await get('/spy-archive')); }, []);
   useEffect(() => { void load(); }, [load]);
   const run = async (fn: () => Promise<any>, ok?: string) => { const r = await act(fn, ok); if (r) setD(r.buddies ? r : await get('/social')); };
-  if (!d) return <Page title="Contacts"><p className="muted">Loading…</p></Page>;
+  if (!d) return <Page title="Contacts"><Loading /></Page>;
   const noteTargets = Object.entries(d.notes as Record<string, string>);
 
   return (

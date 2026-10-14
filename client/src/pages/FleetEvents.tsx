@@ -4,7 +4,7 @@ import { post } from '../api';
 import { UNITS, resName } from '../../../shared/data';
 import type { UnitId } from '../../../shared/types';
 import { ResIcon } from '../ResIcon';
-import { Card, CoordLink, Countdown, ItemIcon, Tip, coordStr, fmt } from '../ui';
+import { Card, CoordLink, Countdown, Empty, ItemIcon, Tip, coordStr, fmt } from '../ui';
 
 const MISSION: Record<string, string> = {
   attack: 'Attack', transport: 'Transport', deploy: 'Deploy', espionage: 'Espionage', colonize: 'Colonize', recycle: 'Recycle debris',
@@ -95,7 +95,7 @@ export function FleetEvents() {
     <Card title={`Events${events.length ? ` (${events.length})` : ''}`} right={<span className="row"><button onClick={toggle}>{hidden ? 'Show' : 'Hide'}</button><button onClick={() => setPage('fleet')}>Fleet</button></span>}>
       {!hidden && (
         <>
-          {events.length === 0 && <p className="muted">Nothing is moving: all ships are home and no fleets are heading your way.</p>}
+          {events.length === 0 && <Empty>Nothing is moving: all ships are home and no fleets are heading your way.</Empty>}
           <div className="events">
             {rows.map((e) => (
               <div key={e.id} className={`event ev-${e.kind} ${e.projected ? 'projected' : ''}`}>

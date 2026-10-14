@@ -142,7 +142,7 @@ export function App() {
             const st = fullState(ms);
             const cls = k === 'deuterium' ? 'deut' : k;
             return (
-              <span key={k} className={`${cls}${st ? ' ' + st : ''}`} title={`${resName(k)}${ms === 0 ? ': storage is full, production is wasted' : ms !== null ? `: full in ${fmtDur(ms)}` : ''}`}>
+              <span key={k} className={`${cls}${st ? ' ' + st : ''}`} title={`${resName(k)} (storage ${fmt(planet.capacity[k])})${ms === 0 ? ': storage is full, production is wasted' : ms !== null ? `: full in ${fmtDur(ms)}` : ''}`}>
                 <ResIcon k={k} /> {fmt(live[k])}<small>/{fmt(planet.capacity[k])}</small>{st === 'soon' && ms !== null && <small className="fullin"> {fmtDur(ms)}</small>}{st === 'full' && <small className="fullin"> FULL</small>}
               </span>
             );

@@ -9,7 +9,7 @@ import { useGame } from '../game';
 import { NumInput } from '../NumInput';
 import { getProbes } from '../prefs';
 import { IntelText } from './FleetEvents';
-import { Card, CoordLink, coordStr, Countdown, fmt, fmtDur, Page, PlanetLink, PlayerLink, ItemIcon } from '../ui';
+import { Card, CoordLink, coordStr, Countdown, fmt, fmtDur, Page, PlanetLink, PlayerLink, ItemIcon, Empty } from '../ui';
 
 const MISSIONS: [Mission, string][] = [
   ['attack', 'Attack'], ['invade', 'Join the invasion front (Void Armada)'], ['scout', 'Scout the Void rift (probes)'], ['supply', 'Supply convoy to the front (cargo ships)'], ['destroy', 'Destroy moon (Deathstars)'], ['transport', 'Transport'], ['deploy', 'Deploy'], ['hold', 'Defend ally (hold)'],
@@ -105,7 +105,7 @@ export function FleetPage() {
       <ExpeditionMap />
 
       <Card title={`Active fleets (${me.slots.used}/${me.slots.max} slots · expeditions ${me.slots.expUsed}/${me.slots.expMax})`}>
-        {fleets.mine.length === 0 && <p className="muted">No fleets in flight.</p>}
+        {fleets.mine.length === 0 && <Empty>No fleets in flight. Ships you send show up here with their arrival time.</Empty>}
         {fleets.mine.map((m) => (
           <div className="row between fleetrow" key={m.id}>
             <div>

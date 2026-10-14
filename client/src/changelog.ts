@@ -6,6 +6,7 @@ export const CHANGELOG: Release[] = [
     id: '2026-10-w', date: '2026-10-17', title: 'Banners everywhere',
     items: [
       'The worlds of other commanders show their banner too: click a position number in the Galaxy, open a commander profile (their home world), or read a spy report or a battle report.',
+      'On a phone the top bar fits all four resources in one line and the Galaxy shows each position as a card with its buttons. Pages show soft placeholder bars while they load, and empty lists say what will appear there.',
     ],
   },
   {

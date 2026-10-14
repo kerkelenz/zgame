@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { get } from './api';
-import { Card, fmt, fmtDur, when } from './ui';
+import { Card, fmt, fmtDur, when, Loading } from './ui';
 
 const bytes = (n: number | null) => (n == null ? 'unknown' : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
 
@@ -16,7 +16,7 @@ export function HealthCard() {
     return () => { alive = false; clearInterval(t); };
   }, []);
   if (err) return <Card title="Server health"><p className="bad">{err}</p></Card>;
-  if (!h) return <Card title="Server health"><p className="muted">Loading…</p></Card>;
+  if (!h) return <Card title="Server health"><Loading /></Card>;
   const slow = h.tick.p95Ms > 250;
   return (
     <Card title="Server health">

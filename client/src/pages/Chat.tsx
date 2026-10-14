@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Linkify, Page } from '../ui';
+import { Card, Empty, Linkify, Page } from '../ui';
 
 export function Chat() {
   const { me, chatEvents, act } = useGame();
@@ -29,7 +29,7 @@ export function Chat() {
         <button disabled={!me.alliance} className={channel === 'alliance' ? 'active' : ''} onClick={() => setChannel('alliance')}>Alliance</button>
       </div>}>
         <div className="chatbox" ref={box}>
-          {all.length === 0 && <p className="muted">No messages yet. Say hi!</p>}
+          {all.length === 0 && <Empty>No messages yet. Say hi!</Empty>}
           {all.map((m) => <div key={m.id}><span className="muted">{new Date(m.at).toLocaleTimeString()}</span> <b className={m.from === me.player.username ? 'me' : ''}><Linkify text={m.from} /></b>: <Linkify text={m.text} /></div>)}
         </div>
         <form className="row" onSubmit={send}>

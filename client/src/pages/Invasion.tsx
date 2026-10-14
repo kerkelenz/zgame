@@ -5,7 +5,7 @@ import { ReplayToggle } from '../BattleReplay';
 import { useGame } from '../game';
 import { canReplay } from '../replay';
 import { ResIcon } from '../ResIcon';
-import { Card, CoordLink, Countdown, ItemIcon, fmt, Page, PlayerLink, when } from '../ui';
+import { Card, CoordLink, Countdown, ItemIcon, fmt, Page, PlayerLink, when, Loading } from '../ui';
 
 const fleetText = (f: Record<string, number>) => Object.entries(f).filter(([, n]) => n).map(([id, n]) => `${fmt(n)} ${(UNITS as any)[id]?.name ?? id}`).join(', ') || 'none';
 const pct = (x: number) => `${Math.round(x * 1000) / 10}%`;
@@ -27,7 +27,7 @@ export function Invasion() {
   const [d, setD] = useState<any>(null);
   const load = useCallback(async () => setD(await get('/invasion')), []);
   useEffect(() => { void load(); const t = setInterval(load, 10_000); return () => clearInterval(t); }, [load]);
-  if (!d) return <Page title="Invasion"><p className="muted">Loading…</p></Page>;
+  if (!d) return <Page title="Invasion"><Loading /></Page>;
   const inv = d.active;
   // a server that has not been restarted since the update still answers in the old shape (no waves): say so instead of crashing
   if (inv && !Array.isArray(inv.waves)) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { get, post } from '../api';
 import { BROWSER_NOTIFY_KEY, useGame } from '../game';
-import { Card, Countdown, Page, PlayerLink, when } from '../ui';
+import { Card, Countdown, Page, PlayerLink, when, Loading } from '../ui';
 import { LANGS, getLang, setLang, t, useLang } from '../i18n';
 import { playCue, setSound, soundOn } from '../sound';
 import { setShowAllPages, useShowAllPages } from '../nav';
@@ -56,7 +56,7 @@ function Alerts() {
   const [busy, setBusy] = useState(false);
   const [browser, setBrowser] = useState(() => { try { return localStorage.getItem(BROWSER_NOTIFY_KEY) === '1'; } catch { return false; } });
   useEffect(() => { void get('/notify').then(setCfg); }, []);
-  if (!cfg) return <Card title="Alerts outside the game"><p className="muted">Loading…</p></Card>;
+  if (!cfg) return <Card title="Alerts outside the game"><Loading /></Card>;
 
   const save = async (patch: Record<string, unknown>, ok?: string) => {
     setBusy(true);

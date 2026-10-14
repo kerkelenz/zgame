@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { get } from '../api';
 import { useGame } from '../game';
-import { Card, Page, fmt } from '../ui';
+import { Card, Page, fmt, Loading } from '../ui';
 
 /** a stable colour per alliance tag */
 const hue = (tag: string) => { let h = 0; for (const c of tag) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
@@ -18,7 +18,7 @@ export function Territory() {
     for (const s of d?.sectors ?? []) if (s.owner) { const e = m.get(s.owner.id) ?? { tag: s.owner.tag, count: 0 }; e.count++; m.set(s.owner.id, e); }
     return [...m.entries()].sort((a, b) => b[1].count - a[1].count);
   }, [d]);
-  if (!d) return <Page title="Territory"><p className="muted">Loading…</p></Page>;
+  if (!d) return <Page title="Territory"><Loading /></Page>;
   const cfg = d.config;
   const myId = me.alliance?.id ?? null;
   return (

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BUILDINGS, TECHS } from '../../../shared/data';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Page, when } from '../ui';
+import { Card, Page, when, Loading } from '../ui';
 
 interface Step { kind: 'building' | 'tech'; id: string; level: number }
 
@@ -27,7 +27,7 @@ export function Automation() {
   const rules = d?.rules;
   const defenseName = useMemo(() => new Map<string, string>((d?.defenses ?? []).map((x: any) => [x.id, x.name])), [d]);
 
-  if (!d) return <Page title="Automation"><p className="muted">Loading…</p></Page>;
+  if (!d) return <Page title="Automation"><Loading /></Page>;
   const summary = (st: Step[]) => st.slice(0, 6).map((s) => `${nameOf(s)} ${s.level}`).join(', ') + (st.length > 6 ? `, … (${st.length} steps)` : '');
 
   return (

@@ -76,6 +76,16 @@ export function Card({ title, children, right, tour }: { title?: ReactNode; chil
   );
 }
 
+/** What a page shows while its data is on the way: soft placeholder bars, announced to screen readers */
+export function Loading() {
+  return <div className="skeleton" role="status" aria-busy="true" aria-label="Loading"><i /><i /><i /></div>;
+}
+
+/** A calm "nothing here yet" with a line on what will appear and, if useful, a button to get started */
+export function Empty({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  return <div className="empty"><p>{children}</p>{action}</div>;
+}
+
 export function Page({ title, children }: { title: string; children: ReactNode }) {
   return <div className="page"><h2>{title}</h2>{children}</div>;
 }

@@ -6,7 +6,7 @@ import type { Mission } from '../../../shared/types';
 import { ReplayToggle } from '../BattleReplay';
 import { canReplay } from '../replay';
 import { WorldBanner } from '../WorldBanner';
-import { Card, CoordLink, Linkify, PlanetLink, Page, PlayerLink, fmt, when, ItemIcon, copyLink } from '../ui';
+import { Card, CoordLink, Linkify, PlanetLink, Page, PlayerLink, fmt, when, ItemIcon, copyLink, Empty } from '../ui';
 
 const KINDS = ['all', 'combat', 'espionage', 'raid', 'news', 'expedition', 'transport', 'alliance', 'player', 'system'];
 
@@ -156,7 +156,7 @@ export function Messages() {
   return (
     <Page title="Messages">
       <Card title="Compose">
-        <form className="row" onSubmit={async (e) => {
+        <form className="row wrap" onSubmit={async (e) => {
           e.preventDefault();
           const r = await act(() => post('/messages/send', { to, text }), 'Message sent');
           if (r) { setText(''); }
@@ -171,7 +171,7 @@ export function Messages() {
         <button onClick={async () => { if (confirm('Delete all messages?')) { await post('/messages/clear'); await load(); await refresh(); toast('Inbox cleared'); } }}>Clear</button>
       </>}>
         <div className="chips">{KINDS.map((k) => <button key={k} className={kind === k ? 'active' : ''} onClick={() => setKind(k)}>{k}</button>)}</div>
-        {list.length === 0 && <p className="muted">No messages.</p>}
+        {list.length === 0 && <Empty>No messages here. Spy reports, battle reports, news and notes from other commanders arrive in this list.</Empty>}
         {list.map((m) => (
           <div key={m.id} className={`msg ${m.read ? '' : 'unread'}`}>
             <div className="msghead" onClick={() => show(m)}>

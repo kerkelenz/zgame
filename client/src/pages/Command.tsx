@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ResIcon } from '../ResIcon';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Countdown, fmt, Linkify, Page, when } from '../ui';
+import { Card, Countdown, fmt, Linkify, Page, when, Loading } from '../ui';
 
 export function Command() {
   const { act, refresh, planet, toast } = useGame();
@@ -17,7 +17,7 @@ export function Command() {
     await refresh();
   };
 
-  if (!d) return <Page title="Command"><p className="muted">Loading…</p></Page>;
+  if (!d) return <Page title="Command"><Loading /></Page>;
   const done = d.achievements.filter((a: any) => a.doneAt).length;
   const mine = d.factions.find((f: any) => f.joined);
 

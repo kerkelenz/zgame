@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { resName } from '../../../shared/data';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, fmt, Page, PlayerLink, when } from '../ui';
+import { Card, fmt, Page, PlayerLink, when, Loading } from '../ui';
 import { NumInput } from '../NumInput';
 import { HealthCard } from '../HealthCard';
 
@@ -17,7 +17,7 @@ export function Admin() {
   const load = useCallback(async () => { setD(await get('/admin/overview')); setReports(await get('/admin/reports')); }, []);
   useEffect(() => { void load(); }, [load]);
   if (!me.player.admin) return <Page title="Admin"><p className="muted">Admins only.</p></Page>;
-  if (!d) return <Page title="Admin"><p className="muted">Loading…</p></Page>;
+  if (!d) return <Page title="Admin"><Loading /></Page>;
   const run = async (fn: () => Promise<unknown>, ok: string) => { if (await act(fn, ok)) await load(); };
   const reason = () => prompt('Reason (shown to the player)') ?? '';
   const hours = () => { const h = prompt('Hours (blank = permanent)'); return h ? Number(h) : null; };

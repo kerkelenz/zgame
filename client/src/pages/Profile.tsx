@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, CoordLink, coordStr, fmt, Page, PlanetLink, when } from '../ui';
+import { Card, CoordLink, coordStr, fmt, Page, PlanetLink, when, Loading } from '../ui';
 import { LineChart } from './Highscore';
 import { WorldBanner } from '../WorldBanner';
 
@@ -21,7 +21,7 @@ export function Profile() {
   }, [profileId]);
   const back = <button onClick={() => goBack('highscore')}>← Back</button>;
   if (err) return <Page title="Commander"><div className="row">{back}</div><div className="error">{err}</div></Page>;
-  if (!p) return <Page title="Commander"><p className="muted">Loading…</p></Page>;
+  if (!p) return <Page title="Commander"><Loading /></Page>;
   const mine = p.id === me.player.id;
   const s = p.stats;
   const isBuddy = !!soc?.buddies.some((b: any) => b.id === p.id);

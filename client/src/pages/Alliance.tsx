@@ -4,7 +4,7 @@ import { resName } from '../../../shared/data';
 import { get, post } from '../api';
 import { post as post_ } from '../api';
 import { useGame } from '../game';
-import { Card, Cost, Linkify, Page, PlayerLink, coordStr, fmt, when } from '../ui';
+import { Card, Cost, Linkify, Page, PlayerLink, coordStr, fmt, when, Loading } from '../ui';
 import { NumInput } from '../NumInput';
 import { OperationsCard } from '../OperationsCard';
 
@@ -36,7 +36,7 @@ export function Alliance() {
 
   const run = async (fn: () => Promise<any>, ok?: string) => { const r = await act(fn, ok); await load(); return r; };
 
-  if (a === undefined) return <Page title="Alliance"><p className="muted">Loading…</p></Page>;
+  if (a === undefined) return <Page title="Alliance"><Loading /></Page>;
   return a ? <Mine a={a} run={run} planetId={planet.id} me={me} setPage={setPage} openProfile={openProfile} showInGalaxy={showInGalaxy} /> : <Browse list={list} run={run} />;
 }
 

@@ -567,3 +567,29 @@ nav .hubitem.active { background: #f0a93b22; border-color: var(--accent); color:
 @media (max-width: 640px) { .wbanner { min-height: 96px; padding: 8px 10px; } }
 
 tr.picked td { background: #2fa0ff18; }
+
+/* ---- phone: a slimmer top bar, and the galaxy list as cards instead of a table that hides its buttons ---- */
+@media (max-width: 760px) {
+  .top .res { gap: 10px; font-size: 12.5px; flex-wrap: nowrap; justify-content: space-between; }
+  .top .res small:not(.fullin) { display: none; }
+  .top .res .ri { width: 16px; height: 16px; vertical-align: -3px; }
+  main table.galaxy { display: block; overflow: visible; white-space: normal; }
+  table.galaxy thead { display: none; }
+  table.galaxy tbody { display: block; }
+  table.galaxy tr { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; margin: 0 0 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel, #0d1224); }
+  table.galaxy td { display: block; padding: 0; border: 0; background: none; }
+  table.galaxy td:first-child { min-width: 22px; font-weight: 700; color: var(--accent); }
+  table.galaxy td.actions { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 4px; text-align: left; white-space: normal; }
+  table.galaxy td.actions button { margin-left: 0; min-height: 34px; padding: 4px 10px; }
+  table.galaxy td[colspan] { flex: 1 1 100%; }
+  table.galaxy td:empty { display: none; }
+}
+@media (max-width: 760px) { .row.wrap > input.grow { flex: 1 1 100%; min-width: 0; } }
+
+.skeleton { display: flex; flex-direction: column; gap: 10px; padding: 6px 0; }
+.skeleton i { display: block; height: 54px; border-radius: 10px; background: linear-gradient(90deg, var(--panel2) 0%, #1b2744 50%, var(--panel2) 100%); background-size: 200% 100%; animation: skel 1.4s ease-in-out infinite; }
+.skeleton i:first-child { height: 90px; } .skeleton i:last-child { width: 70%; }
+@keyframes skel { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton i { animation: none; } }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 10px; border: 1px dashed var(--line); border-radius: 10px; text-align: center; color: var(--muted); }
+.empty p { margin: 0; }
