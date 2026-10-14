@@ -5,6 +5,7 @@
  *     Art.overrides['planet:<planetId>'] = 'data:image/png;base64,...'
  */
 import { artFile } from './artFiles';
+import { moonArtId, moonLook, planetArtId, planetLook } from '../../shared/artlist';
 
 type Kind = 'building' | 'tech' | 'ship' | 'defense';
 
@@ -44,6 +45,9 @@ export const Art = {
   planet(id: string, tempMax: number, isMoon: boolean): string {
     const k = 'planet:' + id;
     if (this.overrides[k]) return this.overrides[k];
+    // a world keeps the picture its id picks: moons from any moon look, planets from the looks that suit their temperature
+    const file = artFile(isMoon ? moonArtId(moonLook(id)) : planetArtId(planetLook(id, tempMax)));
+    if (file) return file;
     const hit = cache.get(k);
     if (hit) return hit;
     const url = drawPlanet(hashStr(id), tempMax, isMoon);

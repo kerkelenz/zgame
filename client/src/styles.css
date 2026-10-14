@@ -108,7 +108,7 @@ tr.mine td { background: #1d4f8f22; }
 .kind.news { background: #3a2f55; }
 .cardtop { display: flex; gap: 10px; align-items: flex-start; }
 .cardtop p { margin: 0; flex: 1; }
-img.icon { width: 64px; height: 64px; border-radius: 8px; border: 1px solid var(--line); flex-shrink: 0; image-rendering: auto; }
+img.icon { object-fit: cover; width: 64px; height: 64px; border-radius: 8px; border: 1px solid var(--line); flex-shrink: 0; image-rendering: auto; }
 img.planetpic { float: right; width: 120px; height: 120px; margin: 0 0 8px 12px; }
 .preset { display: inline-flex; align-items: center; gap: 0; } .preset button:first-child { border-radius: 6px 0 0 6px; } .preset button.link { padding: 0 8px; border: 1px solid var(--line); border-left: 0; border-radius: 0 6px 6px 0; color: var(--muted); }
 .objectives { margin: 0; padding-left: 20px; } .objectives li { padding: 3px 0; } .objectives li.done { color: var(--muted); text-decoration: line-through; text-decoration-color: #3c4a6b; }
@@ -130,7 +130,7 @@ tr.gap td { text-align: center; color: var(--muted); }
 a.itemlink { color: inherit; text-decoration: underline dotted #8a96b5; text-underline-offset: 3px; cursor: pointer; }
 a.itemlink:hover { color: var(--accent); text-decoration-color: var(--accent); }
 img.icon.big { width: 96px; height: 96px; }
-img.icon.hero { width: 240px; height: 240px; max-width: 100%; border-radius: 12px; object-fit: cover; }
+img.icon.hero { width: 320px; height: auto; max-width: 100%; border-radius: 12px; object-fit: contain; }
 @media (max-width: 640px) { .cardtop:has(img.icon.hero) { flex-direction: column; } }
 .dwrap { overflow-x: auto; }
 table.dtable { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
@@ -390,3 +390,5 @@ button.quickstart { padding: 1px 8px; min-height: 0; font-size: 12px; margin-lef
 .bellpanel li.unread { border-left: 3px solid var(--accent); padding-left: 8px; }
 .bellpanel li.alert { color: #ff9aa8; } .bellpanel li.error { color: #ffb347; }
 .toastact { margin-left: 10px; font-weight: 700; color: var(--accent); }
+img.worldthumb { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid var(--line); }
+.celestial img { border-radius: 12px; }

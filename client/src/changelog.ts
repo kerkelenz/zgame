@@ -16,7 +16,8 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-l', date: '2026-10-13', title: 'Artwork',
     items: [
-      'Real pictures are arriving for buildings, research, ships, defenses and resources. They show as the small icon on cards and lists, and large at the top of an item details page. Items without a picture yet keep the drawn placeholder. The Metal Mine, Crystal Mine, Vespene Extractor and Solar Plant are first.',
+      'Every building, research, ship and defense has a picture now: a small icon on cards and lists, and large at the top of its details page. The resource icons keep their drawn style for now.',
+      'Planets and moons have their own pictures: twelve planet looks (picked to suit the temperature of the position, so lava worlds are hot and ice worlds cold) and six moon looks. Each world keeps the picture it was given. They show on the Overview and, as a small round thumbnail, on the Empire page.',
     ],
   },
   {

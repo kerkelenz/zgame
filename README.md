@@ -105,7 +105,7 @@ npm run art -- next 4    # the next 4 missing items with prompts to paste into t
 npm run art -- all       # write art/PROMPTS.md with every prompt
 ```
 
-Save each result as `client/src/assets/art/<id>.png` (`.webp` and `.jpg` also work; resources are `res-metal`, `res-crystal`, `res-deuterium`, `res-energy`). The next build bundles it and replaces the placeholder for that item; items without a file keep the placeholder. Prompts come from `shared/artlist.ts`, which reads the item list, so new items appear automatically. Square images, 512 px or so, are plenty: they are shown at 64-96 px.
+Save each result as `client/src/assets/art/<id>.png` (`.webp` and `.jpg` also work; or point `npm run art -- ingest <folder>` at a folder of generated files: it recognises generator names such as `media-generation-metalmine-0-<uuid>.webp` (case-insensitive, with optional `buildings/`, `ships/`, `research/`, `defenses/`, `planets/`, `moons/` sub-folders), shrinks each to at most 768 px as WebP and saves it under its id; `npm run art -- optimize` shrinks files dropped in by hand. Planet and moon looks are `planet-<look>.webp` and `moon-<look>.webp`, picked per world id (planets by temperature) in `shared/artlist.ts`; resources are `res-metal`, `res-crystal`, `res-deuterium`, `res-energy`). The next build bundles it and replaces the placeholder for that item; items without a file keep the placeholder. Prompts come from `shared/artlist.ts`, which reads the item list, so new items appear automatically. Square images, 512 px or so, are plenty: they are shown at 64-96 px.
 
 ## Try it with a demo universe
 
