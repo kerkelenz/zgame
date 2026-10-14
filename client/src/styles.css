@@ -522,13 +522,6 @@ nav .hubitem.active { background: #f0a93b22; border-color: var(--accent); color:
 .navstick { position: sticky; top: -16px; z-index: 25; margin: -16px -16px 10px; padding: 14px 16px 0; background: #070b18; border-bottom: 1px solid var(--line); }
 .navstick .pstrip { margin-bottom: 8px; }
 .navstick .subtabs { margin-bottom: 0; border-bottom: none; padding-bottom: 6px; }
-.navstick.compact .pchip { flex-direction: row; align-items: center; min-width: 0; padding: 3px 8px; gap: 6px; }
-.navstick.compact .pimg { width: 26px; height: 26px; }
-.navstick.compact .prole, .navstick.compact .pmeta a, .navstick.compact .pmoon .pn, .navstick.compact .pmoon .ptag { display: none; }
-.navstick.compact .pchild { margin: 0; padding: 0; border: none; }
-.navstick.compact .pmoon { padding: 1px; }
-.navstick.compact .pmoon img { width: 20px; height: 20px; }
-.navstick.compact .pcur .muted { display: none; }
 .navstick.compact .pstrip { margin-bottom: 4px; padding: 3px 6px; }
 @media (max-width: 760px) { .navstick { margin: -10px -10px 8px; padding: 8px 10px 0; top: -10px; } }
 
@@ -619,12 +612,28 @@ tr.picked td { background: #2fa0ff18; }
 .pres .prbar b { display: block; height: 100%; background: currentColor; opacity: .75; }
 .pres .pr.soon { color: #ffb347 !important; } .pres .pr.full { color: var(--bad) !important; }
 .pres .prE { font-size: 11.5px; }
-.navstick.compact .pres { flex-direction: row; gap: 8px; padding: 0; }
-.navstick.compact .pres .prbar, .navstick.compact .pres .prE { display: none; }
-.navstick.compact .pres .pr { grid-template-columns: 14px auto; }
 
 .pchild .pres { padding: 2px 0 0 2px; }
 
 .navstick { position: sticky; }
 .stickfold { position: absolute; top: 4px; right: 8px; z-index: 2; min-height: 22px; padding: 0 8px; font-size: 12px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; color: var(--muted); cursor: pointer; }
 @media (max-width: 760px) { .stickfold { top: 2px; right: 4px; } }
+
+/* ---- the slim bar: a name, the three amounts in short form, a tag if something needs you, the moon as a small picture ---- */
+.pres .pshort { display: none; }
+.navstick.compact .pres .pfull { display: none; } .navstick.compact .pres .pshort { display: inline; }
+.navstick.compact .pchip { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "main tags moon" "res res moon"; align-items: center; column-gap: 6px; row-gap: 0; min-width: 0; max-width: 240px; padding: 3px 8px; }
+.navstick.compact .pmain { grid-area: main; }
+.navstick.compact .pmeta { grid-area: tags; padding: 0; }
+.navstick.compact .pres { grid-area: res; flex-direction: row; gap: 8px; padding: 0 0 0 2px; font-size: 11.5px; }
+.navstick.compact .pchild { grid-area: moon; margin: 0; padding: 0; border: none; }
+.navstick.compact .pimg { width: 24px; height: 24px; }
+.navstick.compact .ptext .prole, .navstick.compact .pmeta a, .navstick.compact .pmeta .ptag.info { display: none; }
+.navstick.compact .pres .prbar, .navstick.compact .pres .prE { display: none; }
+.navstick.compact .pres .pr { grid-template-columns: 14px auto; gap: 3px; }
+.navstick.compact .pchild .pres, .navstick.compact .pmoon .pn, .navstick.compact .pmoon .ptag { display: none; }
+.navstick.compact .pmoon { padding: 1px; min-height: 0; }
+.navstick.compact .pmoon img { width: 22px; height: 22px; }
+.navstick.compact .pcur .muted { display: none; }
+.navstick.compact .pres .fullin { display: none; }
+.pres .prn { white-space: nowrap; }

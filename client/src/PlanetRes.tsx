@@ -7,6 +7,9 @@ import { fmt, fmtDur } from './ui';
 type WorldView = ReturnType<typeof useGame>['planets'][number];
 const KEYS = ['metal', 'crystal', 'deuterium'] as const;
 
+/** 3,934,387 as 3.9M: for the slim bar */
+export const short = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(n >= 1e5 ? 0 : 1)}k` : String(Math.floor(n)));
+
 /** a world's stock as it is right now (the server sends it as of `updatedAt`; production runs on from there) */
 export function liveStock(w: WorldView, now: number) {
   const dt = Math.max(0, now - w.updatedAt) / 3_600_000;
@@ -31,7 +34,7 @@ export function PlanetRes({ w, tour, energy: showEnergy = true }: { w: WorldView
         const share = Math.min(100, Math.round((have[k] / Math.max(1, w.capacity[k])) * 100));
         return (
           <span key={k} className={`pr ${cls}${st ? ' ' + st : ''}`} title={`${resName(k)}: ${fmt(have[k])} of ${fmt(w.capacity[k])}${ms === 0 ? ' - storage is full, production is wasted' : ms !== null ? ` - full in ${fmtDur(ms)}` : ''}`}>
-            <ResIcon k={k} size={14} /><span className="prn">{fmt(have[k])}{st === 'full' && <small className="fullin"> FULL</small>}</span>
+            <ResIcon k={k} size={14} /><span className="prn"><span className="pfull">{fmt(have[k])}</span><span className="pshort">{short(have[k])}</span>{st === 'full' && <small className="fullin"> FULL</small>}</span>
             <i className="prbar"><b style={{ width: `${share}%` }} /></i>
           </span>
         );
