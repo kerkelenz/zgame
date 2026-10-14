@@ -14,7 +14,8 @@ export function NavStick({ children }: { children: ReactNode }) {
   useEffect(() => {
     const scroller = ref.current?.closest('main');
     if (!scroller) return;
-    const on = () => setScrolled(scroller.scrollTop > 90);
+    // two thresholds: slimming the bar shortens the page and moves the scroll position, which with a single threshold flips it straight back
+    const on = () => setScrolled((was) => (was ? scroller.scrollTop > 24 : scroller.scrollTop > 140));
     on();
     scroller.addEventListener('scroll', on, { passive: true });
     return () => scroller.removeEventListener('scroll', on);

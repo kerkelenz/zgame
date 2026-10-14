@@ -631,3 +631,6 @@ tr.picked td { background: #2fa0ff18; }
 /* every planet is a card, in one row that scrolls when there are many */
 .pstrip { flex-wrap: nowrap; overflow-x: auto; scroll-padding: 0 8px; }
 .pchip { flex-shrink: 0; }
+
+/* the planet bar slims while you scroll, which shortens the page: without this the browser moves the scroll position to compensate and the bar flips back and forth */
+main { overflow-anchor: none; }
