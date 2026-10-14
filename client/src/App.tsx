@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ResIcon } from './ResIcon';
+import { EnergyIcon, ResIcon } from './ResIcon';
 import { drawStarfield } from './art';
 import { useGame } from './game';
 import { CoordLink, coordStr, Countdown, fmt, fmtDur, Linkify, PlayerLink } from './ui';
@@ -143,7 +143,7 @@ export function App() {
               </span>
             );
           })}
-          <span className={energy < 0 ? 'bad' : 'energy'} title={energy < 0 ? `Energy balance: mines run at ${Math.round((planet.production.efficiency ?? 1) * 100)}% until you build more power` : 'Energy balance'}>⚡ {fmt(energy)}{energy < 0 && planet.production.efficiency != null && <small className="fullin"> {Math.round(planet.production.efficiency * 100)}%</small>}</span>
+          <span className={energy < 0 ? 'bad' : 'energy'} title={energy < 0 ? `Energy balance: mines run at ${Math.round((planet.production.efficiency ?? 1) * 100)}% until you build more power` : 'Energy balance'}><EnergyIcon /> {fmt(energy)}{energy < 0 && planet.production.efficiency != null && <small className="fullin"> {Math.round(planet.production.efficiency * 100)}%</small>}</span>
         </div>
         <PlayerSearch />
         <NotificationBell />

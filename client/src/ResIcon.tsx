@@ -65,3 +65,9 @@ export function ResIcon({ k, size = 16, title }: { k: ResKey; size?: number; tit
 export function Res({ k, children, size = 16 }: { k: ResKey; children?: ReactNode; size?: number }) {
   return <span className={k === 'deuterium' ? 'deut' : k}><ResIcon k={k} size={size} />{children}</span>;
 }
+
+/** The energy symbol: the picture when there is one, otherwise the lightning bolt. */
+export function EnergyIcon({ size = 16 }: { size?: number }) {
+  const pic = artFile('res-energy');
+  return pic ? <img src={pic} width={size} height={size} className="ri" alt="Energy" style={{ borderRadius: 3, objectFit: 'cover' }} /> : <>⚡</>;
+}
