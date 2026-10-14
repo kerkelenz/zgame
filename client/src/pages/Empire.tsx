@@ -1,5 +1,5 @@
 import { BUILDINGS, SHIP_IDS, UNITS, isStationary } from '../../../shared/data';
-import { ResIcon } from '../ResIcon';
+import { EnergyIcon, ResIcon } from '../ResIcon';
 import { Art } from '../art';
 import { useGame } from '../game';
 import { Card, CoordLink, coordStr, Countdown, fmt, Page } from '../ui';
@@ -32,7 +32,7 @@ export function Empire() {
       </Card>
       <Card>
         <table className="table">
-          <thead><tr><th>Planet</th><th>Resources</th><th>Per hour</th><th>Energy</th><th>Construction</th><th>Ships</th><th></th></tr></thead>
+          <thead><tr><th>Planet</th><th>Resources</th><th>Per hour</th><th><EnergyIcon size={14} /> Energy</th><th>Construction</th><th>Ships</th><th></th></tr></thead>
           <tbody>
             {planets.map((p) => {
               const full = (['metal', 'crystal', 'deuterium'] as const).some((k) => p.production[k] > 0 && live(p, k) >= p.capacity[k] * 0.98);

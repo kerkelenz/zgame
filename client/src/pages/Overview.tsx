@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ResIcon } from '../ResIcon';
+import { EnergyIcon, ResIcon } from '../ResIcon';
 import { BUILDINGS, POSITION_BONUS, TECHS, UNITS, crawlerBonus } from '../../../shared/data';
 import { post } from '../api';
 import { Art } from '../art';
@@ -41,7 +41,7 @@ export function Overview() {
               {!planet.isMoon && POSITION_BONUS[planet.coords.p] && <tr><td>Orbit bonus</td><td>{Object.entries(POSITION_BONUS[planet.coords.p]).map(([k, v]) => `+${Math.round((v as number) * 100)}% ${k}`).join(', ')}</td></tr>}
               {!planet.isMoon && (planet.fleet.crawler || 0) > 0 && <tr><td>Crawlers</td><td>{fmt(planet.fleet.crawler)} (+{(crawlerBonus(planet.fleet.crawler || 0, (planet.buildings.metalMine || 0) + (planet.buildings.crystalMine || 0) + (planet.buildings.deuteriumSynthesizer || 0), planet.detail.crawlerMul ?? 1) * 100).toFixed(1)}% mine output)</td></tr>}
               <tr><td>Production / h</td><td><span className="metal"><ResIcon k="metal" size={14} />{fmt(planet.production.metal)}</span> · <span className="crystal"><ResIcon k="crystal" size={14} />{fmt(planet.production.crystal)}</span> · <span className="deut"><ResIcon k="deuterium" size={14} />{fmt(planet.production.deuterium)}</span></td></tr>
-              <tr><td>Energy</td><td>{fmt(planet.production.energyProduced)} / {fmt(planet.production.energyUsed)} ({Math.round(planet.production.efficiency * 100)}%)</td></tr>
+              <tr><td><EnergyIcon size={16} /> Energy</td><td>{fmt(planet.production.energyProduced)} / {fmt(planet.production.energyUsed)} ({Math.round(planet.production.efficiency * 100)}%)</td></tr>
             </tbody>
           </table>
           <form className="row" onSubmit={(e) => { e.preventDefault(); if (name.trim()) void act(() => post(`/planets/${planet.id}/rename`, { name }), 'Renamed').then(() => setName('')); }}>

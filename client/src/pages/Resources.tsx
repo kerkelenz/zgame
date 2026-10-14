@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ResIcon } from '../ResIcon';
+import { EnergyIcon, ResIcon } from '../ResIcon';
 import { post } from '../api';
 import { TRADE_FEE, TRADE_FEE_COLLECTOR, resName, tradeQuote } from '../../../shared/data';
 import { useGame } from '../game';
@@ -33,7 +33,7 @@ export function Resources() {
             <tr><td className="metal"><ResIcon k="metal" size={20} /> Metal</td><td>{fmt(p.metal)} / h</td><td className="muted">stored {fmt(planet.resources.metal)} of {fmt(planet.capacity.metal)}</td></tr>
             <tr><td className="crystal"><ResIcon k="crystal" size={20} /> Crystal</td><td>{fmt(p.crystal)} / h</td><td className="muted">stored {fmt(planet.resources.crystal)} of {fmt(planet.capacity.crystal)}</td></tr>
             <tr><td className="deut"><ResIcon k="deuterium" size={20} /> Vespene Gas</td><td>{fmt(p.deuterium)} / h</td><td className="muted">stored {fmt(planet.resources.deuterium)} of {fmt(planet.capacity.deuterium)}</td></tr>
-            <tr><td className="energy">Energy</td><td>{fmt(p.energyProduced)} produced / {fmt(p.energyUsed)} used</td><td className={p.efficiency < 1 ? 'bad' : 'muted'}>efficiency {Math.round(p.efficiency * 100)}%</td></tr>
+            <tr><td className="energy"><EnergyIcon size={20} /> Energy</td><td>{fmt(p.energyProduced)} produced / {fmt(p.energyUsed)} used</td><td className={p.efficiency < 1 ? 'bad' : 'muted'}>efficiency {Math.round(p.efficiency * 100)}%</td></tr>
           </tbody>
         </table>
         {ab > 0 && <p className="muted">Alliance mining network bonus: +{Math.round(ab * 100)}% on mine output.</p>}

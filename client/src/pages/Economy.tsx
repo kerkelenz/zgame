@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ResIcon } from '../ResIcon';
+import { EnergyIcon, ResIcon } from '../ResIcon';
 import { BUILDINGS } from '../../../shared/data';
 import {
   KEYS, bestUpgrade, empireTotals, planetEconomy, projectStock, upgradeOptions, type ResKey,
@@ -82,7 +82,7 @@ export function Economy() {
 
       <Card title="Planet by planet">
         <div className="dwrap"><table className="table">
-          <thead><tr><th>Planet</th><th className="metal"><ResIcon k="metal" /> Metal / h</th><th className="crystal"><ResIcon k="crystal" /> Crystal / h</th><th className="deut"><ResIcon k="deuterium" /> Vespene / h</th><th>Energy</th><th>Store fills</th><th>Best next upgrade</th></tr></thead>
+          <thead><tr><th>Planet</th><th className="metal"><ResIcon k="metal" /> Metal / h</th><th className="crystal"><ResIcon k="crystal" /> Crystal / h</th><th className="deut"><ResIcon k="deuterium" /> Vespene / h</th><th><EnergyIcon size={14} /> Energy</th><th>Store fills</th><th>Best next upgrade</th></tr></thead>
           <tbody>
             {rows.map((r) => {
               const soonest = KEYS.map((k) => ({ k, s: r.economy.fullIn[k] })).filter((x) => x.s != null).sort((a, b) => a.s! - b.s!)[0];
@@ -129,7 +129,7 @@ export function Economy() {
         })}
       </Card>
 
-      <Card title="Energy" right={<span className={eco.energy.efficiency < 1 ? 'bad' : 'good'}>{Math.round(eco.energy.efficiency * 100)}% efficiency</span>}>
+      <Card title={<><EnergyIcon size={18} /> Energy</>} right={<span className={eco.energy.efficiency < 1 ? 'bad' : 'good'}>{Math.round(eco.energy.efficiency * 100)}% efficiency</span>}>
         <div className="grid2">
           <div>
             <h4>Produced: {fmt(eco.energy.produced)}</h4>
