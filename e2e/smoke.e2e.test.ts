@@ -801,6 +801,19 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('the planet cards fold to a slim bar and stay folded after a reload', async () => {
+    await go('Overview');
+    const bar = page.locator('.navstick');
+    expect(await bar.getAttribute('class')).not.toMatch(/folded/);
+    await page.getByRole('button', { name: 'Fold the planet cards to a slim bar' }).click();
+    expect(await bar.getAttribute('class')).toMatch(/folded/);
+    await page.reload();
+    await page.waitForSelector('.navstick.folded');
+    await page.getByRole('button', { name: 'Show the planet cards in full' }).click();
+    expect(await bar.getAttribute('class')).not.toMatch(/folded/);
+    noErrors();
+  });
+
   run('the market lists an offer, shows it under your offers and gives the goods back on cancel', async () => {
     await go('Market');
     await page.getByRole('heading', { name: 'Make an offer' }).waitFor();
