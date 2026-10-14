@@ -130,8 +130,8 @@ describe('first visit', () => {
   });
 
   run('the resources, next to the planet cards, show the three resources with their pictures', async () => {
-    expect(await page.locator('.navstick .res .ri').count()).toBeGreaterThanOrEqual(3);
-    expect(await page.locator('.navstick .res').textContent()).toMatch(/\d/);
+    expect(await page.locator('.navstick .pres  .ri').count()).toBeGreaterThanOrEqual(3);
+    expect(await page.locator('.navstick .pres').textContent()).toMatch(/\d/);
   });
 });
 

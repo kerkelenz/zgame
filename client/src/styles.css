@@ -610,3 +610,15 @@ tr.picked td { background: #2fa0ff18; }
 /* the resources sit with the planet cards, in the sticky area */
 .navstick .res { margin: 0 0 8px; padding: 0 2px; }
 .navstick.compact .res { margin-bottom: 4px; }
+
+/* ---- a planet card carries its own stock ---- */
+.pres { display: flex; flex-direction: column; gap: 2px; padding: 3px 2px 0; font-variant-numeric: tabular-nums; font-size: 12px; }
+.pres .pr { display: grid; grid-template-columns: 16px minmax(0, auto) 1fr; align-items: center; gap: 5px; }
+.pres .prn small { color: var(--muted); }
+.pres .prbar { display: block; height: 4px; min-width: 24px; border-radius: 3px; background: #0b1226; overflow: hidden; }
+.pres .prbar b { display: block; height: 100%; background: currentColor; opacity: .75; }
+.pres .pr.soon { color: #ffb347 !important; } .pres .pr.full { color: var(--bad) !important; }
+.pres .prE { font-size: 11.5px; }
+.navstick.compact .pres { flex-direction: row; gap: 8px; padding: 0; }
+.navstick.compact .pres .prbar, .navstick.compact .pres .prE { display: none; }
+.navstick.compact .pres .pr { grid-template-columns: 14px auto; }

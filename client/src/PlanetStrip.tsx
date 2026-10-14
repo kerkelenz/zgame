@@ -5,6 +5,7 @@ import { Art } from './art';
 import { useGame } from './game';
 import { isPlanetPage } from './nav';
 import { filterGroups, positionOf, useList, worldGroups } from './planetBar';
+import { PlanetRes } from './PlanetRes';
 import { CoordLink, fmtDur } from './ui';
 
 type WorldView = ReturnType<typeof useGame>['planets'][number];
@@ -69,6 +70,7 @@ export function PlanetStrip() {
               <span className="ptext"><b>{p.name}</b>{roleLabel(p) && <span className="prole">{roleLabel(p)}</span>}</span>
             </button>
             <div className="pmeta"><CoordLink c={p.coords} /><Tags tags={tagsFor(p)} /></div>
+            <PlanetRes w={p} tour={p.id === planet.id} />
             {moon && <div className="pchild">{moonChip(moon)}</div>}
           </div>
         ))}
