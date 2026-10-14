@@ -143,6 +143,8 @@ export interface InvasionRecord { number: number; result: 'won' | 'lost'; starte
 
 export interface Planet {
   id: string;
+  /** what the owner uses this planet for; only changes the suggestions the game makes */
+  role?: import('../shared/roles').PlanetRole;
   /** when the building queue ran dry (nothing running, nothing waiting); cleared when something starts */
   idleSince?: number;
   idleAlerted?: boolean;

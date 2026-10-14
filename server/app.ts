@@ -32,6 +32,8 @@ import { sectorOf, sectorsView, territoryCount } from './sectors';
 import { announceInvasion, finish as finishInvasion, invasionView } from './invasion';
 import { claimContract, contractsView } from './contracts';
 import { recoverAccount } from './account';
+import { defenseReport } from './advisor';
+import { isRole } from '../shared/roles';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
 import { env } from './env';
@@ -154,6 +156,11 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const p = req.player!;
     processPlayer(w, p, now());
     return planetView(w, ownedPlanet(w, p.id, req.params.id), now());
+  }));
+  A.get('/planets/:id/defense-advice', wrap((req) => {
+    const p = req.player!;
+    processPlayer(w, p, now());
+    return defenseReport(w, p, ownedPlanet(w, p.id, req.params.id), now());
   }));
   A.get('/planets', wrap((req) => {
     const p = req.player!;
@@ -350,6 +357,14 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
       if (!allowed.includes(k)) continue;
       planet.settings[k] = Math.min(1, Math.max(0, Math.round(Number(v) * 10) / 10));
     }
+    return planetView(w, planet, now());
+  }));
+  A.post('/planets/:id/role', wrap((req) => {
+    const planet = ownedPlanet(w, req.player!.id, req.params.id);
+    const role = req.body?.role;
+    if (role === null || role === '') delete planet.role;
+    else if (isRole(role)) planet.role = role;
+    else throw new GameError('Unknown role');
     return planetView(w, planet, now());
   }));
   A.post('/planets/:id/abandon', wrap((req) => {

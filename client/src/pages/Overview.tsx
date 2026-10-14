@@ -6,6 +6,7 @@ import { Art } from '../art';
 import { useGame } from '../game';
 import { Card, CoordLink, coordStr, Cost, Countdown, fmt, Page, Progress, ItemIcon } from '../ui';
 import { AdviceCard } from '../AdviceCard';
+import { ROLES } from '../../../shared/roles';
 import { FleetEvents } from './FleetEvents';
 
 export function Overview() {
@@ -46,6 +47,9 @@ export function Overview() {
               <tr><td><EnergyIcon size={16} /> Energy</td><td>{fmt(planet.production.energyProduced)} / {fmt(planet.production.energyUsed)} ({Math.round(planet.production.efficiency * 100)}%)</td></tr>
             </tbody>
           </table>
+          <label className="row small">Role <select value={planet.role ?? ''} onChange={(e) => void act(() => post(`/planets/${planet.id}/role`, { role: e.target.value || null }))} aria-label="What this planet is for">
+            <option value="">None</option>{ROLES.map((r) => <option key={r.id} value={r.id}>{r.label} ({r.hint})</option>)}
+          </select></label>
           <form className="row" onSubmit={(e) => { e.preventDefault(); if (name.trim()) void act(() => post(`/planets/${planet.id}/rename`, { name }), 'Renamed').then(() => setName('')); }}>
             <input placeholder="Rename planet" value={name} onChange={(e) => setName(e.target.value)} maxLength={24} />
             <button>Rename</button>

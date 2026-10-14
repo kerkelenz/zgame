@@ -1,6 +1,7 @@
 import { BUILDINGS, SHIP_IDS, UNITS, isStationary } from '../../../shared/data';
 import { EnergyIcon, ResIcon } from '../ResIcon';
 import { Art } from '../art';
+import { ROLES } from '../../../shared/roles';
 import { useGame } from '../game';
 import { Card, CoordLink, coordStr, Countdown, fmt, Page } from '../ui';
 
@@ -40,7 +41,7 @@ export function Empire() {
               const q = p.buildQueue;
               return (
                 <tr key={p.id}>
-                  <td><div className="row"><img className="worldthumb" src={Art.planet(p.id, p.maxTemp, !!p.isMoon)} alt="" /><div><a onClick={() => open(p.id, 'overview')}>{p.isMoon ? '🌙 ' : ''}{p.name}</a><div className="muted small"><CoordLink c={p.coords} /> · {p.usedFields}/{p.fields} fields</div></div></div></td>
+                  <td><div className="row"><img className="worldthumb" src={Art.planet(p.id, p.maxTemp, !!p.isMoon)} alt="" /><div><a onClick={() => open(p.id, 'overview')}>{p.isMoon ? '🌙 ' : ''}{p.name}</a>{p.role && <span className="tag">{ROLES.find((r) => r.id === p.role)?.label}</span>}<div className="muted small"><CoordLink c={p.coords} /> · {p.usedFields}/{p.fields} fields</div></div></div></td>
                   <td>
                     <span className="metal">{fmt(live(p, 'metal'))}</span> · <span className="crystal">{fmt(live(p, 'crystal'))}</span> · <span className="deut">{fmt(live(p, 'deuterium'))}</span>
                     {full && <span className="bad" title="A storage is (nearly) full"> ⚠ full</span>}

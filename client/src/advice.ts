@@ -1,3 +1,4 @@
+import { nextForRole, ROLES, type PlanetRole } from '../../shared/roles';
 import { timeToFull } from './afford';
 
 /** What the player could usefully do right now, worked out from what the server already sends. Pure, so it can be tested. */
@@ -12,7 +13,7 @@ export interface Advice {
 
 type Res3 = Record<'metal' | 'crystal' | 'deuterium', number>;
 interface P {
-  id: string; name: string; isMoon?: boolean; updatedAt: number;
+  id: string; name: string; isMoon?: boolean; updatedAt: number; role?: PlanetRole | null;
   buildQueue: unknown; buildBacklog?: string[];
   buildings: Record<string, number | undefined>; fleet: Record<string, number | undefined>; defenses: Record<string, number | undefined>;
   resources: Res3; capacity: Res3; production: Record<string, number>;
@@ -32,7 +33,11 @@ export function advise({ me, planets, now }: AdviceInput): Advice[] {
   const out: Advice[] = [];
 
   for (const p of planets) {
-    if (!p.buildQueue && !p.buildBacklog?.length) out.push({ id: `idle-build:${p.id}`, level: 'idle', text: `Nothing is being built on ${p.name}.`, page: 'buildings', planetId: p.id });
+    if (!p.buildQueue && !p.buildBacklog?.length) {
+      const next = p.role && !p.isMoon ? nextForRole(p.role, p.buildings) : null;
+      const label = ROLES.find((r) => r.id === p.role)?.label.toLowerCase();
+      out.push({ id: `idle-build:${p.id}`, level: 'idle', page: 'buildings', planetId: p.id, text: `Nothing is being built on ${p.name}.${next ? ` Suggested next for a ${label} planet: ${next.name} to level ${next.level}.` : ''}` });
+    }
   }
   const hasLab = planets.some((p) => (p.buildings.researchLab ?? 0) > 0);
   if (hasLab && !me.player.research && !me.player.researchBacklog?.length) out.push({ id: 'idle-research', level: 'idle', text: 'No research is running.', page: 'research' });
@@ -65,7 +70,7 @@ export function advise({ me, planets, now }: AdviceInput): Advice[] {
   for (const p of planets.filter((x) => !x.isMoon)) {
     const noDefense = !Object.values(p.defenses).some((n) => (n ?? 0) > 0);
     const noShips = !Object.values(p.fleet).some((n) => (n ?? 0) > 0);
-    if (noDefense && noShips && (p.buildings.shipyard ?? 0) > 0) out.push({ id: `undefended:${p.id}`, level: 'tip', page: 'defense', planetId: p.id, text: `${p.name} has no defenses and no ships.` });
+    if (noDefense && noShips && (p.buildings.shipyard ?? 0) > 0) out.push({ id: `undefended:${p.id}`, level: p.role === 'defense' ? 'warn' : 'tip', page: 'defense', planetId: p.id, text: `${p.name} has no defenses and no ships.` });
   }
   return out.sort((a, b) => ORDER[a.level] - ORDER[b.level]);
 }

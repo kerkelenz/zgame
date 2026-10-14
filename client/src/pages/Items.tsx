@@ -9,6 +9,8 @@ import { Art } from '../art';
 import { useGame } from '../game';
 import { Card, Cost, Countdown, ItemIcon, ItemLink, Page, Progress, ReqList, fmtDur, unmet, fmt } from '../ui';
 import { NumInput } from '../NumInput';
+import { AdvisorCard } from '../AdvisorCard';
+import { PlannerCard } from '../PlannerCard';
 import { affordWait, getOnlyStartable, setOnlyStartable } from '../afford';
 
 type Kind = 'building' | 'tech' | 'ship' | 'defense';
@@ -122,6 +124,8 @@ export function Items({ kind }: { kind: Kind }) {
         </Card>
       )}
 
+      {kind === 'defense' && <AdvisorCard />}
+      {(kind === 'ship' || kind === 'defense') && <PlannerCard kind={kind} />}
       <label className="row small startable"><input type="checkbox" checked={only} onChange={() => { setOnly(!only); setOnlyStartable(!only); }} /> Only what I can start now</label>
       <div className="items">
         {kind === 'building' && BUILDING_IDS.filter((id) => buildingAllowed(id, !!planet.isMoon)).map((id) => {

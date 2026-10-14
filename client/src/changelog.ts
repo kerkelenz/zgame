@@ -3,8 +3,11 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
-    id: '2026-10-n', date: '2026-10-14', title: 'Idle queues and pictures everywhere',
+    id: '2026-10-n', date: '2026-10-14', title: 'Idle queues, planners and pictures everywhere',
     items: [
+      'Planner on the Shipyard and Defense pages: pick a unit and a number to see the price, the buildings and research still missing, the total, the building time and when you can pay, with a button to queue the missing steps.',
+      'Defense advisor on the Defense page: fights the smallest and largest raid the game can send at your planet in the simulator, says whether it holds, and names the cheapest defense that would make the large raid fail.',
+      'Planet roles (Mining, Fleet base, Fortress, Research) on the Overview: the idle-queue tip suggests the next building for that kind of planet, and the Empire page shows the role.',
       'What to do next: the Overview lists idle queues, stores about to fill, energy shortages and tips (a contract to claim, a free expedition slot, an undefended planet), each with a Go button. A chip in the top bar counts idle queues.',
       'Queues running dry: a building queue or the research that has been empty for half an hour sends one alert to Discord, ntfy or push (a new switch under Settings, on by default, away-only like the others).',
       'Item pictures appear in more places: queues, the production and research cards on the Overview, the Fleet ship list, the Simulator, fleet tooltips in the events, battle reports and the Tech tree cards. Pictures load faster, too: lists use small copies and the server lets the browser keep them for a year.',
