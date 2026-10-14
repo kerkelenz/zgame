@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-x', date: '2026-10-18', title: 'The player market',
+    items: [
+      'New Market tab under Home: offer an amount of one resource for another and other commanders can take it. Your goods are held while the offer stands and come back if it is cancelled or runs out. Prices stay near the fair rate, the market keeps a small cut from buyers, and offers to your own alliance carry no cut.',
+    ],
+  },
+  {
     id: '2026-10-w', date: '2026-10-17', title: 'Banners everywhere',
     items: [
       'The worlds of other commanders show their banner too: click a position number in the Galaxy, open a commander profile (their home world), or read a spy report or a battle report.',

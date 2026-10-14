@@ -12,7 +12,7 @@ export interface NavGroup { id: string; label: string; icon: string; items: NavI
 
 export const NAV_GROUPS: NavGroup[] = [
   { id: 'home', label: 'Home', icon: '🏠', items: [
-    { id: 'overview', label: 'Overview', scope: 'planet' }, { id: 'empire', label: 'Empire', scope: 'empire' }, { id: 'economy', label: 'Economy', scope: 'empire' },
+    { id: 'overview', label: 'Overview', scope: 'planet' }, { id: 'empire', label: 'Empire', scope: 'empire' }, { id: 'economy', label: 'Economy', scope: 'empire' }, { id: 'market', label: 'Market', scope: 'planet' },
     { id: 'contracts', label: 'Contracts', scope: 'empire' }, { id: 'command', label: 'Command', scope: 'empire' },
   ] },
   { id: 'build', label: 'Build', icon: '🏗', items: [

@@ -18,6 +18,7 @@ export function loadWorld(file: string, overrides: Partial<UniverseConfig> = {})
       w.wars ??= [];
       w.operations ??= [];
       w.forges ??= {};
+      w.market ??= [];
       migrateLooks(w);
       for (const p of Object.values(w.players)) migratePlayer(p);
       return w;

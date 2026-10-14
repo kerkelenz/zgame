@@ -360,6 +360,8 @@ export interface World {
   wars?: War[];
   /** looks were pinned on the worlds that existed when they were introduced */
   looksAssigned?: boolean;
+  /** player market offers (the goods are held back from the seller's planet while an offer stands) */
+  market?: import('./market').MarketOffer[];
   /** alliance operations: shared targets members sign up for */
   operations?: import('./operations').Operation[];
   /** which alliance holds which system ("g:s") */

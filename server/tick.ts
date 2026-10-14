@@ -4,6 +4,7 @@ import { NPC_TICK_MS, npcTick, processTributes } from './empires';
 import { processPlayer } from './economy';
 import { processMovements } from './fleet';
 import { processInvasion } from './invasion';
+import { processMarket } from './market';
 import { processForges } from './forge';
 import { refreshStandingDay } from './standing';
 import { processRaids } from './npc';
@@ -41,7 +42,7 @@ export function createTicker(world: World) {
     lap('territory');
     for (const p of Object.values(world.players)) processPlayer(world, p, now);
     lap('economy (every player)');
-    if (now - lastIdle >= 60_000) { lastIdle = now; checkIdle(world, now); processOperations(world, now); }
+    if (now - lastIdle >= 60_000) { lastIdle = now; checkIdle(world, now); processOperations(world, now); processMarket(world, now); }
     runAutomationAll(world, now);
     lap('automation');
     if (now - lastProgress > 5000) { lastProgress = now; for (const p of Object.values(world.players)) checkProgress(world, p, now); }

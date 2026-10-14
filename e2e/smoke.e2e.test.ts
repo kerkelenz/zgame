@@ -136,7 +136,7 @@ describe('first visit', () => {
 });
 
 describe('every page', () => {
-  const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Empire', 'Economy', 'Contracts', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
+  const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Empire', 'Economy', 'Contracts', 'Market', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
 
   run('the menu is a handful of hubs, each with its pages as tabs, and a hub opens the page you were last on', async () => {
     await go('Overview');
@@ -775,6 +775,18 @@ describe('using the game', () => {
     await page.locator('table.galaxy tbody tr.mine').getByRole('button', { name: /^\d+$/ }).click();
     await page.locator('.wbanner').waitFor();
     expect(await page.locator('.wbanner').innerText()).toMatch(/\d+:\d+:\d+/);                        // name, coordinates link, commander
+    noErrors();
+  });
+
+  run('the market lists an offer, shows it under your offers and gives the goods back on cancel', async () => {
+    await go('Market');
+    await page.getByRole('heading', { name: 'Make an offer' }).waitFor();
+    await page.getByLabel('Amount to give').fill('1000');
+    await page.getByRole('button', { name: 'Offer', exact: true }).click();
+    await page.getByRole('heading', { name: 'Your offers (1)' }).waitFor();
+    expect(await page.locator('main').innerText()).toMatch(/for .*667/);                        // 1,000 metal asks 667 crystal at the fair price
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await page.getByRole('heading', { name: 'Your offers (0)' }).waitFor();
     noErrors();
   });
 

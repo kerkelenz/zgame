@@ -58,6 +58,10 @@ export interface UniverseConfig {
   invasionStrength: number;
   /** hours a Moon Forge takes (0 = the Moon Forge is switched off) */
   forgeHours: number;
+  /** hours a player-market offer stands before it expires (0 = the market is switched off), the fee in percent the market keeps from what a buyer receives (not on alliance offers), and how many offers one commander may have open */
+  marketHours: number;
+  marketFeePercent: number;
+  marketMaxOffers: number;
   /** length of an alliance war in hours (0 = wars are switched off) */
   warHours: number;
   /** no invasions until this many commanders have started playing */
@@ -97,6 +101,9 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   invasionMinPlayers: 2,
   warHours: 48,
   forgeHours: 12,
+  marketHours: 48,
+  marketFeePercent: 5,
+  marketMaxOffers: 5,
   seasonDays: 0,
   seasonResetHours: 24,
   victoryPoints: 0,

@@ -26,6 +26,7 @@ import * as SOC from './social';
 import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { buyItem, shopView } from './shop';
+import { buyOffer, cancelOffer, listOffer, marketView } from './market';
 import * as AUTO from './automation';
 import { addSubscription, pushToPlayer, pushView, removeSubscription } from './push';
 import { sectorOf, sectorsView, territoryCount } from './sectors';
@@ -206,6 +207,18 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.post('/social/bookmark/remove', wrap((req) => { SOC.removeBookmark(req.player!, str(req.body.id)); return SOC.socialView(w, req.player!, now()); }));
   A.post('/presets', wrap((req) => { SOC.savePreset(req.player!, str(req.body.name, 24), req.body.ships || {}); return SOC.socialView(w, req.player!, now()); }));
   A.post('/presets/remove', wrap((req) => { SOC.removePreset(req.player!, str(req.body.id)); return SOC.socialView(w, req.player!, now()); }));
+  A.get('/market', wrap((req) => marketView(w, req.player!, now())));
+  A.post('/market/offer', wrap((req) => {
+    const p = req.player!;
+    listOffer(w, p, ownedPlanet(w, p.id, str(req.body.planetId)), { give: str(req.body.give), giveAmount: Number(req.body.giveAmount), want: str(req.body.want), wantAmount: Number(req.body.wantAmount), scope: req.body.scope ? str(req.body.scope) : undefined }, now());
+    return marketView(w, p, now());
+  }));
+  A.post('/market/cancel', wrap((req) => { cancelOffer(w, req.player!, str(req.body.id), now()); return marketView(w, req.player!, now()); }));
+  A.post('/market/buy', wrap((req) => {
+    const p = req.player!;
+    const r = buyOffer(w, p, ownedPlanet(w, p.id, str(req.body.planetId)), str(req.body.id), now());
+    return { ...r, market: marketView(w, p, now()) };
+  }));
   A.get('/shop', wrap((req) => shopView(req.player!)));
   A.post('/shop/buy', wrap((req) => {
     const p = req.player!;
