@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-l', date: '2026-10-13', title: 'Artwork',
+    items: [
+      'Real pictures are arriving for buildings, research, ships, defenses and resources. They show as the small icon on cards and lists, and large at the top of an item details page. Items without a picture yet keep the drawn placeholder. The Metal Mine, Crystal Mine, Vespene Extractor and Solar Plant are first.',
+    ],
+  },
+  {
     id: '2026-10-k', date: '2026-10-12', title: 'Rules and tidy-ups',
     items: [
       'Buildings can be demolished one level at a time, on planets and moons: Demolish a level on the card or details page. It takes half the build time, returns about 30% of the price of that level and frees a building field.',
