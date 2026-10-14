@@ -5,7 +5,7 @@ import { moonChance, totalRes } from '../../../shared/formulas';
 import type { UnitId } from '../../../shared/types';
 import { get } from '../api';
 import { useGame } from '../game';
-import { Card, coordStr, fmt, Linkify, Page } from '../ui';
+import { Card, coordStr, fmt, Linkify, Page, ItemIcon } from '../ui';
 import { NumInput } from '../NumInput';
 
 type Units = Partial<Record<UnitId, number>>;
@@ -70,7 +70,7 @@ export function Simulator() {
   const table = (side: 'att' | 'def', ids: UnitId[], units: Units) => (
     <table className="ships"><tbody>
       {ids.map((id) => (
-        <tr key={id}><td>{UNITS[id].name}</td>
+        <tr key={id}><td><ItemIcon id={id} size={24} /> {UNITS[id].name}</td>
           <td><NumInput blankZero placeholder="0" value={units[id] || 0} onChange={(n) => set(side, id, n)} /></td></tr>
       ))}
     </tbody></table>

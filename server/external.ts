@@ -4,8 +4,8 @@
  */
 import { GameError, type Player, type World } from './world';
 
-export type Category = 'attacks' | 'allies' | 'tribute' | 'completions' | 'messages';
-export const CATEGORIES: Category[] = ['attacks', 'allies', 'tribute', 'completions', 'messages'];
+export type Category = 'attacks' | 'allies' | 'tribute' | 'completions' | 'messages' | 'idle';
+export const CATEGORIES: Category[] = ['attacks', 'allies', 'tribute', 'completions', 'messages', 'idle'];
 
 export interface NotifySettings {
   discord: string | null;
@@ -17,7 +17,7 @@ export interface NotifySettings {
 
 export const defaultNotify = (): NotifySettings => ({
   discord: null, ntfy: null, onlyWhenAway: true,
-  events: { attacks: true, allies: true, tribute: true, completions: false, messages: false },
+  events: { attacks: true, allies: true, tribute: true, completions: false, messages: false, idle: true },
 });
 
 const DISCORD = /^https:\/\/(?:(?:ptb|canary)\.)?(?:discord|discordapp)\.com\/api\/webhooks\/\d{5,25}\/[A-Za-z0-9_-]{20,120}$/;
@@ -69,7 +69,7 @@ function allow(player: Player, category: Category, now: number): boolean {
 
 import { pushToPlayer } from './push';
 
-const TAGS: Record<Category, string> = { attacks: 'rotating_light', allies: 'handshake', tribute: 'moneybag', completions: 'white_check_mark', messages: 'envelope' };
+const TAGS: Record<Category, string> = { attacks: 'rotating_light', allies: 'handshake', tribute: 'moneybag', completions: 'white_check_mark', messages: 'envelope', idle: 'zzz' };
 
 function deliver(channel: 'discord' | 'ntfy', url: string, category: Category, title: string, body: string): Promise<{ ok: boolean; status: number }> {
   if (channel === 'discord') {
@@ -91,7 +91,7 @@ export function externalNotify(w: World, playerId: string, category: Category, t
   if (!p || p.npc) return;
   const n = p.notify;
   const hasPush = !!p.pushSubs?.length;
-  if (!n || (!n.discord && !n.ntfy && !hasPush) || !n.events[category]) return;
+  if (!n || (!n.discord && !n.ntfy && !hasPush) || !(n.events[category] ?? category === 'idle')) return;
   if (n.onlyWhenAway && now - p.lastSeen < AWAY_MS) return;
   if (!allow(p, category, now)) return;
   if (hasPush) void pushToPlayer(w, p, { title, body, tag: category }).catch(() => undefined);

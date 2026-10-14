@@ -392,3 +392,12 @@ button.quickstart { padding: 1px 8px; min-height: 0; font-size: 12px; margin-lef
 .toastact { margin-left: 10px; font-weight: 700; color: var(--accent); }
 img.worldthumb { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid var(--line); }
 .celestial img { border-radius: 12px; }
+img.itemicon { vertical-align: middle; border-radius: 4px; object-fit: cover; margin-right: 2px; }
+
+/* ---- what to do next ---- */
+.advice { list-style: none; margin: 0; padding: 0; }
+.advice li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 5px 0; border-top: 1px solid var(--line); }
+.advice li:first-child { border-top: none; }
+.advice li.idle { color: #ffd37a; } .advice li.warn { color: #ff9aa8; }
+.advice button { padding: 2px 10px; min-height: 0; }
+.idlechip { padding: 3px 8px; min-height: 0; color: #ffd37a; border-color: #6b5a24; }

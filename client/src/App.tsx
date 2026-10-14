@@ -13,6 +13,7 @@ import { isOpen, loadCollapsed, saveCollapsed, setAllGroups, useShowAllPages, vi
 import { Tour } from './Tour';
 import { MobileBar } from './MobileBar';
 import { NotificationBell } from './NotificationBell';
+import { IdleChip } from './AdviceCard';
 import { CHANGELOG, markChangelogSeen, unseenRelease } from './changelog';
 import { Alliance } from './pages/Alliance';
 import { Chat } from './pages/Chat';
@@ -146,6 +147,7 @@ export function App() {
           <span className={energy < 0 ? 'bad' : 'energy'} title={energy < 0 ? `Energy balance: mines run at ${Math.round((planet.production.efficiency ?? 1) * 100)}% until you build more power` : 'Energy balance'}><EnergyIcon /> {fmt(energy)}{energy < 0 && planet.production.efficiency != null && <small className="fullin"> {Math.round(planet.production.efficiency * 100)}%</small>}</span>
         </div>
         <PlayerSearch />
+        <IdleChip />
         <NotificationBell />
         <div className="who">
           <span className="energy" title="Command Credits" onClick={() => setPage('command')} style={{ cursor: 'pointer' }}>★ {fmt(me.credits)}</span>

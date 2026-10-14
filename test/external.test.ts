@@ -233,7 +233,7 @@ describe('saved settings', () => {
     expect(old.notify).toEqual(defaultNotify());
     const partial = { ...alice, notify: { discord: DISCORD, events: { attacks: false } } } as unknown as Player;
     migratePlayer(partial);
-    expect(partial.notify.events).toEqual({ attacks: false, allies: true, tribute: true, completions: false, messages: false });
+    expect(partial.notify.events).toEqual({ attacks: false, allies: true, tribute: true, completions: false, messages: false, idle: true });
     expect(partial.notify.onlyWhenAway).toBe(true);
   });
 });

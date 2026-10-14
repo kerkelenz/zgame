@@ -7,7 +7,7 @@ import type { BuildingId, Res, TechId, UnitId } from '../../../shared/types';
 import { post } from '../api';
 import { Art } from '../art';
 import { useGame } from '../game';
-import { Card, Cost, Countdown, ItemLink, Page, Progress, ReqList, fmtDur, unmet, fmt } from '../ui';
+import { Card, Cost, Countdown, ItemIcon, ItemLink, Page, Progress, ReqList, fmtDur, unmet, fmt } from '../ui';
 import { NumInput } from '../NumInput';
 import { affordWait, getOnlyStartable, setOnlyStartable } from '../afford';
 
@@ -71,7 +71,7 @@ export function Items({ kind }: { kind: Kind }) {
     <Page title={TITLES[kind]}>
       {kind === 'building' && buildQ && (
         <Card title={buildQ.down ? 'Being demolished' : 'Under construction'} right={<button onClick={() => void withUndo(() => post(`/planets/${planet.id}/build/cancel`), 'Cancelled', () => post(buildQ.down ? `/planets/${planet.id}/demolish` : `/planets/${planet.id}/build`, { id: buildQ.id }))}>Cancel</button>}>
-          <div className="job"><div>{buildQ.down ? 'Demolishing' : ''} {BUILDINGS[buildQ.id as BuildingId].name} → level {buildQ.level} · <Countdown to={buildQ.end} /></div><Progress from={buildQ.start} to={buildQ.end} />
+          <div className="job"><div><ItemIcon id={buildQ.id} size={24} /> {buildQ.down ? 'Demolishing' : ''} {BUILDINGS[buildQ.id as BuildingId].name} → level {buildQ.level} · <Countdown to={buildQ.end} /></div><Progress from={buildQ.start} to={buildQ.end} />
             {buildQ.down && buildQ.refund && <div className="muted small">Returns <Cost cost={buildQ.refund} /> when it is done.</div>}</div>
         </Card>
       )}
@@ -79,7 +79,7 @@ export function Items({ kind }: { kind: Kind }) {
         <Card title={`Queue (${bBacklog.length}/${MAXQ})`}>
           {bBacklog.map((id, i) => (
             <div className="row between" key={i}>
-              <span>{i + 1}. {BUILDINGS[id as BuildingId].name} <span className="muted small">· {fmtDur(bTimes[i])}</span></span>
+              <span>{i + 1}. <ItemIcon id={id} size={20} /> {BUILDINGS[id as BuildingId].name} <span className="muted small">· {fmtDur(bTimes[i])}</span></span>
               <span className="row">
                 <button disabled={i === 0} title="Earlier" onClick={() => void act(() => post(`/planets/${planet.id}/build/move`, { index: i, dir: -1 }))}>↑</button>
                 <button disabled={i === bBacklog.length - 1} title="Later" onClick={() => void act(() => post(`/planets/${planet.id}/build/move`, { index: i, dir: 1 }))}>↓</button>
@@ -94,7 +94,7 @@ export function Items({ kind }: { kind: Kind }) {
         <Card title={`Queue (${rBacklog.length}/${MAXQ})`}>
           {rBacklog.map((q, i) => (
             <div className="row between" key={i}>
-              <span>{i + 1}. {TECHS[q.id as TechId].name} <span className="muted small">· {fmtDur(rTimes[i])}</span></span>
+              <span>{i + 1}. <ItemIcon id={q.id} size={20} /> {TECHS[q.id as TechId].name} <span className="muted small">· {fmtDur(rTimes[i])}</span></span>
               <span className="row">
                 <button disabled={i === 0} title="Earlier" onClick={() => void act(() => post('/research/move', { index: i, dir: -1 }))}>↑</button>
                 <button disabled={i === rBacklog.length - 1} title="Later" onClick={() => void act(() => post('/research/move', { index: i, dir: 1 }))}>↓</button>
@@ -107,14 +107,14 @@ export function Items({ kind }: { kind: Kind }) {
       )}
       {kind === 'tech' && researchQ && (
         <Card title="Researching" right={<button onClick={() => void withUndo(() => post('/research/cancel'), 'Cancelled', () => post(`/planets/${planet.id}/research`, { id: researchQ.id }))}>Cancel</button>}>
-          <div className="job"><div>{TECHS[researchQ.id as TechId].name} → level {researchQ.level} · <Countdown to={researchQ.end} /></div><Progress from={researchQ.start} to={researchQ.end} /></div>
+          <div className="job"><div><ItemIcon id={researchQ.id} size={24} /> {TECHS[researchQ.id as TechId].name} → level {researchQ.level} · <Countdown to={researchQ.end} /></div><Progress from={researchQ.start} to={researchQ.end} /></div>
         </Card>
       )}
       {(kind === 'ship' || kind === 'defense') && planet.shipyardQueue.length > 0 && (
         <Card title="Production queue">
           {planet.shipyardQueue.map((j: any, i: number) => (
             <div className="row between" key={i}>
-              <span>{j.remaining} / {j.total}× {UNITS[j.id as UnitId].name} {i === 0 && <span className="muted">· next unit in <Countdown to={j.start + j.unitMs} /></span>} <span className="muted small">· row done in {fmtDur(rowTimes[i])}</span></span>
+              <span><ItemIcon id={j.id} size={20} /> {j.remaining} / {j.total}× {UNITS[j.id as UnitId].name} {i === 0 && <span className="muted">· next unit in <Countdown to={j.start + j.unitMs} /></span>} <span className="muted small">· row done in {fmtDur(rowTimes[i])}</span></span>
               <button onClick={() => void withUndo(() => post(`/planets/${planet.id}/produce/cancel`, { index: i }), `Cancelled ${j.remaining}× ${UNITS[j.id as UnitId].name}`, () => post(`/planets/${planet.id}/produce`, { id: j.id, count: j.remaining }))}>Cancel</button>
             </div>
           ))}

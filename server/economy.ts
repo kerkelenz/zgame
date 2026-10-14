@@ -83,6 +83,7 @@ export function updatePlanet(w: World, planet: Planet, now: number) {
       notifyPlayer(w, planet.ownerId, 'system', 'Demolition complete', `${BUILDINGS[job.id].name} on ${planet.name} was taken down to level ${job.level}${job.refund ? ` and returned ${Math.round(totalRes(job.refund)).toLocaleString('en-US')} resources` : ''}.`);
       bus.push({ to: planet.ownerId, type: 'toast', data: `${BUILDINGS[job.id].name} demolished to level ${job.level} on ${planet.name}` });
       startNextBuilding(w, planet, t);
+      if (!planet.buildQueue) { planet.idleSince = t; planet.idleAlerted = false; }
       continue;
     }
     const ownerP = w.players[planet.ownerId];
@@ -90,6 +91,7 @@ export function updatePlanet(w: World, planet: Planet, now: number) {
     notifyPlayer(w, planet.ownerId, 'system', `Construction complete`, `${BUILDINGS[job.id].name} on ${planet.name} is now level ${job.level}.`);
     bus.push({ to: planet.ownerId, type: 'toast', data: `${BUILDINGS[job.id].name} level ${job.level} done on ${planet.name}` });
     startNextBuilding(w, planet, t);
+    if (!planet.buildQueue) { planet.idleSince = t; planet.idleAlerted = false; }
   }
   accrue(w, planet, t, now);
   processShipyard(w, planet, now);
@@ -157,6 +159,7 @@ export function processPlayer(w: World, player: Player, now: number) {
     notifyPlayer(w, player.id, 'system', 'Research complete', `${TECHS[job.id].name} is now level ${job.level}.`);
     bus.push({ to: player.id, type: 'toast', data: `Research: ${TECHS[job.id].name} level ${job.level}` });
     startNextResearch(w, player, job.end);
+    if (!player.research) { player.researchIdleSince = job.end; player.researchIdleAlerted = false; }
   }
   for (const pid of player.planetIds) updatePlanet(w, w.planets[pid], now);
 }
@@ -267,6 +270,7 @@ function beginBuilding(w: World, player: Player, planet: Planet, id: BuildingId,
   if (cost !== prepaid) pay(planet, cost, `${def.name} level ${level}`);
   const secs = buildingTime(cost, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.constructionBoost, timeFactor(player));
   planet.buildQueue = { id, level, start: now, end: now + secs * 1000, cost };
+  planet.idleSince = undefined; planet.idleAlerted = false;
 }
 
 /** Taking a building down one level: half the time it took to build that level, and 30% of its price comes back at the end. */
@@ -353,6 +357,7 @@ function beginResearch(w: World, player: Player, planet: Planet, id: TechId, now
   if (!prepaid) pay(planet, cost, `${def.name} level ${level}`);
   const secs = researchTime(cost, lvl(planet.buildings, 'researchLab'), w.config.economySpeed * w.config.researchBoost, allianceBonuses(w, player).research, timeFactor(player) * researchFactor(player));
   player.research = { id, level, start: now, end: now + secs * 1000, cost, planetId: planet.id };
+  player.researchIdleSince = undefined; player.researchIdleAlerted = false;
 }
 
 export function cancelResearch(w: World, player: Player, now: number) {

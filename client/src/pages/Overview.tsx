@@ -4,7 +4,8 @@ import { BUILDINGS, POSITION_BONUS, TECHS, UNITS, crawlerBonus } from '../../../
 import { post } from '../api';
 import { Art } from '../art';
 import { useGame } from '../game';
-import { Card, CoordLink, coordStr, Cost, Countdown, fmt, Page, Progress } from '../ui';
+import { Card, CoordLink, coordStr, Cost, Countdown, fmt, Page, Progress, ItemIcon } from '../ui';
+import { AdviceCard } from '../AdviceCard';
 import { FleetEvents } from './FleetEvents';
 
 export function Overview() {
@@ -21,6 +22,7 @@ export function Overview() {
   return (
     <Page title={`${planet.name} ${coordStr(planet.coords)}`}>
       <FleetEvents />
+      <AdviceCard />
 
       <div className="grid2">
         <Card title="Planet">
@@ -110,9 +112,9 @@ export function Overview() {
 
       <Card title="In progress">
         {!b && !r && !q && <p className="muted">Nothing is being built. Head to Buildings or Research.</p>}
-        {b && <div className="job"><div>Building: <b>{BUILDINGS[b.id as keyof typeof BUILDINGS].name}</b> → level {b.level} <Countdown to={b.end} /></div><Progress from={b.start} to={b.end} /></div>}
-        {r && <div className="job"><div>Research: <b>{TECHS[r.id as keyof typeof TECHS].name}</b> → level {r.level} <Countdown to={r.end} /></div><Progress from={r.start} to={r.end} /></div>}
-        {q && <div className="job"><div>Shipyard: <b>{q.remaining}× {UNITS[q.id as keyof typeof UNITS].name}</b> remaining</div></div>}
+        {b && <div className="job"><div>Building: <ItemIcon id={b.id} size={24} /> <b>{BUILDINGS[b.id as keyof typeof BUILDINGS].name}</b> → level {b.level} <Countdown to={b.end} /></div><Progress from={b.start} to={b.end} /></div>}
+        {r && <div className="job"><div>Research: <ItemIcon id={r.id} size={24} /> <b>{TECHS[r.id as keyof typeof TECHS].name}</b> → level {r.level} <Countdown to={r.end} /></div><Progress from={r.start} to={r.end} /></div>}
+        {q && <div className="job"><div>Shipyard: <ItemIcon id={q.id} size={24} /> <b>{q.remaining}× {UNITS[q.id as keyof typeof UNITS].name}</b> remaining</div></div>}
       </Card>
 
       {planet.wreck && (

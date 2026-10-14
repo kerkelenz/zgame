@@ -10,6 +10,7 @@ import { processRaids } from './npc';
 import { checkProgress } from './progress';
 import { SECTOR, processSectors } from './sectors';
 import { processWars } from './wars';
+import { checkIdle } from './idle';
 import { processSeason } from './season';
 import type { World } from './world';
 
@@ -20,7 +21,7 @@ export { NPC_TICK_MS };
  * Slow jobs run on their own cadence: territory every minute, achievements and objectives every five seconds.
  */
 export function createTicker(world: World) {
-  let lastProgress = 0, lastSectors = 0, lastStanding = 0;
+  let lastProgress = 0, lastSectors = 0, lastStanding = 0, lastIdle = 0;
   /** pass an object to collect the milliseconds spent in each step (the load test does) */
   return function tick(now: number, prof?: Record<string, number>) {
     let t = prof ? performance.now() : 0;
@@ -39,6 +40,7 @@ export function createTicker(world: World) {
     lap('territory');
     for (const p of Object.values(world.players)) processPlayer(world, p, now);
     lap('economy (every player)');
+    if (now - lastIdle >= 60_000) { lastIdle = now; checkIdle(world, now); }
     runAutomationAll(world, now);
     lap('automation');
     if (now - lastProgress > 5000) { lastProgress = now; for (const p of Object.values(world.players)) checkProgress(world, p, now); }

@@ -8,7 +8,7 @@ import { useGame } from '../game';
 import { NumInput } from '../NumInput';
 import { getProbes } from '../prefs';
 import { IntelText } from './FleetEvents';
-import { Card, CoordLink, coordStr, Countdown, fmt, fmtDur, Page, PlanetLink, PlayerLink } from '../ui';
+import { Card, CoordLink, coordStr, Countdown, fmt, fmtDur, Page, PlanetLink, PlayerLink, ItemIcon } from '../ui';
 
 const MISSIONS: [Mission, string][] = [
   ['attack', 'Attack'], ['invade', 'Join the invasion front (Void Armada)'], ['destroy', 'Destroy moon (Deathstars)'], ['transport', 'Transport'], ['deploy', 'Deploy'], ['hold', 'Defend ally (hold)'],
@@ -178,7 +178,7 @@ export function FleetPage() {
               <tbody>
                 {available.map((id) => (
                   <tr key={id}>
-                    <td>{UNITS[id].name}</td>
+                    <td><ItemIcon id={id} size={24} /> {UNITS[id].name}</td>
                     <td className="muted">{fmt(planet.fleet[id])}</td>
                     <td><NumInput max={planet.fleet[id]} value={ships[id] ?? 0} onChange={(n) => setShips({ ...ships, [id]: n })} /></td>
                     <td><button onClick={() => setShips({ ...ships, [id]: planet.fleet[id] })}>all</button></td>

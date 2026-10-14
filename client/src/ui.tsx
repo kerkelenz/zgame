@@ -2,7 +2,8 @@ import { useMemo, type ReactNode } from 'react';
 import { ResIcon } from './ResIcon';
 import { nameOf } from '../../shared/effects';
 import { lvl } from '../../shared/formulas';
-import { BUILDINGS } from '../../shared/data';
+import { BUILDINGS, TECHS, isDefense, isShip } from '../../shared/data';
+import { Art } from './art';
 import type { Requirement, Res } from '../../shared/types';
 import { usePlayerDirectory } from './directory';
 import { useGame } from './game';
@@ -39,6 +40,12 @@ export function Cost({ cost, have }: { cost: Res; have?: Res }) {
 
 export function unmet(reqs: Requirement[], buildings: Record<string, number | undefined>, techs: Record<string, number | undefined>) {
   return reqs.filter((r) => (r.id in BUILDINGS ? lvl(buildings, r.id) : lvl(techs, r.id)) < r.level);
+}
+/** The small picture of a building, research, ship or defense (the drawn placeholder until it has one), for rows and lists. */
+export function ItemIcon({ id, size = 20 }: { id: string; size?: number }) {
+  const kind = id in BUILDINGS ? 'building' : id in TECHS ? 'tech' : isShip(id) ? 'ship' : isDefense(id) ? 'defense' : null;
+  if (!kind) return null;
+  return <img className="itemicon" src={Art.icon(kind, id, nameOf(id))} width={size} height={size} alt="" />;
 }
 /** An item name that opens its details page. */
 export function ItemLink({ id, children }: { id: string; children?: ReactNode }) {

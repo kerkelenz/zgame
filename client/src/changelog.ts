@@ -3,6 +3,14 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-n', date: '2026-10-14', title: 'Idle queues and pictures everywhere',
+    items: [
+      'What to do next: the Overview lists idle queues, stores about to fill, energy shortages and tips (a contract to claim, a free expedition slot, an undefended planet), each with a Go button. A chip in the top bar counts idle queues.',
+      'Queues running dry: a building queue or the research that has been empty for half an hour sends one alert to Discord, ntfy or push (a new switch under Settings, on by default, away-only like the others).',
+      'Item pictures appear in more places: queues, the production and research cards on the Overview, the Fleet ship list, the Simulator, fleet tooltips in the events, battle reports and the Tech tree cards. Pictures load faster, too: lists use small copies and the server lets the browser keep them for a year.',
+    ],
+  },
+  {
     id: '2026-10-m', date: '2026-10-13', title: 'Getting around',
     items: [
       'The browser Back and Forward buttons now work inside the game: every page, details page, profile and galaxy view is a history entry, a refresh keeps your place, and the address can be bookmarked or shared (for example #/item/metalMine).',

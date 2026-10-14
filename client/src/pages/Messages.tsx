@@ -3,14 +3,14 @@ import { BUILDINGS, TECHS, UNITS } from '../../../shared/data';
 import { del, get, post } from '../api';
 import { useGame } from '../game';
 import type { Mission } from '../../../shared/types';
-import { Card, CoordLink, Linkify, PlanetLink, Page, PlayerLink, fmt, when } from '../ui';
+import { Card, CoordLink, Linkify, PlanetLink, Page, PlayerLink, fmt, when, ItemIcon } from '../ui';
 
 const KINDS = ['all', 'combat', 'espionage', 'raid', 'news', 'expedition', 'transport', 'alliance', 'player', 'system'];
 
 const name = (id: string) => (UNITS as any)[id]?.name ?? (BUILDINGS as any)[id]?.name ?? (TECHS as any)[id]?.name ?? id;
 const List = ({ data }: { data?: Record<string, number> }) => {
   const e = Object.entries(data || {}).filter(([, n]) => n);
-  return e.length ? <>{e.map(([k, n]) => <div key={k}>{name(k)}: {fmt(n)}</div>)}</> : <span className="muted">–</span>;
+  return e.length ? <>{e.map(([k, n]) => <div key={k}><ItemIcon id={k} size={16} /> {name(k)}: {fmt(n)}</div>)}</> : <span className="muted">–</span>;
 };
 
 function SpyReport({ d }: { d: any }) {
@@ -91,7 +91,7 @@ export function BattleReport({ d, full, onOpen }: { d: any; /** show the round-b
       {list.map((s, i) => (
         <div key={i} className="muted">
           <b><PlayerLink id={s.owner} name={s.name} /></b>
-          {Object.keys(s.before || {}).map((k) => <div key={k}>{name(k)}: {fmt(s.before[k])} → {fmt(s.after?.[k] ?? 0)}</div>)}
+          {Object.keys(s.before || {}).map((k) => <div key={k}><ItemIcon id={k} size={16} /> {name(k)}: {fmt(s.before[k])} → {fmt(s.after?.[k] ?? 0)}</div>)}
         </div>
       ))}
     </div>

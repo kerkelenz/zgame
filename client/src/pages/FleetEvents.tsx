@@ -4,7 +4,7 @@ import { post } from '../api';
 import { UNITS, resName } from '../../../shared/data';
 import type { UnitId } from '../../../shared/types';
 import { ResIcon } from '../ResIcon';
-import { Card, CoordLink, Countdown, Tip, coordStr, fmt } from '../ui';
+import { Card, CoordLink, Countdown, ItemIcon, Tip, coordStr, fmt } from '../ui';
 
 const MISSION: Record<string, string> = {
   attack: 'Attack', transport: 'Transport', deploy: 'Deploy', espionage: 'Espionage', colonize: 'Colonize', recycle: 'Recycle debris',
@@ -69,9 +69,9 @@ export function FleetEvents() {
     if (e.kind === 'own' || e.kind === 'friendly' || e.intel === 'exact') {
       const parts = Object.entries(e.fleet ?? {}).filter(([, n]) => n);
       if (!parts.length) return <span className="muted">No ship details.</span>;
-      return <>{parts.map(([id, n]) => <div key={id} className="row2"><span>{unitName(id)}</span><b>{(n as number).toLocaleString('en-US')}</b></div>)}</>;
+      return <>{parts.map(([id, n]) => <div key={id} className="row2"><span><ItemIcon id={id} size={16} /> {unitName(id)}</span><b>{(n as number).toLocaleString('en-US')}</b></div>)}</>;
     }
-    if (e.intel === 'types') return <><div>{e.ships} ships:</div>{(e.shipTypes ?? []).map((id: string) => <div key={id}>{unitName(id)}</div>)}<div className="muted">Two more Espionage levels than theirs would show the numbers too.</div></>;
+    if (e.intel === 'types') return <><div>{e.ships} ships:</div>{(e.shipTypes ?? []).map((id: string) => <div key={id}><ItemIcon id={id} size={16} /> {unitName(id)}</div>)}<div className="muted">Two more Espionage levels than theirs would show the numbers too.</div></>;
     if (e.intel === 'count') return <><div>{e.ships} ship{e.ships === 1 ? '' : 's'}</div><div className="muted">Two more Espionage levels than theirs would show the types.</div></>;
     return <span className="muted">Unknown: their Espionage Technology is above yours.</span>;
   };

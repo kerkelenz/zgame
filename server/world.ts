@@ -15,6 +15,9 @@ export interface ShipyardJob { id: UnitId; total: number; remaining: number; uni
 
 export interface Player {
   id: string;
+  /** when the research queue ran dry; see Planet.idleSince */
+  researchIdleSince?: number;
+  researchIdleAlerted?: boolean;
   username: string;
   salt: string;
   hash: string;
@@ -140,6 +143,9 @@ export interface InvasionRecord { number: number; result: 'won' | 'lost'; starte
 
 export interface Planet {
   id: string;
+  /** when the building queue ran dry (nothing running, nothing waiting); cleared when something starts */
+  idleSince?: number;
+  idleAlerted?: boolean;
   ownerId: string;
   name: string;
   coords: Coords;

@@ -6,7 +6,7 @@ import type { BuildingId, TechId, UnitId } from '../../../shared/types';
 import { GEOM, geometry, routeEdges } from '../../../shared/techroute';
 import { useGame } from '../game';
 import { QuickStart } from '../QuickStart';
-import { Card, ItemLink, Page } from '../ui';
+import { Card, ItemLink, Page, ItemIcon } from '../ui';
 
 const { cardW: CARD_W, cardH: CARD_H, rowGap: ROW_GAP, bandGap: BAND_GAP, bandLabel: BAND_LABEL } = GEOM;
 const LADDER = 24;
@@ -245,7 +245,7 @@ export function TechTree() {
                   <div key={c.id} className={cls} style={{ left: p.x, top: p.y, width: CARD_W, height: CARD_H }} role="button" tabIndex={0} title={n.name}
                     onClick={() => { if (gesture.current.moved <= 6) pick(c.id); }} onMouseEnter={() => setHover(c.id)} onMouseLeave={() => setHover(null)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(c.id); } }}>
-                    <div className="iname">{n.name}{st === 'done' && !isNext ? <span className="tick"> ✓</span> : null}</div>
+                    <div className="iname"><ItemIcon id={c.id} size={16} /> {n.name}{st === 'done' && !isNext ? <span className="tick"> ✓</span> : null}</div>
                     <div className="ibadge">{badge(c.id)}{needLevel?.get(c.id) && needLevel.get(c.id)! > 1 ? ` · need ${needLevel.get(c.id)}` : ''}</div>
                     {ladder && (
                       <div className="ladder" style={{ width: Math.min(total, 12) * LADDER + 12 }} onClick={(e) => e.stopPropagation()}>

@@ -44,6 +44,7 @@ const EVENTS: [string, string, string][] = [
   ['tribute', 'Tribute demands', 'a hostile empire asks for payment'],
   ['completions', 'Things finished', 'construction, research, ships and objectives'],
   ['messages', 'Private messages', 'mail from other commanders'],
+  ['idle', 'Queues running dry', 'a building queue or the research has been empty for half an hour'],
 ];
 
 function Alerts() {
