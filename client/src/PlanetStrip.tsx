@@ -5,6 +5,7 @@ import { Art } from './art';
 import { useGame } from './game';
 import { isPlanetPage } from './nav';
 import { worldGroups } from './planetBar';
+import { setPlanetsFolded, usePlanetsFolded } from './stripFold';
 import { CoordLink, fmtDur } from './ui';
 
 type WorldView = ReturnType<typeof useGame>['planets'][number];
@@ -39,6 +40,7 @@ export function PlanetStrip() {
   const { planets, planet, selectPlanet, page } = useGame();
   const tagsFor = useTags();
   const strip = useRef<HTMLDivElement>(null);
+  const folded = usePlanetsFolded();
   // the selected card stays in view when the row scrolls (many planets, or a narrow window)
   useEffect(() => { strip.current?.querySelector<HTMLElement>('.pchip.in')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }, [planet?.id]);
   if (!planet) return null;
@@ -53,7 +55,29 @@ export function PlanetStrip() {
     </button>
   );
 
+  const fold = (
+    <button className="pfold" onClick={() => setPlanetsFolded(!folded)} aria-pressed={folded} aria-label={folded ? 'Show all planets' : 'Fold the planets to one line'} title={folded ? 'Show all planets' : 'Fold the planets to one line'}>{folded ? '▾ Planets' : '▴'}</button>
+  );
+  if (folded) {
+    const at = Math.max(0, groups.findIndex((g) => g.planet.id === planet.id || g.moon?.id === planet.id));
+    const step = (d: number) => selectPlanet(groups[(at + d + groups.length) % groups.length].planet.id);
+    return (
+      <div className={`pstrip pfolded${dim}`} role="group" aria-label="Your planets" title={dimTitle} ref={strip}>
+        {groups.length > 1 && <button className="parrow" onClick={() => step(-1)} aria-label="Previous planet" title="Previous planet ([)">◀</button>}
+        <img className="pimg sm" src={Art.planet(planet.id, planet.maxTemp, !!planet.isMoon)} alt="" />
+        <b className="pfname">{planet.name}</b>
+        <CoordLink c={planet.coords} />
+        <Tags tags={tagsFor(planet)} />
+        {groups.length > 1 && <button className="parrow" onClick={() => step(1)} aria-label="Next planet" title="Next planet (])">▶</button>}
+        <span className="spacer" />
+        {fold}
+      </div>
+    );
+  }
+
   return (
+    <div className="pwrap">
+    {fold}
     <div className={`pstrip${dim}`} role="group" aria-label="Your planets" title={dimTitle} ref={strip}>
       {groups.map(({ planet: p, moon }) => (
         <div key={p.id} className={`pchip${p.id === planet.id || moon?.id === planet.id ? ' in' : ''}${p.id === planet.id ? ' on' : ''}`}>
@@ -65,6 +89,7 @@ export function PlanetStrip() {
           {moon && <div className="pchild">{moonChip(moon)}</div>}
         </div>
       ))}
+    </div>
     </div>
   );
 }

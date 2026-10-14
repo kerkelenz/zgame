@@ -643,6 +643,21 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('the planet cards fold to one line on command and stay folded after a reload', async () => {
+    await go('Overview');
+    await page.locator('.navstick .pchip').first().waitFor();
+    await page.getByRole('button', { name: 'Fold the planets to one line' }).click();
+    await page.locator('.pstrip.pfolded').waitFor();
+    expect(await page.locator('.navstick .pchip').count()).toBe(0);
+    expect(await page.locator('.navstick .res').isVisible()).toBe(true);          // the resource bar stays
+    await page.reload();
+    await page.locator('.pstrip.pfolded').waitFor();
+    await page.getByRole('button', { name: 'Show all planets' }).click();
+    await page.locator('.navstick .pchip').first().waitFor();
+    expect(await page.locator('.pstrip.pfolded').count()).toBe(0);
+    noErrors();
+  });
+
   run('Ctrl+K jumps to any item, and g then a letter opens a page', async () => {
     await page.keyboard.press('Control+k');
     await page.locator('.palette input').waitFor();

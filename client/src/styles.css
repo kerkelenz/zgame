@@ -607,3 +607,13 @@ main { overflow-anchor: none; }
 .encopts { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
 .encopts button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 8px 12px; }
 .encopts button.primary .muted { color: inherit; opacity: .8; }
+
+/* ---- folding the planet cards to one line, on command ---- */
+.pwrap { position: relative; }
+.pwrap > .pfold { position: absolute; top: 6px; right: 8px; z-index: 2; min-height: 22px; padding: 0 8px; font-size: 12px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; color: var(--muted); cursor: pointer; }
+.pstrip.pfolded { align-items: center; gap: 8px; padding: 4px 8px; flex-wrap: nowrap; overflow: hidden; }
+.pstrip.pfolded .pfold { position: static; top: auto; right: auto; }
+.pstrip.pfolded .pfname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pfolded .parrow { padding: 2px 8px; min-height: 28px; }
+.pstrip .spacer { flex: 1; }
+.pwrap .pstrip { padding-right: 34px; }

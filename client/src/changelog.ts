@@ -14,7 +14,7 @@ export const CHANGELOG: Release[] = [
     id: '2026-10-za', date: '2026-10-21', title: 'A notice strip',
     items: [
       'Hostile fleets, tribute demands, the Void invasion, the season and release notes no longer take a banner each across the page. They share one slim row under the top bar: the most urgent notice, "+N more" to list the rest, and a ✕ on the quieter ones.',
-      'The planet bar is a plain row of planet cards side by side, each with its moon as a smaller child item, and a resource bar above it shows the metal, crystal, Vespene Gas and energy of the selected planet or moon. Both stay in view while you scroll. Many planets scroll sideways.',
+      'The planet bar is a plain row of planet cards side by side, each with its moon as a smaller child item, and a resource bar above it shows the metal, crystal, Vespene Gas and energy of the selected planet or moon. Both stay in view while you scroll. Many planets scroll sideways, and a button folds the cards to one slim line whenever you like.',
       'Every planet and every moon of every commander now has its own picture, as far as the looks last (43 for planets, 53 for moons); worlds that shared a picture with an older one were given a different one, once.',
       'Twenty-four new planet looks (abyss, ash, canyon, copper, dawn, derelict, ember, glacier, hive, iron, jade, lotus, maelstrom, mirage, night, plasma, prism, ruin, sanctuary, savanna, tempest, thorn, twin, void) and twenty-four new moon looks (amber, brine, cinnabar, citrine, cobalt, copper, coral, garnet, granite, ivory, jade, lapis, malachite, marble, onyx, pearl, pumice, ruby, sandstone, sapphire, slate, sulfur, topaz, verdigris), each with its banner.',
     ],
