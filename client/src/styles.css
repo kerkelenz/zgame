@@ -593,3 +593,16 @@ tr.picked td { background: #2fa0ff18; }
 @media (prefers-reduced-motion: reduce) { .skeleton i { animation: none; } }
 .empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 10px; border: 1px dashed var(--line); border-radius: 10px; text-align: center; color: var(--muted); }
 .empty p { margin: 0; }
+
+/* ---- the notice strip: one row of its own under the top bar ---- */
+.alertstrip { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; padding: 0 14px; background: #121a2e; border-bottom: 1px solid var(--line); font-size: 13px; }
+.alertrow { display: flex; align-items: center; gap: 6px; flex: 1 1 0; min-width: 0; padding: 4px 0; }
+.alertrow .alerttext { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alertrow.clickable .alerttext { cursor: pointer; }
+.alertrow.danger { color: #ffb8b8; } .alertrow.warn { color: #ffd9a0; } .alertrow.info { color: #cfe0ff; }
+.alertx, .alertmore { background: none; border: 1px solid var(--line); border-radius: 10px; color: inherit; font-size: 12px; padding: 0 8px; min-height: 22px; cursor: pointer; }
+.alertx { border: none; padding: 0 4px; }
+.alertlist { flex: 1 1 100%; border-top: 1px solid var(--line); padding: 2px 0; }
+.alertlist .alertrow .alerttext { white-space: normal; }
+.alertstrip:has(.alertrow.danger) { background: #3a1616; }
+@media (max-width: 760px) { .alertstrip { padding: 0 10px; font-size: 12.5px; } .alertx, .alertmore { min-height: 28px; } }

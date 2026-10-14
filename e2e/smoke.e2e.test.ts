@@ -787,6 +787,20 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('notices share one strip under the top bar and the quiet ones can be hidden', async () => {
+    await go('Overview');
+    await page.evaluate(() => { try { localStorage.removeItem('zg.seenChangelog'); } catch { /* ignore */ } });
+    await page.reload();
+    await page.waitForSelector('header.top');
+    const strip = page.locator('.alertstrip');
+    await strip.waitFor();
+    expect(await page.locator('.alertbar').count()).toBe(0);
+    expect(await strip.innerText()).toMatch(/New:/);
+    await strip.getByRole('button', { name: 'Hide this notice' }).click();
+    await strip.waitFor({ state: 'detached' });
+    noErrors();
+  });
+
   run('the market lists an offer, shows it under your offers and gives the goods back on cancel', async () => {
     await go('Market');
     await page.getByRole('heading', { name: 'Make an offer' }).waitFor();

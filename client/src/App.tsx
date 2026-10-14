@@ -20,7 +20,8 @@ import { Tutorial } from './Tutorial';
 import { loadTutorial } from './tutorialSteps';
 import { NotificationBell } from './NotificationBell';
 import { IdleChip } from './AdviceCard';
-import { CHANGELOG, markChangelogSeen, unseenRelease } from './changelog';
+import { markChangelogSeen, unseenRelease } from './changelog';
+import { AlertStrip } from './AlertStrip';
 import { Alliance } from './pages/Alliance';
 import { Chat } from './pages/Chat';
 import { Command } from './pages/Command';
@@ -160,18 +161,7 @@ export function App() {
           <button className="link" onClick={g.logout}>{t('common.logout', 'Log out')}</button>
         </div>
       </header>
-      {me.season?.ended && <div className="alertbar newsbar" onClick={() => setPage('highscore')}>🏆 Season {me.season.number} is over - champion {me.season.ended.winnerName ?? 'nobody'}.{me.season.ended.resetAt ? <> The universe resets in <Countdown to={me.season.ended.resetAt} />.</> : ' Waiting for an admin to reset.'}</div>}
-      {!me.season?.ended && me.season?.endsAt && me.season.endsAt - Date.now() < 7 * 86_400_000 && <div className="alertbar newsbar" onClick={() => setPage('highscore')}>🏁 Season {me.season.number} ends in <Countdown to={me.season.endsAt} /></div>}
-      {me.invasion && <div className="alertbar invbar" onClick={() => setPage('invasion')}>{me.invasion.phase === 'announced' ? <>☄ Void invasion: the rift at <CoordLink c={me.invasion.rift} /> opens in <Countdown to={me.invasion.startsAt} /> - click to prepare</> : <>☄ Void invasion, wave {me.invasion.wave} of {me.invasion.waves}, at {coordStr(me.invasion.rift)} - fleets, scouts, convoys and planet defenders all count. The aliens leave in <Countdown to={me.invasion.endsAt} /></>}</div>}
-      {whatsNew && <div className="alertbar newsbar" onClick={() => { markChangelogSeen(); setWhatsNew(false); setPage('news'); }}>✨ New: {CHANGELOG[0].title} - click to see what changed</div>}
-      {offline && <div className="alertbar" style={{ background: '#4a3a1c', cursor: 'default' }}>Connection to the server lost - retrying…</div>}
-      {me.vacation && <div className="alertbar vacbar" onClick={() => setPage('settings')}>🏖 Vacation mode: your empire is frozen and protected. You can leave after {new Date(me.vacation.minUntil).toLocaleString()} - open Settings.</div>}
-      {me.pendingTributes > 0 && <div className="alertbar" onClick={() => setPage('command')}>⚠ A hostile empire is demanding tribute - open Command to answer before the deadline</div>}
-      {fleets.incoming.length > 0 && (
-        <div className="alertbar" onClick={() => setPage('fleet')}>
-          ⚠ {fleets.incoming.length} hostile fleet{fleets.incoming.length > 1 ? 's' : ''} inbound{fleets.incoming.some((f) => f.ally) ? ' (including on allies)' : ''} – click for details{fleets.incoming.length === 1 ? <> (from <PlayerLink id={fleets.incoming[0].ownerId} name={fleets.incoming[0].ownerName} /> at <CoordLink c={fleets.incoming[0].from} />)</> : ''}
-        </div>
-      )}
+      <AlertStrip whatsNew={whatsNew} onNewsSeen={() => { markChangelogSeen(); setWhatsNew(false); }} />
       <div className="body">
         <Sidebar />
         <main id="main" tabIndex={-1}>

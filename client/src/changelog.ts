@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-za', date: '2026-10-21', title: 'A notice strip',
+    items: [
+      'Hostile fleets, tribute demands, the Void invasion, the season and release notes no longer take a banner each across the page. They share one slim row under the top bar: the most urgent notice, "+N more" to list the rest, and a ✕ on the quieter ones.',
+    ],
+  },
+  {
     id: '2026-10-z', date: '2026-10-20', title: 'Admin tools',
     items: [
       'Admins get an audit log of every admin action, a list of who is banned or muted, announcements that can be scheduled (once or repeating) and a daily count of new and active commanders.',
