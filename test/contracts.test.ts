@@ -174,7 +174,7 @@ describe('claiming', () => {
     expect(contractsView(w, a, T0 + 2 * DAY).weekly[0].done).toBe(true);
     const r = claimContract(w, a, weekly.id, T0 + 2 * DAY);
     expect(r.credits).toBe(weekly.credits);
-    expect(weekly.credits).toBeGreaterThan(40);
+    expect(weekly.credits).toBeGreaterThan(KINDS[weekly.kind].credits[0]);
     expect(r.streak).toBe(0);                                           // claiming a weekly does not start a daily streak
   });
 
@@ -214,6 +214,30 @@ describe('api', () => {
 void dayKeyOf;
 
 describe('contracts a newcomer can really do', () => {
+  it('a new account is offered the early kinds anyone can do: upgrades, a merchant trade, the market, an event', async () => {
+    const { register } = await import('../server/accounts');
+    const { createWorld } = await import('../server/world');
+    const w2 = createWorld({ npcDensity: 0, raidIntervalMin: 0 }, T0);
+    const fresh = register(w2, 'freshman', 'secret1', T0).player;
+    const kinds = new Set<string>();
+    for (let d = 0; d < 40; d++) { const v = contractsView(w2, fresh, T0 + d * DAY); for (const c of [...v.daily, ...v.weekly]) kinds.add(c.kind); }
+    expect([...kinds].sort()).toEqual(['build', 'event', 'market', 'trade']);
+    expect(contractsView(w2, fresh, T0).daily).toHaveLength(3);
+  });
+  it('a trade, a market deal and an answered event move their contracts', async () => {
+    const { register } = await import('../server/accounts');
+    const { createWorld } = await import('../server/world');
+    const { tradeResources } = await import('../server/economy');
+    const { listOffer } = await import('../server/market');
+    const w2 = createWorld({ npcDensity: 0, raidIntervalMin: 0 }, T0);
+    const p = register(w2, 'trader1', 'secret1', T0).player;
+    const home = w2.planets[p.planetIds[0]];
+    home.resources = { metal: 50_000, crystal: 50_000, deuterium: 5_000 };
+    tradeResources(w2, home, 'metal', 'crystal', 1000, T0);
+    listOffer(w2, p, home, { give: 'metal', giveAmount: 10_000, want: 'crystal', wantAmount: 6_700 }, T0);
+    expect(p.stats.trades).toBe(1);
+    expect(p.stats.marketDeals).toBe(1);
+  });
   it('never offers a battle before there is a shipyard, nor a raider fleet while still under protection', async () => {
     const { register } = await import('../server/accounts');
     const { createWorld } = await import('../server/world');
@@ -227,11 +251,11 @@ describe('contracts a newcomer can really do', () => {
   it('gives the all-dailies bonus even when fewer than three dailies could be issued', async () => {
     const { register } = await import('../server/accounts');
     const { createWorld } = await import('../server/world');
-    const w2 = createWorld({ npcDensity: 0, raidIntervalMin: 0 }, T0);
+    const w2 = createWorld({ npcDensity: 0, raidIntervalMin: 0, marketHours: 0, encounterMinMinutes: 0 }, T0);   // market and events switched off: only two kinds are left
     const fresh = register(w2, 'freshman', 'secret1', T0).player;
     const v = contractsView(w2, fresh, T0);
     expect(v.daily.length).toBeLessThan(3);                                    // a new account has few kinds to draw from
-    fresh.stats.buildingsDone += 100;
+    fresh.stats.buildingsDone += 100; fresh.stats.trades += 100;
     const before = fresh.credits;
     for (const c of v.daily) claimContract(w2, fresh, c.id, T0);
     expect(fresh.credits - before).toBeGreaterThanOrEqual(ALL_BONUS);

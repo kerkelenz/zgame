@@ -87,6 +87,8 @@ export interface Player {
   npc?: NpcInfo;
   /** the encounters that turn up while this commander plays */
   events?: import('./encounters').EventState;
+  /** the bargains taken on the market today (value over what was paid), against the daily limit */
+  bargains?: { day: number; value: number };
 }
 
 export interface PlayerStats {
@@ -102,13 +104,15 @@ export interface PlayerStats {
   outpostsCleared: number;
   /** encounters answered */
   encountersDone: number;
+  /** trades with the travelling merchant, and market offers made or taken */
+  trades: number; marketDeals: number;
 }
 export interface Tribute { id: string; npc: string; want: Res; deadline: number; answered: false | 'paid' | 'refused' | 'ignored' }
 export interface HistoryPoint { t: number; points: number; rank: number; fleet: number }
 export type NpcStatus = 'inactive' | 'active' | 'aggressive';
 export interface NpcInfo { status: NpcStatus; seedPoints: number; faction: FactionId | null; /** set on the owner of a pirate or alien outpost */ outpost?: { kind: 'pirate' | 'alien'; tier: number } }
 
-export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0, destroyed: 0, plundered: 0, harvested: 0, ipmKills: 0, moonsDestroyed: 0, buildingsDone: 0, researchDone: 0, shipsBuilt: 0, spyReports: 0, delivered: 0, invasionsWon: 0, voidDamage: 0, voidHome: 0, voidSupplied: 0, voidScouts: 0, outpostsCleared: 0, encountersDone: 0 });
+export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0, destroyed: 0, plundered: 0, harvested: 0, ipmKills: 0, moonsDestroyed: 0, buildingsDone: 0, researchDone: 0, shipsBuilt: 0, spyReports: 0, delivered: 0, invasionsWon: 0, voidDamage: 0, voidHome: 0, voidSupplied: 0, voidScouts: 0, outpostsCleared: 0, encountersDone: 0, trades: 0, marketDeals: 0 });
 
 export function blankPlayer(id: string, username: string, now: number, extra: Partial<Player> = {}): Player {
   return {

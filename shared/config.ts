@@ -114,7 +114,7 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   encounterMaxMinutes: 40,
   encounterDailyMax: 6,
   outpostsPerGalaxy: 6,
-  outpostRespawnHours: 8,
+  outpostRespawnHours: 12,
   marketFeePercent: 5,
   marketMaxOffers: 5,
   seasonDays: 0,

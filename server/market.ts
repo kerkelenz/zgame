@@ -1,6 +1,6 @@
 import { TRADE_VALUE, resName } from '../shared/data';
 import { bus } from './bus';
-import { updatePlanet } from './economy';
+import { planetProduction, updatePlanet } from './economy';
 import { notifyPlayer } from './messages';
 import { assertActive } from './vacation';
 import { GameError, uid, type Planet, type Player, type World } from './world';
@@ -19,6 +19,8 @@ export const MARKET = {
   /** the asking price, as a share of the fair rate, may not go outside this band */
   minRate: 0.8, maxRate: 1.25,
   minAmount: 1000, maxAmount: 100_000_000,
+  /** the most a commander can gain in a day from offers priced below the fair rate: this many hours of the paying planet's production, never less than the floor (times the square root of the economy speed) */
+  bargainHours: 3, bargainFloor: 40_000,
 };
 
 export interface MarketOffer {
@@ -100,6 +102,7 @@ export function listOffer(w: World, p: Player, planet: Planet, i: { give: string
   planet.resources[give] -= giveAmount;                           // escrow
   const o: MarketOffer = { id: uid(), sellerId: p.id, planetId: planet.id, give, giveAmount, want, wantAmount, createdAt: now, expiresAt: now + w.config.marketHours * HOUR, scope, allianceId: scope === 'alliance' ? p.allianceId ?? undefined : undefined };
   offers(w).push(o);
+  p.stats.marketDeals = (p.stats.marketDeals ?? 0) + 1;
   bus.push({ to: '*', type: 'refresh' });
   return o;
 }
@@ -132,11 +135,22 @@ export function buyOffer(w: World, p: Player, planet: Planet, id: string, now: n
   const home = landing(w, o);
   if (!seller || !home) { list.splice(list.indexOf(o), 1); throw new GameError('The seller is gone; the offer was removed'); }
   const got = received(w, o);
+  // a cheap offer is a bargain for the buyer; how much bargain one commander can take in a day is limited, so the market cannot be used to feed resources to another account
+  const surplus = Math.max(0, value(o.give, got) - value(o.want, o.wantAmount));
+  if (surplus > 0) {
+    const day = Math.floor(now / 86_400_000);
+    const b = p.bargains && p.bargains.day === day ? p.bargains : { day, value: 0 };
+    const prod = planetProduction(w, planet);
+    const cap = Math.max(MARKET.bargainFloor * Math.sqrt(Math.max(1, w.config.economySpeed)), MARKET.bargainHours * KEYS.reduce((t, k) => t + Math.max(0, prod[k]) * TRADE_VALUE[k], 0));
+    if (b.value + surplus > cap) throw new GameError(`That offer is too cheap: you can take about ${fmtN(cap)} of bargains a day (${MARKET.bargainHours} hours of this planet's production) and have taken ${fmtN(b.value)}. Pick an offer closer to the fair price, or come back tomorrow.`);
+    p.bargains = { day, value: b.value + surplus };
+  }
   list.splice(list.indexOf(o), 1);
   planet.resources[o.want] -= o.wantAmount;
   planet.resources[o.give] += got;
   updatePlanet(w, home, now);
   home.resources[o.want] += o.wantAmount;
+  p.stats.marketDeals = (p.stats.marketDeals ?? 0) + 1;
   notifyPlayer(w, seller.id, 'transport', 'Market: your offer was taken', `${p.username} took your offer: you sold ${fmtN(o.giveAmount)} ${resName(o.give)} and received ${fmtN(o.wantAmount)} ${resName(o.want)} on ${home.name}.`);
   bus.push({ to: '*', type: 'refresh' });
   return { got, paid: o.wantAmount, res: o.give, paidRes: o.want };

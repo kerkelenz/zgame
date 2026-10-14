@@ -460,5 +460,6 @@ export function tradeResources(w: World, planet: Planet, give: string, get: stri
   if (cheap) owner.dealUsed = { day: deal.day, amount: deal.used + cheap };
   planet.resources[g] -= amount;
   planet.resources[t] += out;
+  owner.stats.trades = (owner.stats.trades ?? 0) + 1;
   return out;
 }

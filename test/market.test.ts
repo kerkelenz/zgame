@@ -61,6 +61,19 @@ describe('the player market', () => {
     expect(w.market).toHaveLength(1);
   });
 
+  it('limits how much of a bargain one commander can take in a day, so the market cannot feed an account', () => {
+    ap.resources = { metal: 5_000_000, crystal: 0, deuterium: 0 };
+    bp.resources = { metal: 0, crystal: 5_000_000, deuterium: 0 };
+    const fair = listOffer(w, alice, ap, { give: 'metal', giveAmount: 600_000, want: 'crystal', wantAmount: 400_000 }, T0);
+    expect(buyOffer(w, bob, bp, fair.id, T0).got).toBeGreaterThan(0);          // a fair price is never a bargain
+    const cheap = listOffer(w, alice, ap, { give: 'metal', giveAmount: 3_000_000, want: 'crystal', wantAmount: 1_600_000 }, T0);   // 80% of fair
+    expect(() => buyOffer(w, bob, bp, cheap.id, T0)).toThrow(/too cheap/);
+    expect(w.market!.some((o) => o.id === cheap.id)).toBe(true);               // the offer stays, nothing moved
+    const small = listOffer(w, alice, ap, { give: 'metal', giveAmount: 30_000, want: 'crystal', wantAmount: 16_000 }, T0);
+    expect(buyOffer(w, bob, bp, small.id, T0).got).toBeGreaterThan(0);         // a small bargain is fine
+    expect(() => buyOffer(w, bob, bp, cheap.id, T0 + 2 * 86_400_000)).toThrow(/too cheap|gone/);
+  });
+
   it('limits the open offers per commander and lets a cancel return the goods', () => {
     w.config.marketMaxOffers = 2;
     const a = listOffer(w, alice, ap, offer, T0);

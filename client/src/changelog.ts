@@ -6,6 +6,7 @@ export const CHANGELOG: Release[] = [
     id: '2026-10-zb', date: '2026-10-22', title: 'Events at your planets',
     items: [
       'While you play, something now and then turns up at one of your planets, only for you: a ship in distress, a wandering trader, a strange signal, a pirate patrol or a lucky find. A card in the notice strip counts down and opens a choice; rewards are an hour or two of the production of that planet, with at most six a day.',
+      'New early contracts for new accounts: make a trade with the merchant, make or take a Market offer, deal with an event. The Market limits how much of a below-fair bargain one commander can take in a day. Outposts hold a smaller treasure (measured against what a win costs) and are rebuilt after twelve hours.',
       'The guided objectives now say what each step needs (for example Shipyard 3 and Combustion Drive 3 before Spy Probes), and the contracts offered to a new account are only ones it can do.',
     ],
   },

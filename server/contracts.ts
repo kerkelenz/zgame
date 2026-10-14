@@ -6,7 +6,7 @@ import { GameError, type Player, type PlayerStats, type World } from './world';
 
 const DAY = 86_400_000;
 
-export type ContractKind = 'build' | 'research' | 'ships' | 'spy' | 'win' | 'repel' | 'expedition' | 'recycle' | 'deliver' | 'plunder';
+export type ContractKind = 'build' | 'research' | 'ships' | 'spy' | 'win' | 'repel' | 'expedition' | 'recycle' | 'deliver' | 'plunder' | 'trade' | 'market' | 'event';
 export interface Contract { id: string; kind: ContractKind; period: 'daily' | 'weekly'; target: number; /** stat value when the contract was issued */ base: number; credits: number; claimed?: number }
 export interface ContractBook { dayKey: number; weekKey: number; daily: Contract[]; weekly: Contract[]; streak: number; lastClaimDay: number; allBonusDay: number }
 
@@ -33,6 +33,9 @@ export const KINDS: Record<ContractKind, KindDef> = {
   expedition: { stat: 'expeditions', targets: [1, 5], credits: [15, 90], label: (x) => `Complete ${x} expedition${x === 1 ? '' : 's'}`, eligible: (_w, p) => lvl(p.techs, 'astrophysics') >= 1 },
   recycle: { stat: 'harvested', targets: [40_000, 400_000], scaled: true, credits: [12, 70], label: (x) => `Collect ${n(x)} resources from debris`, eligible: (w, p) => p.stats.harvested > 0 || anyPlanet(w, p, (pl) => (pl.fleet.recycler || 0) > 0) },
   deliver: { stat: 'delivered', targets: [100_000, 1_000_000], scaled: true, credits: [12, 70], label: (x) => `Deliver ${n(x)} resources to alliance members`, eligible: (w, p) => !!p.allianceId && (w.alliances[p.allianceId]?.members.length ?? 0) >= 2 },
+  trade: { stat: 'trades', targets: [1, 3], credits: [8, 30], label: (x) => `Make ${x} trade${x === 1 ? '' : 's'} with the travelling merchant`, eligible: () => true },
+  market: { stat: 'marketDeals', targets: [1, 3], credits: [8, 30], label: (x) => `Make or take ${x} offer${x === 1 ? '' : 's'} on the Market`, eligible: (w) => w.config.marketHours > 0 },
+  event: { stat: 'encountersDone', targets: [1, 4], credits: [10, 40], label: (x) => `Deal with ${x} event${x === 1 ? '' : 's'} at your planets`, eligible: (w) => w.config.encounterMinMinutes > 0 },
   plunder: { stat: 'plundered', targets: [200_000, 2_000_000], scaled: true, credits: [12, 70], label: (x) => `Plunder ${n(x)} resources`, eligible: (w, p) => p.stats.battlesWon > 0 || anyPlanet(w, p, (pl) => Object.values(pl.fleet).some((c) => (c || 0) > 0)) },
 };
 

@@ -38,7 +38,7 @@ export const OUTPOST = {
   /** Command Credits for clearing it, per tier, shared by the commanders in the winning fleets */
   bounty: [20, 45, 100, 220],
   /** what it holds when it is (re)built, as a share of its garrison value */
-  treasure: 0.8,
+  treasure: 0.3,
   /** how many of each tier out of ten (tier 1 is common, tier 4 rare) */
   mix: [4, 3, 2, 1],
   activeWithinMs: 7 * DAY,
@@ -85,8 +85,9 @@ function stock(w: World, o: Outpost, now: number): void {
     const kind = ALIEN_BY_TIER[t - 1];
     planet.fleet = buildWave(kind, value) as Fleet;
   }
-  const hold = value * OUTPOST.treasure;
-  planet.resources = { metal: hold * 0.5, crystal: hold * 0.3, deuterium: hold * 0.2 };
+  const actual = Object.entries({ ...planet.fleet, ...planet.defenses }).reduce((t, [id, n]) => t + (n as number) * shipValue(id as ShipId), 0);   // what was really bought, not the budget
+  const hold = actual * OUTPOST.treasure;
+  planet.resources = { metal: hold * 0.5, crystal: (hold * 0.3) / 1.5, deuterium: (hold * 0.2) / 3 };      // worth `hold` in all, at the merchant's rates
   planet.updatedAt = now;
   const lv = 2 + 2 * t;
   const bonus = o.kind === 'alien' ? ALIEN_KINDS[ALIEN_BY_TIER[t - 1]].tech : { weapons: 0, shielding: 0, armour: 0 };

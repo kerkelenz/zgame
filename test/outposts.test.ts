@@ -6,6 +6,7 @@ import { galaxyView } from '../server/galaxy';
 import { ACHIEVEMENTS } from '../server/progress';
 import { OUTPOST, averageCombatFleet, garrisonValue, generateOutposts, outpostOf, processOutposts } from '../server/outposts';
 import { rankings } from '../server/rankings';
+import { UNITS } from '../shared/data';
 import { createWorld, type Planet, type Player, type World } from '../server/world';
 
 const T0 = 1_700_000_000_000;
@@ -119,5 +120,21 @@ describe('outposts: clearing and rebuilding', () => {
     alice.stats.outpostsCleared = 1;
     expect(a.test(w, alice)).toBe(true);
     void outpostOf;
+  });
+});
+
+describe('outposts: the treasure does not outweigh the fight', () => {
+  it('holds well under the value of the garrison, so a win pays for its repairs and little more', () => {
+    generateOutposts(w, T0);
+    const v = (id: string) => (UNITS as any)[id].cost.metal + (UNITS as any)[id].cost.crystal;
+    for (const o of w.outposts!) {
+      const pl = w.planets[o.planetId];
+      const garrison = Object.entries({ ...pl.fleet, ...pl.defenses }).reduce((t, [id, n]) => t + (n as number) * v(id), 0);
+      const treasure = pl.resources.metal + pl.resources.crystal * 1.5 + pl.resources.deuterium * 3;
+      expect(treasure, `${o.kind} ${o.tier}`).toBeLessThan(garrison * 0.65);
+    }
+  });
+  it('is rebuilt after twelve hours by default', () => {
+    expect(w.config.outpostRespawnHours).toBe(12);
   });
 });
