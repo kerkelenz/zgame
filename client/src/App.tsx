@@ -2,11 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import { ResIcon } from './ResIcon';
 import { drawStarfield } from './art';
 import { useGame } from './game';
-import { CoordLink, coordStr, Countdown, fmt, Linkify, PlayerLink } from './ui';
+import { CoordLink, coordStr, Countdown, fmt, fmtDur, Linkify, PlayerLink } from './ui';
 import { t, useLang } from './i18n';
 import { PlayerSearch } from './PlayerSearch';
+import { CommandPalette } from './CommandPalette';
+import { CHORDS, cycleId, isTypingTarget } from './palette';
+import { fullState, timeToFull } from './afford';
+import { resName } from '../../shared/data';
 import { isOpen, loadCollapsed, saveCollapsed, setAllGroups, useShowAllPages, visibleNav } from './nav';
 import { Tour } from './Tour';
+import { MobileBar } from './MobileBar';
+import { NotificationBell } from './NotificationBell';
 import { CHANGELOG, markChangelogSeen, unseenRelease } from './changelog';
 import { Alliance } from './pages/Alliance';
 import { Chat } from './pages/Chat';
@@ -39,6 +45,7 @@ export function App() {
   useLang();
   const [whatsNew, setWhatsNew] = useState(unseenRelease());
   const [collapsed, setCollapsed] = useState(loadCollapsed);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const showAll = useShowAllPages();
   const g = useGame();
   const stars = useRef<HTMLCanvasElement>(null);
@@ -49,6 +56,29 @@ export function App() {
     return () => window.removeEventListener('resize', draw);
   }, []);
   const { me, planet, planets, page, setPage, live, toasts, fleets, offline } = g;
+  // keyboard: Ctrl+K palette, / search, [ ] planets, g + letter pages, ? help
+  const latest = useRef({ g, setPaletteOpen });
+  latest.current = { g, setPaletteOpen };
+  useEffect(() => {
+    let chord = 0;
+    const onKey = (e: KeyboardEvent) => {
+      const { g: game, setPaletteOpen: openPalette } = latest.current;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette((o) => !o); return; }
+      if (e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target) || !game.me) return;
+      if (chord && Date.now() < chord) {
+        chord = 0;
+        const hit = CHORDS[e.key.toLowerCase()];
+        if (hit) { e.preventDefault(); game.setPage(hit.page); }
+        return;
+      }
+      if (e.key === 'g') { chord = Date.now() + 1200; return; }
+      if (e.key === '/') { e.preventDefault(); document.querySelector<HTMLInputElement>('.psearch input')?.focus(); }
+      else if (e.key === '?') { e.preventDefault(); openPalette(true); }
+      else if ((e.key === '[' || e.key === ']') && game.planet) game.selectPlanet(cycleId(game.planets.map((p) => p.id), game.planet.id, e.key === ']' ? 1 : -1));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   // unread messages and hostile fleets show in the browser tab title
   const unread = me?.unread ?? 0, hostile = fleets.incoming.length;
   useEffect(() => { document.title = `${hostile ? '⚠ ' : ''}${unread ? `(${unread}) ` : ''}Zgame`; }, [unread, hostile]);
@@ -66,7 +96,7 @@ export function App() {
       case 'shipyard': return <Items kind="ship" />;
       case 'defense': return <Items kind="defense" />;
       case 'fleet': return <FleetPage />;
-      case 'galaxy': return <Galaxy />;
+      case 'galaxy': return <Galaxy key={g.galaxyAt ? `${g.galaxyAt.g}:${g.galaxyAt.s}` : 'home'} />;
       case 'alliance': return <Alliance />;
       case 'messages': return <Messages />;
       case 'chat': return <Chat />;
@@ -92,18 +122,31 @@ export function App() {
     <div className="shell">
       <canvas id="stars" ref={stars} aria-hidden="true" />
       <Tour />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <header className="top">
         <div className="brand">Zgame</div>
+        <span className="planetnav">
+          <button title="Previous planet ([)" aria-label="Previous planet" onClick={() => g.selectPlanet(cycleId(planets.map((p) => p.id), planet.id, -1))}>◀</button>
+          <button title="Next planet (])" aria-label="Next planet" onClick={() => g.selectPlanet(cycleId(planets.map((p) => p.id), planet.id, 1))}>▶</button>
+        </span>
         <select value={planet.id} onChange={(e) => g.selectPlanet(e.target.value)}>
           {planets.map((p) => <option key={p.id} value={p.id}>{p.isMoon ? '🌙 ' : ''}{p.name} {coordStr(p.coords)}</option>)}
         </select>
         <div className="res">
-          <span className="metal" title="Metal"><ResIcon k="metal" /> {fmt(live.metal)}<small>/{fmt(planet.capacity.metal)}</small></span>
-          <span className="crystal" title="Crystal"><ResIcon k="crystal" /> {fmt(live.crystal)}<small>/{fmt(planet.capacity.crystal)}</small></span>
-          <span className="deut" title="Vespene Gas"><ResIcon k="deuterium" /> {fmt(live.deuterium)}<small>/{fmt(planet.capacity.deuterium)}</small></span>
-          <span className={energy < 0 ? 'bad' : 'energy'} title="Energy balance">⚡ {fmt(energy)}</span>
+          {(['metal', 'crystal', 'deuterium'] as const).map((k) => {
+            const ms = timeToFull(live[k], planet.production[k], planet.capacity[k]);
+            const st = fullState(ms);
+            const cls = k === 'deuterium' ? 'deut' : k;
+            return (
+              <span key={k} className={`${cls}${st ? ' ' + st : ''}`} title={`${resName(k)}${ms === 0 ? ': storage is full, production is wasted' : ms !== null ? `: full in ${fmtDur(ms)}` : ''}`}>
+                <ResIcon k={k} /> {fmt(live[k])}<small>/{fmt(planet.capacity[k])}</small>{st === 'soon' && ms !== null && <small className="fullin"> {fmtDur(ms)}</small>}{st === 'full' && <small className="fullin"> FULL</small>}
+              </span>
+            );
+          })}
+          <span className={energy < 0 ? 'bad' : 'energy'} title={energy < 0 ? `Energy balance: mines run at ${Math.round((planet.production.efficiency ?? 1) * 100)}% until you build more power` : 'Energy balance'}>⚡ {fmt(energy)}{energy < 0 && planet.production.efficiency != null && <small className="fullin"> {Math.round(planet.production.efficiency * 100)}%</small>}</span>
         </div>
         <PlayerSearch />
+        <NotificationBell />
         <div className="who">
           <span className="energy" title="Command Credits" onClick={() => setPage('command')} style={{ cursor: 'pointer' }}>★ {fmt(me.credits)}</span>
           {me.alliance && <span className="tag">[{me.alliance.tag}]</span>} <PlayerLink id={me.player.id} name={me.player.username} />
@@ -148,8 +191,9 @@ export function App() {
         </nav>
         <main>{page_}</main>
       </div>
+      <MobileBar />
       <div className="toasts">
-        {toasts.map((t) => <div key={t.id} className={`toast ${t.kind}`}><Linkify text={t.text} /></div>)}
+        {toasts.map((t) => <div key={t.id} className={`toast ${t.kind}`}><Linkify text={t.text} />{t.action && <button className="link toastact" onClick={t.action.run}>{t.action.label}</button>}</div>)}
       </div>
     </div>
   );

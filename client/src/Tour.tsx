@@ -15,7 +15,7 @@ export const STEPS: { page: string; title: string; text: string }[] = [
   { page: 'galaxy', title: 'The galaxy', text: 'Browse systems, spot inactive neighbours (i / I flags), bookmark favourites and send fleets from here. Beginners are protected until they grow.' },
   { page: 'fleet', title: 'Fleets', text: 'Send transports, spy, colonize, recycle debris or explore deep space. Always check the flight time and fuel before you launch.' },
   { page: 'alliance', title: 'Play together', text: 'Join an alliance to share a bank, buy bonuses, stand guard over each other\'s planets and plan wars or pacts. Command holds your class, officers and achievements.' },
-  { page: 'settings', title: 'Make it yours', text: 'Alerts reach you outside the game (Discord, phone push), vacation mode freezes your empire, and you can pick sounds and language. Have fun!' },
+  { page: 'settings', title: 'Make it yours', text: 'Alerts reach you outside the game (Discord, phone push), vacation mode freezes your empire, and you can pick sounds and language. Press Ctrl+K anywhere to jump to any page, item or commander, and ? for the keyboard shortcuts. Have fun!' },
 ];
 
 export function Tour() {

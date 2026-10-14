@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { loadLastSend, repeatable, saveLastSend } from '../lastSend';
 import { EXPEDITION_HOURS, SHIP_IDS, UNITS, isStationary, resName } from '../../../shared/data';
 import { cargoCapacity } from '../../../shared/formulas';
 import type { Mission, ShipId } from '../../../shared/types';
@@ -39,6 +40,7 @@ export function FleetPage() {
   const savePreset = async (name: string, ships: object) => { const r = await act(() => post('/presets', { name, ships }), 'Preset saved'); if (r) setPresets(r.presets); };
   const removePreset = async (id: string) => { const r = await act(() => post('/presets/remove', { id })); if (r) setPresets(r.presets); };
   const [toMoon, setToMoon] = useState(false);
+  const [last, setLast] = useState(loadLastSend);
   const [scanTo, setScanTo] = useState({ g: planet.coords.g, s: planet.coords.s, p: 1 });
   const [scan, setScan] = useState<any>(null);
   const [jumpTo, setJumpTo] = useState('');
@@ -74,7 +76,11 @@ export function FleetPage() {
   const send = async () => {
     const r = await act(() => post('/fleets/send', { fromPlanetId: planet.id, to, ships: chosen, mission, speedPct, cargo, holdHours, toMoon: toMoon || mission === 'destroy', joinFleetId: mission === 'attack' && joinId ? joinId : undefined }), 'Fleet dispatched');
     setJoinId('');
-    if (r) { setShips({}); setCargo({ metal: 0, crystal: 0, deuterium: 0 }); }
+    if (r) {
+      saveLastSend({ ships: chosen, to, mission, speedPct, cargo, holdHours, toMoon: toMoon || mission === 'destroy' });
+      setLast(loadLastSend());
+      setShips({}); setCargo({ metal: 0, crystal: 0, deuterium: 0 });
+    }
   };
 
   const phaseTime = (m: any) => (m.phase === 'outbound' ? m.arriveAt : m.phase === 'holding' ? m.holdUntil : m.returnAt);
@@ -101,7 +107,7 @@ export function FleetPage() {
               <b>{m.mission}</b> <CoordLink c={m.from} /> → <CoordLink c={m.to} /> <span className="muted">({m.phase})</span> · <Countdown to={phaseTime(m)} />
               <div className="muted small">{m.missiles ? `${m.missiles} interplanetary missile(s)` : shipList(m.ships)}{m.cargo && m.cargo.metal + m.cargo.crystal + m.cargo.deuterium > 0 ? ` · cargo ${fmt(m.cargo.metal)}M ${fmt(m.cargo.crystal)}C ${fmt(m.cargo.deuterium)}D` : ''}</div>
             </div>
-            {m.phase !== 'returning' && m.mission !== 'missile' && <button onClick={() => void act(() => post(`/fleets/${m.id}/recall`), 'Recalled')}>Recall</button>}
+            {m.phase !== 'returning' && m.mission !== 'missile' && <button onClick={() => confirm('Recall this fleet? It turns around at once and cannot be sent on again from where it is.') && void act(() => post(`/fleets/${m.id}/recall`), 'Recalled')}>Recall</button>}
           </div>
         ))}
       </Card>
@@ -161,7 +167,11 @@ export function FleetPage() {
         </Card>
       )}
 
-      <Card title={<>Send fleet from {planet.name} <CoordLink c={planet.coords} /></>}>
+      <Card title={<>Send fleet from {planet.name} <CoordLink c={planet.coords} /></>} right={(() => {
+        const again = last && repeatable(last, planet.fleet);
+        return again ? <button title="Fill in the form with the fleet, target, mission and cargo of your last dispatch" onClick={() => { setShips(again.ships); setTo(again.to); setMission(again.mission); setSpeedPct(again.speedPct); setCargo(again.cargo); setHoldHours(again.holdHours); setToMoon(again.toMoon); }}>
+          Repeat last: {Object.values(again.ships).reduce((a, b) => a + (b ?? 0), 0)} ships → [{again.to.g}:{again.to.s}:{again.to.p}] {MISSIONS.find(([k]) => k === again.mission)?.[1] ?? again.mission}</button> : null;
+      })()}>
         {available.length === 0 ? <p className="muted">No ships at this planet. Build some in the shipyard.</p> : (
           <>
             <table className="ships">

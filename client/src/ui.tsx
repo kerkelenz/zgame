@@ -9,6 +9,7 @@ import { useGame } from './game';
 import { tokenize } from './linkify';
 
 import { fmt, fmtDur } from '../../shared/format';
+import { QuickStart } from './QuickStart';
 export { fmt, fmtDur };
 
 export const coordStr = (c: { g: number; s: number; p: number }) => `[${c.g}:${c.s}:${c.p}]`;
@@ -48,7 +49,7 @@ export function ItemLink({ id, children }: { id: string; children?: ReactNode })
 export function ReqList({ reqs }: { reqs: Requirement[] }) {
   return (
     <span className="reqs">
-      Needs: {reqs.map((r, i) => <span key={r.id}>{i ? ', ' : ''}<ItemLink id={r.id} /> {r.level}</span>)}
+      Needs: {reqs.map((r, i) => <span key={r.id}>{i ? ', ' : ''}<ItemLink id={r.id} /> {r.level} <QuickStart id={r.id} onlyIfReady /></span>)}
     </span>
   );
 }

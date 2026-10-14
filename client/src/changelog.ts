@@ -3,6 +3,17 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-m', date: '2026-10-13', title: 'Getting around',
+    items: [
+      'The browser Back and Forward buttons now work inside the game: every page, details page, profile and galaxy view is a history entry, a refresh keeps your place, and the address can be bookmarked or shared (for example #/item/metalMine).',
+      'Ctrl+K opens a jump box for any page, building, research, ship, defense, commander or coordinates. Keyboard: / searches players, [ and ] switch planet, g then a letter opens a page, ? lists them. Arrow buttons next to the planet list do the same for the mouse.',
+      'Buildings, Research, Shipyard and Defense have an Only what I can start now filter, and a card you cannot pay for says when you can afford it. Upgrade and Research buttons appear next to unmet requirements and on the Tech tree.',
+      'The top bar shows how long until a store is full (amber within the hour, red when full) and the percentage your mines run at when energy is short. A bell keeps every pop-up message with Mark all read and Clear.',
+      'Cancelling a job or removing a queued one offers Undo. The Fleet page has Repeat last to prepare your previous dispatch again, and your moving fleets in the Overview events have a Recall button.',
+      'On phones the menu is a bar at the bottom: Overview, Buildings, Fleet, Galaxy, Messages and a Menu button with every page.',
+    ],
+  },
+  {
     id: '2026-10-l', date: '2026-10-13', title: 'Artwork',
     items: [
       'Real pictures are arriving for buildings, research, ships, defenses and resources. They show as the small icon on cards and lists, and large at the top of an item details page. Items without a picture yet keep the drawn placeholder. The Metal Mine, Crystal Mine, Vespene Extractor and Solar Plant are first.',

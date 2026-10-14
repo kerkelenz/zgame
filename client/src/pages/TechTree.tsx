@@ -5,6 +5,7 @@ import { FLOWS, ITEM_EDGES, TREE, VISIBLE_EDGES, ancestors, descendants, levelsS
 import type { BuildingId, TechId, UnitId } from '../../../shared/types';
 import { GEOM, geometry, routeEdges } from '../../../shared/techroute';
 import { useGame } from '../game';
+import { QuickStart } from '../QuickStart';
 import { Card, ItemLink, Page } from '../ui';
 
 const { cardW: CARD_W, cardH: CARD_H, rowGap: ROW_GAP, bandGap: BAND_GAP, bandLabel: BAND_LABEL } = GEOM;
@@ -185,7 +186,7 @@ export function TechTree() {
           )}
 
           {selNode && (
-            <Card title={<>{selNode.name} <span className="muted small">{KIND_LABEL[selNode.kind]}</span></>} right={<span className="row"><button onClick={() => showPath(selNode.id)} disabled={!selNode.requires.length || goal === selNode.id}>Show only its path</button><button onClick={() => openItem(selNode.id)}>Details</button></span>}>
+            <Card title={<>{selNode.name} <span className="muted small">{KIND_LABEL[selNode.kind]}</span></>} right={<span className="row"><button onClick={() => showPath(selNode.id)} disabled={!selNode.requires.length || goal === selNode.id}>Show only its path</button><button onClick={() => openItem(selNode.id)}>Details</button>{status(selNode.id) !== 'locked' && <QuickStart id={selNode.id} />}</span>}>
               <div className="treeinfo">
                 <div>
                   <b>Path to get there</b>
@@ -193,7 +194,7 @@ export function TechTree() {
                   <ol className="steps">
                     {path.map((s) => {
                       const ok = haveReq(s.id) >= s.level;
-                      return <li key={s.id} className={ok ? 'good' : 'bad'}><a className="itemlink" onClick={() => jump(s.id)}>{nodeOf(s.id)!.name}</a> to level {s.level} <span className="muted small">{ok ? 'done' : `you: ${haveReq(s.id)}`}</span></li>;
+                      return <li key={s.id} className={ok ? 'good' : 'bad'}><a className="itemlink" onClick={() => jump(s.id)}>{nodeOf(s.id)!.name}</a> to level {s.level} <span className="muted small">{ok ? 'done' : `you: ${haveReq(s.id)}`}</span>{!ok && <> <QuickStart id={s.id} onlyIfReady /></>}</li>;
                     })}
                     <li><b>{selNode.name}</b>{status(selNode.id) === 'done' && !goal ? <span className="good small"> you have it</span> : ready(selNode.id) ? <span className="good small"> ready to start</span> : null}</li>
                   </ol>

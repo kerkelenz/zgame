@@ -7,7 +7,7 @@ import { LineChart } from './Highscore';
 const ACTIVITY: Record<string, string> = { online: 'online now', active: 'active', inactive: 'inactive for a week or more', longInactive: 'inactive for a month or more' };
 
 export function Profile() {
-  const { profileId, profileFrom, setPage, me, showInGalaxy, act } = useGame();
+  const { profileId, goBack, setPage, me, showInGalaxy, act } = useGame();
   const [p, setP] = useState<any>(null);
   const [soc, setSoc] = useState<any>(null);
   const [note, setNote] = useState('');
@@ -18,7 +18,7 @@ export function Profile() {
     get(`/players/${profileId}`).then(setP).catch((e) => setErr(String(e.message || e)));
     get('/social').then((s) => { setSoc(s); setNote(s.notes[`p:${profileId}`] ?? ''); }).catch(() => undefined);
   }, [profileId]);
-  const back = <button onClick={() => setPage(profileFrom)}>← Back</button>;
+  const back = <button onClick={() => goBack('highscore')}>← Back</button>;
   if (err) return <Page title="Commander"><div className="row">{back}</div><div className="error">{err}</div></Page>;
   if (!p) return <Page title="Commander"><p className="muted">Loading…</p></Page>;
   const mine = p.id === me.player.id;

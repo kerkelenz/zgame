@@ -54,7 +54,7 @@ describe('first visit', () => {
     await register('pilot_one');
     await page.waitForSelector('.tour', { timeout: 10_000 });
     expect(await page.locator('.tourbox h3').textContent()).toMatch(/Welcome/);
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
     expect(await page.locator('.tourbox h3').textContent()).toBe('Buildings');
     await page.getByRole('button', { name: 'Skip tour' }).click();
     await page.waitForSelector('.tour', { state: 'detached' });
@@ -116,14 +116,23 @@ describe('every page', () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.reload();
     await page.waitForSelector('header.top');
-    const labels = await page.locator('nav .navitem').allInnerTexts();
+    // on a phone the side menu gives way to a tab bar with the five main pages and a Menu sheet with all of them
+    expect(await page.locator('.tabbar').isVisible()).toBe(true);
+    expect(await page.locator('nav').isVisible()).toBe(false);
+    const openMenu = async () => { await page.locator('.tabbar button[aria-label="Menu"]').click(); await page.locator('.sheet').waitFor(); };
+    await openMenu();
+    const labels = (await page.locator('.sheetitems button').allInnerTexts()).map((l) => l.replace(/d+$/, '').trim());
     expect(labels.length).toBeGreaterThan(15);
-    for (const raw of labels) {
-      const label = raw.replace(/\d+$/, '').trim();
-      await page.locator('nav .navitem', { hasText: new RegExp(`^${label}`) }).first().click();
+    await page.locator('.sheetback').click({ position: { x: 5, y: 5 } });
+    for (const label of labels) {
+      await openMenu();
+      await page.locator('.sheetitems button', { hasText: new RegExp(`^${label}`) }).first().click();
       await heading().waitFor();
       expect(await overflow(), `${label} scrolls sideways on a phone`).toBeLessThanOrEqual(1);
     }
+    await page.locator('.tabbar button[aria-label="Fleet"]').click();
+    await page.getByRole('heading', { name: 'Fleet' }).first().waitFor();
+    expect(await page.locator('.tabbar button.on').innerText()).toMatch(/Fleet/);
     await page.setViewportSize({ width: 1280, height: 900 });
     noErrors();
   });
@@ -465,6 +474,71 @@ describe('using the game', () => {
     await page.getByRole('heading', { name: 'Solar Plant' }).first().waitFor();
     expect(await page.locator('main').innerText()).toMatch(/Demolish level \d+|returns about 30%/);
     await page.getByRole('button', { name: '← Back' }).click();
+    noErrors();
+  });
+
+  run('Back and Forward move between pages, and a refresh keeps the place', async () => {
+    await go('Buildings');
+    await page.locator('.items .card a.itemlink', { hasText: 'Solar Plant' }).first().click();
+    await page.getByRole('heading', { name: 'Solar Plant' }).first().waitFor();
+    expect(await page.evaluate(() => location.hash)).toBe('#/item/solarPlant');
+    await page.goBack();
+    await page.getByRole('heading', { name: 'Buildings' }).first().waitFor();
+    expect(await page.evaluate(() => location.hash)).toBe('#/buildings');
+    await page.goForward();
+    await page.getByRole('heading', { name: 'Solar Plant' }).first().waitFor();
+    await page.reload();
+    await page.getByRole('heading', { name: 'Solar Plant' }).first().waitFor({ timeout: 15_000 });
+    await page.getByRole('button', { name: '← Back' }).click();
+    await page.getByRole('heading', { name: 'Buildings' }).first().waitFor();
+    noErrors();
+  });
+
+  run('Ctrl+K jumps to any item, and g then a letter opens a page', async () => {
+    await page.keyboard.press('Control+k');
+    await page.locator('.palette input').waitFor();
+    expect(await page.locator('.palhelp').innerText()).toMatch(/Ctrl[+]K/);
+    await page.locator('.palette input').fill('cruis');
+    await page.locator('.palresults li', { hasText: 'Cruiser' }).first().waitFor();
+    await page.keyboard.press('Enter');
+    await page.getByRole('heading', { name: 'Cruiser' }).first().waitFor();
+    expect(await page.evaluate(() => location.hash)).toBe('#/item/cruiser');
+    await page.locator('main').click({ position: { x: 5, y: 5 } });
+    await page.keyboard.press('g');
+    await page.keyboard.press('f');
+    await page.getByRole('heading', { name: 'Fleet' }).first().waitFor();
+    await page.keyboard.press('Control+k');
+    await page.locator('.palette input').fill('1:1:5');
+    await page.locator('.palresults li', { hasText: 'Open the galaxy at' }).waitFor();
+    await page.keyboard.press('Escape');
+    await page.locator('.palette').waitFor({ state: 'detached' });
+    noErrors();
+  });
+
+  run('Only what I can start now hides the rest, and a card you cannot pay says when you can', async () => {
+    await go('Buildings');
+    const all = await page.locator('.items .card').count();
+    expect(await page.locator('main').innerText()).toMatch(/Affordable in|Does not fit the storage|no income/);
+    await page.getByText('Only what I can start now').click();
+    await expect.poll(() => page.locator('.items .card').count()).toBeLessThan(all);
+    for (const b of await page.locator('.items .card button.primary').all()) expect(await b.isEnabled()).toBe(true);
+    await page.getByText('Only what I can start now').click();
+    await expect.poll(() => page.locator('.items .card').count()).toBe(all);
+    noErrors();
+  });
+
+  run('cancelling a build offers Undo, and the bell keeps what the pop-ups said', async () => {
+    await go('Buildings');
+    await page.locator('.items .card', { hasText: 'Crystal Mine' }).first().getByRole('button', { name: /^(Build|Upgrade|Add to queue)/ }).click();
+    await page.getByText('Under construction').waitFor({ timeout: 10_000 });
+    await page.locator('section.card', { hasText: 'Under construction' }).getByRole('button', { name: 'Cancel' }).click();
+    await page.locator('.toast', { hasText: 'Cancelled' }).getByRole('button', { name: 'Undo' }).click();
+    await page.getByText('Under construction').waitFor({ timeout: 10_000 });
+    await page.locator('.bell > button').click();
+    await page.locator('.bellpanel').waitFor();
+    expect(await page.locator('.bellpanel').innerText()).toMatch(/Cancelled/);
+    await page.locator('.bellpanel').getByRole('button', { name: 'Clear' }).click();
+    await page.locator('.bellpanel').waitFor({ state: 'detached' });
     noErrors();
   });
 

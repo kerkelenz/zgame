@@ -21,6 +21,10 @@ describe('the in-game guide', () => {
     }
   });
 
+  it('describes how to get around: history, jump box, shortcuts, bell, undo, filter and the phone bar', () => {
+    for (const phrase of ['Back</b> and <b>Forward', 'Ctrl+K', 'Only what I can start now', 'Undo', 'Repeat last', 'Recall', 'bell', 'FULL']) expect(src, phrase).toContain(phrase);
+  });
+
   it('explains the systems players have to know about', () => {
     for (const topic of ['Vespene Gas', 'Solar Plant', 'Astrophysics', 'Space Dock', 'Crawlers', 'Pathfinders', 'Lunar Base', 'Sensor Phalanx', 'Jump Gate', 'Deathstars', 'wreck field', 'vacation', 'tribute', 'Factions', 'Collector', 'General', 'Discoverer', 'Officers', 'bulletin', 'pact', 'war', 'recovery key', 'hall of fame', 'merchant', 'Gather', 'Supply depot', 'presets', 'Nanite Factory', 'Terraformer', 'Missile Silo', 'Events', 'Moon Forge']) {
       expect(text.toLowerCase(), topic).toContain(topic.toLowerCase());

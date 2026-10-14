@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGame } from '../game';
+import { post } from '../api';
 import { UNITS, resName } from '../../../shared/data';
 import type { UnitId } from '../../../shared/types';
 import { ResIcon } from '../ResIcon';
@@ -33,7 +34,8 @@ const clock = (at: number) => {
 
 /** Every fleet movement that concerns you in the order it will happen: your own (out, back and the return still to come), hostile fleets coming for you or your allies, and friendly deliveries. */
 export function FleetEvents() {
-  const { fleets, showInGalaxy, openProfile, setPage } = useGame();
+  const { fleets, showInGalaxy, openProfile, setPage, act } = useGame();
+  const recallable = (e: any) => e.kind === 'own' && !e.projected && e.step !== 'return' && e.mission !== 'missile' && fleets.mine.some((m) => m.id === String(e.id).split(':')[0] && m.phase !== 'returning');
   const [hidden, setHidden] = useState(() => { try { return localStorage.getItem(KEY) === '1'; } catch { return false; } });
   const [all, setAll] = useState(false);
   const events: any[] = fleets.events ?? [];
@@ -99,7 +101,7 @@ export function FleetEvents() {
               <div key={e.id} className={`event ev-${e.kind} ${e.projected ? 'projected' : ''}`}>
                 <span className="evtime">{clock(e.at)}</span>
                 <span className="evleft"><Countdown to={e.at} /></span>
-                <span className="evtext">{text(e)}</span>
+                <span className="evtext">{text(e)}{recallable(e) && <> <button className="link" title="Turn this fleet around" onClick={() => confirm('Recall this fleet? It turns around at once and cannot be sent on again from where it is.') && void act(() => post(`/fleets/${String(e.id).split(':')[0]}/recall`), 'Recalled')}>Recall</button></>}</span>
               </div>
             ))}
           </div>
