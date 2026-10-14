@@ -5,7 +5,8 @@ import { updatePlanet } from './economy';
 import { bus } from './bus';
 import { notifyPlayer } from './messages';
 import { concedeWar, startWar } from './wars';
-import { ALLIANCE_PERMS, GameError, uid, type Alliance, type AlliancePerm, type Player, type World } from './world';
+import { allianceEvent } from './allianceLog';
+import { ALLIANCE_PERMS, GameError, planetAt, uid, type Alliance, type AlliancePerm, type Player, type World } from './world';
 
 const MAX_MEMBERS = 50;
 
@@ -370,4 +371,26 @@ export function endTreaty(w: World, actor: Player, otherId: string) {
   if (o.diplomacy) delete o.diplomacy[a.id];
   log(a, `${actor.username} ended the ${t.kind} with [${o.tag}].`); log(o, `[${a.tag}] ended the ${t.kind}.`);
   for (const m of o.members) notifyPlayer(w, m.playerId, 'alliance', t.kind === 'pact' ? 'Pact cancelled' : 'War ended', `[${a.tag}] ended the ${t.kind} with your alliance.`);
+}
+
+/**
+ * "Ask for help": a member whose planet has a hostile fleet on the way tells the alliance. Every other member gets an alert (the same kind as
+ * a raid on an ally) and the feed gets a line. Once per fleet, and only for a fleet that is really heading for one of the member's worlds.
+ */
+export function requestHelp(w: World, p: Player, fleetId: string, now: number) {
+  const a = p.allianceId ? w.alliances[p.allianceId] : null;
+  if (!a) throw new GameError('You are not in an alliance');
+  const m = w.movements[fleetId];
+  const target = m && m.phase === 'outbound' ? planetAt(w, m.to, !!m.toMoon) : undefined;
+  if (!m || !target || target.ownerId !== p.id || m.ownerId === p.id) throw new GameError('No hostile fleet is heading for you with that id');
+  if (!['attack', 'destroy', 'missile'].includes(m.mission)) throw new GameError('That fleet is not an attack');
+  if (m.helpAsked) throw new GameError('You already asked for help with that fleet');
+  m.helpAsked = true;
+  const where = `${target.name} [${m.to.g}:${m.to.s}:${m.to.p}]`;
+  const eta = Math.max(0, Math.round((m.arriveAt - now) / 60_000));
+  allianceEvent(w, p.id, 'help', `${p.username} asks for help at ${where}: ${m.ownerName} arrives in ${eta} min.`, now);
+  for (const mem of a.members) {
+    if (mem.playerId !== p.id) notifyPlayer(w, mem.playerId, 'raid', `Ally under raid! ${p.username} asks for help`, `${p.username} asks for help at ${where}: ${m.ownerName}'s fleet arrives in about ${eta} minutes. Send a hold fleet to defend them.`);
+  }
+  bus.push({ to: '*', type: 'refresh' });
 }

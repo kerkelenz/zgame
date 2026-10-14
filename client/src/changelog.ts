@@ -3,8 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
-    id: '2026-10-n', date: '2026-10-14', title: 'Idle queues, planners and pictures everywhere',
+    id: '2026-10-n', date: '2026-10-14', title: 'Idle queues, planners, alliance tools and pictures everywhere',
     items: [
+      'Alliance Operations: a shared target board. Plan an attack or a defense with an optional landing time, sign up with the ships of a planet, see when each member must leave to land together, get a reminder ten minutes before, and press Prepare launch to fill in the Fleet page.',
+      'Alliance Activity feed: attacks on members, their attacks, raids, help asked, defenders who answered and building and research milestones, with a filter. A member under attack can press Ask allies for help on the Fleet page.',
+      'Choosing an alliance is easier: open ones first, then the strongest, with active members, points and systems; the Overview suggests joining after the first hour.',
+      'Share links for a planet (Share this planet on the Overview) and for your queue as a build order (on Buildings and Research). Opening an order link while logged in can queue the steps you still lack.',
       'Planner on the Shipyard and Defense pages: pick a unit and a number to see the price, the buildings and research still missing, the total, the building time and when you can pay, with a button to queue the missing steps.',
       'Defense advisor on the Defense page: fights the smallest and largest raid the game can send at your planet in the simulator, says whether it holds, and names the cheapest defense that would make the large raid fail.',
       'Planet roles (Mining, Fleet base, Fortress, Research) on the Overview: the idle-queue tip suggests the next building for that kind of planet, and the Empire page shows the role.',

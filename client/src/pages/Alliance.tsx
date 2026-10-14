@@ -6,6 +6,21 @@ import { post as post_ } from '../api';
 import { useGame } from '../game';
 import { Card, Cost, Linkify, Page, PlayerLink, coordStr, fmt, when } from '../ui';
 import { NumInput } from '../NumInput';
+import { OperationsCard } from '../OperationsCard';
+
+const FEED: [string, string][] = [['all', 'Everything'], ['attack', 'Attacked'], ['defense', 'Defended'], ['offense', 'Attacks by us'], ['raid', 'Raids'], ['help', 'Help asked'], ['build', 'Built'], ['other', 'Members']];
+
+/** the alliance activity feed: who built, attacked, was attacked, got help; with a filter */
+function Feed({ log }: { log: { at: number; text: string; kind?: string }[] }) {
+  const [kind, setKind] = useState('all');
+  const rows = log.filter((l) => kind === 'all' || (kind === 'other' ? !l.kind : l.kind === kind));
+  return (
+    <Card title="Activity" right={<select value={kind} onChange={(e) => setKind(e.target.value)} aria-label="Filter the feed">{FEED.map(([k, label]) => <option key={k} value={k}>{label}</option>)}</select>}>
+      {rows.length === 0 && <p className="muted small">Nothing here yet.</p>}
+      {rows.map((l, i) => <div key={i} className={`feed ${l.kind ?? ''}`}>{when(l.at)} – <Linkify text={l.text} /></div>)}
+    </Card>
+  );
+}
 
 export function Alliance() {
   const { me, act, planet, setPage, openProfile, showInGalaxy } = useGame();
@@ -42,7 +57,7 @@ function Browse({ list, run }: { list: any[]; run: (f: () => Promise<any>, ok?: 
         {list.length === 0 && <p className="muted">No alliances exist yet - found the first one!</p>}
         {list.map((x) => (
           <div className="row between" key={x.id}>
-            <div><b>[{x.tag}] {x.name}</b> <span className="muted">· {x.members} members · {x.open ? 'open' : 'applications'}</span><div className="muted small">{x.description}</div></div>
+            <div><b>[{x.tag}] {x.name}</b> <span className="muted">· {x.members} members{x.active != null ? ` (${x.active} active this week)` : ''} · {fmt(x.points ?? 0)} points{x.territory ? ` · ${x.territory} systems` : ''} · {x.open ? 'open' : 'applications'}</span><div className="muted small">{x.description}</div></div>
             <button onClick={() => void run(() => post('/alliance/join', { id: x.id, text: 'Hello!' }), x.open ? 'Joined' : 'Application sent')}>{x.open ? 'Join' : 'Apply'}</button>
           </div>
         ))}
@@ -226,9 +241,8 @@ function Mine({ a: raw, run, planetId, me, setPage, openProfile, showInGalaxy }:
         </Card>
       )}
 
-      <Card title="Activity log">
-        {a.log.map((l: any, i: number) => <div key={i} className="muted small">{when(l.at)} – <Linkify text={l.text} /></div>)}
-      </Card>
+      <OperationsCard officer={!!a.members?.some((m: any) => m.id === me.player.id && m.role !== 'member')} />
+      <Feed log={a.log} />
     </Page>
   );
 }

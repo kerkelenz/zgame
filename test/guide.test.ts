@@ -22,7 +22,7 @@ describe('the in-game guide', () => {
   });
 
   it('describes how to get around: history, jump box, shortcuts, bell, undo, filter and the phone bar', () => {
-    for (const phrase of ['Back</b> and <b>Forward', 'Ctrl+K', 'Only what I can start now', 'Undo', 'Repeat last', 'Recall', 'bell', 'FULL', 'Planner', 'Defense advisor', 'Roles', 'What to do next']) expect(src, phrase).toContain(phrase);
+    for (const phrase of ['Back</b> and <b>Forward', 'Ctrl+K', 'Only what I can start now', 'Undo', 'Repeat last', 'Recall', 'bell', 'FULL', 'Planner', 'Defense advisor', 'Roles', 'What to do next', 'Operations', 'Asking for help', 'Share links', 'Choosing an alliance']) expect(src, phrase).toContain(phrase);
   });
 
   it('explains the systems players have to know about', () => {

@@ -1,4 +1,5 @@
 import { EXPEDITION_HOURS, TECHS, UNITS, resName, SHIP_IDS, DEFENSE_IDS, BUILDING_IDS, TECH_IDS, isShip, isStationary } from '../shared/data';
+import { allianceEvent } from './allianceLog';
 import {
   addRes, cargoCapacity, canAfford, distance, flightSeconds, fleetSpeed, fuelUse, lvl, sameCoords, subRes, totalRes, zeroRes,
 } from '../shared/formulas';
@@ -505,6 +506,12 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   const moonOdds = moonPossible ? moonChance(field) : null;
   const newMoon = maybeCreateMoon(w, target, field, at);
   const leadPlayer = attackerOf(lead);
+  {
+    const result = res.winner === 'attacker' ? 'the attackers won' : res.winner === 'defender' ? 'the defense held' : 'it ended in a draw';
+    allianceEvent(w, defOwner.id, res.winner === 'attacker' ? 'attack' : 'defense', `${defOwner.username}'s ${target.name} [${lead.to.g}:${lead.to.s}:${lead.to.p}] was attacked by ${lead.ownerName}: ${result}.`, at);
+    if (leadPlayer && !leadPlayer.npc) allianceEvent(w, leadPlayer.id, 'offense', `${leadPlayer.username} attacked ${defOwner.username}'s ${target.name}: ${result}.`, at);
+    for (const h of holders) if (h.ownerId && h.ownerId !== defOwner.id) allianceEvent(w, h.ownerId, 'defense', `${h.ownerName} helped defend ${defOwner.username}'s ${target.name}.`, at);
+  }
 
   // wreck field: a share of the defender's destroyed ships can be rebuilt by a Space Dock
   let wreckFormed = 0;

@@ -184,6 +184,8 @@ export type FleetPhase = 'outbound' | 'holding' | 'returning';
 
 export interface Movement {
   id: string;
+  /** the target asked their alliance for help with this fleet (once) */
+  helpAsked?: boolean;
   /** null = NPC raiders */
   ownerId: string | null;
   ownerName: string;
@@ -237,7 +239,7 @@ export interface Alliance {
   applications: { playerId: string; text: string; at: number }[];
   bank: Res;
   upgrades: Record<string, number>;
-  log: { at: number; text: string }[];
+  log: { at: number; text: string; /** what sort of line it is, for filtering the activity feed */ kind?: 'attack' | 'defense' | 'offense' | 'raid' | 'build' | 'help'; /** the member it is about */ by?: string }[];
   createdAt: number;
 }
 
@@ -312,6 +314,8 @@ export interface World {
   forges?: Record<string, ForgeJob>;
   /** scored alliance wars: the running one and recent history, newest first */
   wars?: War[];
+  /** alliance operations: shared targets members sign up for */
+  operations?: import('./operations').Operation[];
   /** which alliance holds which system ("g:s") */
   sectors?: Record<string, { allianceId: string; since: number }>;
   season?: import('./season').SeasonState;

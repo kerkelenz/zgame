@@ -1,4 +1,5 @@
 import { ALLIANCE_UPGRADES, BUILDINGS, DEAL_FEE, TECHS, UNITS, buildingAllowed, dailyDeal, resName, tradeQuote } from '../shared/data';
+import { allianceEvent } from './allianceLog';
 import {
   buildingCost, buildingTime, canAfford, production, researchTime, scaleRes, storageCapacity,
   subRes, addRes, techCost, totalRes, unitTime, lvl,
@@ -89,6 +90,7 @@ export function updatePlanet(w: World, planet: Planet, now: number) {
     const ownerP = w.players[planet.ownerId];
     if (ownerP) ownerP.stats.buildingsDone++;
     notifyPlayer(w, planet.ownerId, 'system', `Construction complete`, `${BUILDINGS[job.id].name} on ${planet.name} is now level ${job.level}.`);
+    if (job.level % 5 === 0 || (job.level === 1 && ['researchLab', 'shipyard', 'spaceDock', 'jumpGate', 'terraformer', 'naniteFactory'].includes(job.id))) allianceEvent(w, planet.ownerId, 'build', `${ownerP?.username ?? 'A member'} built ${BUILDINGS[job.id].name} level ${job.level} on ${planet.name}.`, t);
     bus.push({ to: planet.ownerId, type: 'toast', data: `${BUILDINGS[job.id].name} level ${job.level} done on ${planet.name}` });
     startNextBuilding(w, planet, t);
     if (!planet.buildQueue) { planet.idleSince = t; planet.idleAlerted = false; }
@@ -157,6 +159,7 @@ export function processPlayer(w: World, player: Player, now: number) {
     player.research = null;
     player.stats.researchDone++;
     notifyPlayer(w, player.id, 'system', 'Research complete', `${TECHS[job.id].name} is now level ${job.level}.`);
+    if (job.level % 5 === 0 || job.level === 1) allianceEvent(w, player.id, 'build', `${player.username} researched ${TECHS[job.id].name} level ${job.level}.`, job.end);
     bus.push({ to: player.id, type: 'toast', data: `Research: ${TECHS[job.id].name} level ${job.level}` });
     startNextResearch(w, player, job.end);
     if (!player.research) { player.researchIdleSince = job.end; player.researchIdleAlerted = false; }

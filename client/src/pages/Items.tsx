@@ -7,7 +7,7 @@ import type { BuildingId, Res, TechId, UnitId } from '../../../shared/types';
 import { post } from '../api';
 import { Art } from '../art';
 import { useGame } from '../game';
-import { Card, Cost, Countdown, ItemIcon, ItemLink, Page, Progress, ReqList, fmtDur, unmet, fmt } from '../ui';
+import { Card, Cost, Countdown, copyLink, ItemIcon, ItemLink, Page, Progress, ReqList, fmtDur, unmet, fmt } from '../ui';
 import { NumInput } from '../NumInput';
 import { AdvisorCard } from '../AdvisorCard';
 import { PlannerCard } from '../PlannerCard';
@@ -126,6 +126,9 @@ export function Items({ kind }: { kind: Kind }) {
 
       {kind === 'defense' && <AdvisorCard />}
       {(kind === 'ship' || kind === 'defense') && <PlannerCard kind={kind} />}
+      {(kind === 'building' || kind === 'tech') && (buildQ || bBacklog.length > 0 || researchQ || rBacklog.length > 0) && (
+        <button className="link" onClick={async () => { const r = await act(() => post(`/planets/${planet.id}/share-order`)); if (r) await copyLink(r.id, toast); }}>Share my queue as a build order link</button>
+      )}
       <label className="row small startable"><input type="checkbox" checked={only} onChange={() => { setOnly(!only); setOnlyStartable(!only); }} /> Only what I can start now</label>
       <div className="items">
         {kind === 'building' && BUILDING_IDS.filter((id) => buildingAllowed(id, !!planet.isMoon)).map((id) => {

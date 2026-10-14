@@ -1,4 +1,5 @@
 import { UNITS } from '../shared/data';
+import { allianceEvent } from './allianceLog';
 import { distance, flightSeconds, fleetSpeed, totalRes } from '../shared/formulas';
 import type { Fleet, ShipId } from '../shared/types';
 import type { Rng } from '../shared/combat';
@@ -112,6 +113,7 @@ export function spawnRaid(w: World, now: number, rng: Rng = Math.random, opts: R
   w.movements[m.id] = m;
   const who = npc ? `${npc.username}'s fleet` : 'A raider fleet';
   notifyPlayer(w, target.id, 'raid', 'Raid incoming!', `${who} (${fleetValue(ships).toLocaleString()} resource value) is heading for ${planet.name} [${planet.coords.g}:${planet.coords.s}:${planet.coords.p}], coming from [${from.g}:${from.s}:${from.p}]${home ? ` (${home.name})` : ' (deep space)'}. Build defenses or ask your alliance to station ships there.`);
+  allianceEvent(w, target.id, 'raid', `${target.username}'s ${planet.name} [${planet.coords.g}:${planet.coords.s}:${planet.coords.p}] is being raided by ${who}.`, now);
   if (target.allianceId) {
     for (const mem of w.alliances[target.allianceId]?.members ?? []) {
       if (mem.playerId !== target.id) notifyPlayer(w, mem.playerId, 'raid', 'Ally under raid!', `${target.username}'s planet ${planet.name} [${planet.coords.g}:${planet.coords.s}:${planet.coords.p}] is about to be attacked by ${npc ? npc.username : 'raiders'}. Send a "hold" fleet to help defend!`);

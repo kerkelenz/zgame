@@ -53,6 +53,7 @@ export function FleetPage() {
   useEffect(() => {
     if (target) {
       setTo(target.coords); if (target.mission) setMission(target.mission); setToMoon(!!target.toMoon); setTarget(null);
+      if (target.ships) setShips(target.ships as Partial<Record<ShipId, number>>);
       // pressing Spy in the galaxy prepares the number of probes chosen in Settings, so it need not be typed every time
       if (target.mission === 'espionage') { const n = Math.min(getProbes(), planet.fleet.espionageProbe || 0); if (n > 0) setShips({ espionageProbe: n }); }
     }
@@ -94,6 +95,7 @@ export function FleetPage() {
             <div key={f.id} className="bad">
               {f.ownerId ? <a className="plink" onClick={() => openProfile(f.ownerId!)}>{f.ownerName}</a> : f.ownerName}{f.ownerAlliance ? ` [${f.ownerAlliance}]` : ''} from <a className="plink" onClick={() => showInGalaxy(f.from)}>{f.fromName ? `${f.fromMoon ? '🌙 ' : ''}${f.fromName} ` : ''}{coordStr(f.from)}</a> → {f.targetOwnerId ? <><a className="plink" onClick={() => openProfile(f.targetOwnerId!)}>{f.targetOwner}</a> (<a className="plink" onClick={() => showInGalaxy(f.to)}>{f.targetName}</a>)</> : f.target} at <a className="plink" onClick={() => showInGalaxy(f.to)}>{coordStr(f.to)}</a> · arrives in <Countdown to={f.arriveAt} /><IntelText intel={f.intel} count={f.shipCount} types={f.shipTypes} fleet={f.fleet} />
               {f.ally && <span className="muted"> — send a "Defend ally" fleet to help!</span>}
+              {!f.ally && me.alliance && <> <button className="link" disabled={f.helpAsked} title="Tell your alliance a hostile fleet is coming and ask for hold fleets" onClick={() => void act(() => post('/alliance/help', { fleetId: f.id }), 'Your alliance has been asked for help')}>{f.helpAsked ? 'Help asked' : 'Ask allies for help'}</button></>}
             </div>
           ))}
         </Card>

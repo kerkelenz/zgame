@@ -3,7 +3,7 @@ import { BUILDINGS, TECHS, UNITS } from '../../../shared/data';
 import { del, get, post } from '../api';
 import { useGame } from '../game';
 import type { Mission } from '../../../shared/types';
-import { Card, CoordLink, Linkify, PlanetLink, Page, PlayerLink, fmt, when, ItemIcon } from '../ui';
+import { Card, CoordLink, Linkify, PlanetLink, Page, PlayerLink, fmt, when, ItemIcon, copyLink } from '../ui';
 
 const KINDS = ['all', 'combat', 'espionage', 'raid', 'news', 'expedition', 'transport', 'alliance', 'player', 'system'];
 
@@ -179,8 +179,7 @@ export function Messages() {
                   <button onClick={async () => {
                     const r = await act(() => post(`/messages/${m.id}/share`));
                     if (!r) return;
-                    const url = `${location.origin}${location.pathname}?report=${r.id}`;
-                    try { await navigator.clipboard.writeText(url); toast('Link copied: ' + url); } catch { prompt('Share this link', url); }
+                    await copyLink(r.id, toast);
                   }}>Share link</button>
                 )}
                 <button onClick={async () => { await del(`/messages/${m.id}`); setOpen(null); await load(); }}>Delete</button>

@@ -19,7 +19,7 @@ interface P {
   resources: Res3; capacity: Res3; production: Record<string, number>;
 }
 export interface AdviceInput {
-  me: { player: { research: unknown; researchBacklog?: unknown[] }; slots?: { used: number; max: number; expUsed: number; expMax: number }; contractsClaimable?: number; vacation?: unknown };
+  me: { alliance?: unknown; recruiting?: number; accountAge?: number; player: { research: unknown; researchBacklog?: unknown[] }; slots?: { used: number; max: number; expUsed: number; expMax: number }; contractsClaimable?: number; vacation?: unknown };
   planets: P[];
   now: number;
 }
@@ -61,6 +61,10 @@ export function advise({ me, planets, now }: AdviceInput): Advice[] {
 
   if ((me.contractsClaimable ?? 0) > 0) {
     out.push({ id: 'contracts', level: 'tip', page: 'contracts', text: `${me.contractsClaimable} contract reward${me.contractsClaimable === 1 ? ' is' : 's are'} ready to claim.` });
+  }
+
+  if (!me.alliance && (me.recruiting ?? 0) > 0 && (me.accountAge ?? 0) > 3_600_000) {
+    out.push({ id: 'alliance', level: 'tip', page: 'alliance', text: `${me.recruiting} alliance${me.recruiting === 1 ? ' is' : 's are'} open to new members. Playing together shares a bank, bonuses and help when you are attacked.` });
   }
 
   const s = me.slots;

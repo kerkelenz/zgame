@@ -13,6 +13,12 @@ import { fmt, fmtDur } from '../../shared/format';
 import { QuickStart } from './QuickStart';
 export { fmt, fmtDur };
 
+/** make a link for a shared card: copies it, or shows it to copy by hand */
+export async function copyLink(id: string, toast: (t: string) => void) {
+  const url = `${location.origin}${location.pathname}?report=${id}`;
+  try { await navigator.clipboard.writeText(url); toast('Link copied: ' + url); } catch { prompt('Share this link', url); }
+}
+
 export const coordStr = (c: { g: number; s: number; p: number }) => `[${c.g}:${c.s}:${c.p}]`;
 export const when = (t: number) => new Date(t).toLocaleString();
 

@@ -33,7 +33,10 @@ import { announceInvasion, finish as finishInvasion, invasionView } from './inva
 import { claimContract, contractsView } from './contracts';
 import { recoverAccount } from './account';
 import { defenseReport } from './advisor';
+import { recruitingList } from './recruiting';
+import { closeOperation, createOperation, operationsView, signUp, withdraw } from './operations';
 import { isRole } from '../shared/roles';
+import { orderCard, planetCard, publish as publishCard } from './share';
 import { CATEGORIES, mask, sendTest, validateTarget } from './external';
 import { GameError, ownedPlanet, uid, type Player, type World } from './world';
 import { env } from './env';
@@ -513,6 +516,19 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     w.messages = w.messages.filter((m) => m.to !== req.player!.id);
     return { ok: true };
   }));
+  A.post('/planets/:id/share', wrap((req) => {
+    const p = req.player!;
+    if (limited('share:' + p.id, 20, 3_600_000)) throw new GameError('You are sharing too many links', 429);
+    const planet = ownedPlanet(w, p.id, req.params.id);
+    return { id: publishCard(w, planetCard(p, planet, !!req.body?.ships), `${planet.name} of ${p.username}`, now()) };
+  }));
+  A.post('/planets/:id/share-order', wrap((req) => {
+    const p = req.player!;
+    if (limited('share:' + p.id, 20, 3_600_000)) throw new GameError('You are sharing too many links', 429);
+    const card = orderCard(p, ownedPlanet(w, p.id, req.params.id));
+    if (!card.steps.length) throw new GameError('Nothing is queued to share');
+    return { id: publishCard(w, card, `Build order of ${p.username}`, now()) };
+  }));
   A.post('/messages/:id/share', wrap((req) => {
     const m = w.messages.find((x) => x.id === req.params.id && x.to === req.player!.id);
     if (!m || (m.kind !== 'combat' && m.kind !== 'raid') || !m.data || !(m.data as { attackers?: unknown }).attackers) throw new GameError('Only battle reports can be shared');
@@ -558,9 +574,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
 
   // ---------------------------------------------------------------- alliances
-  A.get('/alliances', wrap(() => Object.values(w.alliances).map((a) => ({
-    id: a.id, tag: a.tag, name: a.name, description: a.description, open: a.open, members: a.members.length,
-  }))));
+  A.get('/alliances', wrap(() => recruitingList(w, now())));
   A.get('/alliance', wrap((req) => {
     const p = req.player!;
     const a = p.allianceId ? w.alliances[p.allianceId] : null;
@@ -590,6 +604,16 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     if (limited('amsg:' + p.id, 5, 60_000)) throw new GameError('You are sending messages too fast', 429);
     return { sent: AL.massMessage(w, p, str(req.body.subject, 60), str(req.body.text, 1000)) };
   }));
+  A.get('/alliance/operations', wrap((req) => operationsView(w, req.player!)));
+  A.post('/alliance/operations', wrap((req) => {
+    const b = req.body || {};
+    createOperation(w, req.player!, { kind: str(b.kind), name: str(b.name, 40), note: str(b.note, 300), target: { g: Number(b.target?.g), s: Number(b.target?.s), p: Number(b.target?.p) }, toMoon: !!b.toMoon, arriveAt: b.arriveAt == null ? null : Number(b.arriveAt) }, now());
+    return operationsView(w, req.player!);
+  }));
+  A.post('/alliance/operations/signup', wrap((req) => { signUp(w, req.player!, str(req.body.id), str(req.body.planetId), str(req.body.mode), now()); return operationsView(w, req.player!); }));
+  A.post('/alliance/operations/withdraw', wrap((req) => { withdraw(w, req.player!, str(req.body.id)); return operationsView(w, req.player!); }));
+  A.post('/alliance/operations/close', wrap((req) => { closeOperation(w, req.player!, str(req.body.id)); return operationsView(w, req.player!); }));
+  A.post('/alliance/help', wrap((req) => { AL.requestHelp(w, req.player!, str(req.body.fleetId), now()); return { ok: true }; }));
   A.post('/alliance/pact', wrap((req) => { AL.proposePact(w, req.player!, str(req.body.id)); return mine(req); }));
   A.post('/alliance/pact/respond', wrap((req) => { AL.respondPact(w, req.player!, str(req.body.id), !!req.body.accept); return mine(req); }));
   A.post('/alliance/war', wrap((req) => { AL.declareWar(w, req.player!, str(req.body.id)); return mine(req); }));

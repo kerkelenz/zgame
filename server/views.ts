@@ -90,6 +90,9 @@ export function meView(w: World, p: Player, now: number) {
     season: seasonBanner(w, now),
     invasion: invasionBanner(w),
     contractsClaimable: contractsView(w, p, now).claimable,
+    /** how many alliances anyone can join right now, and when this account began (for the join suggestion) */
+    recruiting: Object.values(w.alliances).filter((x) => x.open).length,
+    accountAge: now - p.createdAt,
     features: featuresOf(w, p),
     player: {
       id: p.id, username: p.username, techs: p.techs, research: p.research, researchBacklog: p.researchBacklog ?? [], officers: p.officers, charClass: p.charClass, allianceId: p.allianceId,
@@ -156,7 +159,7 @@ export function fleetsView(w: World, p: Player) {
   const allyCoords = [...allyIds].flatMap((id) => w.players[id].planetIds.map((pid) => ({ owner: w.players[id].username, ownerId: id, c: w.planets[pid].coords, name: w.planets[pid].name })));
 
   const mine: ReturnType<typeof mv>[] = [];
-  const incoming: (ReturnType<typeof mv> & { target: string; ally: boolean; intel?: string; shipCount?: number | null; shipTypes?: string[] | null; fleet?: Record<string, number | undefined> | null; targetOwnerId?: string; targetOwner?: string; targetName?: string })[] = [];
+  const incoming: (ReturnType<typeof mv> & { helpAsked?: boolean; target: string; ally: boolean; intel?: string; shipCount?: number | null; shipTypes?: string[] | null; fleet?: Record<string, number | undefined> | null; targetOwnerId?: string; targetOwner?: string; targetName?: string })[] = [];
   const stationed: ReturnType<typeof mv>[] = [];
   const joinable: (ReturnType<typeof mv> & { targetName: string })[] = [];
   for (const m of Object.values(w.movements)) {
@@ -164,7 +167,7 @@ export function fleetsView(w: World, p: Player) {
     if ((m.mission === 'attack' || m.mission === 'missile' || m.mission === 'destroy') && m.phase === 'outbound' && m.ownerId !== p.id) {
       const hitMe = myCoords.some((c) => sameCoords(c, m.to));
       const hitAlly = allyCoords.find((a) => sameCoords(a.c, m.to));
-      if (hitMe) incoming.push({ ...mv(m, false, w), ships: {}, target: 'you', ally: false, ...intelView(w, p, m) });
+      if (hitMe) incoming.push({ ...mv(m, false, w), helpAsked: !!m.helpAsked, ships: {}, target: 'you', ally: false, ...intelView(w, p, m) });
       else if (hitAlly) incoming.push({ ...mv(m, false, w), ships: {}, target: `${hitAlly.owner} (${hitAlly.name})`, ally: true, ...intelView(w, p, m), targetOwnerId: hitAlly.ownerId, targetOwner: hitAlly.owner, targetName: hitAlly.name });
     }
     if (m.mission === 'attack' && m.phase === 'outbound' && m.ownerId && !m.acsId && (m.ownerId === p.id || allyIds.has(m.ownerId))) {

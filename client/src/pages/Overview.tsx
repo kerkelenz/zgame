@@ -4,13 +4,14 @@ import { BUILDINGS, POSITION_BONUS, TECHS, UNITS, crawlerBonus } from '../../../
 import { post } from '../api';
 import { Art } from '../art';
 import { useGame } from '../game';
-import { Card, CoordLink, coordStr, Cost, Countdown, fmt, Page, Progress, ItemIcon } from '../ui';
+import { Card, CoordLink, coordStr, Cost, Countdown, fmt, Page, Progress, ItemIcon, copyLink } from '../ui';
 import { AdviceCard } from '../AdviceCard';
 import { ROLES } from '../../../shared/roles';
 import { FleetEvents } from './FleetEvents';
 
 export function Overview() {
-  const { me, planet, planets, fleets, act, setPage, selectPlanet } = useGame();
+  const { me, planet, planets, fleets, act, setPage, selectPlanet, toast } = useGame();
+  const [shareShips, setShareShips] = useState(false);
   const [name, setName] = useState('');
   const pts = me.player.points;
   const b = planet.buildQueue;
@@ -47,6 +48,10 @@ export function Overview() {
               <tr><td><EnergyIcon size={16} /> Energy</td><td>{fmt(planet.production.energyProduced)} / {fmt(planet.production.energyUsed)} ({Math.round(planet.production.efficiency * 100)}%)</td></tr>
             </tbody>
           </table>
+          <div className="row small">
+            <button onClick={async () => { const r = await act(() => post(`/planets/${planet.id}/share`, { ships: shareShips })); if (r) await copyLink(r.id, toast); }}>Share this {planet.isMoon ? 'moon' : 'planet'}</button>
+            <label className="row small"><input type="checkbox" checked={shareShips} onChange={() => setShareShips(!shareShips)} /> with ships and defenses</label>
+          </div>
           <label className="row small">Role <select value={planet.role ?? ''} onChange={(e) => void act(() => post(`/planets/${planet.id}/role`, { role: e.target.value || null }))} aria-label="What this planet is for">
             <option value="">None</option>{ROLES.map((r) => <option key={r.id} value={r.id}>{r.label} ({r.hint})</option>)}
           </select></label>

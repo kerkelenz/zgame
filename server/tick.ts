@@ -11,6 +11,7 @@ import { checkProgress } from './progress';
 import { SECTOR, processSectors } from './sectors';
 import { processWars } from './wars';
 import { checkIdle } from './idle';
+import { processOperations } from './operations';
 import { processSeason } from './season';
 import type { World } from './world';
 
@@ -40,7 +41,7 @@ export function createTicker(world: World) {
     lap('territory');
     for (const p of Object.values(world.players)) processPlayer(world, p, now);
     lap('economy (every player)');
-    if (now - lastIdle >= 60_000) { lastIdle = now; checkIdle(world, now); }
+    if (now - lastIdle >= 60_000) { lastIdle = now; checkIdle(world, now); processOperations(world, now); }
     runAutomationAll(world, now);
     lap('automation');
     if (now - lastProgress > 5000) { lastProgress = now; for (const p of Object.values(world.players)) checkProgress(world, p, now); }

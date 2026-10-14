@@ -19,7 +19,7 @@ function browserNotify(title: string, body: string) {
 export interface ToastAction { label: string; run: () => void }
 export interface Toast { id: number; text: string; kind: 'info' | 'alert' | 'error'; action?: ToastAction }
 
-export interface Target { coords: Coords; mission?: Mission; toMoon?: boolean }
+export interface Target { coords: Coords; mission?: Mission; toMoon?: boolean; /** ships to prepare in the form (an alliance operation signup) */ ships?: Record<string, number> }
 
 interface GameCtx {
   me: any | null;

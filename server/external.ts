@@ -122,6 +122,7 @@ export function categoryOf(kind: string, subject: string): Category | null {
   if (kind === 'raid') return /^Ally under raid/i.test(subject) ? 'allies' : 'attacks';
   if (kind === 'system') {
     if (/Hostile fleet detected|Missile launch detected/i.test(subject)) return 'attacks';
+    if (/^Operation:/i.test(subject)) return 'allies';
     if (/Construction complete|Research complete|Production complete|Objective complete/i.test(subject)) return 'completions';
     return null;
   }
