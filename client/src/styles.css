@@ -407,3 +407,19 @@ img.itemicon { vertical-align: middle; border-radius: 4px; object-fit: cover; ma
 .feed.attack, .feed.raid { border-left-color: #ff6b8a; } .feed.defense { border-left-color: #5fd28a; } .feed.offense { border-left-color: #ffb347; }
 .feed.help { border-left-color: #55b7ff; color: var(--text); } .feed.build { border-left-color: #a88bff; }
 .op { border-top: 1px solid var(--line); padding: 8px 0; display: grid; gap: 4px; } .op:first-of-type { border-top: none; }
+
+/* ---- feedback when something finishes ---- */
+@keyframes zg-flash { 0% { box-shadow: 0 0 0 0 rgba(255, 190, 80, .9); background: rgba(255, 190, 80, .35); } 100% { box-shadow: 0 0 0 10px rgba(255, 190, 80, 0); background: transparent; } }
+.flash { animation: zg-flash 1.2s ease-out 2; border-radius: 6px; }
+@keyframes zg-toast { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.toast { animation: zg-toast .25s ease-out; }
+@keyframes zg-ring { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(14deg); } 40% { transform: rotate(-12deg); } 60% { transform: rotate(8deg); } 80% { transform: rotate(-4deg); } }
+.bell.ring > button { animation: zg-ring .8s ease-in-out 2; }
+
+/* ---- accessibility ---- */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.skip { position: absolute; left: -999px; top: 6px; z-index: 100; padding: 6px 12px; background: var(--panel2); border: 1px solid var(--accent); border-radius: 6px; }
+.skip:focus { left: 8px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+}

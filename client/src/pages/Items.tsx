@@ -11,6 +11,7 @@ import { Card, Cost, Countdown, copyLink, ItemIcon, ItemLink, Page, Progress, Re
 import { NumInput } from '../NumInput';
 import { AdvisorCard } from '../AdvisorCard';
 import { PlannerCard } from '../PlannerCard';
+import { Flashing } from '../useFlash';
 import { affordWait, getOnlyStartable, setOnlyStartable } from '../afford';
 
 type Kind = 'building' | 'tech' | 'ship' | 'defense';
@@ -143,7 +144,7 @@ export function Items({ kind }: { kind: Kind }) {
           const ok = !missing.length && (!buildQ || bBacklog.length < MAXQ) && canAfford(have, cost) && planet.usedFields + bBacklog.length < planet.fields;
           if (only && !ok) return null;
           return (
-            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{built}{pending > 0 && <span className="muted"> +{pending}</span>}</span></>}>
+            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <Flashing className="lvl" value={built}>{built}{pending > 0 && <span className="muted"> +{pending}</span>}</Flashing></>}>
               <div className="cardtop"><img className="icon" src={Art.icon('building', id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
               <div>{pending > 0 ? `Level ${level + 1}` : 'Next'}: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
               {missing.length > 0 && <ReqList reqs={missing} />}
@@ -173,7 +174,7 @@ export function Items({ kind }: { kind: Kind }) {
           const ok = !missing.length && energyOk && (!researchQ || rBacklog.length < MAXQ) && canAfford(have, cost);
           if (only && !ok) return null;
           return (
-            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{done}{pendingT > 0 && <span className="muted"> +{pendingT}</span>}</span></>}>
+            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <Flashing className="lvl" value={done}>{done}{pendingT > 0 && <span className="muted"> +{pendingT}</span>}</Flashing></>}>
               <div className="cardtop"><img className="icon" src={Art.icon('tech', id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
               <div>Next: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
               {d.energyReq && <div className="small" style={{ color: planet.production.energyProduced >= d.energyReq * 3 ** level ? 'var(--good)' : 'var(--bad)' }}>Needs {fmt(d.energyReq * 3 ** level)} energy production on this planet (this one makes {fmt(planet.production.energyProduced)})</div>}
@@ -199,7 +200,7 @@ export function Items({ kind }: { kind: Kind }) {
           const ok = !missing.length && canAfford(have, total) && shipyard > 0;
           if (only && !ok) return null;
           return (
-            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <span className="lvl">{fmt(owned)}</span></>}>
+            <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <Flashing className="lvl" value={owned}>{fmt(owned)}</Flashing></>}>
               <div className="cardtop"><img className="icon" src={Art.icon((kind === 'ship' ? 'ship' : 'defense'), id, d.name)} alt="" /><p className="muted">{d.desc}</p></div>
               <div className="stats">
                 <span>⚔ {fmt(d.attack)}</span><span>🛡 {fmt(d.shield)}</span><span>❤ {fmt(d.hull)}</span>

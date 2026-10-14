@@ -6,6 +6,7 @@ import type { BuildingId, TechId, UnitId } from '../../../shared/types';
 import { GEOM, geometry, routeEdges } from '../../../shared/techroute';
 import { useGame } from '../game';
 import { QuickStart } from '../QuickStart';
+import { KEY_DIR, nearestInDirection } from '../treeNav';
 import { Card, ItemLink, Page, ItemIcon } from '../ui';
 
 const { cardW: CARD_W, cardH: CARD_H, rowGap: ROW_GAP, bandGap: BAND_GAP, bandLabel: BAND_LABEL } = GEOM;
@@ -244,7 +245,15 @@ export function TechTree() {
                 return (
                   <div key={c.id} className={cls} style={{ left: p.x, top: p.y, width: CARD_W, height: CARD_H }} role="button" tabIndex={0} title={n.name}
                     onClick={() => { if (gesture.current.moved <= 6) pick(c.id); }} onMouseEnter={() => setHover(c.id)} onMouseLeave={() => setHover(null)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(c.id); } }}>
+                    id={`icard-${c.id}`} aria-label={`${n.name}, ${st === 'done' ? 'you have it' : st === 'ready' ? 'ready to start' : 'locked'}`} aria-pressed={sel === c.id}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(c.id); return; }
+                      const dir = KEY_DIR[e.key];
+                      if (!dir) return;
+                      e.preventDefault();
+                      const next = nearestInDirection(layout.m.cells.map((k) => ({ id: k.id, x: layout.pos.get(k.id)!.x, y: layout.pos.get(k.id)!.y })), c.id, dir);
+                      if (next) { centre(next); setTimeout(() => document.getElementById(`icard-${next}`)?.focus({ preventScroll: true }), 0); }
+                    }}>
                     <div className="iname"><ItemIcon id={c.id} size={16} /> {n.name}{st === 'done' && !isNext ? <span className="tick"> ✓</span> : null}</div>
                     <div className="ibadge">{badge(c.id)}{needLevel?.get(c.id) && needLevel.get(c.id)! > 1 ? ` · need ${needLevel.get(c.id)}` : ''}</div>
                     {ladder && (

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useGame } from './game';
 import { unreadNotes } from './notes';
 import { Linkify } from './ui';
+import { useFlash } from './useFlash';
 
 const ago = (at: number) => {
   const s = Math.max(0, Math.round((Date.now() - at) / 1000));
@@ -14,6 +15,7 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const unread = unreadNotes(notes);
+  const ring = useFlash(unread);
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent) => { if (box.current && !box.current.contains(e.target as Node)) setOpen(false); };
@@ -21,7 +23,7 @@ export function NotificationBell() {
     return () => document.removeEventListener('mousedown', close);
   }, [open]);
   return (
-    <div className="bell" ref={box}>
+    <div className={`bell${ring ? ' ring' : ''}`} ref={box}>
       <button aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`} aria-expanded={open} title="Notifications" onClick={() => { setOpen(!open); if (open) markNotesRead(); }}>
         🔔{unread > 0 && <b className="badge">{unread}</b>}
       </button>

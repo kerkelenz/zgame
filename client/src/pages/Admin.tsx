@@ -4,6 +4,7 @@ import { get, post } from '../api';
 import { useGame } from '../game';
 import { Card, fmt, Page, PlayerLink, when } from '../ui';
 import { NumInput } from '../NumInput';
+import { HealthCard } from '../HealthCard';
 
 export function Admin() {
   const { act, me } = useGame();
@@ -22,6 +23,7 @@ export function Admin() {
   const hours = () => { const h = prompt('Hours (blank = permanent)'); return h ? Number(h) : null; };
   return (
     <Page title="Admin">
+      <HealthCard />
       <Card title="World">
         <div className="chips">{Object.entries(d.world).map(([k, v]) => <span key={k} className="tag">{k}: {fmt(v as number)}</span>)}</div>
       </Card>

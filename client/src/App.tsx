@@ -121,6 +121,7 @@ export function App() {
   const energy = planet.production.energyProduced - planet.production.energyUsed;
   return (
     <div className="shell">
+      <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to the page</a>
       <canvas id="stars" ref={stars} aria-hidden="true" />
       <Tour />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
@@ -191,10 +192,10 @@ export function App() {
             );
           })}
         </nav>
-        <main>{page_}</main>
+        <main id="main" tabIndex={-1}>{page_}</main>
       </div>
       <MobileBar />
-      <div className="toasts">
+      <div className="toasts" role="status" aria-live="polite">
         {toasts.map((t) => <div key={t.id} className={`toast ${t.kind}`}><Linkify text={t.text} />{t.action && <button className="link toastact" onClick={t.action.run}>{t.action.label}</button>}</div>)}
       </div>
     </div>

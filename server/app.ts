@@ -34,6 +34,7 @@ import { claimContract, contractsView } from './contracts';
 import { recoverAccount } from './account';
 import { defenseReport } from './advisor';
 import { recruitingList } from './recruiting';
+import { healthView, recordError } from './health';
 import { closeOperation, createOperation, operationsView, signUp, withdraw } from './operations';
 import { isRole } from '../shared/roles';
 import { orderCard, planetCard, publish as publishCard } from './share';
@@ -268,6 +269,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   A.get('/season', wrap(() => seasonView(w, now())));
   A.post('/admin/season/end', wrap((req) => { ACC.requireAdmin(req.player!); endSeason(w, now(), 'admin'); return seasonView(w, now()); }));
   A.post('/admin/season/reset', wrap((req) => { ACC.requireAdmin(req.player!); if (!w.season?.ended) throw new GameError('End the season first'); resetSeason(w, now()); return seasonView(w, now()); }));
+  A.get('/admin/health', wrap((req) => { ACC.requireAdmin(req.player!); return healthView(w, now()); }));
   A.get('/admin/reports', wrap((req) => { ACC.requireAdmin(req.player!); return (w.reports ?? []).filter((r) => !r.resolved).sort((x, y) => y.at - x.at); }));
   A.post('/admin/reports/resolve', wrap((req) => { ACC.requireAdmin(req.player!); SOC.resolveReport(w, str(req.body.id)); return { ok: true }; }));
   const admin = (req: Request) => ACC.requireAdmin(req.player!);
@@ -636,6 +638,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const status = (err as { status?: number })?.status;
     if (typeof status === 'number' && status >= 400 && status < 500) return res.status(status).json({ error: 'Bad request' });
     console.error(err);
+    recordError(`${_req.method} ${_req.path}: ${(err as Error)?.message ?? err}`);
     res.status(500).json({ error: 'Internal server error' });
   });
   return app;

@@ -5,6 +5,8 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-n', date: '2026-10-14', title: 'Idle queues, planners, alliance tools and pictures everywhere',
     items: [
+      'Feedback when something finishes: a level or ship count glows when it rises, pop-ups slide in and the bell shakes for a new message.',
+      'Accessibility: a Skip to the page link, arrow-key movement and spoken status on the Tech tree cards, visible keyboard focus, announced pop-ups and respect for the reduced-motion setting.',
       'Alliance Operations: a shared target board. Plan an attack or a defense with an optional landing time, sign up with the ships of a planet, see when each member must leave to land together, get a reminder ten minutes before, and press Prepare launch to fill in the Fleet page.',
       'Alliance Activity feed: attacks on members, their attacks, raids, help asked, defenders who answered and building and research milestones, with a filter. A member under attack can press Ask allies for help on the Fleet page.',
       'Choosing an alliance is easier: open ones first, then the strongest, with active members, points and systems; the Overview suggests joining after the first hour.',

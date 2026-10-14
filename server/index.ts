@@ -12,6 +12,7 @@ import { createWorld, type World } from './world';
 import { loadWorld, saveWorld } from './store';
 import { NPC_TICK_MS, generateEmpires, hasEmpires } from './empires';
 import { env } from './env';
+import { configureHealth, recordError, recordSave, recordTick } from './health';
 
 const num = (k: string, d: number) => (env(k) !== undefined ? Number(env(k)) : d);
 const overrides: Partial<UniverseConfig> = {};
@@ -42,6 +43,7 @@ const server = createServer(app);
 // the server only pushes; clients never need to send anything, so inbound frames stay tiny
 const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 1024 });
 const sockets = new Map<WebSocket, string>();
+configureHealth({ sockets: () => sockets.size, saveFile: DB_FILE ?? SAVE_FILE });
 
 wss.on('connection', (ws, req) => {
   // a bad frame (too big, malformed) raises 'error' on the socket; without a listener Node would treat it as fatal
@@ -75,17 +77,20 @@ let dirty = true;
 const runTick = createTicker(world);
 function tick() {
   try {
+    const t0 = performance.now();
     runTick(Date.now());
+    recordTick(performance.now() - t0);
     dirty = true;
   } catch (e) {
     console.error('tick failed', e);
+    recordError(`tick failed: ${(e as Error).message}`);
   }
 }
 setInterval(tick, 1000);
 setInterval(() => { try { pruneSessions(world); } catch (e) { console.error('session prune failed', e); } }, 3_600_000);
 setInterval(() => {
   if (!dirty) return;
-  try { persist(); dirty = false; } catch (e) { console.error('save failed', e); }
+  try { const t0 = performance.now(); persist(); dirty = false; recordSave(performance.now() - t0, DB_FILE ?? SAVE_FILE); } catch (e) { console.error('save failed', e); recordError(`save failed: ${(e as Error).message}`); }
 }, 10_000);
 
 function shutdown() {
