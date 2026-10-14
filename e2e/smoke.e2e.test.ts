@@ -1101,6 +1101,29 @@ describe('the admin', () => {
     noErrors();
   });
 
+  run('an event shows as a card in the notice strip, opens a choice and the answer is kept', async () => {
+    await page.evaluate(async () => {
+      const h = { 'content-type': 'application/json', authorization: 'Bearer ' + (localStorage.getItem('zg.token') ?? '') };
+      const me = await (await fetch('/api/me', { headers: h })).json();
+      await fetch('/api/admin/encounter', { method: 'POST', headers: h, body: JSON.stringify({ id: me.player.id, kind: 'find' }) });
+    });
+    const strip = page.locator('.alertstrip');
+    await strip.waitFor({ timeout: 20_000 });
+    const card = page.locator('.alertrow .alerttext', { hasText: /meteor field|crystal vein/i });
+    for (let i = 0; i < 20 && !(await card.count()); i++) {
+      const more = page.locator('.alertmore');
+      if (await more.count()) await more.click();
+      await page.waitForTimeout(500);
+    }
+    await card.first().click();
+    await page.getByRole('dialog', { name: 'Event' }).waitFor();
+    await page.getByRole('button', { name: /Collect it/ }).click();
+    await page.getByRole('dialog', { name: 'Event' }).getByText('Done').waitFor();
+    expect(await page.getByRole('dialog', { name: 'Event' }).innerText()).toMatch(/brought in/);
+    await page.getByRole('button', { name: 'Close' }).click();
+    noErrors();
+  });
+
   run('the admin schedules an announcement, sees it listed, cancels it and finds the actions in the audit log', async () => {
     await page.getByLabel('Scheduled message').fill('Server restart tonight');
     await page.getByRole('button', { name: 'Schedule', exact: true }).click();

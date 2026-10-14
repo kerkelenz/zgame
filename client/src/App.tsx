@@ -22,6 +22,7 @@ import { NotificationBell } from './NotificationBell';
 import { IdleChip } from './AdviceCard';
 import { markChangelogSeen, unseenRelease } from './changelog';
 import { AlertStrip } from './AlertStrip';
+import { EncounterDialog } from './EncounterDialog';
 import { Alliance } from './pages/Alliance';
 import { Chat } from './pages/Chat';
 import { Command } from './pages/Command';
@@ -148,6 +149,7 @@ export function App() {
           <button className="link" onClick={g.logout}>{t('common.logout', 'Log out')}</button>
         </div>
       </header>
+      <EncounterDialog />
       <AlertStrip whatsNew={whatsNew} onNewsSeen={() => { markChangelogSeen(); setWhatsNew(false); }} />
       <div className="body">
         <Sidebar />

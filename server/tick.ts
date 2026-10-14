@@ -5,6 +5,7 @@ import { processPlayer } from './economy';
 import { processMovements } from './fleet';
 import { processInvasion } from './invasion';
 import { processScheduled, recordDayStats } from './adminlog';
+import { processEncounters } from './encounters';
 import { processMarket } from './market';
 import { processOutposts } from './outposts';
 import { processForges } from './forge';
@@ -44,7 +45,7 @@ export function createTicker(world: World) {
     lap('territory');
     for (const p of Object.values(world.players)) processPlayer(world, p, now);
     lap('economy (every player)');
-    if (now - lastIdle >= 60_000) { lastIdle = now; checkIdle(world, now); processOperations(world, now); processMarket(world, now); processOutposts(world, now); processScheduled(world, now); recordDayStats(world, now); }
+    if (now - lastIdle >= 60_000) { lastIdle = now; checkIdle(world, now); processOperations(world, now); processMarket(world, now); processOutposts(world, now); processScheduled(world, now); recordDayStats(world, now); processEncounters(world, now); }
     runAutomationAll(world, now);
     lap('automation');
     if (now - lastProgress > 5000) { lastProgress = now; for (const p of Object.values(world.players)) checkProgress(world, p, now); }

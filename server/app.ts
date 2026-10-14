@@ -27,6 +27,7 @@ import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { buyItem, shopView } from './shop';
 import { outpostList } from './outposts';
+import { answerEncounter, encounterView, spawnEncounter, type EncounterKind } from './encounters';
 import { audit, auditView, cancelScheduled, scheduleAnnouncement, statsView } from './adminlog';
 import { buyOffer, cancelOffer, listOffer, marketView } from './market';
 import * as AUTO from './automation';
@@ -477,6 +478,22 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
 
   // ---------------------------------------------------------------- galaxy & highscore
+  A.get('/encounter', wrap((req) => encounterView(w, req.player!, now())));
+  A.post('/encounter/answer', wrap((req) => {
+    const p = req.player!;
+    const out = answerEncounter(w, p, str(req.body.id), str(req.body.option), now());
+    return { ...out, encounter: encounterView(w, p, now()) };
+  }));
+  A.post('/admin/encounter', wrap((req) => {
+    admin(req);
+    const t = w.players[str(req.body.id)];
+    if (!t || t.npc) throw new GameError('No such commander', 404);
+    const kind = req.body.kind ? str(req.body.kind) as EncounterKind : undefined;
+    if (kind && !['distress', 'merchant', 'anomaly', 'raid', 'find'].includes(kind)) throw new GameError('Unknown kind');
+    const e = spawnEncounter(w, t, now(), kind);
+    audit(w, req.player!, 'send encounter', now(), t, e?.kind);
+    return { sent: !!e };
+  }));
   A.get('/outposts', wrap(() => outpostList(w)));
   A.get('/galaxy/:g/:s', wrap((req) => {
     const g = Number(req.params.g), s = Number(req.params.s);

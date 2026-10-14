@@ -1,4 +1,5 @@
 import { lvl } from '../shared/formulas';
+import { encounterView } from './encounters';
 import { assignLook } from './looks';
 import type { BuildingId, TechId } from '../shared/types';
 import { ALLIANCE_UPGRADES } from '../shared/data';
@@ -90,6 +91,7 @@ export function meView(w: World, p: Player, now: number) {
     now,
     season: seasonBanner(w, now),
     invasion: invasionBanner(w),
+    encounter: encounterView(w, p, now),
     contractsClaimable: contractsView(w, p, now).claimable,
     /** how many alliances anyone can join right now, and when this account began (for the join suggestion) */
     recruiting: Object.values(w.alliances).filter((x) => x.open).length,

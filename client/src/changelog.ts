@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-zb', date: '2026-10-22', title: 'Events at your planets',
+    items: [
+      'While you play, something now and then turns up at one of your planets, only for you: a ship in distress, a wandering trader, a strange signal, a pirate patrol or a lucky find. A card in the notice strip counts down and opens a choice; rewards are an hour or two of the production of that planet.',
+    ],
+  },
+  {
     id: '2026-10-za', date: '2026-10-21', title: 'A notice strip',
     items: [
       'Hostile fleets, tribute demands, the Void invasion, the season and release notes no longer take a banner each across the page. They share one slim row under the top bar: the most urgent notice, "+N more" to list the rest, and a ✕ on the quieter ones.',

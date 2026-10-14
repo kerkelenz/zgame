@@ -117,6 +117,7 @@ export function Admin() {
                     : <button onClick={() => { const r = reason(); const h = hours(); void run(() => post('/admin/mute', { id: p.id, hours: h, reason: r }), 'Muted'); }}>Mute</button>}
                   <button onClick={async () => setInspect(await get(`/admin/player/${p.id}`))}>Inspect</button>
                   <button onClick={() => void run(() => post('/admin/raid', { id: p.id }), 'Raid sent')}>Raid</button>
+                  <button title="Send this commander a random event now" onClick={() => void run(() => post('/admin/encounter', { id: p.id }), 'Event sent')}>Event</button>
                   <button className="danger" onClick={() => { if (confirm(`Permanently remove ${p.username} and everything they own?`)) void run(() => post('/admin/delete', { id: p.id }), 'Removed'); }}>Remove</button>
                 </>}</td>
               </tr>
