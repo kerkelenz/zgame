@@ -201,7 +201,7 @@ export function npcTick(w: World, now: number) {
   for (const p of humans(w)) {
     for (const [id, heat] of Object.entries(p.heat)) {
       const npc = w.players[id];
-      if (!npc?.npc) { delete p.heat[id]; continue; }
+      if (!npc?.npc || npc.npc.outpost) { delete p.heat[id]; continue; }          // outposts hold no grudges
       if (heat > 40_000 && npc.npc.status !== 'aggressive') {
         npc.npc.status = 'aggressive';
         notifyPlayer(w, p.id, 'news', `${npc.username} has declared a vendetta`, `After your raids on their planets, ${npc.username} has turned its economy to war. Expect their fleets at your coordinates.`);
@@ -224,7 +224,7 @@ export function npcWars(w: World, now: number) {
     for (let tries = 0; tries < 12 && !target; tries++) {
       const s = clamp(base.coords.s + Math.floor(Math.random() * 16) - 8, 1, systems);
       const cand = planetAt(w, { g: base.coords.g, s, p: 1 + Math.floor(Math.random() * positions) });
-      if (cand && w.players[cand.ownerId]?.npc && cand.ownerId !== npc.id) target = cand;
+      if (cand && w.players[cand.ownerId]?.npc && !w.players[cand.ownerId].npc!.outpost && cand.ownerId !== npc.id) target = cand;
     }
     if (!target) continue;
     const defOwner = w.players[target.ownerId];

@@ -778,6 +778,15 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('the Galaxy lists the pirate and alien outposts and a coordinate opens its system', async () => {
+    await go('Galaxy');
+    const card = page.locator('section.card', { has: page.getByRole('heading', { name: /outposts \(\d+\)/ }) });
+    await card.waitFor();
+    await card.locator('a').first().click();                                                     // the coordinate of the nearest one
+    await page.locator('table.galaxy .tag', { hasText: /outpost/i }).first().waitFor();
+    noErrors();
+  });
+
   run('the market lists an offer, shows it under your offers and gives the goods back on cancel', async () => {
     await go('Market');
     await page.getByRole('heading', { name: 'Make an offer' }).waitFor();

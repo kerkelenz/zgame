@@ -7,6 +7,11 @@ import { Card, CoordLink, Page, PlayerLink, coordStr, fmt } from '../ui';
 import { WorldBanner } from '../WorldBanner';
 import { tint } from './Territory';
 
+/** what a pirate or alien outpost is called in the list: its kind, strength (1 to 4) and whether it was cleared */
+export function OutpostTag({ o }: { o: { kind: string; tier: number; state: string; name: string } }) {
+  return <span className={`tag ${o.state === 'cleared' ? 'inactive' : 'aggressive'}`} title={o.state === 'cleared' ? 'Cleared: its garrison is rebuilt later' : `Strength ${o.tier} of 4. The first fleet to break it earns a bounty of Command Credits.`}>{o.name} {o.tier}{o.state === 'cleared' ? ' · cleared' : ''}</span>;
+}
+
 export function Galaxy() {
   const { me, planet, setPage, openProfile, setTarget, now } = useGame();
   const cfg = me.config;
@@ -16,11 +21,13 @@ export function Galaxy() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
   const [soc, setSoc] = useState<any>(null);
+  const [outposts, setOutposts] = useState<any[]>([]);
   const [onlyInactive, setOnlyInactive] = useState(false);
   const [hideProtected, setHideProtected] = useState(false);
+  const [onlyOutposts, setOnlyOutposts] = useState(false);
   const [sel, setSel] = useState<number | null>(null);
   const { act } = useGame();
-  useEffect(() => { void get('/social').then(setSoc).catch(() => undefined); }, []);
+  useEffect(() => { void get('/social').then(setSoc).catch(() => undefined); void get('/outposts').then(setOutposts).catch(() => undefined); }, []);
   const bookmarked = soc?.bookmarks.find((b: any) => b.coords.g === g && b.coords.s === s && b.coords.p === 1);
 
   useEffect(() => {
@@ -56,9 +63,20 @@ export function Galaxy() {
         )}
         <div className="row small">
           <label className="row"><input type="checkbox" checked={onlyInactive} onChange={(e) => setOnlyInactive(e.target.checked)} /> only inactive targets</label>
+          <label className="row"><input type="checkbox" checked={onlyOutposts} onChange={(e) => setOnlyOutposts(e.target.checked)} /> only outposts</label>
           <label className="row"><input type="checkbox" checked={hideProtected} onChange={(e) => setHideProtected(e.target.checked)} /> hide protected</label>
         </div>
       </Card>
+      {outposts.length > 0 && (
+        <Card title={`Pirate and alien outposts (${outposts.length})`}>
+          <p className="muted small">Fixed targets with a garrison and a treasure. The first fleet to break one earns Command Credits; a cleared outpost is rebuilt after a while. Spy first: the strength is measured against the fleets of the active commanders.</p>
+          <div className="chips">
+            {[...outposts].filter((o) => o.coords).sort((x, y) => Math.abs(x.coords.g - planet.coords.g) * 1000 + Math.abs(x.coords.s - planet.coords.s) - (Math.abs(y.coords.g - planet.coords.g) * 1000 + Math.abs(y.coords.s - planet.coords.s))).map((o) => (
+              <span key={o.id} className="row"><OutpostTag o={{ ...o, name: o.kind === 'pirate' ? 'Pirate outpost' : 'Alien outpost' }} /> <CoordLink c={o.coords} /> <span className="muted small">{o.name}</span></span>
+            ))}
+          </div>
+        </Card>
+      )}
       {data?.sector && (
         <Card>
           <div className="sector-banner small">
@@ -80,9 +98,10 @@ export function Galaxy() {
         <tbody>
           {data?.slots.filter((sl: any) => {
             const pl = sl.planet;
-            if (!pl || pl.mine) return !(onlyInactive || hideProtected) || !!pl;
+            if (!pl || pl.mine) return !(onlyInactive || hideProtected || onlyOutposts) || !!pl;
             if (onlyInactive && !(pl.status?.activity === 'inactive' || pl.status?.activity === 'longInactive' || pl.npc === 'inactive')) return false;
             if (hideProtected && pl.protectedFor) return false;
+            if (onlyOutposts && !pl.outpost) return false;
             return true;
           }).map((sl: any) => {
             const pl = sl.planet;
@@ -92,7 +111,7 @@ export function Galaxy() {
               <tr key={sl.p} className={`${pl?.mine ? 'mine' : ''}${sel === sl.p ? ' picked' : ''}`}>
                 <td>{pl ? <button className="link" title="Show this planet's banner" aria-pressed={sel === sl.p} onClick={() => setSel(sel === sl.p ? null : sl.p)}>{sl.p}</button> : sl.p}</td>
                 <td>{pl ? <a className="plink" title="Open the owner's profile" onClick={() => openProfile(pl.ownerId)}>{pl.name}</a> : <span className="muted">empty</span>}{note && <span title={note}> 📝</span>}{sl.moon && <span title={sl.moon.name}> 🌙</span>}</td>
-                <td>{pl ? <><a className="plink" onClick={() => openProfile(pl.ownerId)}>{pl.owner}</a>{pl.npc && <span className={`tag ${pl.npc}`}>{pl.npc}</span>}{pl.status?.vacation && <span className="tag vac" title="On vacation: cannot be attacked or spied on">v</span>}{pl.status?.activity === 'online' && <span className="online" title="Online now"> ●</span>}{pl.status?.activity === 'inactive' && <span className="tag inact" title="Inactive for a week or more">i</span>}{pl.status?.activity === 'longInactive' && <span className="tag inact" title="Inactive for a month or more">I</span>}{pl.status?.protection === 'weak' && <span className="tag" title="Newbie protection: too weak to attack">n</span>}{pl.status?.protection === 'strong' && <span className="tag" title="Too strong: protected from you">s</span>}</> : ''}</td>
+                <td>{pl ? <><a className="plink" onClick={() => openProfile(pl.ownerId)}>{pl.owner}</a>{pl.outpost ? <OutpostTag o={pl.outpost} /> : pl.npc && <span className={`tag ${pl.npc}`}>{pl.npc}</span>}{pl.status?.vacation && <span className="tag vac" title="On vacation: cannot be attacked or spied on">v</span>}{pl.status?.activity === 'online' && <span className="online" title="Online now"> ●</span>}{pl.status?.activity === 'inactive' && <span className="tag inact" title="Inactive for a week or more">i</span>}{pl.status?.activity === 'longInactive' && <span className="tag inact" title="Inactive for a month or more">I</span>}{pl.status?.protection === 'weak' && <span className="tag" title="Newbie protection: too weak to attack">n</span>}{pl.status?.protection === 'strong' && <span className="tag" title="Too strong: protected from you">s</span>}</> : ''}</td>
                 <td>{pl?.relation && <span className={`tag ${pl.relation === 'war' ? 'bad' : 'you'}`} title={pl.relation === 'war' ? 'Your alliances are at war' : pl.relation === 'pact' ? 'Pact partner: cannot be attacked' : 'Alliance member'}>{pl.relation}</span>} {pl?.alliance ? `[${pl.alliance}]` : pl?.faction ? <span className="muted small">{pl.faction}</span> : ''}</td>
                 <td>{sl.debris ? <a onClick={() => go(sl.p, 'recycle')} className="crystal"><ResIcon k="metal" size={14} />{fmt(sl.debris.metal)} <ResIcon k="crystal" size={14} />{fmt(sl.debris.crystal)}</a> : ''}</td>
                 <td className="actions">

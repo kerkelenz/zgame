@@ -12,6 +12,7 @@ import { bus } from './bus';
 import { allianceBonuses, planetCapacity, processPlayer, updatePlanet } from './economy';
 import { colonyCount, createMoon, createPlanet, inBounds, isProtected, maxExpeditions, maxPlanets } from './galaxy';
 import { assignLook } from './looks';
+import { outpostBattle, outpostTag } from './outposts';
 import { notifyPlayer } from './messages';
 import { adjustRep } from './progress';
 import { externalNotify } from './external';
@@ -433,7 +434,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   if (level >= 5) lines.buildings = { ...target.buildings };
   if (level >= 7) lines.techs = { ...def.techs };
   const report = {
-    coords: m.to, moon: !!target.isMoon, look: assignLook(target), planet: target.name, owner: def.username, ownerId: def.id, level, ...lines,
+    coords: m.to, moon: !!target.isMoon, look: assignLook(target), outpost: outpostTag(w, target), planet: target.name, owner: def.username, ownerId: def.id, level, ...lines,
   };
   const r = target.resources;
   notifyPlayer(w, spy.id, 'espionage', `Spy report ${target.name} ${fmt(m.to)}`,
@@ -522,6 +523,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   const newMoon = maybeCreateMoon(w, target, field, at);
   const leadPlayer = attackerOf(lead);
   if (lead.alien) creditStrike(w, lead, res, defOwner.id, holders.map((h) => h.ownerId!).filter(Boolean));
+  if (defOwner.npc?.outpost) outpostBattle(w, target, res, group.map((m) => attackerOf(m)).filter((p): p is Player => !!p), at);
   {
     const result = res.winner === 'attacker' ? 'the attackers won' : res.winner === 'defender' ? 'the defense held' : 'it ended in a draw';
     allianceEvent(w, defOwner.id, res.winner === 'attacker' ? 'attack' : 'defense', `${defOwner.username}'s ${target.name} [${lead.to.g}:${lead.to.s}:${lead.to.p}] was attacked by ${lead.ownerName}: ${result}.`, at);

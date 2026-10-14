@@ -57,6 +57,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'moonlit', name: 'Moonlit', desc: 'Gain a moon of your own.', reward: 250, test: (w, p) => p.planetIds.some((id) => w.planets[id]?.isMoon) },
   { id: 'explorer', name: 'Explorer', desc: 'Complete 10 expeditions.', reward: 150, test: (_w, p) => p.stats.expeditions >= 10 },
   { id: 'salvager', name: 'Salvager', desc: 'Harvest 500,000 resources from debris.', reward: 150, test: (_w, p) => p.stats.harvested >= 5e5 },
+  { id: 'outpostBreaker', name: 'Outpost Breaker', desc: 'Break a pirate or alien outpost.', reward: 150, test: (_w, p) => (p.stats.outpostsCleared ?? 0) >= 1 },
   { id: 'pirate', name: 'Pirate', desc: 'Plunder 1,000,000 resources.', reward: 200, test: (_w, p) => p.stats.plundered >= 1e6 },
   { id: 'missileer', name: 'Missileer', desc: 'Destroy defenses with an interplanetary strike.', reward: 150, test: (_w, p) => p.stats.ipmKills >= 1 },
   { id: 'moonbreaker', name: 'Moonbreaker', desc: 'Destroy a moon with your Deathstars.', reward: 300, test: (_w, p) => p.stats.moonsDestroyed >= 1 },

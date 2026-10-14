@@ -6,6 +6,7 @@ import type { Mission } from '../../../shared/types';
 import { ReplayToggle } from '../BattleReplay';
 import { canReplay } from '../replay';
 import { WorldBanner } from '../WorldBanner';
+import { OutpostTag } from './Galaxy';
 import { Card, CoordLink, Linkify, PlanetLink, Page, PlayerLink, fmt, when, ItemIcon, copyLink, Empty } from '../ui';
 
 const KINDS = ['all', 'combat', 'espionage', 'raid', 'news', 'expedition', 'transport', 'alliance', 'player', 'system'];
@@ -25,7 +26,7 @@ function SpyReport({ d }: { d: any }) {
       {d.look && <WorldBanner look={d.look} isMoon={!!d.moon}><b>{d.planet}</b>{d.coords && <CoordLink c={d.coords} />}{d.owner && <PlayerLink id={d.ownerId} name={d.owner} />}</WorldBanner>}
       {d.coords && (
         <div className="row wrap spyhead">
-          <span><PlanetLink name={d.planet} coords={d.coords} moon={d.moon}><b>{d.planet}</b></PlanetLink> <CoordLink c={d.coords} />{d.owner ? <span className="muted"> · <PlayerLink id={d.ownerId} name={d.owner} /></span> : null}</span>
+          <span><PlanetLink name={d.planet} coords={d.coords} moon={d.moon}><b>{d.planet}</b></PlanetLink> <CoordLink c={d.coords} />{d.owner ? <span className="muted"> · <PlayerLink id={d.ownerId} name={d.owner} /></span> : null}{d.outpost && <OutpostTag o={d.outpost} />}</span>
           <span className="row">
             <button onClick={() => send('attack')}>Attack</button>
             <button onClick={() => send('espionage')}>Spy again</button>

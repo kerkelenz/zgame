@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-y', date: '2026-10-19', title: 'Pirate and alien outposts',
+    items: [
+      'Pirate and alien outposts now stand in the galaxy: fixed targets with a garrison that fits the fleets of the day and a treasure to loot. Break one to earn Command Credits and the Outpost Breaker achievement; it is rebuilt a few hours later. The Galaxy page lists them nearest first and can show only outposts.',
+    ],
+  },
+  {
     id: '2026-10-x', date: '2026-10-18', title: 'The player market',
     items: [
       'New Market tab under Home: offer an amount of one resource for another and other commanders can take it. Your goods are held while the offer stands and come back if it is cancelled or runs out. Prices stay near the fair rate, the market keeps a small cut from buyers, and offers to your own alliance carry no cut.',

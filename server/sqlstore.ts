@@ -15,7 +15,7 @@ type Doc = { kind: string; id: string; json: string };
 
 const COLLECTIONS = ['players', 'planets', 'movements', 'wrecks', 'alliances', 'shared'] as const;
 const LISTS = ['messages', 'chat', 'reports'] as const;
-const SCALARS = ['version', 'config', 'createdAt', 'nextRaidAt', 'nextNpcTick', 'rngSeed', 'season', 'hallOfFame', 'debris', 'sessions', 'sessionAt', 'sectors', 'invasion', 'invasionCount', 'nextInvasionAt', 'invasionHistory', 'wars', 'operations', 'looksAssigned', 'forges', 'market', 'standingDay', 'vapid'] as const;
+const SCALARS = ['version', 'config', 'createdAt', 'nextRaidAt', 'nextNpcTick', 'rngSeed', 'season', 'hallOfFame', 'debris', 'sessions', 'sessionAt', 'sectors', 'invasion', 'invasionCount', 'nextInvasionAt', 'invasionHistory', 'wars', 'operations', 'looksAssigned', 'forges', 'market', 'outposts', 'standingDay', 'vapid'] as const;
 
 const hashOf = (s: string) => createHash('sha1').update(s).digest('base64');
 

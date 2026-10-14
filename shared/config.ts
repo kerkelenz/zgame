@@ -62,6 +62,9 @@ export interface UniverseConfig {
   marketHours: number;
   marketFeePercent: number;
   marketMaxOffers: number;
+  /** pirate and alien outposts settled in each galaxy (0 = none), and the hours before a cleared one is rebuilt */
+  outpostsPerGalaxy: number;
+  outpostRespawnHours: number;
   /** length of an alliance war in hours (0 = wars are switched off) */
   warHours: number;
   /** no invasions until this many commanders have started playing */
@@ -102,6 +105,8 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   warHours: 48,
   forgeHours: 12,
   marketHours: 48,
+  outpostsPerGalaxy: 6,
+  outpostRespawnHours: 8,
   marketFeePercent: 5,
   marketMaxOffers: 5,
   seasonDays: 0,

@@ -26,6 +26,7 @@ import * as SOC from './social';
 import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { buyItem, shopView } from './shop';
+import { outpostList } from './outposts';
 import { buyOffer, cancelOffer, listOffer, marketView } from './market';
 import * as AUTO from './automation';
 import { addSubscription, pushToPlayer, pushView, removeSubscription } from './push';
@@ -465,6 +466,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
 
   // ---------------------------------------------------------------- galaxy & highscore
+  A.get('/outposts', wrap(() => outpostList(w)));
   A.get('/galaxy/:g/:s', wrap((req) => {
     const g = Number(req.params.g), s = Number(req.params.s);
     if (!inBounds(w, { g, s, p: 1 })) throw new GameError('Out of bounds');

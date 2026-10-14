@@ -11,6 +11,7 @@ import { SqlStore } from './sqlstore';
 import { createWorld, type World } from './world';
 import { loadWorld, saveWorld } from './store';
 import { NPC_TICK_MS, generateEmpires, hasEmpires } from './empires';
+import { generateOutposts } from './outposts';
 import { env } from './env';
 import { configureHealth, recordError, recordSave, recordTick } from './health';
 
@@ -35,6 +36,10 @@ const persist = () => (sql ? void sql.save(world) : saveWorld(SAVE_FILE, world))
 if (world.config.npcDensity > 0 && !hasEmpires(world)) {
   const n = generateEmpires(world);
   console.log(`Settled ${n} computer empires.`);
+}
+if (world.config.outpostsPerGalaxy > 0 && world.outposts === undefined) {
+  const n = generateOutposts(world);
+  console.log(`Settled ${n} pirate and alien outposts.`);
 }
 if (hasEmpires(world) && !world.nextNpcTick) world.nextNpcTick = Date.now() + NPC_TICK_MS;
 

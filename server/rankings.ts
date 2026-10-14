@@ -22,7 +22,7 @@ export function rankings(w: World, force = false): RankRow[] {
   if (!force && hit && Date.now() - hit.at < TTL) return hit.rows;
   const flights = movementsByOwner(w);
   const rows = Object.values(w.players)
-    .filter((p) => p.planetIds.length > 0)
+    .filter((p) => p.planetIds.length > 0 && !p.npc?.outpost)
     .map((p) => ({
       id: p.id, username: p.username, alliance: p.allianceId ? w.alliances[p.allianceId]?.tag ?? null : null,
       faction: p.npc ? p.npc.faction : p.faction, planets: colonyCount(w, p), npc: p.npc?.status ?? null, vacation: !!p.vacation, ...playerPoints(w, p, flights),

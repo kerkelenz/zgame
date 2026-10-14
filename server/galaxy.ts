@@ -1,5 +1,6 @@
 import { buildingPoints, techPoints, unitPoints, lvl } from '../shared/formulas';
 import { assignLook } from './looks';
+import { outpostTag } from './outposts';
 import { BUILDING_IDS, DEFENSE_IDS, SHIP_IDS, TECH_IDS, POS_DIAMETER, fieldsFromDiameter } from '../shared/data';
 import { extraExpeditionSlots } from './perks';
 import { activityOf, type Activity } from './vacation';
@@ -140,6 +141,8 @@ export interface GalaxySlot {
     mine: boolean; relation: 'ally' | 'war' | 'pact' | null; protectedFor: boolean; debris: { metal: number; crystal: number } | null;
     /** computer empire disposition, or null for a commander */
     npc: string | null; faction: string | null;
+    /** set on a pirate or alien outpost: what it is, how strong (1 to 4), and whether it stands or was cleared */
+    outpost: null | { kind: 'pirate' | 'alien'; tier: number; state: 'guarded' | 'cleared'; respawnAt: number | null; name: string };
     /** flags: vacation (v), activity (online / inactive i / long inactive I), protection (weak = newbie n, strong = s) */
     status: { vacation: boolean; activity: Activity | null; protection: 'weak' | 'strong' | null };
   };
@@ -167,6 +170,7 @@ export function galaxyView(w: World, viewer: Player, g: number, s: number, now =
         mine: owner.id === viewer.id,
         relation: owner.id === viewer.id ? null : sameAlliance(w, viewer.id, owner.id) ? 'ally' : atWar(w, viewer.id, owner.id) ? 'war' : friendly(w, viewer.id, owner.id) ? 'pact' : null,
         npc: owner.npc?.status ?? null,
+        outpost: outpostTag(w, pl),
         faction: owner.npc ? owner.npc.faction : owner.faction,
         protectedFor: owner.id !== viewer.id && isProtected(w, viewer, owner),
         status: {
