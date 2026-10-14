@@ -482,7 +482,7 @@ nav .hubitem.active { background: #f0a93b22; border-color: var(--accent); color:
 
 /* ---- planet bar: chips with a moon as a child, and the switcher for many planets ---- */
 .pstrip { align-items: stretch; gap: 8px; flex-wrap: wrap; overflow: visible; position: relative; }
-.pstrip.dim .pchip, .pstrip.dim .pcur { opacity: .55; }
+.pstrip.dim .pchip { opacity: .55; }
 .pchip { display: flex; flex-direction: column; gap: 3px; min-width: 150px; max-width: 230px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel2); }
 .pchip.in { border-color: #6b5a24; }
 .pchip.on { border-color: var(--accent); box-shadow: 0 0 10px rgba(240, 169, 59, .35); }
@@ -502,20 +502,9 @@ nav .hubitem.active { background: #f0a93b22; border-color: var(--accent); color:
 .pmoon img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .pmoon .pn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pmoon.on { border-color: var(--accent); background: rgba(240, 169, 59, .12); }
-.pswitch { align-items: center; }
-.pcur { display: flex; align-items: center; gap: 8px; text-align: left; padding: 4px 10px; min-height: 0; min-width: 190px; border-radius: 12px; }
-.parrow { padding: 6px 9px; min-height: 0; }
-.ppop { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; width: min(520px, 100%); max-height: 60vh; overflow-y: auto; padding: 8px; background: #0e1526; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 36px rgba(0, 0, 0, .55); }
-.ppop input { width: 100%; margin-bottom: 6px; }
-.ppop ul { list-style: none; margin: 0; padding: 0; }
-.prow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 6px; border-radius: 8px; }
-.prow.on { background: rgba(240, 169, 59, .12); }
-.pnum { width: 14px; text-align: center; color: var(--muted); font-size: 12px; }
 @media (max-width: 760px) {
   .pstrip { flex-wrap: nowrap; overflow-x: auto; }
   .pchip { flex-shrink: 0; min-width: 140px; }
-  .pswitch { flex-wrap: wrap; }
-  .pcur { min-width: 0; flex: 1; }
 }
 
 /* ---- the planet bar and tabs stay put while the page scrolls ---- */
@@ -634,16 +623,11 @@ tr.picked td { background: #2fa0ff18; }
 .navstick.compact .pchild .pres, .navstick.compact .pmoon .pn, .navstick.compact .pmoon .ptag { display: none; }
 .navstick.compact .pmoon { padding: 1px; min-height: 0; }
 .navstick.compact .pmoon img { width: 22px; height: 22px; }
-.navstick.compact .pcur .muted { display: none; }
 .navstick.compact .pres .fullin { display: none; }
 .pres .prn { white-space: nowrap; }
 
 /* ---- the switcher (many planets) carries the stock too: in the bar for the selected world, short amounts in every row of the list ---- */
-.pswitch .pres { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 0 4px; }
-.pswitch .pres .pr { grid-template-columns: 16px auto 44px; }
-.ppop .pres { flex-direction: row; gap: 10px; padding: 0 0 0 4px; margin-left: auto; }
-.ppop .pres .pfull { display: none; } .ppop .pres .pshort { display: inline; }
-.ppop .pres .prbar, .ppop .pres .prE, .ppop .pres .fullin { display: none; }
-.ppop .pres .pr { grid-template-columns: 14px auto; gap: 3px; }
-.ppop .prow { flex-wrap: wrap; }
-.navstick.compact .pswitch .pres .prbar { display: none; }
+
+/* every planet is a card, in one row that scrolls when there are many */
+.pstrip { flex-wrap: nowrap; overflow-x: auto; scroll-padding: 0 8px; }
+.pchip { flex-shrink: 0; }
