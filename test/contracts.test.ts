@@ -212,3 +212,28 @@ describe('api', () => {
 });
 
 void dayKeyOf;
+
+describe('contracts a newcomer can really do', () => {
+  it('never offers a battle before there is a shipyard, nor a raider fleet while still under protection', async () => {
+    const { register } = await import('../server/accounts');
+    const { createWorld } = await import('../server/world');
+    const w2 = createWorld({ npcDensity: 0, raidIntervalMin: 0, protectionPoints: 200 }, T0);
+    const fresh = register(w2, 'freshman', 'secret1', T0).player;
+    for (let d = 0; d < 40; d++) {
+      const v = contractsView(w2, fresh, T0 + d * DAY);
+      for (const c of [...v.daily, ...v.weekly]) { expect(c.kind, `day ${d}`).not.toBe('win'); expect(c.kind, `day ${d}`).not.toBe('repel'); }
+    }
+  });
+  it('gives the all-dailies bonus even when fewer than three dailies could be issued', async () => {
+    const { register } = await import('../server/accounts');
+    const { createWorld } = await import('../server/world');
+    const w2 = createWorld({ npcDensity: 0, raidIntervalMin: 0 }, T0);
+    const fresh = register(w2, 'freshman', 'secret1', T0).player;
+    const v = contractsView(w2, fresh, T0);
+    expect(v.daily.length).toBeLessThan(3);                                    // a new account has few kinds to draw from
+    fresh.stats.buildingsDone += 100;
+    const before = fresh.credits;
+    for (const c of v.daily) claimContract(w2, fresh, c.id, T0);
+    expect(fresh.credits - before).toBeGreaterThanOrEqual(ALL_BONUS);
+  });
+});

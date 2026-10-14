@@ -17,9 +17,12 @@ export interface Objective {
   test: (w: World, p: Player) => boolean;
 }
 
+/** the points goal of the last objective: 5,000 at an economy speed of 5 or more, less on a slower server where that would take weeks */
+export const o12Target = (w: World) => Math.round(5000 * Math.min(1, Math.max(0.2, w.config.economySpeed / 5)));
+
 /** The guided first hours: one open at a time, in order, each paid when met. */
 export const OBJECTIVES: Objective[] = [
-  { id: 'o1', name: 'Dig in', hint: 'Raise the Metal Mine and Crystal Mine to level 4 on the Resources screen.', reward: { metal: 1500, crystal: 800 },
+  { id: 'o1', name: 'Dig in', hint: 'Raise the Metal Mine and Crystal Mine to level 4 on the Buildings page.', reward: { metal: 1500, crystal: 800 },
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'metalMine') >= 4 && lvl(x.buildings, 'crystalMine') >= 4) },
   { id: 'o2', name: 'Keep the lights on', hint: 'Mines need energy. Build the Solar Plant until the energy readout is no longer red.', reward: { metal: 2000, crystal: 1000 },
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'solarPlant') >= 4 && planetProduction(w, x).efficiency >= 0.999) },
@@ -27,22 +30,22 @@ export const OBJECTIVES: Objective[] = [
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'metalMine') >= 8 && lvl(x.buildings, 'crystalMine') >= 7) },
   { id: 'o4', name: 'Heavy water', hint: 'Build the Vespene Extractor to level 5 - fleets run on it.', reward: { deuterium: 2000 },
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'deuteriumSynthesizer') >= 5) },
-  { id: 'o5', name: 'Science first', hint: 'Build a Research Lab, then research Energy Technology.', reward: { crystal: 4000 },
+  { id: 'o5', name: 'Science first', hint: 'Build a Research Lab on the Buildings page, then research Energy Technology on the Research page.', reward: { crystal: 4000 },
     test: (_w, p) => lvl(p.techs, 'energy') >= 1 },
   { id: 'o6', name: 'Open the yards', hint: 'Robotics Factory 2 unlocks the Shipyard. Build both.', reward: { metal: 8000, crystal: 4000 },
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'shipyard') >= 1) },
-  { id: 'o7', name: 'Eyes out there', hint: 'Research Espionage Technology 2, build 3 Spy Probes, then send them to spy on an inactive empire from the Galaxy.', reward: { credits: 100 },
+  { id: 'o7', name: 'Eyes out there', hint: 'Spy Probes need Shipyard 3, Research Lab 3, Combustion Drive 3 and Espionage Technology 2 (the item cards list what is missing). Research those, build 3 Espionage Probes, then send them to spy on an inactive empire from the Galaxy.', reward: { credits: 100 },
     test: (w, p) => w.messages.some((m) => m.to === p.id && m.kind === 'espionage' && m.subject.startsWith('Spy report')) },
-  { id: 'o8', name: 'First raid', hint: 'Build cargo ships and fighters, then attack an inactive empire. The spy report shows how much there is to loot.', reward: { credits: 150 },
+  { id: 'o8', name: 'First raid', hint: 'Build 6 Small Cargo (Shipyard 2, Combustion Drive 2) and a few Light Fighters (Shipyard 1, Combustion Drive 1), then attack an inactive empire from the Galaxy. The spy report shows how much there is to loot; the cargo ships carry it home.', reward: { credits: 150 },
     test: (_w, p) => p.stats.plundered > 0 },
-  { id: 'o9', name: 'Dig in deeper', hint: 'Put up defenses - Rocket Launchers are cheap - before hostiles notice you.', reward: { metal: 20000, crystal: 10000 },
+  { id: 'o9', name: 'Dig in deeper', hint: 'Put up 20 defenses (Rocket Launchers are cheap, Light Lasers count too) on the Defense page before hostiles notice you.', reward: { metal: 20000, crystal: 10000 },
     test: (w, p) => anyWorld(w, p, (x) => (x.defenses.rocketLauncher || 0) + (x.defenses.lightLaser || 0) >= 20) },
-  { id: 'o10', name: 'Room to grow', hint: 'Research Astrophysics, build a Colony Ship and settle a second planet.', reward: { credits: 300 },
+  { id: 'o10', name: 'Room to grow', hint: 'Research Astrophysics (it needs Espionage Technology 4 and Impulse Drive 3), build a Colony Ship (Shipyard 4, Impulse Drive 3) and settle a second planet from the Galaxy.', reward: { credits: 300 },
     test: (w, p) => colonyCount(w, p) >= 2 },
-  { id: 'o11', name: 'Into the deep', hint: 'Send a fleet on an Expedition to the deep-space slot of any system.', reward: { credits: 200 },
+  { id: 'o11', name: 'Into the deep', hint: 'Send a few ships on an Expedition to the deep-space slot (the last position) of any system. Astrophysics gives you the expedition slot.', reward: { credits: 200 },
     test: (_w, p) => p.stats.expeditions >= 1 },
-  { id: 'o12', name: 'Stand on your own', hint: 'You know the loop now: mine, research, build, raid, defend. Reach 5,000 points.', reward: { credits: 500 },
-    test: (w, p) => playerPoints(w, p).total >= 5000 },
+  { id: 'o12', name: 'Stand on your own', hint: 'You know the loop now: mine, research, build, raid, defend. Reach 5,000 points (fewer on a slow server).', reward: { credits: 500 },
+    test: (w, p) => playerPoints(w, p).total >= o12Target(w) },
 ];
 
 export interface Achievement { id: string; name: string; desc: string; reward: number; test: (w: World, p: Player) => boolean }

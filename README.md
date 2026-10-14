@@ -43,6 +43,7 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `ZGAME_OUTPOST_RESPAWN_HOURS` | 8 | hours before a cleared outpost is rebuilt |
 | `ZGAME_ENCOUNTER_MIN_MINUTES` | 20 | minutes of active play at the least between two events at a commander's planets (0 = no events) |
 | `ZGAME_ENCOUNTER_MAX_MINUTES` | 40 | at the most |
+| `ZGAME_ENCOUNTER_DAILY_MAX` | 6 | events per commander per UTC day at the most (0 = no limit); at 20-40 minutes apart and about half an hour of production each, uncapped play would nearly double an income |
 | `ZGAME_MARKET_HOURS` | 48 | how long a player-market offer stands before it expires and the goods return (0 = the market is switched off) |
 | `ZGAME_MARKET_FEE_PERCENT` | 5 | percent of what a buyer receives that the market keeps (alliance offers carry none) |
 | `ZGAME_MARKET_MAX_OFFERS` | 5 | open offers one commander may have |

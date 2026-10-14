@@ -107,3 +107,33 @@ describe('sqlite store', () => {
     expect(open(file).load().messages.map((m) => m.subject)).toEqual(['s0', 's1', 's2', 's3', 's4']);
   });
 });
+
+describe('the newer parts of the world survive the SQLite save', () => {
+  it('keeps market offers, outposts, audit log, scheduled announcements, daily numbers and a commander\'s waiting event', async () => {
+    const { listOffer } = await import('../server/market');
+    const { generateOutposts } = await import('../server/outposts');
+    const { audit, scheduleAnnouncement, recordDayStats } = await import('../server/adminlog');
+    const { spawnEncounter } = await import('../server/encounters');
+    const w = populated();
+    const [a] = Object.values(w.players).filter((p) => !p.npc);
+    const home = w.planets[a.planetIds[0]];
+    home.resources = { metal: 50_000, crystal: 50_000, deuterium: 50_000 };
+    listOffer(w, a, home, { give: 'metal', giveAmount: 10_000, want: 'crystal', wantAmount: 6_700 }, T0);
+    generateOutposts(w, T0);
+    audit(w, a, 'test', T0);
+    scheduleAnnouncement(w, a, 'later', 30, 0, T0);
+    recordDayStats(w, T0);
+    const e = spawnEncounter(w, a, T0, 'merchant')!;
+    const file = tmp();
+    const s1 = open(file);
+    s1.save(w); s1.close();
+    const back = open(file).load();
+    expect(back.market?.map((o) => o.id)).toEqual(w.market!.map((o) => o.id));
+    expect(back.outposts?.length).toBe(w.outposts!.length);
+    expect(back.auditLog?.map((x) => x.action)).toContain('test');
+    expect(back.scheduledAnnouncements?.[0].text).toBe('later');
+    expect(back.dailyStats?.length).toBe(1);
+    expect(back.players[a.id].events?.current?.id).toBe(e.id);
+    expect(back.looksDeduped).toBe(true);
+  });
+});

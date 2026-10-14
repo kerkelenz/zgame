@@ -726,7 +726,7 @@ describe('using the game', () => {
   run('shows the contracts board and the guide, whose contents links jump', async () => {
     await go('Contracts');
     await page.getByText('Today').first().waitFor();
-    expect(await page.locator('.contract').count()).toBeGreaterThanOrEqual(3);
+    expect(await page.locator('.contract').count()).toBeGreaterThanOrEqual(1);
     await go('Guide');
     await page.getByRole('button', { name: 'Territory: holding systems' }).click();
     const top = await page.locator('#guide-territory').evaluate((el) => Math.round(el.getBoundingClientRect().top));

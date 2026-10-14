@@ -65,6 +65,8 @@ export interface UniverseConfig {
   /** minutes of active play between encounters at a commander's planets: somewhere in this range (0 = no encounters) */
   encounterMinMinutes: number;
   encounterMaxMinutes: number;
+  /** at most this many encounters per commander per UTC day (0 = no limit): keeps the bonus a small share of the income */
+  encounterDailyMax: number;
   /** pirate and alien outposts settled in each galaxy (0 = none), and the hours before a cleared one is rebuilt */
   outpostsPerGalaxy: number;
   outpostRespawnHours: number;
@@ -110,6 +112,7 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   marketHours: 48,
   encounterMinMinutes: 20,
   encounterMaxMinutes: 40,
+  encounterDailyMax: 6,
   outpostsPerGalaxy: 6,
   outpostRespawnHours: 8,
   marketFeePercent: 5,

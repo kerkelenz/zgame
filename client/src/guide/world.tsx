@@ -30,7 +30,7 @@ export const WORLD: Topic[] = [
     id: 'encounters', title: 'Events at your planets',
     body: (
       <ul>
-        <li>While you play, something now and then turns up at one of your planets: roughly every 20 to 40 minutes of play, and only for you. A card appears in the <b>notice strip</b> with a countdown (it fades after 10 to 20 minutes if you do nothing) and a pop-up tells you. Click the card to read it and choose. Nothing happens while the game is closed or you are away, and one event waits at a time.</li>
+        <li>While you play, something now and then turns up at one of your planets: roughly every 20 to 40 minutes of play, at most six a day, and only for you. A card appears in the <b>notice strip</b> with a countdown (it fades after 10 to 20 minutes if you do nothing) and a pop-up tells you. Click the card to read it and choose. Nothing happens while the game is closed or you are away, and one event waits at a time.</li>
         <li><b>Distress signal.</b> A freighter asks for a tow. <b>Send a rescue</b> costs some Vespene Gas for fuel and usually pays a good haul of metal and crystal and 5 Command Credits; one call in four is bait and only costs you the fuel. With an Espionage Probe at that planet you can <b>scan</b> it first to find out which.</li>
         <li><b>Wandering trader.</b> A one-off deal at a better rate than the travelling merchant's. <b>Haggle</b> is a coin flip: a much better rate, or he leaves.</li>
         <li><b>Strange signal.</b> <b>Study</b> it for a data cache (Command Credits), a crystal-rich fragment, or now and then a small repair bill.</li>

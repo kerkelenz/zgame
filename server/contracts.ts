@@ -1,5 +1,6 @@
 import { makeRng } from '../shared/combat';
 import { lvl } from '../shared/formulas';
+import { playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
 import { GameError, type Player, type PlayerStats, type World } from './world';
 
@@ -27,8 +28,8 @@ export const KINDS: Record<ContractKind, KindDef> = {
   research: { stat: 'researchDone', targets: [1, 5], credits: [12, 70], label: (x) => `Complete ${x} research project${x === 1 ? '' : 's'}`, eligible: (w, p) => anyPlanet(w, p, (pl) => lvl(pl.buildings, 'researchLab') >= 1) },
   ships: { stat: 'shipsBuilt', targets: [20, 150], credits: [10, 55], label: (x) => `Build ${n(x)} ships or defenses`, eligible: (w, p) => anyPlanet(w, p, (pl) => lvl(pl.buildings, 'shipyard') >= 1) },
   spy: { stat: 'spyReports', targets: [3, 15], credits: [10, 55], label: (x) => `Bring back ${x} spy report${x === 1 ? '' : 's'}`, eligible: (w, p) => anyPlanet(w, p, (pl) => lvl(pl.buildings, 'shipyard') >= 1) },
-  win: { stat: 'battlesWon', targets: [1, 5], credits: [15, 90], label: (x) => `Win ${x} battle${x === 1 ? '' : 's'}`, eligible: () => true },
-  repel: { stat: 'raidsRepelled', targets: [null, 2], credits: [0, 80], label: (x) => `Repel ${x} raider fleet${x === 1 ? '' : 's'}`, eligible: () => true },
+  win: { stat: 'battlesWon', targets: [1, 5], credits: [15, 90], label: (x) => `Win ${x} battle${x === 1 ? '' : 's'}`, eligible: (w, p) => anyPlanet(w, p, (pl) => lvl(pl.buildings, 'shipyard') >= 1) },
+  repel: { stat: 'raidsRepelled', targets: [null, 2], credits: [0, 80], label: (x) => `Repel ${x} raider fleet${x === 1 ? '' : 's'}`, eligible: (w, p) => playerPoints(w, p).total >= w.config.protectionPoints },
   expedition: { stat: 'expeditions', targets: [1, 5], credits: [15, 90], label: (x) => `Complete ${x} expedition${x === 1 ? '' : 's'}`, eligible: (_w, p) => lvl(p.techs, 'astrophysics') >= 1 },
   recycle: { stat: 'harvested', targets: [40_000, 400_000], scaled: true, credits: [12, 70], label: (x) => `Collect ${n(x)} resources from debris`, eligible: (w, p) => p.stats.harvested > 0 || anyPlanet(w, p, (pl) => (pl.fleet.recycler || 0) > 0) },
   deliver: { stat: 'delivered', targets: [100_000, 1_000_000], scaled: true, credits: [12, 70], label: (x) => `Deliver ${n(x)} resources to alliance members`, eligible: (w, p) => !!p.allianceId && (w.alliances[p.allianceId]?.members.length ?? 0) >= 2 },
@@ -93,7 +94,7 @@ export function claimContract(w: World, p: Player, id: string, now: number): { c
     credits += Math.min(b.streak, STREAK_CAP) * STREAK_STEP;
   }
   c.claimed = now;
-  if (c.period === 'daily' && b.daily.length >= DAILY_COUNT && b.daily.every((x) => x.claimed) && b.allBonusDay !== day) {
+  if (c.period === 'daily' && b.daily.length > 0 && b.daily.every((x) => x.claimed) && b.allBonusDay !== day) {
     b.allBonusDay = day;
     bonus = ALL_BONUS;
   }

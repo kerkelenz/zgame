@@ -76,6 +76,38 @@ describe('when encounters come', () => {
   });
 });
 
+describe('what an encounter asks of a poor commander', () => {
+  it('a trader only asks for what you hold, and a planet with nothing to trade gets a find instead', () => {
+    ap.resources = { metal: 4000, crystal: 100, deuterium: 0 };
+    const e = spawnEncounter(w, alice, T0, 'merchant', seq(0, 0, 0))!;
+    expect(e.kind).toBe('merchant');
+    expect((e.data as any).giveAmt).toBeLessThanOrEqual(4000 * 0.7);
+    expect((e.data as any).g).toBe('metal');
+    ap.resources = { metal: 100, crystal: 100, deuterium: 0 };
+    expect(spawnEncounter(w, alice, T0, 'merchant', seq(0, 0, 0))!.kind).toBe('find');
+  });
+  it('the fuel for a rescue is never more than the gas on the planet', () => {
+    ap.resources = { metal: 5000, crystal: 5000, deuterium: 100 };
+    const e = spawnEncounter(w, alice, T0, 'distress', seq(0, 0.5, 0.1))!;
+    expect((e.data as any).cost.deuterium).toBeLessThanOrEqual(60);
+    expect(answerEncounter(w, alice, e.id, 'rescue', T0 + MIN).done).toBe(true);
+  });
+  it('a newcomer under protection never meets a pirate patrol', () => {
+    const kinds = new Set<string>();
+    for (let i = 0; i < 60; i++) { alice.events = undefined; kinds.add(spawnEncounter(w, alice, T0, undefined, seq(0, 0.5, (i % 20) / 20))!.kind); }
+    expect(alice.stats).toBeDefined();
+    const points = 99999; void points;
+    expect(kinds.has('raid')).toBe(false);
+  });
+  it('there is a daily limit on events', () => {
+    w.config.encounterDailyMax = 2;
+    let t = T0, count = 0, seen = '';
+    for (let i = 0; i < 100; i++) { t += MIN; alice.lastSeen = t; processEncounters(w, t, seq(0.1)); const id = alice.events?.current?.id; if (id && id !== seen) { seen = id; count++; } if (alice.events?.current) alice.events.current.expiresAt = t; }
+    expect(count).toBe(2);
+    expect(alice.events!.today).toBe(2);
+  });
+});
+
 describe('answering', () => {
   const at = T0 + MIN;
   it('a find pays hours of production on the planet and is gone', () => {
@@ -118,8 +150,8 @@ describe('answering', () => {
     expect(answerEncounter(w, alice, h.id, 'haggle', at, seq(0.1)).text).toMatch(/too hard/);
     const h2 = spawnEncounter(w, alice, T0, 'merchant', seq(0, 0, 0))!;
     expect(answerEncounter(w, alice, h2.id, 'haggle', at, seq(0.9)).text).toMatch(/haggling worked/);
-    ap.resources = { metal: 0, crystal: 0, deuterium: 0 };
     const h3 = spawnEncounter(w, alice, T0, 'merchant', seq(0, 0, 0))!;
+    ap.resources = { metal: 0, crystal: 0, deuterium: 0 };                     // the goods are spent before he is answered
     expect(() => answerEncounter(w, alice, h3.id, 'accept', at)).toThrow(/You need/);
     expect(alice.events!.current!.id).toBe(h3.id);                             // a failed answer keeps the card
   });

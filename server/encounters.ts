@@ -3,6 +3,7 @@ import { UNITS, isStationary, resName } from '../shared/data';
 import { lvl } from '../shared/formulas';
 import type { Fleet, Res, ShipId, UnitId } from '../shared/types';
 import { bus } from './bus';
+import { playerPoints } from './galaxy';
 import { planetProduction, updatePlanet } from './economy';
 import { combatant, onlyDefs, onlyShips } from './fleet';
 import { notifyPlayer } from './messages';
@@ -27,7 +28,7 @@ export interface Encounter {
   /** what the commander has not been told: the true nature of a distress call, the exact offer of a trader */
   data: Record<string, any>;
 }
-export interface EventState { /** milliseconds of active play since the last encounter */ clock: number; /** how much play brings the next one */ next: number; last: number; /** when the clock last ran for this commander */ tickAt?: number; lastKind?: EncounterKind; current?: Encounter; done: number }
+export interface EventState { /** milliseconds of active play since the last encounter */ clock: number; /** how much play brings the next one */ next: number; last: number; /** the UTC day the count of today's events is for, and how many came */ day?: number; today?: number; /** when the clock last ran for this commander */ tickAt?: number; lastKind?: EncounterKind; current?: Encounter; done: number }
 
 export const ENCOUNTER = {
   /** a commander counts as playing when the game talked to the server this recently (the open page does every 15 s) */
@@ -74,6 +75,7 @@ function make(w: World, p: Player, planet: Planet, kind: EncounterKind, now: num
     case 'distress': {
       const real = rng() < 0.75;
       const cost = worth(w, planet, { deuterium: 0.3 });
+      cost.deuterium = Math.min(cost.deuterium, Math.floor(planet.resources.deuterium * 0.6));   // never more fuel than the planet has
       const reward = worth(w, planet, { metal: 1, crystal: 1, deuterium: 0.5 });
       const probes = (planet.fleet.espionageProbe ?? 0) > 0;
       return { ...base, title: 'Distress signal', text: `A weak distress call is coming from just outside ${planet.name}: a freighter with a failing drive, asking for a tow. It could also be bait.`,
@@ -84,10 +86,13 @@ function make(w: World, p: Player, planet: Planet, kind: EncounterKind, now: num
         ], data: { real, cost, reward, scanned: false } };
     }
     case 'merchant': {
-      const g = pick(rng, KEYS), r = pick(rng, KEYS.filter((k) => k !== g));
-      const prodG = worth(w, planet, { [g]: 1.2 } as Partial<Record<ResKey, number>>)[g];
+      const TVs = { metal: 1, crystal: 1.5, deuterium: 3 } as const;
+      const richest = [...KEYS].sort((a, b) => planet.resources[b] * TVs[b] - planet.resources[a] * TVs[a]);
+      const g = richest[0] === 'deuterium' && rng() < 0.5 ? richest[1] : richest[0], r = pick(rng, KEYS.filter((k) => k !== g));
+      const prodG = Math.floor(Math.min(worth(w, planet, { [g]: 1.2 } as Partial<Record<ResKey, number>>)[g], planet.resources[g] * 0.7));
+      if (prodG < 500) return make(w, p, planet, 'find', now, rng);                    // nothing worth trading yet
       const rate = 1.3;
-      const TV = { metal: 1, crystal: 1.5, deuterium: 3 } as const;
+      const TV = TVs;
       const getAmt = Math.floor((prodG * TV[g]) / TV[r] * rate);
       return { ...base, title: 'A wandering trader', text: `A trader's ship has dropped out of hyperspace above ${planet.name} with a short-lived offer: ${fmtN(prodG)} ${resName(g)} from you for ${fmtN(getAmt)} ${resName(r)}, a better rate than any merchant gives.`,
         options: [
@@ -122,7 +127,9 @@ function make(w: World, p: Player, planet: Planet, kind: EncounterKind, now: num
 
 function kindFor(w: World, p: Player, rng: Rng): EncounterKind {
   const st = state(p);
-  const options = (Object.keys(ENCOUNTER.weights) as EncounterKind[]).filter((k) => k !== st.lastKind);
+  // a pirate patrol only for a commander who is past newbie protection
+  const raidable = playerPoints(w, p).total >= w.config.protectionPoints;
+  const options = (Object.keys(ENCOUNTER.weights) as EncounterKind[]).filter((k) => k !== st.lastKind && (k !== 'raid' || raidable));
   const total = options.reduce((s, k) => s + ENCOUNTER.weights[k], 0);
   let r = rng() * total;
   for (const k of options) { r -= ENCOUNTER.weights[k]; if (r <= 0) return k; }
@@ -159,7 +166,10 @@ export function processEncounters(w: World, now: number, rng: Rng = Math.random)
     st.tickAt = now;
     if (!isPlaying(p, now) || st.current) continue;
     st.clock += since;
-    if (st.clock >= st.next) spawnEncounter(w, p, now, undefined, rng);
+    const day = Math.floor(now / 86_400_000);
+    if (st.day !== day) { st.day = day; st.today = 0; }
+    const cap = w.config.encounterDailyMax;
+    if (st.clock >= st.next && (cap <= 0 || (st.today ?? 0) < cap)) { spawnEncounter(w, p, now, undefined, rng); st.today = (st.today ?? 0) + 1; }
   }
 }
 
