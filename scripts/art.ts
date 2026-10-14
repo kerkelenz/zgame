@@ -9,7 +9,7 @@
  *   npm run art -- optimize           shrink pictures already in client/src/assets/art that are larger than needed
  * The game picks the files up on the next build.
  */
-import { readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -20,12 +20,15 @@ const dir = join(__dirname, '..', 'client', 'src', 'assets', 'art');
 mkdirSync(dir, { recursive: true });
 const IMG = /\.(png|webp|jpe?g)$/i;
 const MAX_SIDE = 768;
-const have = () => new Set(readdirSync(dir).filter((f) => IMG.test(f)).map((f) => f.replace(/\.[a-z]+$/i, '')));
+const THUMB = /\.thumb\.webp$/i;
+const have = () => new Set(readdirSync(dir).filter((f) => IMG.test(f) && !THUMB.test(f)).map((f) => f.replace(/\.[a-z]+$/i, '')));
 const items = artItems();
 const [cmd = 'status', arg] = process.argv.slice(2);
 
 /** longest side at most MAX_SIDE, same proportions, WebP */
 const shrink = (input: Buffer) => sharp(input).resize(MAX_SIDE, MAX_SIDE, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
+/** the small square copy used by lists and icons: 256 px, cropped to the middle */
+const thumb = (input: Buffer) => sharp(input).resize(256, 256, { fit: 'cover' }).webp({ quality: 78 }).toBuffer();
 const kb = (n: number) => `${Math.round(n / 1024)} KB`;
 
 async function ingest(from: string) {
@@ -49,6 +52,7 @@ async function ingest(from: string) {
     const src = readFileSync(f.path);
     const out = await shrink(src);
     writeFileSync(join(dir, `${id}.webp`), out);
+    writeFileSync(join(dir, `${id}.thumb.webp`), await thumb(out));
     before += src.length; after += out.length;
     console.log(`${id.padEnd(24)} ${basename(f.path).slice(0, 40).padEnd(40)} ${kb(src.length)} -> ${kb(out.length)}`);
   }
@@ -57,18 +61,23 @@ async function ingest(from: string) {
 }
 
 async function optimize() {
-  let before = 0, after = 0, n = 0;
-  for (const f of readdirSync(dir).filter((x) => IMG.test(x))) {
+  let before = 0, after = 0, n = 0, thumbs = 0;
+  for (const f of readdirSync(dir).filter((x) => IMG.test(x) && !THUMB.test(x))) {
     const p = join(dir, f);
-    const src = readFileSync(p);
+    let src = readFileSync(p);
     const meta = await sharp(src).metadata();
-    if (Math.max(meta.width ?? 0, meta.height ?? 0) <= MAX_SIDE && /\.webp$/i.test(f)) continue;
-    const out = await shrink(src);
-    writeFileSync(p.replace(/\.[a-z]+$/i, '.webp'), out);
-    before += src.length; after += out.length; n++;
-    console.log(`${f.padEnd(34)} ${kb(src.length)} -> ${kb(out.length)}`);
+    if (Math.max(meta.width ?? 0, meta.height ?? 0) > MAX_SIDE || !/\.webp$/i.test(f)) {
+      const out = await shrink(src);
+      writeFileSync(p.replace(/\.[a-z]+$/i, '.webp'), out);
+      before += src.length; after += out.length; n++;
+      console.log(`${f.padEnd(34)} ${kb(src.length)} -> ${kb(out.length)}`);
+      src = out;
+    }
+    // every picture also has a small square copy for lists and icons
+    const small = join(dir, f.replace(/\.[a-z]+$/i, '.thumb.webp'));
+    if (!existsSync(small)) { writeFileSync(small, await thumb(src)); thumbs++; }
   }
-  console.log(n ? `${n} shrunk, ${kb(before)} -> ${kb(after)}` : 'nothing to shrink');
+  console.log(n ? `${n} shrunk, ${kb(before)} -> ${kb(after)}` : 'nothing to shrink', `; ${thumbs} small copies made`);
 }
 
 const show = (list: typeof items) => list.forEach((i, n) => console.log(`\n${n + 1}. save as ${i.id}.png   (${i.kind}: ${i.name})\n${i.prompt}`));

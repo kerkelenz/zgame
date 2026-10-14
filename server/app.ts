@@ -586,7 +586,8 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
 
   const dir = opts.staticDir;
   if (dir && existsSync(join(dir, 'index.html'))) {
-    app.use(express.static(dir));
+    // the build names every file in /assets after its content, so a file there can be kept for a year
+    app.use(express.static(dir, { setHeaders: (res, path) => { if (/[\\/]assets[\\/]/.test(path)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); } }));
     app.get('*', (_req, res) => res.sendFile(join(dir, 'index.html')));
   }
 

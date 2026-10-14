@@ -10,6 +10,8 @@ let base = '', close: () => void, dir = '';
 beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), 'sf-static-'));
   mkdirSync(join(dir, 'icons'));
+  mkdirSync(join(dir, 'assets'));
+  writeFileSync(join(dir, 'assets', 'metalMine-abc123.webp'), Buffer.from([82, 73, 70, 70]));
   writeFileSync(join(dir, 'index.html'), '<!doctype html><title>shell</title>');
   writeFileSync(join(dir, 'sw.js'), 'self.addEventListener("install", () => {});');
   writeFileSync(join(dir, 'manifest.webmanifest'), '{"name":"x"}');
@@ -33,6 +35,13 @@ describe('serving the installable app', () => {
     expect(m.headers.get('content-type')).toMatch(/manifest\+json|application\/json/);
     const i = await fetch(base + '/icons/icon-192.png');
     expect(i.headers.get('content-type')).toBe('image/png');
+  });
+  it('lets the browser keep the content-named files in /assets for a year, but never the app shell or the service worker', async () => {
+    const pic = await fetch(base + '/assets/metalMine-abc123.webp');
+    expect(pic.status).toBe(200);
+    expect(pic.headers.get('cache-control')).toMatch(/max-age=31536000.*immutable/);
+    expect(await (await fetch(base + '/sw.js')).headers.get('cache-control')).not.toMatch(/immutable/);
+    expect(await (await fetch(base + '/')).headers.get('cache-control')).not.toMatch(/immutable/);
   });
   it('falls back to the app shell for client-side pages, but never for the API', async () => {
     const page = await fetch(base + '/some/page');

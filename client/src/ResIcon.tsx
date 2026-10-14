@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react';
 import { resName } from '../../shared/data';
-import { artFile } from './artFiles';
+import { artThumb } from './artFiles';
 
 export type ResKey = 'metal' | 'crystal' | 'deuterium';
 
 /** Hand-drawn SVG pictures for the three resources: steel ingots, a cut crystal and a glowing canister of Vespene gas. */
 export function ResIcon({ k, size = 16, title }: { k: ResKey; size?: number; title?: string }) {
   const label = title ?? resName(k);
-  const pic = artFile('res-' + k);
+  const pic = artThumb('res-' + k);
   if (pic) return <img src={pic} width={size} height={size} className="ri" alt={label} title={label} style={{ borderRadius: 3, objectFit: 'cover' }} />;
   const common = { width: size, height: size, viewBox: '0 0 24 24', className: 'ri', role: 'img', 'aria-label': label } as const;
   if (k === 'metal') {
@@ -68,6 +68,6 @@ export function Res({ k, children, size = 16 }: { k: ResKey; children?: ReactNod
 
 /** The energy symbol: the picture when there is one, otherwise the lightning bolt. */
 export function EnergyIcon({ size = 16 }: { size?: number }) {
-  const pic = artFile('res-energy');
+  const pic = artThumb('res-energy');
   return pic ? <img src={pic} width={size} height={size} className="ri" alt="Energy" style={{ borderRadius: 3, objectFit: 'cover' }} /> : <>⚡</>;
 }

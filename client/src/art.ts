@@ -4,7 +4,7 @@
  *     Art.overrides['metalMine'] = 'https://.../mine.png'
  *     Art.overrides['planet:<planetId>'] = 'data:image/png;base64,...'
  */
-import { artFile } from './artFiles';
+import { artFile, artThumb } from './artFiles';
 import { moonArtId, moonLook, planetArtId, planetLook } from '../../shared/artlist';
 
 type Kind = 'building' | 'tech' | 'ship' | 'defense';
@@ -34,7 +34,7 @@ export const Art = {
   overrides: {} as Record<string, string>,
   icon(kind: Kind, id: string, name: string): string {
     if (this.overrides[id]) return this.overrides[id];
-    const file = artFile(id);
+    const file = artThumb(id);
     if (file) return file;
     const hit = cache.get(id);
     if (hit) return hit;
@@ -46,7 +46,7 @@ export const Art = {
     const k = 'planet:' + id;
     if (this.overrides[k]) return this.overrides[k];
     // a world keeps the picture its id picks: moons from any moon look, planets from the looks that suit their temperature
-    const file = artFile(isMoon ? moonArtId(moonLook(id)) : planetArtId(planetLook(id, tempMax)));
+    const file = artThumb(isMoon ? moonArtId(moonLook(id)) : planetArtId(planetLook(id, tempMax)));
     if (file) return file;
     const hit = cache.get(k);
     if (hit) return hit;
