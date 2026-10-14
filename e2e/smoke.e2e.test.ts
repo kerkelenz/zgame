@@ -768,6 +768,16 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('a position number in the Galaxy shows that planet banner', async () => {
+    await go('Galaxy');
+    await page.locator('table.galaxy').waitFor();
+    expect(await page.locator('.wbanner').count()).toBe(0);
+    await page.locator('table.galaxy tbody tr.mine').getByRole('button', { name: /^\d+$/ }).click();
+    await page.locator('.wbanner').waitFor();
+    expect(await page.locator('.wbanner').innerText()).toMatch(/\d+:\d+:\d+/);                        // name, coordinates link, commander
+    noErrors();
+  });
+
   run('searching for a player by name opens their profile', async () => {
     await fetch(server.base + '/api/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'Searchable_Sam', password: 'correct-horse-9' }) });
     await go('Overview');

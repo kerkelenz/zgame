@@ -11,6 +11,7 @@ import type { Coords, DefenseId, Defenses, Fleet, Mission, Res, ShipId } from '.
 import { bus } from './bus';
 import { allianceBonuses, planetCapacity, processPlayer, updatePlanet } from './economy';
 import { colonyCount, createMoon, createPlanet, inBounds, isProtected, maxExpeditions, maxPlanets } from './galaxy';
+import { assignLook } from './looks';
 import { notifyPlayer } from './messages';
 import { adjustRep } from './progress';
 import { externalNotify } from './external';
@@ -432,7 +433,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   if (level >= 5) lines.buildings = { ...target.buildings };
   if (level >= 7) lines.techs = { ...def.techs };
   const report = {
-    coords: m.to, moon: !!target.isMoon, planet: target.name, owner: def.username, ownerId: def.id, level, ...lines,
+    coords: m.to, moon: !!target.isMoon, look: assignLook(target), planet: target.name, owner: def.username, ownerId: def.id, level, ...lines,
   };
   const r = target.resources;
   notifyPlayer(w, spy.id, 'espionage', `Spy report ${target.name} ${fmt(m.to)}`,
@@ -596,7 +597,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   const names = group.map((m) => m.ownerName).join(' + ');
   const roundSide = (s: { shots: number; damage: number; absorbed: number; hullDamage: number; destroyed: number }) => ({ shots: s.shots, damage: Math.round(s.damage), absorbed: Math.round(s.absorbed), hullDamage: Math.round(s.hullDamage), destroyed: s.destroyed });
   const report = {
-    coords: lead.to, planet: target.name, rounds: res.rounds, winner: res.winner, debris: res.debris, loot, bounty, roundLog: res.roundLog, roundStats: res.roundStats.map((r) => ({ attackers: roundSide(r.attackers), defenders: roundSide(r.defenders) })),
+    coords: lead.to, planet: target.name, look: assignLook(target), isMoon: !!target.isMoon, rounds: res.rounds, winner: res.winner, debris: res.debris, loot, bounty, roundLog: res.roundLog, roundStats: res.roundStats.map((r) => ({ attackers: roundSide(r.attackers), defenders: roundSide(r.defenders) })),
     moon: moonOdds === null ? null : { chance: moonOdds, formed: !!newMoon, field: Math.round(field.metal + field.crystal) },
     attackers: res.attackers.map((a) => ({ name: a.name, owner: a.owner, before: a.before, after: a.after, lost: a.lost })),
     defenders: res.defenders.map((d) => ({ name: d.name, owner: d.owner, before: d.before, after: d.after, lost: d.lost, rebuilt: d.rebuilt })),

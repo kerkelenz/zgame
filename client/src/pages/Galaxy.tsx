@@ -3,7 +3,8 @@ import { ResIcon } from '../ResIcon';
 import type { Mission } from '../../../shared/types';
 import { get, post } from '../api';
 import { useGame } from '../game';
-import { Card, Page, coordStr, fmt } from '../ui';
+import { Card, CoordLink, Page, PlayerLink, coordStr, fmt } from '../ui';
+import { WorldBanner } from '../WorldBanner';
 import { tint } from './Territory';
 
 export function Galaxy() {
@@ -17,6 +18,7 @@ export function Galaxy() {
   const [soc, setSoc] = useState<any>(null);
   const [onlyInactive, setOnlyInactive] = useState(false);
   const [hideProtected, setHideProtected] = useState(false);
+  const [sel, setSel] = useState<number | null>(null);
   const { act } = useGame();
   useEffect(() => { void get('/social').then(setSoc).catch(() => undefined); }, []);
   const bookmarked = soc?.bookmarks.find((b: any) => b.coords.g === g && b.coords.s === s && b.coords.p === 1);
@@ -67,6 +69,12 @@ export function Galaxy() {
         </Card>
       )}
       {error && <div className="error">{error}</div>}
+      {(() => {
+        const sl = data?.slots.find((x: any) => x.p === sel && x.planet);
+        if (!sl) return null;
+        const pl = sl.planet;
+        return <WorldBanner look={pl.look}><b>{pl.name}</b><CoordLink c={{ g, s, p: sl.p }} /><span><PlayerLink id={pl.ownerId} name={pl.owner} />{pl.alliance ? ` [${pl.alliance}]` : ''}</span>{sl.moon && <span>🌙 {sl.moon.name}</span>}</WorldBanner>;
+      })()}
       <table className="galaxy">
         <thead><tr><th>#</th><th>Planet</th><th>Commander</th><th>Alliance</th><th>Debris</th><th>Actions</th></tr></thead>
         <tbody>
@@ -81,8 +89,8 @@ export function Galaxy() {
             const note = soc?.notes[`c:${g}:${s}:${sl.p}`] ?? (pl && soc?.notes[`p:${pl.ownerId}`]);
             const recycle = sl.debris ? <button onClick={() => go(sl.p, 'recycle')} title={`Collect the debris field: ${fmt(sl.debris.metal)} metal, ${fmt(sl.debris.crystal)} crystal (needs Recyclers)`}>Recycle</button> : null;
             return (
-              <tr key={sl.p} className={pl?.mine ? 'mine' : ''}>
-                <td>{sl.p}</td>
+              <tr key={sl.p} className={`${pl?.mine ? 'mine' : ''}${sel === sl.p ? ' picked' : ''}`}>
+                <td>{pl ? <button className="link" title="Show this planet's banner" aria-pressed={sel === sl.p} onClick={() => setSel(sel === sl.p ? null : sl.p)}>{sl.p}</button> : sl.p}</td>
                 <td>{pl ? <a className="plink" title="Open the owner's profile" onClick={() => openProfile(pl.ownerId)}>{pl.name}</a> : <span className="muted">empty</span>}{note && <span title={note}> 📝</span>}{sl.moon && <span title={sl.moon.name}> 🌙</span>}</td>
                 <td>{pl ? <><a className="plink" onClick={() => openProfile(pl.ownerId)}>{pl.owner}</a>{pl.npc && <span className={`tag ${pl.npc}`}>{pl.npc}</span>}{pl.status?.vacation && <span className="tag vac" title="On vacation: cannot be attacked or spied on">v</span>}{pl.status?.activity === 'online' && <span className="online" title="Online now"> ●</span>}{pl.status?.activity === 'inactive' && <span className="tag inact" title="Inactive for a week or more">i</span>}{pl.status?.activity === 'longInactive' && <span className="tag inact" title="Inactive for a month or more">I</span>}{pl.status?.protection === 'weak' && <span className="tag" title="Newbie protection: too weak to attack">n</span>}{pl.status?.protection === 'strong' && <span className="tag" title="Too strong: protected from you">s</span>}</> : ''}</td>
                 <td>{pl?.relation && <span className={`tag ${pl.relation === 'war' ? 'bad' : 'you'}`} title={pl.relation === 'war' ? 'Your alliances are at war' : pl.relation === 'pact' ? 'Pact partner: cannot be attacked' : 'Alliance member'}>{pl.relation}</span>} {pl?.alliance ? `[${pl.alliance}]` : pl?.faction ? <span className="muted small">{pl.faction}</span> : ''}</td>

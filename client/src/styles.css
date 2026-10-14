@@ -556,3 +556,14 @@ nav .hubitem.active { background: #f0a93b22; border-color: var(--accent); color:
 .fieldbar { width: 64px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .15); overflow: hidden; display: inline-block; }
 .fieldbar i { display: block; height: 100%; background: var(--accent); }
 @media (max-width: 760px) { .hero { min-height: 200px; gap: 30px; padding: 10px; } .herokind { font-size: 17px; } .herochip { font-size: 12px; padding: 3px 8px; white-space: normal; } }
+
+.wbanner { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 30px; min-height: 120px; margin: 0 0 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background-size: cover; background-position: center; background-color: #070b18; isolation: isolate; }
+.wbanner::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(5, 8, 16, .82) 0%, rgba(5, 8, 16, .4) 55%, rgba(5, 8, 16, .05) 100%); }
+.wbanner.plain { min-height: 0; gap: 4px; background: none; }
+.wbanner.plain::before { display: none; }
+.wbkind { align-self: flex-start; font-size: 12px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--accent); color: var(--accent); background: rgba(8, 12, 26, .6); }
+.wbtext { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-size: 14px; text-shadow: 0 1px 6px rgba(0, 0, 0, .85); }
+.wbtext b { font-family: var(--f-display); font-size: 18px; }
+@media (max-width: 640px) { .wbanner { min-height: 96px; padding: 8px 10px; } }
+
+tr.picked td { background: #2fa0ff18; }

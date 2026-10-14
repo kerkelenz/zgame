@@ -3,6 +3,7 @@ import { get, post } from '../api';
 import { useGame } from '../game';
 import { Card, CoordLink, coordStr, fmt, Page, PlanetLink, when } from '../ui';
 import { LineChart } from './Highscore';
+import { WorldBanner } from '../WorldBanner';
 
 const ACTIVITY: Record<string, string> = { online: 'online now', active: 'active', inactive: 'inactive for a week or more', longInactive: 'inactive for a month or more' };
 
@@ -29,6 +30,7 @@ export function Profile() {
   return (
     <Page title={p.username}>
       <div className="row">{back}{p.home && !mine && <button onClick={() => showInGalaxy(p.home)}>Find in galaxy {coordStr(p.home)}</button>}</div>
+      {p.homeLook && <WorldBanner look={p.homeLook}><b>{p.homeName}</b>{p.home && <CoordLink c={p.home} />}<span>Home world</span></WorldBanner>}
       {!mine && !p.npc && soc && (
         <div className="row wrap">
           {isBuddy ? <button onClick={() => void social('/social/buddy/remove', { id: p.id }, 'Removed from buddies')}>Remove buddy</button> : <button onClick={() => void social('/social/buddy', { id: p.id }, 'Added to buddies')} disabled={isBlocked}>Add buddy</button>}

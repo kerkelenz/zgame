@@ -156,8 +156,8 @@ const TOPICS: Topic[] = [
     body: (
       <ul>
         <li>The galaxy has a few galaxies, each with systems and numbered positions. Each row shows the planet, its owner, their alliance or faction, and any debris field. Buttons start a mission against that position: Spy, Attack, Transport and Defend on other commanders' planets, Deploy on your own, Colonize on empty positions, and <b>Recycle</b> on any position that has a debris field, including the one above your own planet.</li>
-        <li>Use the filters to show only inactive targets or hide protected ones. <b>Bookmark</b> a system with the star, and the Galaxy remembers your recent targets. The 📝 button keeps a private note on a position; notes on commanders show there too.</li>
-        <li>Spies are most useful against <b>inactive</b> commanders and empires: they never spend what they hoard. Your latest report on each planet is kept under <b>Contacts</b>. At the top of a spy report the coordinates are a link to the galaxy, and buttons <b>Attack</b>, <b>Spy again</b> and <b>Transport</b> open the Fleet page with that planet already chosen as the target.</li>
+        <li>Use the filters to show only inactive targets or hide protected ones. <b>Bookmark</b> a system with the star, and the Galaxy remembers your recent targets. The 📝 button keeps a private note on a position; notes on commanders show there too. Click a planet's position number to show its <b>banner</b> above the list, with the planet's name, coordinates and commander.</li>
+        <li>Spies are most useful against <b>inactive</b> commanders and empires: they never spend what they hoard. Your latest report on each planet is kept under <b>Contacts</b>. At the top of a spy report the coordinates are a link to the galaxy, and buttons <b>Attack</b>, <b>Spy again</b> and <b>Transport</b> open the Fleet page with that planet already chosen as the target. Spy reports and battle reports open with the banner of the planet they were about.</li>
         <li>The last position of every system, one past the planets, is <b>deep space</b>, where expeditions go.</li>
       </ul>
     ),
@@ -257,7 +257,7 @@ const TOPICS: Topic[] = [
     id: 'people', title: 'People: profiles, contacts and messages',
     body: (
       <ul>
-        <li>Click a commander's name anywhere (Standing, the Galaxy, Contacts, your alliance) for their <b>profile</b>: rank in every category, record, class, alliance, achievements and <b>where all their planets are</b>. Resources, fleets and queues are always private. Back returns to the page you came from.</li>
+        <li>Click a commander's name anywhere (Standing, the Galaxy, Contacts, your alliance) for their <b>profile</b>: rank in every category, record, class, alliance, achievements and <b>where all their planets are</b>, under the banner of their home world. Resources, fleets and queues are always private. Back returns to the page you came from.</li>
         <li><b>Contacts</b> holds your <b>buddies</b> (with online status and home coordinates), <b>blocked</b> commanders (they cannot message you and their chat lines are hidden), <b>bookmarks</b>, private <b>notes</b> and your <b>spy report archive</b>. Add a buddy, block or report someone from their profile; reports go to the admins.</li>
         <li><b>Messages</b> collects battle, spy, expedition, alliance and system reports; you can message other commanders directly. <b>Chat</b> has a global and an alliance channel. Muted commanders cannot send either.</li>
         <li>Be decent: spam and abuse get people muted or banned.</li>

@@ -42,6 +42,10 @@ export const Art = {
     const look = lookOf(id, tempMax, isMoon);
     return artFile(isMoon ? moonBannerId(look) : planetBannerId(look)) ?? this.planet(id, tempMax, isMoon);
   },
+  /** the banner for a look the server named (other commanders' worlds, reports), or nothing when there is none */
+  bannerOfLook(look: string | null | undefined, isMoon: boolean): string | undefined {
+    return look ? artFile(isMoon ? moonBannerId(look) : planetBannerId(look)) ?? undefined : undefined;
+  },
   icon(kind: Kind, id: string, name: string): string {
     if (this.overrides[id]) return this.overrides[id];
     const file = artThumb(id);

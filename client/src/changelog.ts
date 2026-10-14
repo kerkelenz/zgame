@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-w', date: '2026-10-17', title: 'Banners everywhere',
+    items: [
+      'The worlds of other commanders show their banner too: click a position number in the Galaxy, open a commander profile (their home world), or read a spy report or a battle report.',
+    ],
+  },
+  {
     id: '2026-10-v', date: '2026-10-16', title: 'A longer tutorial',
     items: [
       'The hands-on tutorial now also shows the Shipyard and its planner, the Fleet page and how to send a fleet, Contracts and Alliance, before it ends on the Overview. It still moves on by itself when you press the highlighted thing, and you can skip a step or the whole tutorial.',

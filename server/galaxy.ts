@@ -1,4 +1,5 @@
 import { buildingPoints, techPoints, unitPoints, lvl } from '../shared/formulas';
+import { assignLook } from './looks';
 import { BUILDING_IDS, DEFENSE_IDS, SHIP_IDS, TECH_IDS, POS_DIAMETER, fieldsFromDiameter } from '../shared/data';
 import { extraExpeditionSlots } from './perks';
 import { activityOf, type Activity } from './vacation';
@@ -133,9 +134,9 @@ export function isProtected(w: World, attacker: Player, target: Player): boolean
 
 export interface GalaxySlot {
   p: number;
-  moon: null | { id: string; name: string };
+  moon: null | { id: string; name: string; look: string };
   planet: null | {
-    id: string; name: string; owner: string; ownerId: string; alliance: string | null;
+    id: string; name: string; look: string; owner: string; ownerId: string; alliance: string | null;
     mine: boolean; relation: 'ally' | 'war' | 'pact' | null; protectedFor: boolean; debris: { metal: number; crystal: number } | null;
     /** computer empire disposition, or null for a commander */
     npc: string | null; faction: string | null;
@@ -160,9 +161,9 @@ export function galaxyView(w: World, viewer: Player, g: number, s: number, now =
     slots.push({
       p,
       debris,
-      moon: moon ? { id: moon.id, name: moon.name } : null,
+      moon: moon ? { id: moon.id, name: moon.name, look: assignLook(moon) } : null,
       planet: {
-        id: pl.id, name: pl.name, owner: owner.username, ownerId: owner.id, alliance: ally,
+        id: pl.id, name: pl.name, look: assignLook(pl), owner: owner.username, ownerId: owner.id, alliance: ally,
         mine: owner.id === viewer.id,
         relation: owner.id === viewer.id ? null : sameAlliance(w, viewer.id, owner.id) ? 'ally' : atWar(w, viewer.id, owner.id) ? 'war' : friendly(w, viewer.id, owner.id) ? 'pact' : null,
         npc: owner.npc?.status ?? null,

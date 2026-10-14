@@ -56,7 +56,7 @@ describe('score categories', () => {
     expect(p.ranks.find((r) => r.id === 'battles')).toMatchObject({ rank: 2, value: 5, of: 2 });
     expect(p.ranks.find((r) => r.id === 'expeditions')).toMatchObject({ rank: null, value: 0 });
     expect(p.activity).toBe('online');
-    expect(p.locations).toEqual([{ name: w.planets[a.planetIds[0]].name, coords: w.planets[a.planetIds[0]].coords, moon: false }]);
+    expect(p.locations).toEqual([{ name: w.planets[a.planetIds[0]].name, coords: w.planets[a.planetIds[0]].coords, moon: false, look: w.planets[a.planetIds[0]].look }]);
     expect(p.points.total).toBeGreaterThan(0);
     expect(p.stats.moonsDestroyed).toBe(1);
     const json = JSON.stringify(p);

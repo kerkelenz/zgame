@@ -5,6 +5,7 @@ import { useGame } from '../game';
 import type { Mission } from '../../../shared/types';
 import { ReplayToggle } from '../BattleReplay';
 import { canReplay } from '../replay';
+import { WorldBanner } from '../WorldBanner';
 import { Card, CoordLink, Linkify, PlanetLink, Page, PlayerLink, fmt, when, ItemIcon, copyLink } from '../ui';
 
 const KINDS = ['all', 'combat', 'espionage', 'raid', 'news', 'expedition', 'transport', 'alliance', 'player', 'system'];
@@ -21,6 +22,7 @@ function SpyReport({ d }: { d: any }) {
   const send = (mission: Mission) => { setTarget({ coords: d.coords, mission, toMoon: !!d.moon }); setPage('fleet'); };
   return (
     <>
+      {d.look && <WorldBanner look={d.look} isMoon={!!d.moon}><b>{d.planet}</b>{d.coords && <CoordLink c={d.coords} />}{d.owner && <PlayerLink id={d.ownerId} name={d.owner} />}</WorldBanner>}
       {d.coords && (
         <div className="row wrap spyhead">
           <span><PlanetLink name={d.planet} coords={d.coords} moon={d.moon}><b>{d.planet}</b></PlanetLink> <CoordLink c={d.coords} />{d.owner ? <span className="muted"> · <PlayerLink id={d.ownerId} name={d.owner} /></span> : null}</span>
@@ -101,6 +103,7 @@ export function BattleReport({ d, full, onOpen, replay }: { d: any; /** show the
   const moon = moonLine(d.moon);
   return (
     <>
+      {d.look && <WorldBanner look={d.look} isMoon={!!d.isMoon}><b>{d.planet}</b><CoordLink c={d.coords} /></WorldBanner>}
       <p>{d.winner === 'attacker' ? 'Attacker won' : d.winner === 'defender' ? 'Defender won' : 'Draw'} after {d.rounds} rounds at {d.planet ? <><PlanetLink name={d.planet} coords={d.coords} /> </> : null}<CoordLink c={d.coords} />.</p>
       <div className="grid2">{side('Attackers', d.attackers)}{side('Defenders', d.defenders)}</div>
       {(d.loot?.metal || d.loot?.crystal || d.loot?.deuterium) ? <p>Loot: {fmt(d.loot.metal)} M, {fmt(d.loot.crystal)} C, {fmt(d.loot.deuterium)} D</p> : null}
