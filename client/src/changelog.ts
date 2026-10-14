@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-zc', date: '2026-10-23', title: 'Upgrades',
+    items: [
+      'New Upgrades tab under Build, with things to spend on for as long as you play: empire upgrades (bigger building and research queues, more fleet slots, faster timers, a smaller merchant cut, better expeditions), projects for one planet (mine output, storage, building fields, a vault against raids), boosts that run for a few hours, and five monuments for your standing.',
+    ],
+  },
+  {
     id: '2026-10-zb', date: '2026-10-22', title: 'Events at your planets',
     items: [
       'While you play, something now and then turns up at one of your planets, only for you: a ship in distress, a wandering trader, a strange signal, a pirate patrol or a lucky find. A card in the notice strip counts down and opens a choice; rewards are an hour or two of the production of that planet, with at most six a day.',

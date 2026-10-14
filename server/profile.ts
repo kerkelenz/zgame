@@ -1,4 +1,5 @@
 import { CHAR_CLASSES, FACTION_BY_ID } from '../shared/data';
+import { monumentsOf } from './upgrades';
 import { assignLook } from './looks';
 import { colonyCount, playerPoints } from './galaxy';
 import { ACHIEVEMENTS } from './progress';
@@ -23,6 +24,7 @@ export function profileView(w: World, id: string, now: number) {
     alliance: ally ? { tag: ally.tag, name: ally.name } : null,
     faction: faction ? FACTION_BY_ID[faction]?.name ?? null : null,
     charClass: CHAR_CLASSES.find((c) => c.id === p.charClass)?.name ?? null,
+    monuments: monumentsOf(p),
     home: home ? home.coords : null, homeName: home?.name ?? null, homeLook: home ? assignLook(home, w) : null, planets: colonyCount(w, p),
     // planet positions are public knowledge (anyone can browse the galaxy), so the profile lists them
     locations: p.planetIds.map((id) => w.planets[id]).filter(Boolean).map((pl) => ({ name: pl.name, coords: pl.coords, moon: !!pl.isMoon, look: assignLook(pl, w) })),

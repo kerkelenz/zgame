@@ -87,6 +87,8 @@ export interface Player {
   npc?: NpcInfo;
   /** the encounters that turn up while this commander plays */
   events?: import('./encounters').EventState;
+  /** empire upgrades, boosts and monuments bought (see shared/upgrades.ts) */
+  upgrades?: import('../shared/upgrades').PlayerUpgrades;
   /** the bargains taken on the market today (value over what was paid), against the daily limit */
   bargains?: { day: number; value: number };
 }
@@ -193,6 +195,8 @@ export interface InvasionRecord { number: number; result: 'won' | 'lost'; starte
 
 export interface Planet {
   id: string;
+  /** planet projects bought here, by level (see shared/upgrades.ts) */
+  projects?: Partial<Record<import('../shared/upgrades').ProjectId, number>>;
   /** which picture and banner it shows (a name from shared/artlist), stored when first needed so it never changes */
   look?: string;
   /** what the owner uses this planet for; only changes the suggestions the game makes */

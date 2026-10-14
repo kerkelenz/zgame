@@ -36,7 +36,7 @@ export function useItems() {
   const researchQ = me.player.research;
   const bBacklog: string[] = planet.buildBacklog ?? [];
   const rBacklog: { id: string }[] = me.player.researchBacklog ?? [];
-  const MAXQ = 4;
+  const MAXB = me.limits?.buildQueue ?? 4, MAXR = me.limits?.researchQueue ?? 4;   // four, and more with the upgrades
 
   // how long the whole queue takes: the running job's time left plus every queued job, worked out at today's levels (a queued Robotics Factory or Lab
   // would shorten the ones behind it, so the total is an estimate)
@@ -57,6 +57,6 @@ export function useItems() {
   // the shipyard: a row finishes after its running unit plus the rest; the whole queue is every row one after the other
   const rowTimes: number[] = planet.shipyardQueue.map((j: any, i: number) => (i === 0 ? Math.max(0, j.start + j.unitMs - now) + Math.max(0, j.remaining - 1) * j.unitMs : j.remaining * j.unitMs));
   const yardTotal = rowTimes.reduce((a, b) => a + b, 0);
-  return { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXQ, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal };
+  return { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal };
 }
 export type ItemsData = ReturnType<typeof useItems>;

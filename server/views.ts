@@ -3,7 +3,7 @@ import { encounterView } from './encounters';
 import { assignLook } from './looks';
 import type { BuildingId, TechId } from '../shared/types';
 import { ALLIANCE_UPGRADES } from '../shared/data';
-import { allianceBonuses, maxFields, planetCapacity, planetProduction, updatePlanet, usedFields } from './economy';
+import { allianceBonuses, buildBacklogMax, researchBacklogMax, maxFields, planetCapacity, planetProduction, updatePlanet, usedFields } from './economy';
 import { activeSlots } from './fleet';
 import { wreckView } from './wrecks';
 import { classSpeedBonus, crawlerMul, energyBoost, mineBoost, researchFactor, timeFactor } from './perks';
@@ -92,6 +92,7 @@ export function meView(w: World, p: Player, now: number) {
     season: seasonBanner(w, now),
     invasion: invasionBanner(w),
     encounter: encounterView(w, p, now),
+    limits: { buildQueue: buildBacklogMax(p), researchQueue: researchBacklogMax(p) },
     contractsClaimable: contractsView(w, p, now).claimable,
     /** how many alliances anyone can join right now, and when this account began (for the join suggestion) */
     recruiting: Object.values(w.alliances).filter((x) => x.open).length,

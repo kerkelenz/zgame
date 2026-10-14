@@ -10,7 +10,7 @@ import { Flashing } from '../useFlash';
 import type { ItemsData, Kind } from './useItems';
 
 export function BuildingCards({ d, only }: { d: ItemsData; only: boolean }) {
-  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXQ, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
+  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
   return (
     <>
         {BUILDING_IDS.filter((id) => buildingAllowed(id, !!planet.isMoon)).map((id) => {
@@ -22,7 +22,7 @@ export function BuildingCards({ d, only }: { d: ItemsData; only: boolean }) {
           const cost = buildingCost(id, level + 1);
           const secs = buildingTime(cost, robotics, nanite, cfg.economySpeed * cfg.constructionBoost, timeFactor);
           const missing = unmet(d.requires, planet.buildings, techs);
-          const ok = !missing.length && (!buildQ || bBacklog.length < MAXQ) && canAfford(have, cost) && planet.usedFields + bBacklog.length < planet.fields;
+          const ok = !missing.length && (!buildQ || bBacklog.length < MAXB) && canAfford(have, cost) && planet.usedFields + bBacklog.length < planet.fields;
           if (only && !ok) return null;
           return (
             <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <Flashing className="lvl" value={built}>{built}{pending > 0 && <span className="muted"> +{pending}</span>}</Flashing></>}>
@@ -47,7 +47,7 @@ export function BuildingCards({ d, only }: { d: ItemsData; only: boolean }) {
 }
 
 export function TechCards({ d, only }: { d: ItemsData; only: boolean }) {
-  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXQ, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
+  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
   return (
     <>
         {TECH_IDS.map((id) => {
@@ -59,7 +59,7 @@ export function TechCards({ d, only }: { d: ItemsData; only: boolean }) {
           const secs = researchTime(cost, lab, cfg.economySpeed * cfg.researchBoost, me.allianceBonuses.research, timeFactor * researchFactor);
           const missing = unmet(d.requires, planet.buildings, techs);
           const energyOk = !d.energyReq || planet.production.energyProduced >= d.energyReq * 3 ** level;
-          const ok = !missing.length && energyOk && (!researchQ || rBacklog.length < MAXQ) && canAfford(have, cost);
+          const ok = !missing.length && energyOk && (!researchQ || rBacklog.length < MAXR) && canAfford(have, cost);
           if (only && !ok) return null;
           return (
             <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <Flashing className="lvl" value={done}>{done}{pendingT > 0 && <span className="muted"> +{pendingT}</span>}</Flashing></>}>
@@ -77,7 +77,7 @@ export function TechCards({ d, only }: { d: ItemsData; only: boolean }) {
 }
 
 export function UnitCards({ kind, d, only }: { kind: Kind; d: ItemsData; only: boolean }) {
-  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXQ, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
+  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
   const [counts, setCounts] = useState<Record<string, number>>({});
   return (
     <>

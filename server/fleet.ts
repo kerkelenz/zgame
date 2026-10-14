@@ -567,7 +567,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   const free = group.map((m) => (fleetCount(m.ships) ? Math.max(0, cargoFor(attackerOf(m), m.ships) - totalRes(m.cargo)) : 0));
   const freeTotal = free.reduce((a, b) => a + b, 0);
   if (res.winner === 'attacker' && freeTotal > 0) {
-    loot = computeLoot(target.resources, freeTotal, lootShare(leadPlayer));
+    loot = computeLoot(target.resources, freeTotal, lootShare(leadPlayer) * (1 - 0.04 * (target.projects?.vault ?? 0)));
     target.resources = subRes(target.resources, loot);
     group.forEach((m, i) => {
       const share = free[i] / freeTotal;

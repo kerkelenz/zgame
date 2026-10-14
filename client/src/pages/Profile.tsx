@@ -97,6 +97,7 @@ export function Profile() {
           </div>
         </Card>
       )}
+      {p.monuments?.length > 0 && <p className="muted">🗿 Monuments: {p.monuments.join(', ')}</p>}
       <Card title={`Achievements ${p.achievements.length} / ${p.achievementsTotal}`}>
         {p.achievements.length === 0 ? <p className="muted">None yet.</p> : (
           <ul className="ach">{p.achievements.map((a: any) => <li key={a.id} className="done"><span><b>{a.name}</b> - {a.desc}</span><span className="muted small">{when(a.doneAt)}</span></li>)}</ul>

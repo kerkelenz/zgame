@@ -6,7 +6,7 @@ import type { ItemsData, Kind } from './useItems';
 
 /** the running job, the waiting list and the totals above the cards: buildings, research and the shipyard each have their own */
 export function Queues({ kind, d }: { kind: Kind; d: ItemsData }) {
-  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXQ, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
+  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
   return (
     <>
       {kind === 'building' && buildQ && (
@@ -16,7 +16,7 @@ export function Queues({ kind, d }: { kind: Kind; d: ItemsData }) {
         </Card>
       )}
       {kind === 'building' && bBacklog.length > 0 && (
-        <Card title={`Queue (${bBacklog.length}/${MAXQ})`}>
+        <Card title={`Queue (${bBacklog.length}/${MAXB})`}>
           {bBacklog.map((id, i) => (
             <div className="row between" key={i}>
               <span>{i + 1}. <ItemIcon id={id} size={20} /> {BUILDINGS[id as BuildingId].name} <span className="muted small">· {fmtDur(bTimes[i])}</span></span>
@@ -31,7 +31,7 @@ export function Queues({ kind, d }: { kind: Kind; d: ItemsData }) {
         </Card>
       )}
       {kind === 'tech' && rBacklog.length > 0 && (
-        <Card title={`Queue (${rBacklog.length}/${MAXQ})`}>
+        <Card title={`Queue (${rBacklog.length}/${MAXR})`}>
           {rBacklog.map((q, i) => (
             <div className="row between" key={i}>
               <span>{i + 1}. <ItemIcon id={q.id} size={20} /> {TECHS[q.id as TechId].name} <span className="muted small">· {fmtDur(rTimes[i])}</span></span>

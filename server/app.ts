@@ -27,6 +27,7 @@ import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { buyItem, shopView } from './shop';
 import { outpostList } from './outposts';
+import { buildMonument, buyBoost, buyEmpireUpgrade, buyProject, upgradesView } from './upgrades';
 import { answerEncounter, encounterView, spawnEncounter, type EncounterKind } from './encounters';
 import { audit, auditView, cancelScheduled, scheduleAnnouncement, statsView } from './adminlog';
 import { buyOffer, cancelOffer, listOffer, marketView } from './market';
@@ -478,6 +479,18 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
 
   // ---------------------------------------------------------------- galaxy & highscore
+  A.get('/upgrades', wrap((req) => {
+    const p = req.player!;
+    const planet = ownedPlanet(w, p.id, req.query.planetId ? str(String(req.query.planetId)) : p.planetIds[0]);
+    return upgradesView(w, p, planet, now());
+  }));
+  A.post('/upgrades/buy', wrap((req) => {
+    const p = req.player!;
+    const planet = ownedPlanet(w, p.id, str(req.body.planetId));
+    const kind = str(req.body.kind), id = str(req.body.id);
+    const result = kind === 'empire' ? buyEmpireUpgrade(w, p, planet, id, now()) : kind === 'project' ? buyProject(w, p, planet, id, now()) : kind === 'boost' ? buyBoost(w, p, planet, id, now()) : kind === 'monument' ? buildMonument(w, p, planet, id, now()) : (() => { throw new GameError('Unknown kind'); })();
+    return { result, view: upgradesView(w, p, planet, now()) };
+  }));
   A.get('/encounter', wrap((req) => encounterView(w, req.player!, now())));
   A.post('/encounter/answer', wrap((req) => {
     const p = req.player!;

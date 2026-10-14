@@ -136,7 +136,7 @@ describe('first visit', () => {
 });
 
 describe('every page', () => {
-  const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Empire', 'Economy', 'Contracts', 'Market', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
+  const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Empire', 'Economy', 'Contracts', 'Market', 'Upgrades', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
 
   run('the menu is a handful of hubs, each with its pages as tabs, and a hub opens the page you were last on', async () => {
     await go('Overview');
@@ -145,7 +145,7 @@ describe('every page', () => {
     const navLook = await page.locator('nav').evaluate((el) => ({ bar: getComputedStyle(el).scrollbarWidth }));
     expect(navLook.bar).toBe('none');                                      // no scroll bar drawn in the menu
     await page.locator('nav [data-tour="hub-build"]').click();
-    expect(await page.locator('.subtabs .subtab').allInnerTexts()).toEqual(['Buildings', 'Research', 'Shipyard', 'Defense', 'Tech tree', 'Resources']);       // in this order
+    expect(await page.locator('.subtabs .subtab').allInnerTexts()).toEqual(['Buildings', 'Research', 'Shipyard', 'Defense', 'Tech tree', 'Resources', 'Upgrades']);       // in this order
     expect(await page.locator('.subtab.active').innerText()).toBe('Buildings');
     await page.locator('.subtabs [data-tour="nav-research"]').click();
     await page.locator('nav [data-tour="hub-home"]').click();
@@ -1125,7 +1125,27 @@ describe('the admin', () => {
     noErrors();
   });
 
+  run('the Upgrades tab sells empire upgrades, shows the new queue size and starts a boost', async () => {
+    await page.evaluate(async () => {
+      const h = { 'content-type': 'application/json', authorization: 'Bearer ' + (localStorage.getItem('zg.token') ?? '') };
+      const me = await (await fetch('/api/me', { headers: h })).json();
+      await fetch('/api/admin/gift', { method: 'POST', headers: h, body: JSON.stringify({ id: me.player.id, metal: 1e9, crystal: 1e9, deuterium: 1e9 }) });
+    });
+    await go('Upgrades');
+    const bureau = page.locator('section.card', { has: page.getByRole('heading', { name: /Construction Bureau/ }) });
+    await bureau.waitFor();
+    await bureau.getByRole('button', { name: 'Raise to 1' }).click();
+    await bureau.getByText('5 buildings in the queue').waitFor();
+    const boost = page.locator('section.card', { has: page.getByRole('heading', { name: 'Rapid Assembly' }) });
+    await boost.getByRole('button', { name: /Start/ }).click();
+    await boost.getByText(/Running/).waitFor();
+    await go('Buildings');
+    await page.locator('.items .card').first().waitFor();
+    noErrors();
+  });
+
   run('the admin schedules an announcement, sees it listed, cancels it and finds the actions in the audit log', async () => {
+    await go('Admin');
     await page.getByLabel('Scheduled message').fill('Server restart tonight');
     await page.getByRole('button', { name: 'Schedule', exact: true }).click();
     await page.getByRole('heading', { name: 'Scheduled announcements (1)' }).waitFor();

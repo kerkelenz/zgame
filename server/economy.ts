@@ -8,6 +8,7 @@ import type { BuildingId, Requirement, Res, TechId, UnitId } from '../shared/typ
 import { bus } from './bus';
 import { notifyPlayer } from './messages';
 import { territoryBonus } from './sectors';
+import { empireLevel } from '../shared/upgrades';
 import { crawlerMul, energyBoost, mineBoost, researchFactor, timeFactor, tradeFee } from './perks';
 import { assertActive } from './vacation';
 import { GameError, allianceOf, type BuildJob, type Planet, type Player, type World } from './world';
@@ -34,7 +35,7 @@ export function planetProduction(w: World, planet: Planet) {
     speed: w.config.economySpeed * w.config.productionBoost,
     allianceBonus: allianceBonuses(w, owner).production,
     noBasic: !!planet.isMoon,
-    boost: mineBoost(owner),
+    boost: mineBoost(owner) * (1 + 0.015 * (planet.projects?.surveyors ?? 0)),
     energyBoost: energyBoost(owner),
     position: planet.isMoon ? 0 : planet.coords.p,
     crawlers: planet.fleet.crawler || 0,
@@ -44,7 +45,7 @@ export function planetProduction(w: World, planet: Planet) {
 
 /** Storage scales with universe speed: at x20 the mines fill twenty times faster, so a classic-sized silo would waste almost everything. */
 export function planetCapacity(w: World, planet: Planet): Res {
-  const k = Math.max(1, w.config.economySpeed) * w.config.storageBoost;
+  const k = Math.max(1, w.config.economySpeed) * w.config.storageBoost * (1 + 0.08 * (planet.projects?.annex ?? 0));
   return {
     metal: storageCapacity(lvl(planet.buildings, 'metalStorage')) * k,
     crystal: storageCapacity(lvl(planet.buildings, 'crystalStorage')) * k,
@@ -191,7 +192,7 @@ export function requirementsMet(planet: Planet | null, player: Player, reqs: Req
 }
 
 export function maxFields(planet: Planet): number {
-  return planet.fields + (planet.isMoon ? 3 * lvl(planet.buildings, 'lunarBase') : 5 * lvl(planet.buildings, 'terraformer'));
+  return planet.fields + (planet.isMoon ? 3 * lvl(planet.buildings, 'lunarBase') : 5 * lvl(planet.buildings, 'terraformer') + 2 * (planet.projects?.habitat ?? 0));
 }
 
 export function usedFields(planet: Planet): number {
@@ -216,6 +217,9 @@ export function startBuilding(w: World, player: Player, planet: Planet, id: Buil
 }
 
 export const MAX_BACKLOG = 4;
+/** how many buildings, and how many research projects, may wait in the queue: four, and a place more for every level of the upgrade */
+export const buildBacklogMax = (p: Player) => MAX_BACKLOG + empireLevel(p.upgrades, 'constructionQueue');
+export const researchBacklogMax = (p: Player) => MAX_BACKLOG + empireLevel(p.upgrades, 'researchQueue');
 
 /** Start now if idle, otherwise line up behind the active job (paid when queued). */
 export function queueBuilding(w: World, player: Player, planet: Planet, id: BuildingId, now: number) {
@@ -224,7 +228,7 @@ export function queueBuilding(w: World, player: Player, planet: Planet, id: Buil
   if (!Object.hasOwn(BUILDINGS, id)) throw new GameError('Unknown building');
   if (!planet.buildQueue) return beginBuilding(w, player, planet, id, now);
   const backlog = (planet.buildBacklog ||= []);
-  if (backlog.length >= MAX_BACKLOG) throw new GameError(`Queue is full (${MAX_BACKLOG})`);
+  if (backlog.length >= buildBacklogMax(player)) throw new GameError(`Queue is full (${buildBacklogMax(player)})`);
   if (!buildingAllowed(id, !!planet.isMoon)) throw new GameError(planet.isMoon ? 'That cannot be built on a moon' : 'That can only be built on a moon');
   if (id !== 'terraformer' && usedFields(planet) + backlog.length >= maxFields(planet)) throw new GameError('No free fields left on this planet');
   const level = lvl(planet.buildings, id) + 1 + (planet.buildQueue?.id === id ? 1 : 0) + backlog.filter((b) => b === id).length;
@@ -330,7 +334,7 @@ export function queueResearch(w: World, player: Player, planet: Planet, id: Tech
   if (!Object.hasOwn(TECHS, id)) throw new GameError('Unknown technology');
   if (!player.research) return beginResearch(w, player, planet, id, now);
   const backlog = (player.researchBacklog ||= []);
-  if (backlog.length >= MAX_BACKLOG) throw new GameError(`Queue is full (${MAX_BACKLOG})`);
+  if (backlog.length >= researchBacklogMax(player)) throw new GameError(`Queue is full (${researchBacklogMax(player)})`);
   const lv = lvl(player.techs, id) + 1 + (player.research?.id === id ? 1 : 0) + backlog.filter((b) => b.id === id).length;
   const cost = techCost(id, lv);
   pay(planet, cost, `${TECHS[id].name} level ${lv}`);

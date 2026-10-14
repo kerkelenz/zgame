@@ -40,6 +40,18 @@ export const WORLD: Topic[] = [
     ),
   },
   {
+    id: 'upgrades', title: 'Upgrades: queues, projects, boosts and monuments',
+    body: (
+      <ul>
+        <li>The <b>Upgrades</b> tab (under Build) is where resources go once the basics are in place. Everything there is paid from the planet you have selected, instantly, and nothing is ever lost: costs rise level by level and scale with the server's economy speed, so there is always a next level to save for. Everything you spend there also counts as points in your standing.</li>
+        <li><b>Empire upgrades</b> (the whole empire, up to a top level each): <i>Construction Bureau</i> and <i>Research Council</i> each add one place in the building or research queue per level (eight levels, from four to twelve); <i>Fleet Command</i> adds a fleet slot per level (six); <i>Engineering Guild</i> makes every build, research and ship timer 1.5% shorter per level and <i>Archives</i> make research 2% shorter per level (ten levels each); <i>Trade Network</i> lowers the travelling merchant's cut by 0.6 points per level (never under 4%); <i>Deep-Space Relay</i> adds 4% to what expeditions bring back per level.</li>
+        <li><b>Projects</b> are for one planet (not moons): <i>Orbital Surveyors</i> +1.5% mine output per level, <i>Storage Annex</i> +8% storage per level, <i>Habitat Rings</i> +2 building fields per level and <i>Fortified Vault</i> 4% less taken when that planet is raided, per level, ten levels each.</li>
+        <li><b>Boosts</b> run for a few hours for the whole empire: <i>Rapid Assembly</i> (every build, research and ship timer a quarter shorter, 4 hours), <i>Research Surge</i> (research a quarter shorter, 4 hours) and <i>Fuel Reserve</i> (30% less Vespene Gas burned, 6 hours). Buying a boost that is running adds its hours, up to 24 in all.</li>
+        <li><b>Monuments</b> (Beacon, Obelisk, Spire, Monolith, Star Throne) are raised one after the other, once each, at a huge price that grows five-fold each time. They produce nothing: they add a great deal to your standing and are listed on your profile.</li>
+      </ul>
+    ),
+  },
+  {
     id: 'command', title: 'Command: classes, officers, credits and achievements',
     body: (
       <ul>

@@ -1,4 +1,5 @@
 import { buildingPoints, techPoints, unitPoints, lvl } from '../shared/formulas';
+import { upgradePoints } from '../shared/upgrades';
 import { assignLook } from './looks';
 import { outpostTag } from './outposts';
 import { BUILDING_IDS, DEFENSE_IDS, SHIP_IDS, TECH_IDS, POS_DIAMETER, fieldsFromDiameter } from '../shared/data';
@@ -120,6 +121,7 @@ export function playerPoints(w: World, p: Player, flights?: Map<string, Movement
   for (const m of flights ? flights.get(p.id) ?? [] : Object.values(w.movements).filter((x) => x.ownerId === p.id)) {
     for (const [id, n] of Object.entries(m.ships)) fleet += unitPoints(id as UnitId, n || 0);
   }
+  buildings += upgradePoints(p.upgrades);                       // what was spent on upgrades, projects and monuments counts as building
   const r = (x: number) => Math.floor(x);
   return { buildings: r(buildings), research: r(research), fleet: r(fleet), defense: r(defense), total: r(buildings + research + fleet + defense) };
 }
