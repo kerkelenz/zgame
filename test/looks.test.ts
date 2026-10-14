@@ -101,22 +101,22 @@ describe('every world looks different, as far as the looks last', () => {
     return { w, homes };
   };
   it('gives every commander planet a different look while there are looks left', () => {
-    const { homes } = many(19);
-    expect(new Set(homes.map((h) => h.look)).size).toBe(19);
+    const { homes } = many(43);
+    expect(new Set(homes.map((h) => h.look)).size).toBe(43);
   });
   it('keeps the temperature rule while the suitable looks last, and repeats as little as possible after that', () => {
     const { homes } = many(8);
     for (const h of homes) expect(planetPool(h.maxTemp)).toContain(h.look);
-    const more = many(40).homes.map((h) => h.look!);
+    const more = many(90).homes.map((h) => h.look!);
     const counts = new Map<string, number>();
     for (const l of more) counts.set(l, (counts.get(l) ?? 0) + 1);
-    expect(Math.max(...counts.values())).toBeLessThanOrEqual(3);          // 40 worlds over 19 looks: nobody has more than three of one
-    expect(new Set(more).size).toBe(19);
+    expect(Math.max(...counts.values())).toBeLessThanOrEqual(3);          // 90 worlds over 43 looks: nobody has more than three of one
+    expect(new Set(more).size).toBe(43);
   });
   it('gives every moon a different look too, up to the number of moon looks', () => {
-    const { w, homes } = many(29);
+    const { w, homes } = many(53);
     const moons = homes.map((h) => createMoon(w, h, 4000));
-    expect(new Set(moons.map((m) => m.look)).size).toBe(29);
+    expect(new Set(moons.map((m) => m.look)).size).toBe(53);
   });
   it('lets computer empires have any look without using up the looks of commanders', () => {
     const w = createWorld({ npcDensity: 0 }, T0);

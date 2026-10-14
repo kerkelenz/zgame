@@ -56,6 +56,14 @@ export const PLANET_LOOKS: Record<string, string> = {
   aurora: 'a planet wrapped in shimmering aurora light', chrome: 'a planet with a polished metallic surface', fungal: 'a planet covered in glowing fungal forests',
   shattered: 'a cracked, shattered planet with drifting fragments', storm: 'a planet under planet-wide storms and lightning', swamp: 'a misty swamp planet with dark water',
   twilight: 'a planet half in permanent twilight',
+  abyss: 'a dark planet cracked by glowing blue lightning', ash: 'a grey ash planet with smouldering vents', canyon: 'a planet carved by enormous canyons',
+  copper: 'a planet with a polished copper crust', dawn: 'a planet with a bright dawn line across it', derelict: 'a ringed planet strewn with abandoned wrecks',
+  ember: 'a charred planet with glowing ember cracks', glacier: 'a planet of blue glaciers and ice mountains', hive: 'a planet covered in dense hive-like city lights',
+  iron: 'a rust-red iron planet with vein-like ridges', jade: 'a green jade planet with a thin ring', lotus: 'a planet shaped like a giant metal lotus',
+  maelstrom: 'a planet-wide ocean maelstrom', mirage: 'a planet of frozen dunes under a hazy giant', night: 'a planet dark side only, lit by teal city lights',
+  plasma: 'a planet crackling with violet plasma', prism: 'a planet of faceted crystal throwing rainbows', ruin: 'a planet of ancient stepped ruins',
+  sanctuary: 'a calm blue and white planet with swirling clouds', savanna: 'a golden savanna planet with lone trees', tempest: 'a planet torn by spiralling tempests',
+  thorn: 'a planet bristling with enormous spires', twin: 'a pair of planets orbiting each other', void: 'a nearly black planet with a faint rim of light',
 };
 export const MOON_LOOKS: Record<string, string> = {
   asteroid: 'an irregular asteroid-like moon', azure: 'a pale blue moon with smooth plains', cratered: 'a grey moon covered in impact craters',
@@ -66,6 +74,12 @@ export const MOON_LOOKS: Record<string, string> = {
   mist: 'a moon wrapped in mist', moss: 'a moss-green moon', obsidian: 'a black glassy obsidian moon', opal: 'an opalescent moon', prism: 'a moon of prismatic crystal',
   quartz: 'a pale quartz moon', rust: 'a rusty red moon', storm: 'a moon with a storm-swirled atmosphere', tempest: 'a moon wracked by tempests',
   thorn: 'a moon bristling with thorn-like spires', tide: 'a moon with tidal seas',
+  amber: 'a glowing amber moon', brine: 'a pale salt-crusted moon with cracks', cinnabar: 'a deep red cinnabar moon', citrine: 'a yellow citrine moon over a blue world',
+  cobalt: 'a bright cobalt-blue moon', copper: 'a copper-brown moon over a blue world', coral: 'a moon grown over with pink coral', garnet: 'a dark garnet-red moon',
+  granite: 'a grey granite moon', ivory: 'a smooth ivory moon over a blue world', jade: 'a green jade moon', lapis: 'a deep blue lapis moon with gold flecks',
+  malachite: 'a banded green malachite moon', marble: 'a white marble moon with veins', onyx: 'a black onyx moon with white veins', pearl: 'a pearl-white moon',
+  pumice: 'a porous pumice moon', ruby: 'a red ruby moon', sandstone: 'a layered sandstone moon', sapphire: 'a blue sapphire moon with lightning',
+  slate: 'a dark slate moon', sulfur: 'a bright yellow sulfur moon', topaz: 'a golden topaz moon', verdigris: 'a teal verdigris moon',
 };
 export const planetArtId = (look: string) => `planet-${look}`;
 export const moonArtId = (look: string) => `moon-${look}`;
@@ -74,10 +88,10 @@ export const moonBannerId = (look: string) => `moonbanner-${look}`;
 
 /** which looks suit a planet's temperature, so an ice world is never a hot one: the hotter positions get lava and desert, the colder ones ice and rock */
 export function planetPool(maxTemp: number): string[] {
-  if (maxTemp >= 70) return ['lava', 'desert', 'obsidian', 'toxic', 'crystal', 'chrome', 'shattered', 'storm'];
-  if (maxTemp >= 20) return ['desert', 'jungle', 'terran', 'ocean', 'toxic', 'swamp', 'fungal', 'storm'];
-  if (maxTemp > -20) return ['terran', 'ocean', 'jungle', 'barren', 'ringed', 'swamp', 'fungal', 'twilight', 'aurora'];
-  return ['ice', 'barren', 'ringed', 'gasgiant', 'crystal', 'aurora', 'twilight', 'shattered', 'chrome'];
+  if (maxTemp >= 70) return ['lava', 'desert', 'obsidian', 'toxic', 'crystal', 'chrome', 'shattered', 'storm', 'ash', 'ember', 'copper', 'iron', 'canyon', 'plasma'];
+  if (maxTemp >= 20) return ['desert', 'jungle', 'terran', 'ocean', 'toxic', 'swamp', 'fungal', 'storm', 'savanna', 'canyon', 'jade', 'lotus', 'hive', 'thorn', 'prism', 'iron', 'copper'];
+  if (maxTemp > -20) return ['terran', 'ocean', 'jungle', 'barren', 'ringed', 'swamp', 'fungal', 'twilight', 'aurora', 'sanctuary', 'dawn', 'maelstrom', 'jade', 'lotus', 'ruin', 'mirage', 'twin', 'night', 'tempest', 'hive'];
+  return ['ice', 'barren', 'ringed', 'gasgiant', 'crystal', 'aurora', 'twilight', 'shattered', 'chrome', 'glacier', 'abyss', 'void', 'night', 'derelict', 'mirage', 'tempest', 'maelstrom', 'ruin', 'prism', 'twin'];
 }
 /** the pools before more looks were added: worlds that already existed keep the look they were showing */
 export function legacyPlanetPool(maxTemp: number): string[] {
@@ -99,7 +113,9 @@ export const legacyMoonLook = (moonId: string) => pickLook(moonId, LEGACY_MOON_L
 
 /** the picture a downloaded file is for: its name without the generator's prefix and number, matched to an item ignoring case, in the folder it came from */
 export function artIdFromFile(file: string, folder: string, ids: string[]): string | null {
-  const base = file.replace(/\.[a-z0-9]+$/i, '').replace(/^media-generation-/, '').replace(/-\d+-[0-9a-f-]{20,}$/i, '').toLowerCase();
+  const base = file.replace(/\.[a-z0-9]+$/i, '').replace(/^media-generation-/, '').replace(/-\d+-[0-9a-f-]{20,}$/i, '').toLowerCase()
+    // the generator sometimes writes a sentence instead of the name ("copper-moon-game-asset-copper", "jade-planet-banner-game-asse"): the first words say what it is
+    .replace(/^([a-z]+)-(moon|planet)(-banner)?-game-.*$/, (_m, a: string, b: string, c?: string) => `${a}${b}${c ? 'banner' : ''}`);
   if (folder === 'planets') { const look = Object.keys(PLANET_LOOKS).find((k) => base === k || base === `${k}planet`); return look ? planetArtId(look) : null; }
   if (folder === 'moons') { const look = Object.keys(MOON_LOOKS).find((k) => base === k || base === `${k}moon`); return look ? moonArtId(look) : null; }
   if (folder === 'planetbanners' || folder === 'banners') {
