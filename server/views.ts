@@ -146,7 +146,7 @@ const mv = (m: Movement, mine: boolean, w?: World) => ({
   fromName: (w && m.fromPlanetId ? w.planets[m.fromPlanetId]?.name : undefined) ?? undefined,
   fromMoon: (w && m.fromPlanetId ? !!w.planets[m.fromPlanetId]?.isMoon : undefined),
   ownerAlliance: (w && m.ownerId ? w.alliances[w.players[m.ownerId]?.allianceId ?? '']?.tag : undefined),
-  id: m.id, mission: m.mission, phase: m.phase, from: m.from, to: m.to, ships: m.ships,
+  id: m.id, mission: m.mission, phase: m.phase, from: m.from, to: m.to, ships: m.ships, holdHours: m.holdHours, fromId: mine ? m.fromPlanetId ?? undefined : undefined,
   cargo: mine ? m.cargo : undefined, arriveAt: m.arriveAt, returnAt: m.returnAt, holdUntil: m.holdUntil,
   acsId: m.acsId, toMoon: m.toMoon, missiles: m.missiles, ownerName: m.ownerName, ownerId: m.ownerId, speedPct: m.speedPct, flightMs: m.flightMs, departAt: m.departAt,
 });

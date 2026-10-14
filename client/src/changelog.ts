@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-q', date: '2026-10-14', title: 'Expedition chart',
+    items: [
+      'The Fleet page has an Expeditions chart: your planet in the middle, a spoke out to deep space for each expedition with the ship riding along it (orange out, purple exploring, green coming home), a timeline for each fleet with the time left, when it is home, its ships and cargo, a Recall button, and your latest five expedition results.',
+    ],
+  },
+  {
     id: '2026-10-p', date: '2026-10-14', title: 'Battle replay',
     items: [
       'Watch any battle as an animated replay: both fleets as rows of pictures, beams across the gap, shields flashing, ships bursting as they fall and the counts ticking down, with Play, Pause, step by round, a slider and speeds from half to four times. Open it with Watch the replay in the battle message, in the full report or on a shared report link. The Simulator replays the first of its runs too.',

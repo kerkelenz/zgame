@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ExpeditionMap } from '../ExpeditionMap';
 import { loadLastSend, repeatable, saveLastSend } from '../lastSend';
 import { EXPEDITION_HOURS, SHIP_IDS, UNITS, isStationary, resName } from '../../../shared/data';
 import { cargoCapacity } from '../../../shared/formulas';
@@ -100,6 +101,8 @@ export function FleetPage() {
           ))}
         </Card>
       )}
+
+      <ExpeditionMap />
 
       <Card title={`Active fleets (${me.slots.used}/${me.slots.max} slots · expeditions ${me.slots.expUsed}/${me.slots.expMax})`}>
         {fleets.mine.length === 0 && <p className="muted">No fleets in flight.</p>}

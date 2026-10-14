@@ -790,6 +790,29 @@ describe('advice, planners and alliance tools', () => {
     noErrors();
   });
 
+  run('active expeditions are drawn as a chart with a timeline for each', async () => {
+    const now = Date.now(), H = 3_600_000;
+    const mk = (id: string, phase: string, extra: object) => ({ id, mission: 'expedition', phase, from: { g: 1, s: 5, p: 6 }, to: { g: 1, s: 5, p: 16 }, ships: { largeCargo: 4, pathfinder: 1 }, flightMs: H, holdHours: 2, speedPct: 100, ownerName: 'x', ...extra });
+    const mine = [
+      mk('e1', 'outbound', { departAt: now - H / 2, arriveAt: now + H / 2 }),
+      mk('e2', 'holding', { departAt: now - 2 * H, arriveAt: now - H, holdUntil: now + H }),
+      mk('e3', 'returning', { departAt: now - 4 * H, arriveAt: now - 3 * H, holdUntil: now - 2 * H, returnAt: now + H / 2, cargo: { metal: 12000, crystal: 3000, deuterium: 0 } }),
+    ];
+    await page.route('**/api/fleets', async (route) => { await route.fulfill({ json: { mine, incoming: [], stationed: [], joinable: [], events: [] } }); });
+    await page.reload();
+    await go('Fleet');
+    await page.locator('.expmap svg').waitFor({ timeout: 15_000 });
+    expect(await page.locator('.expfleet').count()).toBe(3);
+    const text = await page.locator('.expmap').innerText();
+    expect(text).toMatch(/Flying out/); expect(text).toMatch(/Exploring/); expect(text).toMatch(/Coming home/);
+    expect(await page.locator('.expfleet .nowmark').count()).toBe(3);
+    expect(await page.locator('.expfleet button', { hasText: 'Recall' }).count()).toBe(2);       // a fleet already coming home cannot be recalled
+    expect(await page.locator('.expmap svg foreignObject a').count()).toBe(3);                    // every target is a link
+    await page.unroute('**/api/fleets');
+    await page.reload();
+    noErrors();
+  });
+
   run('the tech tree cards can be walked with the arrow keys', async () => {
     await go('Tech tree');
     await page.locator('.icard').first().waitFor();

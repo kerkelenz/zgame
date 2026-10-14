@@ -439,3 +439,16 @@ img.itemicon { vertical-align: middle; border-radius: 4px; object-fit: cover; ma
 .replay canvas { width: 100%; height: auto; aspect-ratio: 860 / 360; background: #070b18; border: 1px solid var(--line); border-radius: 10px; display: block; }
 .replayctl { flex-wrap: wrap; align-items: center; gap: 8px; }
 .replayctl input[type="range"] { flex: 1 1 160px; min-width: 120px; }
+
+/* ---- expedition chart ---- */
+.expmap { display: grid; gap: 12px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; }
+.expmap svg { width: 100%; height: auto; display: block; }
+.expcap { font-size: 12px; line-height: 1.35; color: var(--text); }
+.explist { display: grid; gap: 10px; }
+.expfleet { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: grid; gap: 6px; }
+.exptime { position: relative; display: flex; height: 20px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); font-size: 11px; }
+.exptime .seg { display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; color: #0b1020; font-weight: 600; }
+.exptime .out { background: #ffb347; } .exptime .stay { background: #a88bff; } .exptime .back { background: #5fd28a; }
+.exptime .nowmark { position: absolute; top: -2px; bottom: -2px; width: 3px; margin-left: -1px; background: #fff; box-shadow: 0 0 6px #fff; }
+.expresults { margin: 0; padding-left: 18px; }
+@media (max-width: 860px) { .expmap { grid-template-columns: 1fr; } }
