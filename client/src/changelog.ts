@@ -6,7 +6,7 @@ export const CHANGELOG: Release[] = [
     id: '2026-10-za', date: '2026-10-21', title: 'A notice strip',
     items: [
       'Hostile fleets, tribute demands, the Void invasion, the season and release notes no longer take a banner each across the page. They share one slim row under the top bar: the most urgent notice, "+N more" to list the rest, and a ✕ on the quieter ones.',
-      'Every planet card now shows its own metal, crystal, Vespene Gas and energy, with a thin bar for how full the store is, so you see the stock of all your planets at once. The separate resource row only remains for a moon or when you have many planets.',
+      'Every planet card now shows its own metal, crystal, Vespene Gas and energy, with a thin bar for how full the store is, so you see the stock of all your planets at once. Moons show their stock on their own chip; the separate resource row only remains when you have many planets.',
     ],
   },
   {

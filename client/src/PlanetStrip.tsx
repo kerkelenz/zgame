@@ -59,6 +59,7 @@ export function PlanetStrip() {
       <img src={Art.planet(m.id, m.maxTemp, true)} alt="" /><span className="pn">{m.name}</span><Tags tags={tagsFor(m)} />
     </button>
   );
+  const moonRes = (m: WorldView) => <PlanetRes w={m} tour={m.id === planet.id} energy={false} />;
 
   if (!useList(groups)) {
     return (
@@ -71,7 +72,7 @@ export function PlanetStrip() {
             </button>
             <div className="pmeta"><CoordLink c={p.coords} /><Tags tags={tagsFor(p)} /></div>
             <PlanetRes w={p} tour={p.id === planet.id} />
-            {moon && <div className="pchild">{moonChip(moon)}</div>}
+            {moon && <div className="pchild">{moonChip(moon)}{moonRes(moon)}</div>}
           </div>
         ))}
       </div>

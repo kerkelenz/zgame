@@ -18,7 +18,7 @@ export function liveStock(w: WorldView, now: number) {
 }
 
 /** the three resources of a planet on its card: amount and a thin bar for how full the store is, red when full or about to be; energy below */
-export function PlanetRes({ w, tour }: { w: WorldView; tour?: boolean }) {
+export function PlanetRes({ w, tour, energy: showEnergy = true }: { w: WorldView; tour?: boolean; energy?: boolean }) {
   const { now } = useGame();
   const have = liveStock(w, now);
   const energy = w.production.energyProduced - w.production.energyUsed;
@@ -36,7 +36,7 @@ export function PlanetRes({ w, tour }: { w: WorldView; tour?: boolean }) {
           </span>
         );
       })}
-      <span className={`prE ${energy < 0 ? 'bad' : 'energy'}`} title={energy < 0 ? `Energy balance: mines run at ${Math.round((w.production.efficiency ?? 1) * 100)}% until you build more power` : 'Energy balance'}><EnergyIcon size={12} /> {fmt(energy)}</span>
+      {showEnergy && <span className={`prE ${energy < 0 ? 'bad' : 'energy'}`} title={energy < 0 ? `Energy balance: mines run at ${Math.round((w.production.efficiency ?? 1) * 100)}% until you build more power` : 'Energy balance'}><EnergyIcon size={12} /> {fmt(energy)}</span>}
     </div>
   );
 }

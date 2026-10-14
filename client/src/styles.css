@@ -622,3 +622,5 @@ tr.picked td { background: #2fa0ff18; }
 .navstick.compact .pres { flex-direction: row; gap: 8px; padding: 0; }
 .navstick.compact .pres .prbar, .navstick.compact .pres .prE { display: none; }
 .navstick.compact .pres .pr { grid-template-columns: 14px auto; }
+
+.pchild .pres { padding: 2px 0 0 2px; }

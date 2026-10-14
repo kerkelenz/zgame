@@ -155,7 +155,7 @@ export function App() {
         <Sidebar />
         <main id="main" tabIndex={-1}>
           <NavStick>
-            {(planet.isMoon || worldGroups(planets).length > MAX_CHIPS) && <ResourceBar />}
+            {worldGroups(planets).length > MAX_CHIPS && <ResourceBar />}
             <PlanetStrip />
             <SubTabs />
           </NavStick>
