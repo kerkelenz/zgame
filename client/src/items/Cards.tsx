@@ -10,7 +10,7 @@ import { Flashing } from '../useFlash';
 import type { ItemsData, Kind } from './useItems';
 
 export function BuildingCards({ d, only }: { d: ItemsData; only: boolean }) {
-  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
+  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, lfBuild, lfShip, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
   return (
     <>
         {BUILDING_IDS.filter((id) => buildingAllowed(id, !!planet.isMoon)).map((id) => {
@@ -20,7 +20,7 @@ export function BuildingCards({ d, only }: { d: ItemsData; only: boolean }) {
           const pending = (buildQ?.id === id ? 1 : 0) + bBacklog.filter((x) => x === id).length;
           const level = built + pending;
           const cost = buildingCost(id, level + 1);
-          const secs = buildingTime(cost, robotics, nanite, cfg.economySpeed * cfg.constructionBoost, timeFactor);
+          const secs = buildingTime(cost, robotics, nanite, cfg.economySpeed * cfg.constructionBoost, timeFactor * lfBuild);
           const missing = unmet(d.requires, planet.buildings, techs);
           const ok = !missing.length && (!buildQ || bBacklog.length < MAXB) && canAfford(have, cost) && planet.usedFields + bBacklog.length < planet.fields;
           if (only && !ok) return null;
@@ -47,7 +47,7 @@ export function BuildingCards({ d, only }: { d: ItemsData; only: boolean }) {
 }
 
 export function TechCards({ d, only }: { d: ItemsData; only: boolean }) {
-  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
+  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, lfBuild, lfShip, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
   return (
     <>
         {TECH_IDS.map((id) => {
@@ -77,7 +77,7 @@ export function TechCards({ d, only }: { d: ItemsData; only: boolean }) {
 }
 
 export function UnitCards({ kind, d, only }: { kind: Kind; d: ItemsData; only: boolean }) {
-  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
+  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, lfBuild, lfShip, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
   const [counts, setCounts] = useState<Record<string, number>>({});
   return (
     <>
@@ -87,7 +87,7 @@ export function UnitCards({ kind, d, only }: { kind: Kind; d: ItemsData; only: b
           const n = Math.max(1, counts[id] || 1);
           const missing = unmet(d.requires, planet.buildings, techs);
           const total = scaleRes(d.cost, n);
-          const msUnit = unitTime(id, shipyard, nanite, cfg.economySpeed * cfg.shipyardBoost, timeFactor) * 1000;
+          const msUnit = unitTime(id, shipyard, nanite, cfg.economySpeed * cfg.shipyardBoost, timeFactor * lfShip) * 1000;
           const maxAfford = Math.floor(Math.min(
             d.cost.metal ? have.metal / d.cost.metal : Infinity,
             d.cost.crystal ? have.crystal / d.cost.crystal : Infinity,

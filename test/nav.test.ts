@@ -50,8 +50,8 @@ describe('the navigation', () => {
 });
 
 describe('the order of the Build tabs', () => {
-  it('goes Buildings, Research, Shipyard, Defense, Tech tree, Resources, Upgrades, Automation', () => {
-    expect(NAV_GROUPS.find((g) => g.id === 'build')!.items.map((i) => i.id)).toEqual(['buildings', 'research', 'shipyard', 'defense', 'techtree', 'resources', 'upgrades', 'automation']);
+  it('goes Buildings, Research, Shipyard, Defense, Tech tree, Resources, Lifeform, Upgrades, Automation', () => {
+    expect(NAV_GROUPS.find((g) => g.id === 'build')!.items.map((i) => i.id)).toEqual(['buildings', 'research', 'shipyard', 'defense', 'techtree', 'resources', 'lifeform', 'upgrades', 'automation']);
   });
 });
 

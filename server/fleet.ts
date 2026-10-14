@@ -11,6 +11,7 @@ import type { Coords, DefenseId, Defenses, Fleet, Mission, Res, ShipId } from '.
 import { bus } from './bus';
 import { allianceBonuses, planetCapacity, processPlayer, updatePlanet } from './economy';
 import { colonyCount, createMoon, createPlanet, inBounds, isProtected, maxExpeditions, maxPlanets } from './galaxy';
+import { lifeformEffects } from '../shared/lifeforms';
 import { assignLook } from './looks';
 import { outpostBattle, outpostTag } from './outposts';
 import { notifyPlayer } from './messages';
@@ -581,7 +582,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   const free = group.map((m) => (fleetCount(m.ships) ? Math.max(0, cargoFor(attackerOf(m), m.ships) - totalRes(m.cargo)) : 0));
   const freeTotal = free.reduce((a, b) => a + b, 0);
   if (res.winner === 'attacker' && freeTotal > 0) {
-    loot = computeLoot(target.resources, freeTotal, lootShare(leadPlayer) * (1 - 0.04 * (target.projects?.vault ?? 0)));
+    loot = computeLoot(target.resources, freeTotal, lootShare(leadPlayer) * Math.max(0.2, 1 - 0.04 * (target.projects?.vault ?? 0) - lifeformEffects(target.lifeform).vault));
     target.resources = subRes(target.resources, loot);
     group.forEach((m, i) => {
       const share = free[i] / freeTotal;

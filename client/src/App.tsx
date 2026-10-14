@@ -43,6 +43,7 @@ import { Invasion } from './pages/Invasion';
 import { Territory } from './pages/Territory';
 import { Contracts } from './pages/Contracts';
 import { Market } from './pages/Market';
+import { Lifeform } from './pages/Lifeform';
 import { Upgrades } from './pages/Upgrades';
 import { Automation } from './pages/Automation';
 import { Highscore } from './pages/Highscore';
@@ -124,6 +125,7 @@ export function App() {
       case 'contracts': return <Contracts />;
       case 'market': return <Market />;
       case 'upgrades': return <Upgrades />;
+      case 'lifeform': return <Lifeform />;
       case 'automation': return <Automation />;
       case 'guide': return <Guide />;
       case 'settings': return <Settings />;

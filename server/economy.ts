@@ -8,6 +8,7 @@ import type { BuildingId, Requirement, Res, TechId, UnitId } from '../shared/typ
 import { bus } from './bus';
 import { notifyPlayer } from './messages';
 import { territoryBonus } from './sectors';
+import { lifeformEffects, timeMul } from '../shared/lifeforms';
 import { empireLevel } from '../shared/upgrades';
 import { crawlerMul, energyBoost, mineBoost, researchFactor, timeFactor, tradeFee } from './perks';
 import { assertActive } from './vacation';
@@ -26,7 +27,8 @@ export function allianceBonuses(w: World, player: Player): AllianceBonuses {
 
 export function planetProduction(w: World, planet: Planet) {
   const owner = w.players[planet.ownerId];
-  return production({
+  const lf = lifeformEffects(planet.lifeform);
+  const p = production({
     buildings: planet.buildings,
     techs: owner.techs,
     maxTemp: planet.maxTemp,
@@ -36,16 +38,17 @@ export function planetProduction(w: World, planet: Planet) {
     allianceBonus: allianceBonuses(w, owner).production,
     noBasic: !!planet.isMoon,
     boost: mineBoost(owner) * (1 + 0.015 * (planet.projects?.surveyors ?? 0)),
-    energyBoost: energyBoost(owner),
+    energyBoost: energyBoost(owner) * (1 + lf.energy),
     position: planet.isMoon ? 0 : planet.coords.p,
     crawlers: planet.fleet.crawler || 0,
     crawlerMul: crawlerMul(owner),
   });
+  return { ...p, metal: p.metal * (1 + lf.metal), crystal: p.crystal * (1 + lf.crystal), deuterium: p.deuterium * (1 + lf.deuterium) };
 }
 
 /** Storage scales with universe speed: at x20 the mines fill twenty times faster, so a classic-sized silo would waste almost everything. */
 export function planetCapacity(w: World, planet: Planet): Res {
-  const k = Math.max(1, w.config.economySpeed) * w.config.storageBoost * (1 + 0.08 * (planet.projects?.annex ?? 0));
+  const k = Math.max(1, w.config.economySpeed) * w.config.storageBoost * (1 + 0.08 * (planet.projects?.annex ?? 0) + lifeformEffects(planet.lifeform).storage);
   return {
     metal: storageCapacity(lvl(planet.buildings, 'metalStorage')) * k,
     crystal: storageCapacity(lvl(planet.buildings, 'crystalStorage')) * k,
@@ -192,7 +195,7 @@ export function requirementsMet(planet: Planet | null, player: Player, reqs: Req
 }
 
 export function maxFields(planet: Planet): number {
-  return planet.fields + (planet.isMoon ? 3 * lvl(planet.buildings, 'lunarBase') : 5 * lvl(planet.buildings, 'terraformer') + 2 * (planet.projects?.habitat ?? 0));
+  return planet.fields + (planet.isMoon ? 3 * lvl(planet.buildings, 'lunarBase') : 5 * lvl(planet.buildings, 'terraformer') + 2 * (planet.projects?.habitat ?? 0) + lifeformEffects(planet.lifeform).fields);
 }
 
 export function usedFields(planet: Planet): number {
@@ -275,7 +278,7 @@ function beginBuilding(w: World, player: Player, planet: Planet, id: BuildingId,
   const level = lvl(planet.buildings, id) + 1;
   const cost = prepaid && (prepaid.metal || prepaid.crystal || prepaid.deuterium) ? prepaid : buildingCost(id, level);
   if (cost !== prepaid) pay(planet, cost, `${def.name} level ${level}`);
-  const secs = buildingTime(cost, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.constructionBoost, timeFactor(player));
+  const secs = buildingTime(cost, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.constructionBoost, timeFactor(player) * timeMul(lifeformEffects(planet.lifeform).buildTime));
   planet.buildQueue = { id, level, start: now, end: now + secs * 1000, cost };
   planet.idleSince = undefined; planet.idleAlerted = false;
 }
@@ -305,7 +308,7 @@ export function startDemolition(w: World, player: Player, planet: Planet, id: Bu
     if (stored > 10 * (have - 1)) throw new GameError('The missiles stored in the silo would no longer fit: fire or remove some first');
   }
   const price = buildingCost(id, have);
-  const secs = buildingTime(price, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.constructionBoost, timeFactor(player)) * DEMOLISH.timeShare;
+  const secs = buildingTime(price, lvl(planet.buildings, 'roboticsFactory'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.constructionBoost, timeFactor(player) * timeMul(lifeformEffects(planet.lifeform).buildTime)) * DEMOLISH.timeShare;
   const job: BuildJob = { id, level: have - 1, start: now, end: now + secs * 1000, cost: { metal: 0, crystal: 0, deuterium: 0 }, down: true, refund: scaleRes(price, DEMOLISH.refundShare) };
   job.refund = { metal: Math.floor(job.refund!.metal), crystal: Math.floor(job.refund!.crystal), deuterium: Math.floor(job.refund!.deuterium) };
   planet.buildQueue = job;
@@ -362,7 +365,7 @@ function beginResearch(w: World, player: Player, planet: Planet, id: TechId, now
   }
   const cost = prepaid ?? techCost(id, level);
   if (!prepaid) pay(planet, cost, `${def.name} level ${level}`);
-  const secs = researchTime(cost, lvl(planet.buildings, 'researchLab'), w.config.economySpeed * w.config.researchBoost, allianceBonuses(w, player).research, timeFactor(player) * researchFactor(player));
+  const secs = researchTime(cost, lvl(planet.buildings, 'researchLab'), w.config.economySpeed * w.config.researchBoost, allianceBonuses(w, player).research, timeFactor(player) * researchFactor(player) * timeMul(lifeformEffects(planet.lifeform).researchTime));
   player.research = { id, level, start: now, end: now + secs * 1000, cost, planetId: planet.id };
   player.researchIdleSince = undefined; player.researchIdleAlerted = false;
 }
@@ -402,7 +405,7 @@ export function queueUnits(w: World, player: Player, planet: Planet, id: UnitId,
   }
   const total = scaleRes(def.cost, count);
   pay(planet, total);
-  const unitMs = unitTime(id, lvl(planet.buildings, 'shipyard'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.shipyardBoost, timeFactor(player)) * 1000;
+  const unitMs = unitTime(id, lvl(planet.buildings, 'shipyard'), lvl(planet.buildings, 'naniteFactory'), w.config.economySpeed * w.config.shipyardBoost, timeFactor(player) * timeMul(lifeformEffects(planet.lifeform).shipTime)) * 1000;
   const start = planet.shipyardQueue.length ? now : now;
   planet.shipyardQueue.push({ id, total: count, remaining: count, unitMs, start, unitCost: def.cost });
   if (planet.shipyardQueue.length === 1) planet.shipyardQueue[0].start = now;

@@ -6,7 +6,7 @@ import type { ItemsData, Kind } from './useItems';
 
 /** the running job, the waiting list and the totals above the cards: buildings, research and the shipyard each have their own */
 export function Queues({ kind, d }: { kind: Kind; d: ItemsData }) {
-  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
+  const { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, lfBuild, lfShip, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal } = d;
   return (
     <>
       {kind === 'building' && buildQ && (

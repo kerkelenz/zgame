@@ -13,7 +13,7 @@ import { GameError, type Planet, type Player, type World } from './world';
 const HOUR = 3_600_000;
 const state = (p: Player): PlayerUpgrades => (p.upgrades ??= { levels: {}, boosts: {}, monuments: [], spent: 0 });
 
-function pay(w: World, p: Player, planet: Planet, cost: Res, now: number) {
+export function pay(w: World, p: Player, planet: Planet, cost: Res, now: number) {
   assertActive(p, 'spend on upgrades');
   if (planet.ownerId !== p.id) throw new GameError('Not your planet', 403);
   updatePlanet(w, planet, now);

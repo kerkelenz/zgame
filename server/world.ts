@@ -195,6 +195,8 @@ export interface InvasionRecord { number: number; result: 'won' | 'lost'; starte
 
 export interface Planet {
   id: string;
+  /** the people settled on this planet and the levels of their structures (see shared/lifeforms.ts) */
+  lifeform?: import('../shared/lifeforms').PlanetLifeform;
   /** planet projects bought here, by level (see shared/upgrades.ts) */
   projects?: Partial<Record<import('../shared/upgrades').ProjectId, number>>;
   /** which picture and banner it shows (a name from shared/artlist), stored when first needed so it never changes */

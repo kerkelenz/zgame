@@ -3,6 +3,13 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-zd', date: '2026-10-24', title: 'Lifeforms and the Reaper',
+    items: [
+      'New Lifeform tab under Build: settle each planet with Humans, Rock-tal, Mechas or Kaelesh (the first choice is free) and raise their five structures with resources, for more of a resource, bigger stores, shorter building, research or ship times, more building fields or a safer stock on that planet.',
+      'New ship: the Reaper, a heavy warship (Shipyard 10, Hyperspace Drive 6, Shielding 6) that recycles debris fields and takes up to 30% of the debris of battles it fights in straight into its hold.',
+    ],
+  },
+  {
     id: '2026-10-zc', date: '2026-10-23', title: 'Upgrades',
     items: [
       'New Upgrades tab under Build, with things to spend on for as long as you play: empire upgrades (bigger building and research queues, more fleet slots, faster timers, a smaller merchant cut, better expeditions), projects for one planet (mine output, storage, building fields, a vault against raids), boosts that run for a few hours, and five monuments for your standing.',

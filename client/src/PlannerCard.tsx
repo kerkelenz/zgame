@@ -18,7 +18,7 @@ export function PlannerCard({ kind }: { kind: 'ship' | 'defense' }) {
   const cfg = me.config;
   const plan = planFleet({
     unit, count, buildings: planet.buildings, techs: me.player.techs, stock: live,
-    speed: cfg.economySpeed * cfg.shipyardBoost, timeFactor: planet.detail.timeFactor,
+    speed: cfg.economySpeed * cfg.shipyardBoost, timeFactor: planet.detail.timeFactor * (planet.detail.lfShip ?? 1),
   });
   const wait = affordWait(plan.total, live, planet.production, planet.capacity);
   const payable = canAfford(live, plan.total);

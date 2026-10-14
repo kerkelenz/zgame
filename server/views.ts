@@ -1,4 +1,5 @@
 import { lvl } from '../shared/formulas';
+import { lifeformEffects, timeMul } from '../shared/lifeforms';
 import { encounterView } from './encounters';
 import { assignLook } from './looks';
 import type { BuildingId, TechId } from '../shared/types';
@@ -30,7 +31,7 @@ export function planetView(w: World, planet: Planet, now: number) {
   updatePlanet(w, planet, now);
   const prod = planetProduction(w, planet);
   return {
-    id: planet.id, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon, parentId: planet.parentId ?? null, role: planet.role ?? null, look: assignLook(planet, w),
+    id: planet.id, lifeform: planet.lifeform?.id ?? null, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon, parentId: planet.parentId ?? null, role: planet.role ?? null, look: assignLook(planet, w),
     jumpReadyAt: planet.jumpReadyAt ?? 0,
     forge: forgeView(w, planet, w.players[planet.ownerId]),
     maxTemp: planet.maxTemp, isHome: planet.isHome, buildings: planet.buildings, resources: planet.resources,
@@ -45,7 +46,7 @@ export function planetView(w: World, planet: Planet, now: number) {
     detail: (() => {
       const owner = w.players[planet.ownerId], ab = allianceBonuses(w, owner), c = w.config;
       return {
-        allianceProduction: ab.production, allianceResearch: ab.research, boost: mineBoost(owner), energyBoost: energyBoost(owner), crawlerMul: crawlerMul(owner), timeFactor: timeFactor(owner), researchFactor: researchFactor(owner), classSpeed: classSpeedBonus(owner),
+        allianceProduction: ab.production, allianceResearch: ab.research, boost: mineBoost(owner), energyBoost: energyBoost(owner), crawlerMul: crawlerMul(owner), timeFactor: timeFactor(owner), researchFactor: researchFactor(owner), lfBuild: timeMul(lifeformEffects(planet.lifeform).buildTime), lfShip: timeMul(lifeformEffects(planet.lifeform).shipTime), lfResearch: timeMul(lifeformEffects(planet.lifeform).researchTime), classSpeed: classSpeedBonus(owner),
         speeds: {
           production: c.economySpeed * c.productionBoost, construction: c.economySpeed * c.constructionBoost, research: c.economySpeed * c.researchBoost,
           shipyard: c.economySpeed * c.shipyardBoost, storage: Math.max(1, c.economySpeed) * c.storageBoost, fleet: c.fleetSpeed,

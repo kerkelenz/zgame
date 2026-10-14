@@ -1,5 +1,6 @@
 import { MOON_LOOKS, PLANET_LOOKS } from '../../shared/artlist';
 import { POSITION_BONUS } from '../../shared/data';
+import { LIFEFORMS, type LifeformId } from '../../shared/lifeforms';
 import { ROLES } from '../../shared/roles';
 import { Art } from './art';
 import { useGame } from './game';
@@ -34,7 +35,7 @@ export function PlanetHero() {
     <section className={`hero${planet.isMoon ? ' moonhero' : ''}`} style={{ backgroundImage: `url(${Art.banner(planet.id, planet.maxTemp, !!planet.isMoon)})` }} aria-label={`${planet.name}, ${lookName(planet.look, !!planet.isMoon)}`}>
       <div className="herotop">
         <div className="herotitle">
-          <span className="herokind">{lookName(planet.look, !!planet.isMoon)}{role && <span className="herorole">{role.label}</span>}</span>
+          <span className="herokind">{lookName(planet.look, !!planet.isMoon)}{role && <span className="herorole">{role.label}</span>}{planet.lifeform && LIFEFORMS[planet.lifeform as LifeformId] && <span className="herorole" title="The people of this planet">{LIFEFORMS[planet.lifeform as LifeformId].name}</span>}</span>
           {desc && <span className="herodesc">{sentence(desc)}</span>}
         </div>
         {bodies.length > 1 && (

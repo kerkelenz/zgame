@@ -26,7 +26,8 @@ export function useItems() {
 
   // the Chief Engineer shortens every timer; the server applies the same factor
   const timeFactor = planet.detail.timeFactor as number;
-  const researchFactor = planet.detail.researchFactor as number; // Discoverer: research only
+  const researchFactor = (planet.detail.researchFactor as number) * ((planet.detail.lfResearch as number | undefined) ?? 1); // Discoverer, Archives and the lifeform: research only
+  const lfBuild = (planet.detail.lfBuild as number | undefined) ?? 1, lfShip = (planet.detail.lfShip as number | undefined) ?? 1;   // the lifeform of this planet
   const robotics = lvl(planet.buildings, 'roboticsFactory');
   const nanite = lvl(planet.buildings, 'naniteFactory');
   const shipyard = lvl(planet.buildings, 'shipyard');
@@ -44,7 +45,7 @@ export function useItems() {
   const bTimes = bBacklog.map((id) => {
     const level = lvl(planet.buildings, id as BuildingId) + (seenB[id] ?? 0) + 1;
     seenB[id] = (seenB[id] ?? 0) + 1;
-    return buildingTime(buildingCost(id as BuildingId, level), robotics, nanite, cfg.economySpeed * cfg.constructionBoost, timeFactor) * 1000;
+    return buildingTime(buildingCost(id as BuildingId, level), robotics, nanite, cfg.economySpeed * cfg.constructionBoost, timeFactor * lfBuild) * 1000;
   });
   const bTotal = (buildQ ? Math.max(0, buildQ.end - now) : 0) + bTimes.reduce((a, b) => a + b, 0);
   const seenR: Record<string, number> = researchQ ? { [researchQ.id]: 1 } : {};
@@ -57,6 +58,6 @@ export function useItems() {
   // the shipyard: a row finishes after its running unit plus the rest; the whole queue is every row one after the other
   const rowTimes: number[] = planet.shipyardQueue.map((j: any, i: number) => (i === 0 ? Math.max(0, j.start + j.unitMs - now) + Math.max(0, j.remaining - 1) * j.unitMs : j.remaining * j.unitMs));
   const yardTotal = rowTimes.reduce((a, b) => a + b, 0);
-  return { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal };
+  return { me, planet, act, live, now, toast, withUndo, cfg, techs, have, hint, timeFactor, lfBuild, lfShip, researchFactor, robotics, nanite, shipyard, lab, buildQ, researchQ, bBacklog, rBacklog, MAXB, MAXR, bTimes, bTotal, rTimes, rTotal, rowTimes, yardTotal };
 }
 export type ItemsData = ReturnType<typeof useItems>;

@@ -27,6 +27,7 @@ import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { buyItem, shopView } from './shop';
 import { outpostList } from './outposts';
+import { buyStructure, chooseLifeform, lifeformView } from './lifeforms';
 import { buildMonument, buyBoost, buyEmpireUpgrade, buyProject, upgradesView } from './upgrades';
 import { answerEncounter, encounterView, spawnEncounter, type EncounterKind } from './encounters';
 import { audit, auditView, cancelScheduled, scheduleAnnouncement, statsView } from './adminlog';
@@ -490,6 +491,22 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const kind = str(req.body.kind), id = str(req.body.id);
     const result = kind === 'empire' ? buyEmpireUpgrade(w, p, planet, id, now()) : kind === 'project' ? buyProject(w, p, planet, id, now()) : kind === 'boost' ? buyBoost(w, p, planet, id, now()) : kind === 'monument' ? buildMonument(w, p, planet, id, now()) : (() => { throw new GameError('Unknown kind'); })();
     return { result, view: upgradesView(w, p, planet, now()) };
+  }));
+  A.get('/lifeform', wrap((req) => {
+    const p = req.player!;
+    return lifeformView(w, ownedPlanet(w, p.id, req.query.planetId ? str(String(req.query.planetId)) : p.planetIds[0]));
+  }));
+  A.post('/lifeform/choose', wrap((req) => {
+    const p = req.player!;
+    const planet = ownedPlanet(w, p.id, str(req.body.planetId));
+    chooseLifeform(w, p, planet, str(req.body.id), now());
+    return lifeformView(w, planet);
+  }));
+  A.post('/lifeform/buy', wrap((req) => {
+    const p = req.player!;
+    const planet = ownedPlanet(w, p.id, str(req.body.planetId));
+    const level = buyStructure(w, p, planet, str(req.body.id), now());
+    return { level, view: lifeformView(w, planet) };
   }));
   A.get('/encounter', wrap((req) => encounterView(w, req.player!, now())));
   A.post('/encounter/answer', wrap((req) => {

@@ -137,7 +137,7 @@ describe('first visit', () => {
 });
 
 describe('every page', () => {
-  const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Empire', 'Economy', 'Contracts', 'Market', 'Upgrades', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
+  const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Empire', 'Economy', 'Contracts', 'Market', 'Lifeform', 'Upgrades', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
 
   run('the menu is a handful of hubs, each with its pages as tabs, and a hub opens the page you were last on', async () => {
     await go('Overview');
@@ -146,7 +146,7 @@ describe('every page', () => {
     const navLook = await page.locator('nav').evaluate((el) => ({ bar: getComputedStyle(el).scrollbarWidth }));
     expect(navLook.bar).toBe('none');                                      // no scroll bar drawn in the menu
     await page.locator('nav [data-tour="hub-build"]').click();
-    expect(await page.locator('.subtabs .subtab').allInnerTexts()).toEqual(['Buildings', 'Research', 'Shipyard', 'Defense', 'Tech tree', 'Resources', 'Upgrades']);       // in this order
+    expect(await page.locator('.subtabs .subtab').allInnerTexts()).toEqual(['Buildings', 'Research', 'Shipyard', 'Defense', 'Tech tree', 'Resources', 'Lifeform', 'Upgrades']);       // in this order
     expect(await page.locator('.subtab.active').innerText()).toBe('Buildings');
     await page.locator('.subtabs [data-tour="nav-research"]').click();
     await page.locator('nav [data-tour="hub-home"]').click();
@@ -1142,6 +1142,19 @@ describe('the admin', () => {
     await boost.getByText(/Running/).waitFor();
     await go('Buildings');
     await page.locator('.items .card').first().waitFor();
+    noErrors();
+  });
+
+  run('the Lifeform tab settles a people on the planet and raises a structure', async () => {
+    await go('Lifeform');
+    await page.getByRole('heading', { name: 'Choose a people' }).waitFor();
+    await page.locator('section.card', { has: page.getByRole('heading', { name: /Humans/ }) }).getByRole('button', { name: /Settle the Humans/ }).click();
+    const residential = page.locator('section.card', { has: page.getByRole('heading', { name: /Residential Sector/ }) });
+    await residential.waitFor();
+    await residential.getByRole('button', { name: 'Raise to 1' }).click();
+    await residential.getByText('+3 building fields').waitFor();
+    await go('Overview');
+    await page.locator('.herorole', { hasText: 'Humans' }).waitFor();
     noErrors();
   });
 

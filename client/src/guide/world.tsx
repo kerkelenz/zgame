@@ -40,6 +40,19 @@ export const WORLD: Topic[] = [
     ),
   },
   {
+    id: 'lifeforms', title: 'Lifeforms: the people of a planet',
+    body: (
+      <ul>
+        <li>On the <b>Lifeform</b> tab (under Build) each planet is settled by one of four peoples, and you raise their structures with resources from that planet, up to level 12 each. The first choice on a planet is free; starting over with another people on the same planet costs a great deal (a few hours of a mid-game income) and loses the structures. Moons have no people.</li>
+        <li><b>Humans</b> (builders and scholars): <i>Residential Sector</i> +3 building fields per level, <i>Research Annex</i> 2% shorter research per level, <i>Solar Gardens</i> +3% energy, <i>Planning Office</i> 2% shorter building times, <i>Warehouses</i> +4% storage.</li>
+        <li><b>Rock'tal</b> (miners): <i>Deep Bore Station</i> +3% metal per level, <i>Crystal Smelter</i> +3% crystal, <i>Gas Pumps</i> +3% Vespene Gas, <i>Rock Vaults</i> +5% storage, <i>Stone Fortress</i> 3% less taken when the planet is raided.</li>
+        <li><b>Mechas</b> (industry): <i>Assembly Lines</i> 3% shorter ship and defense production per level, <i>Fabrication Bay</i> 2% shorter building times, <i>Fusion Core</i> +4% energy, <i>Refinery Drones</i> +3% Vespene Gas, <i>Drone Hangars</i> +2 building fields.</li>
+        <li><b>Kaelesh</b> (dreamers): <i>Spice Gardens</i> +4% crystal per level, <i>Aether Looms</i> +4% energy, <i>Dream Archive</i> 3% shorter research, <i>Glass Vaults</i> +3% storage, <i>Silent Docks</i> 2% shorter ship and defense production.</li>
+        <li>The effects work on that planet only (research time counts for research started there) and add to everything else: officers, classes, Upgrades and projects. What you spend counts as points in your standing.</li>
+      </ul>
+    ),
+  },
+  {
     id: 'upgrades', title: 'Upgrades: queues, projects, boosts and monuments',
     body: (
       <ul>
