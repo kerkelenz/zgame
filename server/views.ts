@@ -29,7 +29,7 @@ export function planetView(w: World, planet: Planet, now: number) {
   updatePlanet(w, planet, now);
   const prod = planetProduction(w, planet);
   return {
-    id: planet.id, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon, parentId: planet.parentId ?? null, role: planet.role ?? null, look: assignLook(planet),
+    id: planet.id, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon, parentId: planet.parentId ?? null, role: planet.role ?? null, look: assignLook(planet, w),
     jumpReadyAt: planet.jumpReadyAt ?? 0,
     forge: forgeView(w, planet, w.players[planet.ownerId]),
     maxTemp: planet.maxTemp, isHome: planet.isHome, buildings: planet.buildings, resources: planet.resources,

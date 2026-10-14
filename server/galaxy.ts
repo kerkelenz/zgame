@@ -54,6 +54,7 @@ export function createPlanet(w: World, owner: Player, coords: Coords, opts: { ho
   };
   w.planets[planet.id] = planet;
   owner.planetIds.push(planet.id);
+  assignLook(planet, w);
   return planet;
 }
 
@@ -86,6 +87,7 @@ export function createMoon(w: World, parent: Planet, now: number, chance = 0.05,
   };
   w.planets[moon.id] = moon;
   owner.planetIds.push(moon.id);
+  assignLook(moon, w);
   return moon;
 }
 
@@ -164,9 +166,9 @@ export function galaxyView(w: World, viewer: Player, g: number, s: number, now =
     slots.push({
       p,
       debris,
-      moon: moon ? { id: moon.id, name: moon.name, look: assignLook(moon) } : null,
+      moon: moon ? { id: moon.id, name: moon.name, look: assignLook(moon, w) } : null,
       planet: {
-        id: pl.id, name: pl.name, look: assignLook(pl), owner: owner.username, ownerId: owner.id, alliance: ally,
+        id: pl.id, name: pl.name, look: assignLook(pl, w), owner: owner.username, ownerId: owner.id, alliance: ally,
         mine: owner.id === viewer.id,
         relation: owner.id === viewer.id ? null : sameAlliance(w, viewer.id, owner.id) ? 'ally' : atWar(w, viewer.id, owner.id) ? 'war' : friendly(w, viewer.id, owner.id) ? 'pact' : null,
         npc: owner.npc?.status ?? null,

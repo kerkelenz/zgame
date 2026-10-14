@@ -23,9 +23,9 @@ export function profileView(w: World, id: string, now: number) {
     alliance: ally ? { tag: ally.tag, name: ally.name } : null,
     faction: faction ? FACTION_BY_ID[faction]?.name ?? null : null,
     charClass: CHAR_CLASSES.find((c) => c.id === p.charClass)?.name ?? null,
-    home: home ? home.coords : null, homeName: home?.name ?? null, homeLook: home ? assignLook(home) : null, planets: colonyCount(w, p),
+    home: home ? home.coords : null, homeName: home?.name ?? null, homeLook: home ? assignLook(home, w) : null, planets: colonyCount(w, p),
     // planet positions are public knowledge (anyone can browse the galaxy), so the profile lists them
-    locations: p.planetIds.map((id) => w.planets[id]).filter(Boolean).map((pl) => ({ name: pl.name, coords: pl.coords, moon: !!pl.isMoon, look: assignLook(pl) })),
+    locations: p.planetIds.map((id) => w.planets[id]).filter(Boolean).map((pl) => ({ name: pl.name, coords: pl.coords, moon: !!pl.isMoon, look: assignLook(pl, w) })),
     joinedAt: p.createdAt, activity: p.npc ? null : activityOf(w, p, now), vacation: !!p.vacation,
     points: playerPoints(w, p), stats: p.stats, ranks,
     achievements: ACHIEVEMENTS.filter((a) => p.achievements[a.id]).map((a) => ({ id: a.id, name: a.name, desc: a.desc, doneAt: p.achievements[a.id] })),

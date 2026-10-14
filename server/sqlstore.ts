@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { DEFAULT_CONFIG, type UniverseConfig } from '../shared/config';
-import { migrateLooks } from './looks';
+import { dedupeLooks, migrateLooks } from './looks';
 import { migratePlayer, type World } from './world';
 
 /**
@@ -15,7 +15,7 @@ type Doc = { kind: string; id: string; json: string };
 
 const COLLECTIONS = ['players', 'planets', 'movements', 'wrecks', 'alliances', 'shared'] as const;
 const LISTS = ['messages', 'chat', 'reports'] as const;
-const SCALARS = ['version', 'config', 'createdAt', 'nextRaidAt', 'nextNpcTick', 'rngSeed', 'season', 'hallOfFame', 'debris', 'sessions', 'sessionAt', 'sectors', 'invasion', 'invasionCount', 'nextInvasionAt', 'invasionHistory', 'wars', 'operations', 'looksAssigned', 'forges', 'market', 'outposts', 'auditLog', 'scheduledAnnouncements', 'dailyStats', 'standingDay', 'vapid'] as const;
+const SCALARS = ['version', 'config', 'createdAt', 'nextRaidAt', 'nextNpcTick', 'rngSeed', 'season', 'hallOfFame', 'debris', 'sessions', 'sessionAt', 'sectors', 'invasion', 'invasionCount', 'nextInvasionAt', 'invasionHistory', 'wars', 'operations', 'looksAssigned', 'looksDeduped', 'forges', 'market', 'outposts', 'auditLog', 'scheduledAnnouncements', 'dailyStats', 'standingDay', 'vapid'] as const;
 
 const hashOf = (s: string) => createHash('sha1').update(s).digest('base64');
 
@@ -97,6 +97,7 @@ export class SqlStore {
     world.config = { ...DEFAULT_CONFIG, ...world.config, ...overrides };
     world.debris ??= {}; world.sessions ??= {};
     migrateLooks(world);
+    dedupeLooks(world);
     for (const p of Object.values(world.players)) migratePlayer(p);
     return world;
   }

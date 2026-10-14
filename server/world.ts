@@ -362,6 +362,8 @@ export interface World {
   wars?: War[];
   /** looks were pinned on the worlds that existed when they were introduced */
   looksAssigned?: boolean;
+  /** commanders' worlds that shared a look were given distinct ones, once */
+  looksDeduped?: boolean;
   /** what admins did, newest first; announcements waiting to go out; accounts created and commanders seen per day */
   auditLog?: import('./adminlog').AuditEntry[];
   scheduledAnnouncements?: import('./adminlog').ScheduledAnnouncement[];
