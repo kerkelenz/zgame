@@ -94,13 +94,15 @@ export interface PlayerStats {
   buildingsDone: number; researchDone: number; shipsBuilt: number; spyReports: number; delivered: number;
   /** Void invasions fought in (and won, with a real share of the damage), and total damage dealt to the Armada */
   invasionsWon: number; voidDamage: number;
+  /** Void invasion work outside the front: value of aliens destroyed at home, value of supplies delivered, waves scouted */
+  voidHome: number; voidSupplied: number; voidScouts: number;
 }
 export interface Tribute { id: string; npc: string; want: Res; deadline: number; answered: false | 'paid' | 'refused' | 'ignored' }
 export interface HistoryPoint { t: number; points: number; rank: number; fleet: number }
 export type NpcStatus = 'inactive' | 'active' | 'aggressive';
 export interface NpcInfo { status: NpcStatus; seedPoints: number; faction: FactionId | null }
 
-export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0, destroyed: 0, plundered: 0, harvested: 0, ipmKills: 0, moonsDestroyed: 0, buildingsDone: 0, researchDone: 0, shipsBuilt: 0, spyReports: 0, delivered: 0, invasionsWon: 0, voidDamage: 0 });
+export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0, battlesLost: 0, expeditions: 0, destroyed: 0, plundered: 0, harvested: 0, ipmKills: 0, moonsDestroyed: 0, buildingsDone: 0, researchDone: 0, shipsBuilt: 0, spyReports: 0, delivered: 0, invasionsWon: 0, voidDamage: 0, voidHome: 0, voidSupplied: 0, voidScouts: 0 });
 
 export function blankPlayer(id: string, username: string, now: number, extra: Partial<Player> = {}): Player {
   return {
@@ -128,8 +130,46 @@ export interface BuildOrder { id: string; name: string; steps: BuildStep[] }
 export interface AutoRules { energy: boolean; storage: boolean; defense: { on: boolean; unit: string; count: number; maxSharePct: number } }
 
 /** A Void Armada event: one shared boss fleet every commander fights together. */
+export interface InvasionWave {
+  index: number;
+  kind: import('../shared/aliens').AlienKindId;
+  name: string;
+  share: number;
+  fleet: Fleet;
+  value: number;
+  status: 'pending' | 'active' | 'cleared';
+  /** when it arrives if the one before has not been cleared sooner */
+  scheduledAt: number;
+  appearedAt?: number;
+  clearedAt?: number;
+}
+export interface Contribution {
+  damage: number; lost: number; battles: number;
+  /** value of aliens destroyed at home (own planets and ones defended for allies) */
+  home?: number;
+  /** value of supplies delivered to the front, and convoys that arrived */
+  supplied?: number; convoys?: number;
+  /** waves scouted (the first look at a wave, and the first exact look) */
+  scouts?: number;
+}
 export interface Invasion {
   number: number;
+  /** the waves, the one on the field and when the next comes */
+  waves?: InvasionWave[];
+  waveIndex?: number;
+  nextWaveAt?: number;
+  /** what the whole invasion is worth, all waves together */
+  totalValue?: number;
+  /** what scouts have learned of each wave, by wave index; `fleet` only when it was an exact look */
+  scouted?: Record<number, { by: string; at: number; exact: boolean; fleet?: Fleet }>;
+  /** supplies waiting at the front, spent on repairs before each engagement, and the ships each commander lost last time */
+  supply?: Res;
+  lastLoss?: Record<string, Fleet>;
+  repaired?: number;
+  /** alien strike teams sent at planets */
+  strikes?: number;
+  /** the last engagement, for the replay */
+  last?: { at: number; wave: number; rounds: number; winner: string; roundLog: unknown[]; roundStats: unknown[] };
   phase: 'announced' | 'active';
   announcedAt: number; startsAt: number; endsAt: number;
   rift: Coords;
@@ -137,9 +177,9 @@ export interface Invasion {
   level: number;
   startFleet: Fleet; fleet: Fleet; startValue: number;
   nextEngageAt: number; round: number;
-  contrib: Record<string, { damage: number; lost: number; battles: number }>;
+  contrib: Record<string, Contribution>;
 }
-export interface InvasionRecord { number: number; result: 'won' | 'lost'; startedAt: number; endedAt: number; startValue: number; rounds: number; top: { name: string; damage: number }[]; topAlliance: { tag: string; damage: number } | null }
+export interface InvasionRecord { number: number; result: 'won' | 'lost'; startedAt: number; endedAt: number; startValue: number; rounds: number; top: { name: string; damage: number }[]; topAlliance: { tag: string; damage: number } | null; waves?: number; wavesCleared?: number; strikes?: number; supplied?: number }
 
 export interface Planet {
   id: string;
@@ -184,6 +224,8 @@ export type FleetPhase = 'outbound' | 'holding' | 'returning';
 
 export interface Movement {
   id: string;
+  /** an alien strike team of a Void invasion, with its technology levels and the wave it came with */
+  alien?: { wave: number; weapons: number; shielding: number; armour: number };
   /** the target asked their alliance for help with this fleet (once) */
   helpAsked?: boolean;
   /** null = NPC raiders */

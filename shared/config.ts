@@ -49,6 +49,11 @@ export interface UniverseConfig {
   invasionDurationHours: number;
   /** minutes between engagements at the front */
   invasionEngageMinutes: number;
+  /** how many waves an invasion has (1 = a single Armada), the chance each active commander is hit by a strike team per wave, their strength, and the pause after a wave is cleared (minutes) */
+  invasionWaves: number;
+  invasionHomeShare: number;
+  invasionStrikeStrength: number;
+  invasionBreatherMinutes: number;
   /** the Armada's size as a share of all commanders' combat fleets (by resource value) when it is announced */
   invasionStrength: number;
   /** hours a Moon Forge takes (0 = the Moon Forge is switched off) */
@@ -84,6 +89,10 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   invasionAnnounceHours: 12,
   invasionDurationHours: 24,
   invasionEngageMinutes: 30,
+  invasionWaves: 4,
+  invasionHomeShare: 0.5,
+  invasionStrikeStrength: 1,
+  invasionBreatherMinutes: 20,
   invasionStrength: 0.35,
   invasionMinPlayers: 2,
   warHours: 48,

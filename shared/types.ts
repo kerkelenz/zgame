@@ -31,7 +31,9 @@ export type Coords = { g: number; s: number; p: number };
 
 export type Mission =
   | 'attack' | 'transport' | 'deploy' | 'espionage' | 'colonize'
-  | 'recycle' | 'expedition' | 'hold' | 'missile' | 'destroy' | 'invade';
+  | 'recycle' | 'expedition' | 'hold' | 'missile' | 'destroy' | 'invade'
+  /** probes to the Void rift (what is coming), and a supply convoy to the front */
+  | 'scout' | 'supply';
 
 export interface Requirement { id: BuildingId | TechId; level: number }
 

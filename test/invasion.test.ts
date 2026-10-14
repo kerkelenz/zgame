@@ -13,7 +13,7 @@ let w: World; let a: Player, b: Player, c: Player;
 let pa: Planet, pb: Planet;
 
 beforeEach(() => {
-  w = createWorld({ economySpeed: 20, fleetSpeed: 100, protectionPoints: 0, raidIntervalMin: 0, npcDensity: 0, invasionIntervalHours: 72, invasionMinPlayers: 2 }, T0);
+  w = createWorld({ economySpeed: 20, fleetSpeed: 100, protectionPoints: 0, raidIntervalMin: 0, npcDensity: 0, invasionIntervalHours: 72, invasionMinPlayers: 2, invasionWaves: 1 }, T0);
   [a, b, c] = ['ann', 'bob', 'cat'].map((n) => register(w, n, 'secret1', T0).player);
   for (const p of [a, b, c]) { p.techs = { combustionDrive: 6, impulseDrive: 5, computer: 6, weapons: 3, shielding: 3, armour: 3 }; }
   pa = w.planets[a.planetIds[0]]; pb = w.planets[b.planetIds[0]];

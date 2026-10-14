@@ -62,6 +62,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'moonbreaker', name: 'Moonbreaker', desc: 'Destroy a moon with your Deathstars.', reward: 300, test: (_w, p) => p.stats.moonsDestroyed >= 1 },
   { id: 'diplomat', name: 'Diplomat', desc: 'Join a faction.', reward: 200, test: (_w, p) => !!p.faction },
   { id: 'voidslayer', name: 'Void Slayer', desc: 'Help destroy a Void Armada.', reward: 250, test: (_w, p) => p.stats.invasionsWon >= 1 },
+  { id: 'voidguardian', name: 'Void Guardian', desc: 'Destroy 1,000,000 resources of Void strike teams at home.', reward: 200, test: (_w, p) => p.stats.voidHome >= 1_000_000 },
+  { id: 'voidquartermaster', name: 'Void Quartermaster', desc: 'Deliver 500,000 resources of supplies to the front.', reward: 200, test: (_w, p) => p.stats.voidSupplied >= 500_000 },
+  { id: 'voidscout', name: 'Void Scout', desc: 'Scout the Void rift three times.', reward: 150, test: (_w, p) => p.stats.voidScouts >= 3 },
   { id: 'topTen', name: 'Top Ten', desc: 'Reach the top 10 of the highscore.', reward: 500, test: (w, p) => rankOf(w, p.id) <= 10 },
 ];
 

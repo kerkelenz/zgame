@@ -8,7 +8,7 @@ import { Card, CoordLink, Countdown, ItemIcon, Tip, coordStr, fmt } from '../ui'
 
 const MISSION: Record<string, string> = {
   attack: 'Attack', transport: 'Transport', deploy: 'Deploy', espionage: 'Espionage', colonize: 'Colonize', recycle: 'Recycle debris',
-  expedition: 'Expedition', hold: 'Defend ally', missile: 'Missile strike', destroy: 'Moon destruction', invade: 'Void invasion',
+  expedition: 'Expedition', hold: 'Defend ally', missile: 'Missile strike', destroy: 'Moon destruction', invade: 'Void invasion', scout: 'Scout the rift', supply: 'Supply convoy',
 };
 const KEY = 'zg.eventsHidden';
 const unitName = (id: string) => UNITS[id as UnitId]?.name ?? id;

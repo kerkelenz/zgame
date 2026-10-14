@@ -12,7 +12,7 @@ import { IntelText } from './FleetEvents';
 import { Card, CoordLink, coordStr, Countdown, fmt, fmtDur, Page, PlanetLink, PlayerLink, ItemIcon } from '../ui';
 
 const MISSIONS: [Mission, string][] = [
-  ['attack', 'Attack'], ['invade', 'Join the invasion front (Void Armada)'], ['destroy', 'Destroy moon (Deathstars)'], ['transport', 'Transport'], ['deploy', 'Deploy'], ['hold', 'Defend ally (hold)'],
+  ['attack', 'Attack'], ['invade', 'Join the invasion front (Void Armada)'], ['scout', 'Scout the Void rift (probes)'], ['supply', 'Supply convoy to the front (cargo ships)'], ['destroy', 'Destroy moon (Deathstars)'], ['transport', 'Transport'], ['deploy', 'Deploy'], ['hold', 'Defend ally (hold)'],
   ['espionage', 'Espionage'], ['colonize', 'Colonize'], ['recycle', 'Recycle debris'], ['expedition', 'Expedition'],
 ];
 
@@ -230,7 +230,7 @@ export function FleetPage() {
               </label>
               <label>Mission
                 <select value={mission} onChange={(e) => setMission(e.target.value as Mission)}>
-                  {MISSIONS.filter(([id]) => id !== 'invade' || me.invasion?.phase === 'active').map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+                  {MISSIONS.filter(([id]) => (id !== 'invade' || me.invasion?.phase === 'active') && ((id !== 'scout' && id !== 'supply') || !!me.invasion)).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
                 </select>
               </label>
               <label>Speed

@@ -58,7 +58,7 @@ export function intelFields(w: World, viewer: Player, m: Movement): { intel: Int
 }
 
 /** missions whose fleet flies home after the job */
-const RETURNS: Mission[] = ['attack', 'espionage', 'recycle', 'transport', 'destroy'];
+const RETURNS: Mission[] = ['attack', 'espionage', 'recycle', 'transport', 'destroy', 'scout', 'supply'];
 
 export function fleetEvents(w: World, viewer: Player): FleetEvent[] {
   const mine = new Set(viewer.planetIds.map((id) => w.planets[id]?.coords).filter(Boolean) as Coords[]);

@@ -1,5 +1,6 @@
 import { EXPEDITION_HOURS, TECHS, UNITS, resName, SHIP_IDS, DEFENSE_IDS, BUILDING_IDS, TECH_IDS, isShip, isStationary } from '../shared/data';
 import { allianceEvent } from './allianceLog';
+import { creditStrike, deliverSupply, scoutRift } from './alien';
 import {
   addRes, cargoCapacity, canAfford, distance, flightSeconds, fleetSpeed, fuelUse, lvl, sameCoords, subRes, totalRes, zeroRes,
 } from '../shared/formulas';
@@ -77,8 +78,13 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   const toMoon = !!req.toMoon;
   const expedition = mission === 'expedition';
   const invade = mission === 'invade';
-  if (!inBounds(w, to, expedition || invade)) throw new GameError('Invalid destination');
-  if (invade) {
+  const toRift = mission === 'scout' || mission === 'supply';
+  if (!inBounds(w, to, expedition || invade || toRift)) throw new GameError('Invalid destination');
+  if (toRift) {
+    const inv = w.invasion;
+    if (!inv) throw new GameError('There is no invasion: no rift to ' + (mission === 'scout' ? 'scout' : 'supply'));
+    if (!sameCoords(to, inv.rift)) throw new GameError(`The Void rift is at ${fmt(inv.rift)}`);
+  } else if (invade) {
     const inv = w.invasion;
     if (!inv || inv.phase !== 'active') throw new GameError('There is no invasion to fight right now');
     if (!sameCoords(to, inv.rift)) throw new GameError(`The Void rift is at ${fmt(inv.rift)}`);
@@ -99,6 +105,12 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   let joinLead: Movement | undefined;
 
   switch (mission) {
+    case 'scout':
+      if (!has('espionageProbe')) throw new GameError('Scouting the rift needs Espionage Probes');
+      break;
+    case 'supply':
+      if (cargoFor(player, ships) <= 0) throw new GameError('A supply convoy needs cargo ships');
+      break;
     case 'invade':
       if (!SHIP_IDS.some((id) => has(id) && UNITS[id].attack > 1)) throw new GameError('Your fleet has no combat ships');
       break;
@@ -168,7 +180,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     crystal: Math.max(0, Math.floor(req.cargo?.crystal || 0)),
     deuterium: Math.max(0, Math.floor(req.cargo?.deuterium || 0)),
   };
-  if (mission === 'attack' || mission === 'espionage' || mission === 'invade' || mission === 'destroy') { cargo.metal = cargo.crystal = cargo.deuterium = 0; }
+  if (mission === 'attack' || mission === 'espionage' || mission === 'invade' || mission === 'destroy' || mission === 'scout') { cargo.metal = cargo.crystal = cargo.deuterium = 0; }
   const cap = cargoFor(player, ships);
   if (totalRes(cargo) > cap) throw new GameError(`Cargo exceeds capacity (${num(cap)})`);
   const need = addRes(cargo, { metal: 0, crystal: 0, deuterium: plan.fuel });
@@ -192,7 +204,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     if (joinLead.ownerId && joinLead.ownerId !== player.id) notifyPlayer(w, joinLead.ownerId, 'alliance', 'Ally joined your attack', `${player.username} joined your attack on ${fmt(to)} with ${fleetCount(ships)} ships.`);
   }
   w.movements[m.id] = m;
-  if (mission !== 'expedition' && mission !== 'deploy') rememberTarget(player, to);
+  if (mission !== 'expedition' && mission !== 'deploy' && mission !== 'scout' && mission !== 'supply') rememberTarget(player, to);
 
   if ((mission === 'attack' || mission === 'destroy') && targetOwner) {
     notifyPlayer(w, targetOwner.id, 'system', 'Hostile fleet detected', `${player.username} is attacking ${target!.name} ${fmt(to)} with a fleet from ${w.planets[m.fromPlanetId ?? '']?.name ?? 'unknown'} ${fmt(m.from)}. ETA ${new Date(m.arriveAt).toLocaleTimeString()}.`);
@@ -326,6 +338,8 @@ function arrive(w: World, m: Movement, at: number) {
       bus.push({ to: target.ownerId, type: 'refresh' });
       return;
     }
+    case 'scout': scoutRift(w, m, at); sendHome(m, at); return;
+    case 'supply': deliverSupply(w, m, at); if (fleetCount(m.ships)) sendHome(m, at); else delete w.movements[m.id]; return;
     case 'invade': {
       const inv = w.invasion;
       if (!inv || inv.phase !== 'active') {
@@ -486,7 +500,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   for (const h of holders) defenders.push(combatant(w, w.players[h.ownerId!], h.ownerName, h.ships));
 
   const rng = makeRng(Math.floor(Math.random() * 2 ** 31));
-  const res: CombatResult = simulateCombat(group.map((m) => combatant(w, attackerOf(m), m.ownerName, m.ships)), defenders, rng, { debrisRatio: debrisShare(attackerOf(lead)) });
+  const res: CombatResult = simulateCombat(group.map((m) => (m.alien ? { ...combatant(w, null, m.ownerName, m.ships), weapons: m.alien.weapons, shielding: m.alien.shielding, armour: m.alien.armour } : combatant(w, attackerOf(m), m.ownerName, m.ships))), defenders, rng, { debrisRatio: debrisShare(attackerOf(lead)) });
 
   const planetAfter = res.defenders[0].after;
   target.fleet = onlyShips(planetAfter);
@@ -506,6 +520,7 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   const moonOdds = moonPossible ? moonChance(field) : null;
   const newMoon = maybeCreateMoon(w, target, field, at);
   const leadPlayer = attackerOf(lead);
+  if (lead.alien) creditStrike(w, lead, res, defOwner.id, holders.map((h) => h.ownerId!).filter(Boolean));
   {
     const result = res.winner === 'attacker' ? 'the attackers won' : res.winner === 'defender' ? 'the defense held' : 'it ended in a draw';
     allianceEvent(w, defOwner.id, res.winner === 'attacker' ? 'attack' : 'defense', `${defOwner.username}'s ${target.name} [${lead.to.g}:${lead.to.s}:${lead.to.p}] was attacked by ${lead.ownerName}: ${result}.`, at);
