@@ -22,7 +22,7 @@ interface Spot { id: string; k: number; x: number; y: number }
 /** where each picture stands: types in blocks, columns running away from the middle, centred up and down */
 function formation(plan: IconPlan, side: Side): Spot[] {
   const order = Object.keys(plan.icons).sort((x, y) => plan.icons[y] - plan.icons[x]);
-  const rows = Math.max(1, Math.min(7, Math.ceil(Object.values(plan.icons).reduce((a, b) => a + b, 0) / 4)));
+  const rows = Math.max(1, Math.min(6, Math.ceil(Object.values(plan.icons).reduce((a, b) => a + b, 0) / 4)));
   const out: Spot[] = [];
   let slot = 0;
   for (const id of order) for (let k = 0; k < plan.icons[id]; k++, slot++) {
