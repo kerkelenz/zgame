@@ -531,3 +531,9 @@ nav .hubitem.active { background: #f0a93b22; border-color: var(--accent); color:
 .navstick.compact .pcur .muted { display: none; }
 .navstick.compact .pstrip { margin-bottom: 4px; padding: 3px 6px; }
 @media (max-width: 760px) { .navstick { margin: -10px -10px 8px; padding: 8px 10px 0; top: -10px; } }
+
+/* ---- invasion waves ---- */
+.waves { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 4px; }
+.wave { padding: 4px 8px; border-left: 3px solid var(--line); border-radius: 0; }
+.wave.active { border-left-color: #ff6b8a; background: rgba(255, 107, 138, .08); }
+.wave.cleared { border-left-color: #5fd28a; }

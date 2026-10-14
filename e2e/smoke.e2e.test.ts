@@ -852,6 +852,50 @@ describe('advice, planners and alliance tools', () => {
     noErrors();
   });
 
+  run('the Invasion page shows the waves, intelligence, strike teams, supplies, a replay and the boards', async () => {
+    const now = Date.now(), MIN = 60_000;
+    const wave = (i: number, name: string, status: string, known: boolean, extra: object = {}) => ({ index: i, name, status, scheduledAt: now + i * 3_600_000, appearedAt: null, clearedAt: null, kind: known ? 'bio' : null, label: known ? 'Bio-ships' : 'Unknown', hint: known ? 'They regrow 15% of their fleet before every engagement.' : 'Scout the rift with probes to learn what is coming.', value: known ? 5_000_000 : null, exact: known, fleet: known ? { cruiser: 100 } : null, scoutedBy: null, ...extra });
+    const board = { total: 0, rows: [] };
+    const d = {
+      history: [{ number: 1, result: 'won', startedAt: now - 9e7, endedAt: now - 8e7, startValue: 9_000_000, rounds: 7, top: [{ name: 'ann', damage: 5000 }], topAlliance: null, waves: 4, wavesCleared: 4 }],
+      next: null, engageMinutes: 30, reward: { base: 600, perParticipant: 100, cap: 3000, floor: 25, lossDivisor: 3, minShare: 0.005, weights: { damage: 0.5, home: 0.2, supply: 0.2, scout: 0.1 }, relief: 0.15 }, supply: { repairShare: 0.5, riskBase: 0.1 },
+      active: {
+        number: 2, phase: 'active', announcedAt: now - 3e7, startsAt: now - 3e6, endsAt: now + 8e7, rift: { g: 1, s: 20, p: 16 }, level: 5, round: 3, nextEngageAt: now + 20 * MIN, nextWaveAt: now + 90 * MIN, waveIndex: 1, waveCount: 4,
+        waves: [wave(0, 'Scouts', 'cleared', true, { label: 'Swarm', kind: 'swarm' }), wave(1, 'Assault 1', 'active', true), wave(2, 'Assault 2', 'pending', false), wave(3, 'Mothership', 'pending', false)],
+        boss: { fleet: { cruiser: 100 }, startFleet: { cruiser: 200 }, value: 2_700_000, startValue: 5_400_000, onField: true },
+        kind: { id: 'bio', label: 'Bio-ships', hint: 'They regrow 15% of their fleet before every engagement.' },
+        supply: { metal: 5000, crystal: 3000, deuterium: 1000, repaired: 123_456 },
+        strikes: { sent: 5, onTheWay: [{ id: 's1', to: { g: 1, s: 5, p: 6 }, arriveAt: now + 10 * MIN, wave: 1, mine: true, value: 400_000 }] },
+        last: { at: now - 5 * MIN, wave: 1, rounds: 3, winner: 'attacker', roundLog: [{ a: { cruiser: 10 }, d: { cruiser: 20 } }, { a: { cruiser: 9 }, d: { cruiser: 12 } }, { a: { cruiser: 9 }, d: { cruiser: 5 } }], roundStats: [1, 2].map((n) => ({ attackers: { shots: 10 * n, damage: 100, absorbed: 10, hullDamage: 90, destroyed: n }, defenders: { shots: 5, damage: 50, absorbed: 5, hullDamage: 45, destroyed: 1 } })) },
+        mine: { damage: 12345, lost: 1000, share: 0.4, battles: 2, home: 600, supplied: 300, convoys: 1, scouts: 2, reward: 0.31 },
+        players: [], boards: { damage: { total: 100, rows: [{ rank: 1, id: 'x', name: 'pilot_one', value: 100, share: 1, you: true }] }, home: board, supply: board, scout: board }, alliances: [], front: [], participants: 1,
+        combined: { fleets: 1, commanders: 1, value: 1_000_000 }, total: 100,
+      },
+      now,
+    };
+    await page.route('**/api/invasion', async (route) => { await route.fulfill({ json: d }); });
+    await page.evaluate(() => { location.hash = '#/invasion'; });
+    await page.getByRole('heading', { name: 'Void invasion' }).waitFor({ timeout: 15_000 });
+    expect(await page.locator('li.wave').count()).toBe(4);
+    const text = await page.locator('main').innerText();
+    expect(text).toMatch(/wave 2 of 4/);
+    expect(text).toMatch(/Bio-ships/);
+    expect(text).toMatch(/Unknown/);                                                // the waves nobody has scouted
+    expect(text).toMatch(/regrow 15%/);
+    expect(text).toMatch(/A strike team \(400,000\) hits/);
+    expect(await page.locator('main a', { hasText: '[1:5:6]' }).count()).toBeGreaterThanOrEqual(1);   // where it hits is a link
+    expect(text).toMatch(/Supplies at the front/);
+    expect(text).toMatch(/123,456/);
+    expect(text).toMatch(/Your share of the rewards so far: 31%/);
+    for (const t of ['At the front (damage)', 'At home (aliens destroyed)', 'Supplies delivered', 'Scouting reports', 'Earlier invasions']) expect(text, t).toContain(t);
+    await page.getByRole('button', { name: /Watch the replay/ }).click();
+    await page.locator('.replay canvas').waitFor();
+    await page.getByRole('button', { name: 'Scout the rift' }).first().click();
+    await page.getByRole('heading', { name: 'Fleet' }).first().waitFor();
+    await page.unroute('**/api/invasion');
+    noErrors();
+  });
+
   run('the tech tree cards can be walked with the arrow keys', async () => {
     await go('Tech tree');
     await page.locator('.icard').first().waitFor();

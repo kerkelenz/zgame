@@ -3,6 +3,15 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-t', date: '2026-10-15', title: 'The Void invasion is a campaign',
+    items: [
+      'Invasions come in waves (four by default): Scouts, Assaults and the Mothership. A wave arrives on schedule or soon after you destroy the one before. Each wave is a kind of alien with a weakness: swarms, shield-breakers, bio-ships that regrow, armoured carriers.',
+      'Everyone has a job. Fleets fight at the rift together as before. Planets beat off alien strike teams that head for them with every wave (soft losses, never for newcomers or players on vacation). Probes can scout the rift and tell everyone what the next wave is. Cargo ships can fly supply convoys that rebuild ships lost at the front.',
+      'Rewards follow all four jobs: damage, aliens destroyed at home, supplies delivered and scouting. Part of the ships you lose at the front comes back as resources. New achievements: Void Guardian, Void Quartermaster and Void Scout.',
+      'The Invasion page shows the wave timeline, what scouts have learned, strike teams on the way to your planets, the supplies, a replay of the last engagement, your work and a board for each job. New missions on the Fleet page: Scout the Void rift and Supply convoy to the front.',
+    ],
+  },
+  {
     id: '2026-10-s', date: '2026-10-15', title: 'A clearer planet bar',
     items: [
       'Every planet is a chip with its picture, name, role and coordinates, with its moon as a smaller part of the same chip. Small tags show what needs you: an attack on the way, an idle queue, time left on a build, a full store, low energy.',

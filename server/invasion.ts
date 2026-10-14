@@ -354,5 +354,5 @@ export function invasionView(w: World, viewerId: string, now: number) {
   };
 }
 
-export const invasionBanner = (w: World) => (w.invasion ? { phase: w.invasion.phase, startsAt: w.invasion.startsAt, endsAt: w.invasion.endsAt, rift: w.invasion.rift, number: w.invasion.number } : null);
+export const invasionBanner = (w: World) => (w.invasion ? { phase: w.invasion.phase, startsAt: w.invasion.startsAt, endsAt: w.invasion.endsAt, rift: w.invasion.rift, number: w.invasion.number, wave: (w.invasion.waveIndex ?? 0) + 1, waves: w.invasion.waves?.length ?? 1 } : null);
 export type { AlienKindId, Res };
