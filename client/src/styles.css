@@ -130,6 +130,8 @@ tr.gap td { text-align: center; color: var(--muted); }
 a.itemlink { color: inherit; text-decoration: underline dotted #8a96b5; text-underline-offset: 3px; cursor: pointer; }
 a.itemlink:hover { color: var(--accent); text-decoration-color: var(--accent); }
 img.icon.big { width: 96px; height: 96px; }
+img.icon.hero { width: 240px; height: 240px; max-width: 100%; border-radius: 12px; object-fit: cover; }
+@media (max-width: 640px) { .cardtop:has(img.icon.hero) { flex-direction: column; } }
 .dwrap { overflow-x: auto; }
 table.dtable { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
 table.dtable th { position: sticky; top: 0; background: var(--panel); font-size: 11.5px; line-height: 1.25; white-space: normal; vertical-align: bottom; }

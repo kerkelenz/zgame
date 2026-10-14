@@ -10,6 +10,7 @@ import { canAfford, lvl, scaleRes } from '../../../shared/formulas';
 import type { BuildingId, Res, TechId, UnitId } from '../../../shared/types';
 import { post } from '../api';
 import { Art } from '../art';
+import { artFile } from '../artFiles';
 import { useGame } from '../game';
 import { fmtCell, fmtDelta } from '../../../shared/format';
 import { Card, Cost, ItemLink, Page, fmt, fmtDur } from '../ui';
@@ -147,7 +148,7 @@ export function ItemDetail() {
         <div className="row">{back}<span className="muted small">{isB ? 'Building' : 'Research'}</span></div>
         <Card>
           <div className="cardtop">
-            <img className="icon big" src={Art.icon(isB ? 'building' : 'tech', id, def.name)} alt="" />
+            <img className={artFile(id) ? "icon big hero" : "icon big"} src={Art.icon(isB ? 'building' : 'tech', id, def.name)} alt="" />
             <div>
               <Explain id={id} fallback={def.desc} />
               <p className="muted">{isB ? `Level on ${planet.name}:` : 'Your level:'} <b className="energy">{cur}</b>{!isB && TECHS[id as TechId].energyReq ? ` · needs ${fmt(TECHS[id as TechId].energyReq! * 3 ** cur)} energy production for level ${cur + 1}` : ''}</p>
@@ -218,7 +219,7 @@ export function ItemDetail() {
       <div className="row">{back}<span className="muted small">{kind === 'ship' ? 'Ship' : 'Defense'}{u.missile ? ' · stored in the missile silo' : ''}</span></div>
       <Card>
         <div className="cardtop">
-          <img className="icon big" src={Art.icon(kind === 'ship' ? 'ship' : 'defense', id, u.name)} alt="" />
+          <img className={artFile(id) ? "icon big hero" : "icon big"} src={Art.icon(kind === 'ship' ? 'ship' : 'defense', id, u.name)} alt="" />
           <div>
             <Explain id={id} fallback={u.desc} />
             <p className="muted">On {planet.name}: <b className="energy">{fmt(owned)}</b></p>
