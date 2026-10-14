@@ -637,3 +637,13 @@ tr.picked td { background: #2fa0ff18; }
 .navstick.compact .pcur .muted { display: none; }
 .navstick.compact .pres .fullin { display: none; }
 .pres .prn { white-space: nowrap; }
+
+/* ---- the switcher (many planets) carries the stock too: in the bar for the selected world, short amounts in every row of the list ---- */
+.pswitch .pres { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 0 4px; }
+.pswitch .pres .pr { grid-template-columns: 16px auto 44px; }
+.ppop .pres { flex-direction: row; gap: 10px; padding: 0 0 0 4px; margin-left: auto; }
+.ppop .pres .pfull { display: none; } .ppop .pres .pshort { display: inline; }
+.ppop .pres .prbar, .ppop .pres .prE, .ppop .pres .fullin { display: none; }
+.ppop .pres .pr { grid-template-columns: 14px auto; gap: 3px; }
+.ppop .prow { flex-wrap: wrap; }
+.navstick.compact .pswitch .pres .prbar { display: none; }

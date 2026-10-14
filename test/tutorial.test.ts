@@ -23,7 +23,7 @@ describe('the tutorial steps', () => {
     for (const s of STEPS) {
       if (!s.target) continue;
       const m = /^(nav|build|link)-(.+)$/.exec(s.target);
-      if (!m) { expect(sources.includes(`data-tour="${s.target}"`) || sources.includes(` tour="${s.target}"`), s.target).toBe(true); continue; }
+      if (!m) { expect(sources.includes(`data-tour="${s.target}"`) || sources.includes(` tour="${s.target}"`) || sources.includes(`data-tour={tour ? '${s.target}' : undefined}`), s.target).toBe(true); continue; }
       if (m[1] === 'nav') { expect(navIds.has(m[2]), s.target).toBe(true); expect(sources).toContain('data-tour={`nav-${'); }
       if (m[1] === 'build') { expect(m[2] in BUILDINGS, s.target).toBe(true); expect(sources).toContain('data-tour={`build-${id}`}'); }
       if (m[1] === 'link') { expect(m[2] in BUILDINGS || m[2] in TECHS, s.target).toBe(true); expect(sources).toContain('data-tour={`link-${id}`}'); }

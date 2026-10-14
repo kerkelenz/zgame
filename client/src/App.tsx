@@ -22,8 +22,6 @@ import { NotificationBell } from './NotificationBell';
 import { IdleChip } from './AdviceCard';
 import { markChangelogSeen, unseenRelease } from './changelog';
 import { AlertStrip } from './AlertStrip';
-import { ResourceBar } from './ResourceBar';
-import { MAX_CHIPS } from './planetBar';
 import { Alliance } from './pages/Alliance';
 import { Chat } from './pages/Chat';
 import { Command } from './pages/Command';
@@ -155,7 +153,6 @@ export function App() {
         <Sidebar />
         <main id="main" tabIndex={-1}>
           <NavStick>
-            {worldGroups(planets).length > MAX_CHIPS && <ResourceBar />}
             <PlanetStrip />
             <SubTabs />
           </NavStick>

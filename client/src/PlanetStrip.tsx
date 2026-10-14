@@ -92,6 +92,7 @@ export function PlanetStrip() {
       </button>
       <button className="parrow" onClick={() => step(1)} aria-label="Next planet" title="Next planet (])">▶</button>
       <span className="pmeta"><CoordLink c={planet.coords} /><Tags tags={tagsFor(planet)} /></span>
+      <PlanetRes w={planet} tour />
       {open && (
         <div className="ppop" role="dialog" aria-label="All planets">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or coordinates" aria-label="Search planets" autoFocus />
@@ -106,8 +107,9 @@ export function PlanetStrip() {
                       <span className="ptext"><b>{p.name}</b>{roleLabel(p) && <span className="prole">{roleLabel(p)}</span>}</span>
                     </button>
                     <span className="pmeta"><CoordLink c={p.coords} /><Tags tags={tagsFor(p)} /></span>
+                    <PlanetRes w={p} energy={false} />
                   </div>
-                  {moon && <div className="pchild">{moonChip(moon)}</div>}
+                  {moon && <div className="pchild">{moonChip(moon)}{moonRes(moon)}</div>}
                 </li>
               );
             })}
