@@ -31,8 +31,8 @@ button.active { background: #f0a93b26; border-color: var(--accent); }
 .top { display: flex; align-items: center; gap: 16px; padding: 8px 14px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .brand { font-family: var(--f-display); font-weight: 800; letter-spacing: .18em; color: var(--accent); text-transform: uppercase; }
 h1, h2, h3 { font-family: var(--f-display); }
-.top .res { display: flex; gap: 14px; flex: 1; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
-.top .res small { color: var(--muted); }
+.res { display: flex; gap: 14px; flex: 1; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.res small { color: var(--muted); }
 .who .tag { color: var(--energy); }
 .alertbar { background: #5a1d1d; color: #ffd6d6; padding: 6px 14px; cursor: pointer; text-align: center; }
 .body { display: flex; flex: 1; min-height: 0; }
@@ -99,7 +99,7 @@ tr.mine td { background: #1d4f8f22; }
   /* wide tables scroll inside themselves instead of dragging the whole page sideways */
   main table { display: block; max-width: 100%; overflow-x: auto; white-space: nowrap; }
   .top { gap: 8px; padding: 6px 10px; }
-  .top .res { gap: 8px; font-size: 13px; }
+  .res { gap: 8px; font-size: 13px; }
 }
 
 /* ---- empires, progression, art ---- */
@@ -184,7 +184,7 @@ label.check input { width: auto; }
   .top { flex-wrap: wrap; }
   .top .brand { display: none; }
   .top select { max-width: 100%; flex: 1 1 100%; }
-  .top .res { flex-wrap: wrap; flex: 1 1 100%; }
+  .res { flex-wrap: wrap; flex: 1 1 100%; }
   .top .who { flex: 1 1 100%; justify-content: space-between; }
   nav { position: sticky; top: 0; z-index: 5; padding: 6px; }
   nav button { padding: 8px 10px; }
@@ -203,11 +203,11 @@ label.check input { width: auto; }
 
 /* resource pictures */
 .ri { display: inline-block; vertical-align: -3px; margin-right: 3px; flex-shrink: 0; }
-.top .res .ri { width: 20px; height: 20px; vertical-align: -5px; filter: drop-shadow(0 0 3px rgba(255,255,255,.12)); }
+.res .ri { width: 20px; height: 20px; vertical-align: -5px; filter: drop-shadow(0 0 3px rgba(255,255,255,.12)); }
 .deut .ri { filter: drop-shadow(0 0 4px rgba(125,255,74,.45)); }
 
 label.row { flex-direction: row; align-items: center; gap: 6px; color: var(--text); font-size: 14px; }
-@media (min-width: 761px) { .top .res { flex-wrap: nowrap; gap: 12px; white-space: nowrap; } .top select { max-width: 240px; } }
+@media (min-width: 761px) { .res { flex-wrap: nowrap; gap: 12px; white-space: nowrap; } .top select { max-width: 240px; } }
 
 /* territory map */
 .sectormap { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 4px; }
@@ -478,7 +478,7 @@ nav .hubitem.active { background: #f0a93b22; border-color: var(--accent); color:
   .subtab { white-space: nowrap; padding: 8px 12px; }
   .pname { display: none; }
 }
-@media (min-width: 761px) { .psearch input { width: 140px; } .top .who { white-space: nowrap; } .top .res { gap: 10px; } }
+@media (min-width: 761px) { .psearch input { width: 140px; } .top .who { white-space: nowrap; } .res { gap: 10px; } }
 
 /* ---- planet bar: chips with a moon as a child, and the switcher for many planets ---- */
 .pstrip { align-items: stretch; gap: 8px; flex-wrap: wrap; overflow: visible; position: relative; }
@@ -570,9 +570,9 @@ tr.picked td { background: #2fa0ff18; }
 
 /* ---- phone: a slimmer top bar, and the galaxy list as cards instead of a table that hides its buttons ---- */
 @media (max-width: 760px) {
-  .top .res { gap: 10px; font-size: 12.5px; flex-wrap: nowrap; justify-content: space-between; }
-  .top .res small:not(.fullin) { display: none; }
-  .top .res .ri { width: 16px; height: 16px; vertical-align: -3px; }
+  .res { gap: 10px; font-size: 12.5px; flex-wrap: nowrap; justify-content: space-between; }
+  .res small:not(.fullin) { display: none; }
+  .res .ri { width: 16px; height: 16px; vertical-align: -3px; }
   main table.galaxy { display: block; overflow: visible; white-space: normal; }
   table.galaxy thead { display: none; }
   table.galaxy tbody { display: block; }
@@ -606,3 +606,7 @@ tr.picked td { background: #2fa0ff18; }
 .alertlist .alertrow .alerttext { white-space: normal; }
 .alertstrip:has(.alertrow.danger) { background: #3a1616; }
 @media (max-width: 760px) { .alertstrip { padding: 0 10px; font-size: 12.5px; } .alertx, .alertmore { min-height: 28px; } }
+
+/* the resources sit with the planet cards, in the sticky area */
+.navstick .res { margin: 0 0 8px; padding: 0 2px; }
+.navstick.compact .res { margin-bottom: 4px; }

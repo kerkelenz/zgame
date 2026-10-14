@@ -129,9 +129,9 @@ describe('first visit', () => {
     } finally { await c2.close(); }
   });
 
-  run('the top bar shows the three resources with their pictures', async () => {
-    expect(await page.locator('header.top .res .ri').count()).toBeGreaterThanOrEqual(3);
-    expect(await page.locator('header.top .res').textContent()).toMatch(/\d/);
+  run('the resources, next to the planet cards, show the three resources with their pictures', async () => {
+    expect(await page.locator('.navstick .res .ri').count()).toBeGreaterThanOrEqual(3);
+    expect(await page.locator('.navstick .res').textContent()).toMatch(/\d/);
   });
 });
 
