@@ -9,7 +9,8 @@ import { CommandPalette } from './CommandPalette';
 import { CHORDS, cycleId, isTypingTarget } from './palette';
 import { fullState, timeToFull } from './afford';
 import { resName } from '../../shared/data';
-import { isOpen, loadCollapsed, saveCollapsed, setAllGroups, useShowAllPages, visibleNav } from './nav';
+import { Breadcrumb, PlanetStrip, Sidebar, SubTabs } from './NavParts';
+import { rememberPage } from './nav';
 import { Tour } from './Tour';
 import { MobileBar } from './MobileBar';
 import { Tutorial } from './Tutorial';
@@ -47,9 +48,7 @@ import { Resources } from './pages/Resources';
 export function App() {
   useLang();
   const [whatsNew, setWhatsNew] = useState(unseenRelease());
-  const [collapsed, setCollapsed] = useState(loadCollapsed);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const showAll = useShowAllPages();
   const g = useGame();
   const stars = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -59,6 +58,7 @@ export function App() {
     return () => window.removeEventListener('resize', draw);
   }, []);
   const { me, planet, planets, page, setPage, live, toasts, fleets, offline } = g;
+  useEffect(() => rememberPage(page), [page]);                    // a hub opens the page you were last on in it
   // keyboard: Ctrl+K palette, / search, [ ] planets, g + letter pages, ? help
   const latest = useRef({ g, setPaletteOpen });
   latest.current = { g, setPaletteOpen };
@@ -132,13 +132,6 @@ export function App() {
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <header className="top">
         <div className="brand">Zgame</div>
-        <span className="planetnav">
-          <button title="Previous planet ([)" aria-label="Previous planet" onClick={() => g.selectPlanet(cycleId(planets.map((p) => p.id), planet.id, -1))}>◀</button>
-          <button title="Next planet (])" aria-label="Next planet" onClick={() => g.selectPlanet(cycleId(planets.map((p) => p.id), planet.id, 1))}>▶</button>
-        </span>
-        <select value={planet.id} onChange={(e) => g.selectPlanet(e.target.value)}>
-          {planets.map((p) => <option key={p.id} value={p.id}>{p.isMoon ? '🌙 ' : ''}{p.name} {coordStr(p.coords)}</option>)}
-        </select>
         <div className="res" data-tour="resources">
           {(['metal', 'crystal', 'deuterium'] as const).map((k) => {
             const ms = timeToFull(live[k], planet.production[k], planet.capacity[k]);
@@ -174,30 +167,13 @@ export function App() {
         </div>
       )}
       <div className="body">
-        <nav>
-          <div className="navtools">
-            <button onClick={() => { const next = setAllGroups(true); setCollapsed(next); saveCollapsed(next); }} title={t('nav.expandAll', 'Open every group')}>{t('nav.expandAll', 'Expand all')}</button>
-            <button onClick={() => { const next = setAllGroups(false); setCollapsed(next); saveCollapsed(next); }} title={t('nav.collapseAll', 'Close every group (the one you are in stays open)')}>{t('nav.collapseAll', 'Collapse all')}</button>
-          </div>
-          {visibleNav(me.features, showAll, !!me.player.admin, page).map((grp) => {
-            const open = isOpen(grp.id, collapsed, page);
-            const badge = (id: string) => (id === 'messages' ? me.unread : id === 'contracts' ? me.contractsClaimable : id === 'invasion' && me.invasion ? '!' : 0) || 0;
-            const closedBadge = grp.items.reduce((sum, it) => sum + (badge(it.id) === '!' ? 1 : Number(badge(it.id))), 0);
-            return (
-              <div key={grp.id} className={`navgroup${open ? '' : ' closed'}`}>
-                <button className="navhead" aria-expanded={open} onClick={() => { const next = { ...collapsed, [grp.id]: open }; setCollapsed(next); saveCollapsed(next); }}>
-                  <span>{open ? '▾' : '▸'} {t(`nav.group.${grp.id}`, grp.label)}</span>{!open && closedBadge > 0 && <b className="badge">{closedBadge}</b>}
-                </button>
-                {grp.items.map((it) => (
-                  <button key={it.id} data-tour={`nav-${it.id}`} className={`navitem${page === it.id ? ' active' : ''}`} onClick={() => setPage(it.id)}>
-                    {t(`nav.${it.id}`, it.label)}{badge(it.id) !== 0 && <b className="badge">{badge(it.id)}</b>}
-                  </button>
-                ))}
-              </div>
-            );
-          })}
-        </nav>
-        <main id="main" tabIndex={-1}>{page_}</main>
+        <Sidebar />
+        <main id="main" tabIndex={-1}>
+          <PlanetStrip />
+          <SubTabs />
+          <Breadcrumb />
+          {page_}
+        </main>
       </div>
       <MobileBar />
       <div className="toasts" role="status" aria-live="polite">

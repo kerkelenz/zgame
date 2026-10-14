@@ -5,16 +5,17 @@ import * as AL from '../server/alliance';
 import { featuresOf } from '../server/features';
 import { announceInvasion, finish } from '../server/invasion';
 import { createWorld, type Planet, type Player, type World } from '../server/world';
-import { NAV_GROUPS, groupOfPage, isOpen, setAllGroups, visibleNav, type Features } from '../client/src/nav';
+import { NAV_GROUPS, breadcrumb, groupOfPage, hubTarget, isPlanetPage, tabOfItem, visibleNav, type Features } from '../client/src/nav';
 
 const none: Features = { automation: false, territory: false, invasion: false, simulator: false };
 const ids = (f: Features | undefined, showAll = false, admin = false, current?: string) => visibleNav(f, showAll, admin, current).flatMap((g) => g.items.map((i) => i.id));
 
-describe('the menu', () => {
-  it('lists every page exactly once', () => {
+describe('the navigation', () => {
+  it('lists every page exactly once, under a hub', () => {
     const all = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
     expect(new Set(all).size).toBe(all.length);
     expect(all).toEqual(expect.arrayContaining(['overview', 'resources', 'buildings', 'research', 'techtree', 'shipyard', 'defense', 'automation', 'fleet', 'galaxy', 'invasion', 'simulator', 'empire', 'economy', 'contracts', 'command', 'alliance', 'territory', 'contacts', 'messages', 'chat', 'highscore', 'settings', 'guide', 'news', 'admin']));
+    expect(NAV_GROUPS.map((g) => g.id)).toEqual(['home', 'build', 'fleet', 'galaxy', 'inbox', 'alliance', 'more']);
   });
 
   it('has a page behind every entry', () => {
@@ -28,7 +29,7 @@ describe('the menu', () => {
     for (const shown of ['overview', 'fleet', 'galaxy', 'contracts', 'alliance', 'messages', 'settings', 'guide', 'news']) expect(base, shown).toContain(shown);
     expect(ids({ ...none, territory: true })).toContain('territory');
     expect(ids({ ...none, automation: true, invasion: true, simulator: true })).toEqual(expect.arrayContaining(['automation', 'invasion', 'simulator']));
-    expect(ids(undefined)).not.toContain('automation');                      // before the first server answer nothing optional shows
+    expect(ids(undefined)).not.toContain('automation');
   });
 
   it('can show everything, and always shows the page you are on', () => {
@@ -41,48 +42,59 @@ describe('the menu', () => {
     expect(ids(none, false, true)).toContain('admin');
   });
 
-  it('drops a group that has nothing to show', () => {
+  it('keeps every hub for a newcomer, each with something to show', () => {
     const groups = visibleNav(none, false, false);
-    expect(groups.map((g) => g.id)).toEqual(['planet', 'space', 'empire', 'social', 'more']);
+    expect(groups.map((g) => g.id)).toEqual(['home', 'build', 'fleet', 'galaxy', 'inbox', 'alliance', 'more']);
     expect(groups.every((g) => g.items.length > 0)).toBe(true);
   });
 });
 
-describe('open and closed groups', () => {
-  it('maps pages that are not in the menu to the group they were opened from', () => {
-    expect(groupOfPage('buildings')).toBe('planet');
-    expect(groupOfPage('highscore')).toBe('social');
-    expect(groupOfPage('detail')).toBe('planet');
-    expect(groupOfPage('profile')).toBe('social');
+describe('which hub a page belongs to', () => {
+  it('knows the hub of every tab, and of the pages that are not tabs', () => {
+    expect(groupOfPage('buildings')).toBe('build');
+    expect(groupOfPage('techtree')).toBe('build');
+    expect(groupOfPage('messages')).toBe('inbox');
+    expect(groupOfPage('highscore')).toBe('alliance');
+    expect(groupOfPage('detail')).toBe('build');
+    expect(groupOfPage('profile')).toBe('alliance');
     expect(groupOfPage('news')).toBe('more');
-    expect(groupOfPage('who-knows')).toBe('planet');
+    expect(groupOfPage('who-knows')).toBe('home');
   });
-
-  it('starts with only the Planet group open, remembers choices, and keeps the current group open', () => {
-    expect(isOpen('planet', {}, 'overview')).toBe(true);
-    expect(isOpen('space', {}, 'overview')).toBe(false);
-    expect(isOpen('space', { space: false }, 'overview')).toBe(true);       // the player opened it
-    expect(isOpen('planet', { planet: true }, 'overview')).toBe(true);      // the page you are on keeps its group open even if you "collapsed" it
-    expect(isOpen('planet', { planet: true }, 'fleet')).toBe(false);        // but once you leave, the choice applies
-    expect(isOpen('social', {}, 'profile')).toBe(true);
+  it('says whether a page is about the selected planet', () => {
+    for (const p of ['overview', 'buildings', 'resources', 'research', 'shipyard', 'defense', 'fleet', 'detail']) expect(isPlanetPage(p), p).toBe(true);
+    for (const p of ['empire', 'economy', 'galaxy', 'messages', 'alliance', 'settings', 'techtree']) expect(isPlanetPage(p), p).toBe(false);
   });
 });
 
-describe('collapse all and expand all', () => {
-  it('opens every group, whatever was saved before', () => {
-    const all = setAllGroups(true);
-    for (const g of NAV_GROUPS) expect(isOpen(g.id, all, 'overview'), g.id).toBe(true);
+describe('where a hub takes you', () => {
+  const groups = visibleNav(none, false, false);
+  it('opens the first page, or the one you were last on in it when it is still there', () => {
+    expect(hubTarget('build', groups, {})).toBe('buildings');
+    expect(hubTarget('build', groups, { build: 'research' })).toBe('research');
+    expect(hubTarget('build', groups, { build: 'automation' })).toBe('buildings');         // that page is not unlocked (any more)
+    expect(hubTarget('inbox', groups, { build: 'research' })).toBe('messages');
+    expect(hubTarget('nope', groups, {})).toBe('overview');
   });
+});
 
-  it('closes every group except the one holding the current page', () => {
-    const none = setAllGroups(false);
-    for (const g of NAV_GROUPS) expect(isOpen(g.id, none, 'overview'), g.id).toBe(g.id === 'planet');
-    expect(isOpen('social', none, 'alliance')).toBe(true);
-    expect(isOpen('planet', none, 'alliance')).toBe(false);
+describe('the tab an item sits under', () => {
+  it('puts buildings, research, ships and defenses under their own pages', () => {
+    expect(tabOfItem('metalMine')).toBe('buildings');
+    expect(tabOfItem('laser')).toBe('research');
+    expect(tabOfItem('cruiser')).toBe('shipyard');
+    expect(tabOfItem('rocketLauncher')).toBe('defense');
+    expect(tabOfItem('nope')).toBeUndefined();
+    expect(tabOfItem(null)).toBeUndefined();
   });
+});
 
-  it('covers every group', () => {
-    expect(Object.keys(setAllGroups(true)).sort()).toEqual(NAV_GROUPS.map((g) => g.id).sort());
+describe('the breadcrumb', () => {
+  it('names the hub and the tab, and the item on a details page', () => {
+    expect(breadcrumb('buildings')).toEqual([{ label: 'Build', page: 'buildings' }, { label: 'Buildings' }]);
+    expect(breadcrumb('detail', 'Metal Mine', 'buildings')).toEqual([{ label: 'Build', page: 'buildings' }, { label: 'Buildings', page: 'buildings' }, { label: 'Metal Mine' }]);
+    expect(breadcrumb('detail', 'Metal Mine')).toEqual([{ label: 'Build', page: 'buildings' }, { label: 'Metal Mine' }]);
+    expect(breadcrumb('galaxy')).toEqual([{ label: 'Galaxy', page: 'galaxy' }]);           // a hub with one page needs no second step
+    expect(breadcrumb('profile', 'Alice')).toEqual([{ label: 'Alliance', page: 'alliance' }, { label: 'Standing', page: 'highscore' }, { label: 'Alice' }]);
   });
 });
 

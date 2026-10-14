@@ -3,6 +3,14 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-r', date: '2026-10-14', title: 'A new menu',
+    items: [
+      'The long side menu is now seven hubs that are always showing: Home, Build, Fleet, Galaxy, Inbox, Alliance and More. The pages of a hub are tabs along the top, and a hub opens the page you were last on in it. Messages has its own hub with an unread count instead of hiding under Social.',
+      'Your planets and moons are a strip of pictures under the top bar (it replaces the planet list). It dims on pages that are not about a single planet.',
+      'Item and commander pages show a trail (Build > Buildings > Metal Mine) and keep their tab lit. On a phone the same hubs are the bottom bar, with the Alliance hub and the rest under More. Expand all and Collapse all are gone, since nothing folds any more.',
+    ],
+  },
+  {
     id: '2026-10-q', date: '2026-10-14', title: 'Expedition chart',
     items: [
       'The Fleet page has an Expeditions chart: your planet in the middle, a spoke out to deep space for each expedition with the ship riding along it (orange out, purple exploring, green coming home), a timeline for each fleet with the time left, when it is home, its ships and cargo, a Recall button, and your latest five expedition results.',

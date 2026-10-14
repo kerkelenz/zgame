@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Browser, BrowserContext, Page } from 'playwright-core';
 import { launchBrowser, startServer, type TestServer } from './harness';
+import { NAV_GROUPS } from '../client/src/nav';
 
 /**
  * Smoke tests in a real browser against a real server: register through the form, open every page on desktop and phone,
@@ -30,14 +31,13 @@ afterAll(async () => { await browser?.close(); await server?.stop(); });
 const run = (name: string, fn: () => Promise<void>) => it(name, async (ctxT) => { if (!browser) { ctxT.skip(); return; } await fn(); }, 90_000);
 const noErrors = () => { expect(errors, errors.join('\n')).toEqual([]); };
 const heading = () => page.locator('main h1, main h2').first();
+const hubOf = (label: string) => NAV_GROUPS.find((g) => g.items.some((i) => i.label === label))!;
 const go = async (label: string) => {
-  // open whichever group holds the page, then click it
-  const item = page.locator('nav .navitem', { hasText: new RegExp(`^${label}(?![A-Za-z])`) }).first();
-  if (!(await item.isVisible())) {
-    const closed = page.locator('nav .navgroup.closed .navhead');
-    for (let i = 0; i < (await closed.count()); i++) { await closed.first().click(); if (await item.isVisible()) break; }
-  }
-  await item.click();
+  // click the hub that holds the page if its tab is not showing, then the tab (a hub with one page has none)
+  const hub = hubOf(label), item = hub.items.find((i) => i.label === label)!;
+  const tab = page.locator('.subtabs [data-tour="nav-' + item.id + '"]');
+  if (!(await tab.isVisible().catch(() => false))) await page.locator('nav [data-tour="hub-' + hub.id + '"]').click();
+  if (await tab.isVisible().catch(() => false)) await tab.click();
 };
 const register = async (name: string) => {
   await page.goto(server.base + '/');
@@ -84,7 +84,7 @@ describe('first visit', () => {
       expect(await p2.locator('.tutspot').isVisible()).toBe(true);
       await p2.getByRole('button', { name: 'Next', exact: true }).click();
       await expect.poll(title).toBe('Open Buildings');
-      await p2.locator('.navitem[data-tour="nav-buildings"]').click();                      // pressing the real thing moves it on
+      await p2.locator('nav [data-tour="hub-build"]').click();                      // pressing the real thing moves it on
       await expect.poll(title).toBe('Build a Metal Mine');
       await p2.locator('[data-tour="build-metalMine"]').click();
       await expect.poll(title).toBe('The construction queue');
@@ -112,20 +112,30 @@ describe('first visit', () => {
 describe('every page', () => {
   const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Empire', 'Economy', 'Contracts', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
 
-  run('collapse all and expand all work on the side menu', async () => {
+  run('the menu is a handful of hubs, each with its pages as tabs, and a hub opens the page you were last on', async () => {
     await go('Overview');
-    const navLook = await page.locator('nav').evaluate((el) => ({ bar: getComputedStyle(el).scrollbarWidth, width: el.getBoundingClientRect().width }));
+    expect(await page.locator('nav .hubitem > span:nth-child(2)').allInnerTexts()).toEqual(['Home', 'Build', 'Fleet', 'Galaxy', 'Inbox', 'Alliance', 'More']);
+    expect(await page.locator('nav .hubitem.active').innerText()).toMatch(/Home/);
+    const navLook = await page.locator('nav').evaluate((el) => ({ bar: getComputedStyle(el).scrollbarWidth }));
     expect(navLook.bar).toBe('none');                                      // no scroll bar drawn in the menu
-    expect(navLook.width).toBeGreaterThanOrEqual(165);
-    await page.getByRole('button', { name: 'Collapse all' }).click();
-    expect(await page.locator('nav .navgroup.closed').count()).toBe(await page.locator('nav .navgroup').count() - 1);    // the group you are in stays open
-    await page.getByRole('button', { name: 'Expand all' }).click();
-    expect(await page.locator('nav .navgroup.closed').count()).toBe(0);
-    await page.reload();
-    await page.waitForSelector('header.top');
-    expect(await page.locator('nav .navgroup.closed').count()).toBe(0);                                                  // remembered
-    await page.getByRole('button', { name: 'Collapse all' }).click();
-    await page.getByRole('button', { name: 'Expand all' }).click();
+    await page.locator('nav [data-tour="hub-build"]').click();
+    expect(await page.locator('.subtabs .subtab').allInnerTexts()).toEqual(expect.arrayContaining(['Buildings', 'Resources', 'Research', 'Shipyard', 'Defense', 'Tech tree']));
+    expect(await page.locator('.subtab.active').innerText()).toBe('Buildings');
+    await page.locator('.subtabs [data-tour="nav-research"]').click();
+    await page.locator('nav [data-tour="hub-home"]').click();
+    await page.locator('nav [data-tour="hub-build"]').click();            // back to where you were in Build
+    expect(await page.locator('.subtab.active').innerText()).toBe('Research');
+    // an item page keeps its tab lit and shows the trail
+    await page.locator('.subtabs [data-tour="nav-buildings"]').click();
+    await page.locator('.items .card a.itemlink', { hasText: 'Solar Plant' }).first().click();
+    await page.getByRole('heading', { name: 'Solar Plant' }).first().waitFor();
+    expect(await page.locator('.subtab.active').innerText()).toBe('Buildings');
+    expect(await page.locator('.crumbs').innerText()).toMatch(/Build\s*›\s*Buildings\s*›\s*Solar Plant/);
+    // the planet strip shows your planets as pictures and dims on pages that are not about one planet
+    expect(await page.locator('.pstrip .pthumb').count()).toBeGreaterThanOrEqual(1);
+    expect(await page.locator('.pstrip.dim').count()).toBe(0);
+    await go('Empire');
+    expect(await page.locator('.pstrip.dim').count()).toBe(1);
     noErrors();
   });
 
@@ -142,13 +152,14 @@ describe('every page', () => {
 
   run('pages that are held back appear when the switch in Settings is on, and the choice survives a reload', async () => {
     const held = ['Automation', 'Territory', 'Invasion'];
-    for (const label of held) expect(await page.locator('nav .navitem', { hasText: new RegExp(`^${label}`) }).count(), `${label} should be hidden at first`).toBe(0);
+    const tabs = async (label: string) => { await page.locator('nav [data-tour="hub-' + hubOf(label).id + '"]').click(); return page.locator('.subtabs .subtab', { hasText: new RegExp('^' + label) }).count(); };
+    for (const label of held) expect(await tabs(label), label + ' should be hidden at first').toBe(0);
     await go('Settings');
     await page.getByLabel(/Show every page in the menu/).check();
-    for (const label of held) expect(await page.locator('nav .navitem', { hasText: new RegExp(`^${label}`) }).count(), `${label} should appear`).toBe(1);
+    for (const label of held) expect(await tabs(label), label + ' should appear').toBe(1);
     await page.reload();
     await page.waitForSelector('header.top');
-    expect(await page.locator('nav .navitem', { hasText: /^Automation/ }).count()).toBe(1);
+    expect(await tabs('Automation')).toBe(1);
     for (const label of held) { await go(label); await heading().waitFor(); expect(await page.locator('main', { hasText: /Something went wrong/i }).count(), label).toBe(0); }
     noErrors();
   });
@@ -157,19 +168,24 @@ describe('every page', () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.reload();
     await page.waitForSelector('header.top');
-    // on a phone the side menu gives way to a tab bar with the five main pages and a Menu sheet with all of them
+    // on a phone the side menu gives way to a bar with the five main hubs and More for the rest; the pages of a hub are tabs along the top
     expect(await page.locator('.tabbar').isVisible()).toBe(true);
-    expect(await page.locator('nav').isVisible()).toBe(false);
-    const openMenu = async () => { await page.locator('.tabbar button[aria-label="Menu"]').click(); await page.locator('.sheet').waitFor(); };
-    await openMenu();
-    const labels = (await page.locator('.sheetitems button').allInnerTexts()).map((l) => l.replace(/d+$/, '').trim());
+    expect(await page.locator('nav [data-tour="hub-home"]').isVisible()).toBe(false);
+    const bar = ['home', 'build', 'fleet', 'galaxy', 'inbox'];
+    const labels = NAV_GROUPS.flatMap((g) => g.items.filter((i) => !i.admin && !i.feature).map((i) => ({ hub: g.id, id: i.id, label: i.label })));
     expect(labels.length).toBeGreaterThan(15);
-    await page.locator('.sheetback').click({ position: { x: 5, y: 5 } });
-    for (const label of labels) {
-      await openMenu();
-      await page.locator('.sheetitems button', { hasText: new RegExp(`^${label}`) }).first().click();
+    for (const l of labels) {
+      if (bar.includes(l.hub)) {
+        await page.locator('.tabbar [data-tour="hub-' + l.hub + '"]').click();
+        const tab = page.locator('.subtabs [data-tour="nav-' + l.id + '"]');
+        if (await tab.count()) await tab.click();
+      } else {
+        await page.locator('.tabbar button[aria-label="More"]').click();
+        await page.locator('.sheet').waitFor();
+        await page.locator('.sheetitems [data-tour="nav-' + l.id + '"]').click();
+      }
       await heading().waitFor();
-      expect(await overflow(), `${label} scrolls sideways on a phone`).toBeLessThanOrEqual(1);
+      expect(await overflow(), l.label + ' scrolls sideways on a phone').toBeLessThanOrEqual(1);
     }
     await page.locator('.tabbar button[aria-label="Fleet"]').click();
     await page.getByRole('heading', { name: 'Fleet' }).first().waitFor();
@@ -679,7 +695,7 @@ describe('using the game', () => {
     await page.getByRole('button', { name: 'Post', exact: true }).click();
     await page.getByText('Rally at dawn').waitFor();
     // the territory page now exists for an alliance member
-    expect(await page.locator('nav .navitem', { hasText: /^Territory/ }).count()).toBe(1);
+    expect(await page.locator('.subtabs [data-tour="nav-territory"]').count()).toBe(1);
     noErrors();
   });
 

@@ -452,3 +452,30 @@ img.itemicon { vertical-align: middle; border-radius: 4px; object-fit: cover; ma
 .exptime .nowmark { position: absolute; top: -2px; bottom: -2px; width: 3px; margin-left: -1px; background: #fff; box-shadow: 0 0 6px #fff; }
 .expresults { margin: 0; padding-left: 18px; }
 @media (max-width: 860px) { .expmap { grid-template-columns: 1fr; } }
+
+/* ---- navigation: hubs, tabs, breadcrumb, planet strip ---- */
+nav .hubitem { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; font-size: 14px; }
+nav .hubitem .hubicon { width: 20px; text-align: center; font-size: 16px; }
+nav .hubitem .badge { margin-left: auto; }
+nav .hubitem.active { background: #f0a93b22; border-color: var(--accent); color: var(--accent); }
+.subtabs { display: flex; gap: 4px; flex-wrap: wrap; margin: 0 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.subtab { background: transparent; border-color: transparent; padding: 6px 12px; color: var(--muted); }
+.subtab:hover { color: var(--text); }
+.subtab.active { background: var(--panel2); border-color: var(--line); color: var(--accent); font-weight: 600; }
+.crumbs { font-size: 12.5px; margin: -2px 0 10px; color: var(--muted); }
+.crumbs a { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.pstrip { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; padding: 6px 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+.pstrip.dim .pthumb { opacity: .45; }
+.pstrip.dim .pname { opacity: .8; }
+.pgroup { display: inline-flex; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.pthumb { padding: 0; width: 40px; height: 40px; min-height: 0; border-radius: 50%; border: 2px solid transparent; background: none; overflow: hidden; flex-shrink: 0; }
+.pthumb.moon { width: 26px; height: 26px; }
+.pthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pthumb.on { border-color: var(--accent); box-shadow: 0 0 8px rgba(240, 169, 59, .5); }
+.pname { margin-left: auto; white-space: nowrap; font-size: 13px; }
+@media (max-width: 760px) {
+  .subtabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-left: -4px; }
+  .subtab { white-space: nowrap; padding: 8px 12px; }
+  .pname { display: none; }
+}
+@media (min-width: 761px) { .psearch input { width: 140px; } .top .who { white-space: nowrap; } .top .res { gap: 10px; } }

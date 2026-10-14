@@ -1,18 +1,27 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useGame } from './game';
+import { groupOfPage } from './nav';
 import { STEPS, setTutorialStep, settle, stopTutorial, useTutorial } from './tutorialSteps';
 
 interface Box { x: number; y: number; w: number; h: number }
 const PAD = 6;
 
-/** the target, or on a phone the Menu button when the target lives in the (hidden) side menu */
+/**
+ * the target; a page tab that is not showing (you are in another hub) points at the hub that holds it, and on a phone at the More button when the
+ * hub is not in the bar
+ */
 function findTarget(name: string | undefined): { el: HTMLElement | null; viaMenu: boolean } {
   if (!name) return { el: null, viaMenu: false };
   const visible = (e: Element | null): e is HTMLElement => !!e && (e as HTMLElement).getClientRects().length > 0;
-  // the desktop menu and the phone tab bar can both carry the name: whichever one is showing
-  const el = [...document.querySelectorAll(`[data-tour="${name}"]`)].find(visible) ?? null;
+  const find = (n: string) => [...document.querySelectorAll(`[data-tour="${n}"]`)].find(visible) ?? null;
+  const el = find(name);
   if (el) return { el, viaMenu: false };
-  if (name.startsWith('nav-')) { const menu = document.querySelector('[data-tour="nav-menu"]'); if (visible(menu)) return { el: menu, viaMenu: true }; }
+  if (name.startsWith('nav-')) {
+    const hub = find(`hub-${groupOfPage(name.slice(4))}`);
+    if (hub) return { el: hub, viaMenu: false };
+    const more = find('hub-menu');
+    if (more) return { el: more, viaMenu: true };
+  }
   return { el: null, viaMenu: false };
 }
 
@@ -77,7 +86,7 @@ export function Tutorial() {
       <div className="tutnote" ref={tip} style={style} role="dialog" aria-label="Tutorial">
         <div className="muted small">Tutorial · {STEPS.indexOf(step) + 1} of {STEPS.length}</div>
         <h3>{step.title}</h3>
-        <p>{step.text}{viaMenu ? ' (Open the Menu at the bottom first.)' : ''}</p>
+        <p>{step.text}{viaMenu ? ' (It is under More at the bottom.)' : ''}</p>
         {waits && <p className="small tutwait">{box ? 'Do it, and the tutorial carries on.' : 'Waiting for you to do it.'}</p>}
         <div className="row">
           <button className="link" onClick={stopTutorial}>Skip tutorial</button>
