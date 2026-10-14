@@ -17,6 +17,7 @@
     "bench": "tsx server/bench.ts",
     "demo": "tsx server/seed-demo.ts && cross-env ZGAME_SAVE=data/demo-world.json tsx server/index.ts",
     "backup": "tsx server/backup.ts",
+    "art": "tsx scripts/art.ts",
     "e2e": "npm run build && vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {

@@ -95,6 +95,18 @@ Config is stored in the save on first start; env vars override it on later start
 - **Empire page** – every planet and moon on one screen: resources, production, construction, ships, storage warnings.
 - **Live UI** – WebSocket push for alerts/messages/chat, interpolated resource counters, countdowns.
 
+## Artwork
+
+Buildings, research, ships, defenses and resources use a drawn placeholder until a real picture exists. Pictures are generated outside the game and dropped in as files:
+
+```
+npm run art              # progress per category and what is missing
+npm run art -- next 4    # the next 4 missing items with prompts to paste into the image generator
+npm run art -- all       # write art/PROMPTS.md with every prompt
+```
+
+Save each result as `client/src/assets/art/<id>.png` (`.webp` and `.jpg` also work; resources are `res-metal`, `res-crystal`, `res-deuterium`, `res-energy`). The next build bundles it and replaces the placeholder for that item; items without a file keep the placeholder. Prompts come from `shared/artlist.ts`, which reads the item list, so new items appear automatically. Square images, 512 px or so, are plenty: they are shown at 64-96 px.
+
 ## Try it with a demo universe
 
 ```bash

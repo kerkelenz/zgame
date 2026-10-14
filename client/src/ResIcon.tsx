@@ -1,11 +1,14 @@
 import type { ReactNode } from 'react';
 import { resName } from '../../shared/data';
+import { artFile } from './artFiles';
 
 export type ResKey = 'metal' | 'crystal' | 'deuterium';
 
 /** Hand-drawn SVG pictures for the three resources: steel ingots, a cut crystal and a glowing canister of Vespene gas. */
 export function ResIcon({ k, size = 16, title }: { k: ResKey; size?: number; title?: string }) {
   const label = title ?? resName(k);
+  const pic = artFile('res-' + k);
+  if (pic) return <img src={pic} width={size} height={size} className="ri" alt={label} title={label} style={{ borderRadius: 3, objectFit: 'cover' }} />;
   const common = { width: size, height: size, viewBox: '0 0 24 24', className: 'ri', role: 'img', 'aria-label': label } as const;
   if (k === 'metal') {
     return (

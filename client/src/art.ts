@@ -4,6 +4,8 @@
  *     Art.overrides['metalMine'] = 'https://.../mine.png'
  *     Art.overrides['planet:<planetId>'] = 'data:image/png;base64,...'
  */
+import { artFile } from './artFiles';
+
 type Kind = 'building' | 'tech' | 'ship' | 'defense';
 
 function mulberry32(a: number) {
@@ -31,6 +33,8 @@ export const Art = {
   overrides: {} as Record<string, string>,
   icon(kind: Kind, id: string, name: string): string {
     if (this.overrides[id]) return this.overrides[id];
+    const file = artFile(id);
+    if (file) return file;
     const hit = cache.get(id);
     if (hit) return hit;
     const url = drawIcon(kind, id, name);
