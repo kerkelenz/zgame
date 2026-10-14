@@ -27,6 +27,7 @@ import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { buyItem, shopView } from './shop';
 import { outpostList } from './outposts';
+import { audit, auditView, cancelScheduled, scheduleAnnouncement, statsView } from './adminlog';
 import { buyOffer, cancelOffer, listOffer, marketView } from './market';
 import * as AUTO from './automation';
 import { addSubscription, pushToPlayer, pushView, removeSubscription } from './push';
@@ -255,12 +256,14 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     ACC.requireAdmin(req.player!);
     const mins = req.body.delayMinutes === undefined ? 10 : Math.max(0, Math.min(72 * 60, Number(req.body.delayMinutes) || 0));
     announceInvasion(w, now(), mins * 60_000);
+    audit(w, req.player!, 'start invasion', now(), null, `rift opens in ${mins} min`);
     return invasionView(w, req.player!.id, now());
   }));
   A.post('/admin/invasion/end', wrap((req) => {
     ACC.requireAdmin(req.player!);
     if (!w.invasion) throw new GameError('There is no invasion');
     finishInvasion(w, now(), 'lost');
+    audit(w, req.player!, 'end invasion', now());
     return invasionView(w, req.player!.id, now());
   }));
   A.get('/push', wrap((req) => pushView(w, req.player!)));
@@ -281,22 +284,28 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
 
   // ---------------------------------------------------------------- admin
   A.get('/season', wrap(() => seasonView(w, now())));
-  A.post('/admin/season/end', wrap((req) => { ACC.requireAdmin(req.player!); endSeason(w, now(), 'admin'); return seasonView(w, now()); }));
-  A.post('/admin/season/reset', wrap((req) => { ACC.requireAdmin(req.player!); if (!w.season?.ended) throw new GameError('End the season first'); resetSeason(w, now()); return seasonView(w, now()); }));
+  A.post('/admin/season/end', wrap((req) => { ACC.requireAdmin(req.player!); audit(w, req.player!, 'end season', now()); endSeason(w, now(), 'admin'); return seasonView(w, now()); }));
+  A.post('/admin/season/reset', wrap((req) => { ACC.requireAdmin(req.player!); if (!w.season?.ended) throw new GameError('End the season first'); audit(w, req.player!, 'reset universe', now()); resetSeason(w, now()); return seasonView(w, now()); }));
   A.get('/admin/health', wrap((req) => { ACC.requireAdmin(req.player!); return healthView(w, now()); }));
   A.get('/admin/reports', wrap((req) => { ACC.requireAdmin(req.player!); return (w.reports ?? []).filter((r) => !r.resolved).sort((x, y) => y.at - x.at); }));
-  A.post('/admin/reports/resolve', wrap((req) => { ACC.requireAdmin(req.player!); SOC.resolveReport(w, str(req.body.id)); return { ok: true }; }));
+  A.post('/admin/reports/resolve', wrap((req) => { ACC.requireAdmin(req.player!); SOC.resolveReport(w, str(req.body.id)); audit(w, req.player!, 'resolve report', now(), null, str(req.body.id)); return { ok: true }; }));
   const admin = (req: Request) => ACC.requireAdmin(req.player!);
   A.get('/admin/overview', wrap((req) => { admin(req); return ACC.adminOverview(w, now(), (p) => playerPoints(w, p).total); }));
-  A.post('/admin/ban', wrap((req) => { admin(req); ACC.ban(w, str(req.body.id), req.body.hours ? Number(req.body.hours) : null, str(req.body.reason), now()); return { ok: true }; }));
-  A.post('/admin/unban', wrap((req) => { admin(req); ACC.unban(w, str(req.body.id)); return { ok: true }; }));
-  A.post('/admin/mute', wrap((req) => { admin(req); ACC.mute(w, str(req.body.id), req.body.hours ? Number(req.body.hours) : null, str(req.body.reason), now()); return { ok: true }; }));
-  A.post('/admin/unmute', wrap((req) => { admin(req); ACC.unmute(w, str(req.body.id)); return { ok: true }; }));
-  A.post('/admin/announce', wrap((req) => { admin(req); ACC.announce(w, str(req.body.text, 500)); return { ok: true }; }));
+  A.post('/admin/ban', wrap((req) => { admin(req); ACC.ban(w, str(req.body.id), req.body.hours ? Number(req.body.hours) : null, str(req.body.reason), now()); audit(w, req.player!, 'ban', now(), w.players[str(req.body.id)], `${req.body.hours ? Number(req.body.hours) + ' h' : 'permanent'}: ${str(req.body.reason)}`); return { ok: true }; }));
+  A.post('/admin/unban', wrap((req) => { admin(req); ACC.unban(w, str(req.body.id)); audit(w, req.player!, 'unban', now(), w.players[str(req.body.id)]); return { ok: true }; }));
+  A.post('/admin/mute', wrap((req) => { admin(req); ACC.mute(w, str(req.body.id), req.body.hours ? Number(req.body.hours) : null, str(req.body.reason), now()); audit(w, req.player!, 'mute', now(), w.players[str(req.body.id)], `${req.body.hours ? Number(req.body.hours) + ' h' : 'permanent'}: ${str(req.body.reason)}`); return { ok: true }; }));
+  A.post('/admin/unmute', wrap((req) => { admin(req); ACC.unmute(w, str(req.body.id)); audit(w, req.player!, 'unmute', now(), w.players[str(req.body.id)]); return { ok: true }; }));
+  A.post('/admin/announce', wrap((req) => { admin(req); ACC.announce(w, str(req.body.text, 500)); audit(w, req.player!, 'announce', now(), null, str(req.body.text, 500)); return { ok: true }; }));
+  A.get('/admin/audit', wrap((req) => { admin(req); return auditView(w, Number(req.query.limit) || 100); }));
+  A.get('/admin/stats', wrap((req) => { admin(req); return statsView(w, Number(req.query.days) || 14); }));
+  A.get('/admin/schedule', wrap((req) => { admin(req); return w.scheduledAnnouncements ?? []; }));
+  A.post('/admin/schedule', wrap((req) => { admin(req); scheduleAnnouncement(w, req.player!, str(req.body.text, 500), Number(req.body.minutes), Number(req.body.repeatHours) || 0, now()); return w.scheduledAnnouncements ?? []; }));
+  A.post('/admin/schedule/cancel', wrap((req) => { admin(req); cancelScheduled(w, req.player!, str(req.body.id), now()); return w.scheduledAnnouncements ?? []; }));
   A.post('/admin/raid', wrap((req) => {
     admin(req);
     const t = w.players[str(req.body.id)];
     if (!t || t.npc) throw new GameError('No such commander', 404);
+    audit(w, req.player!, 'raid', now(), t);
     return { sent: !!spawnRaid(w, now(), Math.random, { targetPlayerId: t.id }) };
   }));
   A.post('/admin/gift', wrap((req) => {
@@ -305,6 +314,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     if (!t || t.npc) throw new GameError('No such commander', 404);
     const home = w.planets[t.planetIds[0]];
     for (const k of ['metal', 'crystal', 'deuterium'] as const) home.resources[k] += Math.max(0, Math.min(1e12, Math.floor(Number(req.body[k]) || 0)));
+    audit(w, req.player!, 'gift', now(), t, `${Math.floor(Number(req.body.metal) || 0)} metal, ${Math.floor(Number(req.body.crystal) || 0)} crystal, ${Math.floor(Number(req.body.deuterium) || 0)} vespene gas`);
     return { ok: true };
   }));
   A.post('/admin/delete', wrap((req) => {
@@ -312,6 +322,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const t = w.players[str(req.body.id)];
     if (!t || t.npc) throw new GameError('No such commander', 404);
     if (ACC.isAdmin(t)) throw new GameError('Admins cannot be removed here', 403);
+    audit(w, req.player!, 'remove commander', now(), t);
     ACC.removePlayer(w, t);
     return { ok: true };
   }));

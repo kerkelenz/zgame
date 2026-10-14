@@ -1073,4 +1073,17 @@ describe('the admin', () => {
     expect(await page.locator('main').innerText()).toMatch(/Tick \(last \d+\)[\s\S]*Recent errors/);
     noErrors();
   });
+
+  run('the admin schedules an announcement, sees it listed, cancels it and finds the actions in the audit log', async () => {
+    await page.getByLabel('Scheduled message').fill('Server restart tonight');
+    await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+    await page.getByRole('heading', { name: 'Scheduled announcements (1)' }).waitFor();
+    expect(await page.locator('main').innerText()).toMatch(/Server restart tonight/);
+    await page.locator('section.card', { has: page.getByRole('heading', { name: /Scheduled announcements/ }) }).getByRole('button', { name: 'Cancel' }).click();
+    await page.getByRole('heading', { name: 'Scheduled announcements (0)' }).waitFor();
+    await page.getByRole('heading', { name: /Audit log \([1-9]/ }).waitFor();
+    expect(await page.locator('main').innerText()).toMatch(/cancel scheduled announcement/);
+    await page.getByRole('heading', { name: 'Commanders per day' }).waitFor();
+    noErrors();
+  });
 });

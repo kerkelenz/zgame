@@ -362,6 +362,10 @@ export interface World {
   wars?: War[];
   /** looks were pinned on the worlds that existed when they were introduced */
   looksAssigned?: boolean;
+  /** what admins did, newest first; announcements waiting to go out; accounts created and commanders seen per day */
+  auditLog?: import('./adminlog').AuditEntry[];
+  scheduledAnnouncements?: import('./adminlog').ScheduledAnnouncement[];
+  dailyStats?: import('./adminlog').DayStat[];
   /** pirate and alien outposts (undefined until they were first settled) */
   outposts?: import('./outposts').Outpost[];
   /** player market offers (the goods are held back from the seller's planet while an offer stands) */

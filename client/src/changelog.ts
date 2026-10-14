@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-z', date: '2026-10-20', title: 'Admin tools',
+    items: [
+      'Admins get an audit log of every admin action, a list of who is banned or muted, announcements that can be scheduled (once or repeating) and a daily count of new and active commanders.',
+    ],
+  },
+  {
     id: '2026-10-y', date: '2026-10-19', title: 'Pirate and alien outposts',
     items: [
       'Pirate and alien outposts now stand in the galaxy: fixed targets with a garrison that fits the fleets of the day and a treasure to loot. Break one to earn Command Credits and the Outpost Breaker achievement; it is rebuilt a few hours later. The Galaxy page lists them nearest first and can show only outposts.',

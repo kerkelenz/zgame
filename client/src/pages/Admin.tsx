@@ -14,7 +14,14 @@ export function Admin() {
   const [sel, setSel] = useState('');
   const [reports, setReports] = useState<any[]>([]);
   const [inspect, setInspect] = useState<any>(null);
-  const load = useCallback(async () => { setD(await get('/admin/overview')); setReports(await get('/admin/reports')); }, []);
+  const [audit, setAudit] = useState<any[]>([]);
+  const [stats, setStats] = useState<any[]>([]);
+  const [sched, setSched] = useState<any[]>([]);
+  const [plan, setPlan] = useState({ text: '', minutes: 60, repeatHours: 0 });
+  const load = useCallback(async () => {
+    setD(await get('/admin/overview')); setReports(await get('/admin/reports'));
+    setAudit(await get('/admin/audit?limit=60')); setStats(await get('/admin/stats?days=14')); setSched(await get('/admin/schedule'));
+  }, []);
   useEffect(() => { void load(); }, [load]);
   if (!me.player.admin) return <Page title="Admin"><p className="muted">Admins only.</p></Page>;
   if (!d) return <Page title="Admin"><Loading /></Page>;
@@ -45,6 +52,48 @@ export function Admin() {
         <div className="row"><input className="grow" value={text} maxLength={500} placeholder="Message to every commander" onChange={(e) => setText(e.target.value)} />
           <button className="primary" disabled={!text.trim()} onClick={() => void run(() => post('/admin/announce', { text }), 'Announcement sent').then(() => setText(''))}>Send</button></div>
       </Card>
+      <Card title={`Scheduled announcements (${sched.length})`}>
+        <div className="row wrap">
+          <input className="grow" value={plan.text} maxLength={500} placeholder="Message to send later" onChange={(e) => setPlan({ ...plan, text: e.target.value })} aria-label="Scheduled message" />
+          <label className="row small">in <NumInput min={1} value={plan.minutes} onChange={(n) => setPlan({ ...plan, minutes: n })} aria-label="Minutes from now" /> minutes</label>
+          <label className="row small">repeat every <NumInput min={0} value={plan.repeatHours} onChange={(n) => setPlan({ ...plan, repeatHours: n })} aria-label="Repeat every hours" /> hours (0 = once)</label>
+          <button className="primary" disabled={!plan.text.trim()} onClick={() => void run(() => post('/admin/schedule', plan), 'Announcement scheduled').then(() => setPlan({ ...plan, text: '' }))}>Schedule</button>
+        </div>
+        {sched.length === 0 ? <p className="muted small">Nothing is scheduled.</p> : sched.map((a) => (
+          <div key={a.id} className="row between"><span><b>{new Date(a.at).toLocaleString()}</b>{a.repeatHours > 0 && <span className="muted small"> · every {a.repeatHours} h</span>}<div>{a.text}</div></span>
+            <button onClick={() => void run(() => post('/admin/schedule/cancel', { id: a.id }), 'Cancelled')}>Cancel</button></div>
+        ))}
+      </Card>
+      {(() => {
+        const held = d.players.filter((p: any) => p.banned || p.muted);
+        return (
+          <Card title={`Moderation (${held.length})`}>
+            {held.length === 0 ? <p className="muted small">Nobody is banned or muted.</p> : held.map((p: any) => (
+              <div key={p.id} className="row between">
+                <span><PlayerLink id={p.id} name={p.username} />{' '}
+                  {p.banned && <span className="tag bad">banned {p.banned.until ? `until ${new Date(p.banned.until).toLocaleString()}` : 'for good'}</span>}
+                  {p.muted && <span className="tag">muted {p.muted.until ? `until ${new Date(p.muted.until).toLocaleString()}` : 'for good'}</span>}
+                  <span className="muted small"> {p.banned?.reason || p.muted?.reason}</span></span>
+                <span className="row">
+                  {p.banned && <button onClick={() => void run(() => post('/admin/unban', { id: p.id }), 'Unbanned')}>Unban</button>}
+                  {p.muted && <button onClick={() => void run(() => post('/admin/unmute', { id: p.id }), 'Unmuted')}>Unmute</button>}
+                </span>
+              </div>
+            ))}
+          </Card>
+        );
+      })()}
+      <Card title="Commanders per day">
+        {stats.length === 0 ? <p className="muted small">The first numbers appear within a minute.</p> : (
+          <table className="table">
+            <thead><tr><th>Day (UTC)</th><th>New accounts</th><th>Seen</th><th>Came back</th><th /></tr></thead>
+            <tbody>{[...stats].reverse().map((r) => (
+              <tr key={r.day}><td>{r.day}</td><td>{r.registered}</td><td>{r.active}</td><td>{r.returning}</td>
+                <td style={{ width: '40%' }}><div className="bar" title={`${r.active} seen`}><div style={{ width: `${Math.round((r.active / Math.max(1, ...stats.map((x) => x.active))) * 100)}%` }} /></div></td></tr>
+            ))}</tbody>
+          </table>
+        )}
+      </Card>
       {reports.length > 0 && (
         <Card title={`Player reports (${reports.length})`}>
           {reports.map((r) => (
@@ -74,6 +123,16 @@ export function Admin() {
             ))}
           </tbody>
         </table>
+      </Card>
+      <Card title={`Audit log (${audit.length})`}>
+        {audit.length === 0 ? <p className="muted small">Nothing has been done yet.</p> : (
+          <table className="table">
+            <thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Commander</th><th>Details</th></tr></thead>
+            <tbody>{audit.map((e) => (
+              <tr key={e.id}><td>{when(e.at)}</td><td>{e.admin}</td><td>{e.action}</td><td>{e.targetId ? <PlayerLink id={e.targetId} name={e.targetName ?? '?'} /> : ''}</td><td className="muted small">{e.detail}</td></tr>
+            ))}</tbody>
+          </table>
+        )}
       </Card>
       {inspect && (
         <Card title={`Inspect ${inspect.player.username}`} right={<button onClick={() => setInspect(null)}>Close</button>}>
