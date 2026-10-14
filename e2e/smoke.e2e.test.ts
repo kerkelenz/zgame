@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Browser, BrowserContext, Page } from 'playwright-core';
 import { launchBrowser, startServer, type TestServer } from './harness';
 import { NAV_GROUPS } from '../client/src/nav';
+import { BUILDING_IDS, DEFENSE_IDS, SHIP_IDS, TECH_IDS } from '../shared/data';
 
 /**
  * Smoke tests in a real browser against a real server: register through the form, open every page on desktop and phone,
@@ -236,7 +237,7 @@ describe('using the game', () => {
 
   run('the tech tree shows one card per item, lights a chain, opens levels and can show only a path', async () => {
     await go('Tech tree');
-    expect(await page.locator('.icard').count()).toBe(59);                  // one card per building, research, ship and defense
+    expect(await page.locator('.icard').count()).toBe(BUILDING_IDS.length + TECH_IDS.length + SHIP_IDS.length + DEFENSE_IDS.length);                  // one card per building, research, ship and defense
     expect(await page.locator('.band').count()).toBe(5);                     // rows grouped by purpose
     expect(await page.locator('.icard.ready').count()).toBeGreaterThan(5);   // what you can start right now stands out
     await page.locator('.icard', { hasText: 'Fusion Reactor' }).first().click();
@@ -283,7 +284,7 @@ describe('using the game', () => {
     expect(few).toBeLessThan(30);
     expect(await page.locator('.icard.next').count()).toBeGreaterThan(0);    // the next move is highlighted
     await page.getByRole('button', { name: 'Show everything' }).click();
-    expect(await page.locator('.icard').count()).toBe(59);
+    expect(await page.locator('.icard').count()).toBe(BUILDING_IDS.length + TECH_IDS.length + SHIP_IDS.length + DEFENSE_IDS.length);
     await page.getByRole('button', { name: 'Production and effects' }).click();
     expect(await page.locator('main').innerText()).toMatch(/Raised by/);
     noErrors();
