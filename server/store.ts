@@ -1,6 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { DEFAULT_CONFIG, type UniverseConfig } from '../shared/config';
+import { migrateLooks } from './looks';
 import { createWorld, migratePlayer, type World } from './world';
 
 export function loadWorld(file: string, overrides: Partial<UniverseConfig> = {}): World {
@@ -17,6 +18,7 @@ export function loadWorld(file: string, overrides: Partial<UniverseConfig> = {})
       w.wars ??= [];
       w.operations ??= [];
       w.forges ??= {};
+      migrateLooks(w);
       for (const p of Object.values(w.players)) migratePlayer(p);
       return w;
     } catch (e) {

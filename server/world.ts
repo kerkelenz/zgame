@@ -183,6 +183,8 @@ export interface InvasionRecord { number: number; result: 'won' | 'lost'; starte
 
 export interface Planet {
   id: string;
+  /** which picture and banner it shows (a name from shared/artlist), stored when first needed so it never changes */
+  look?: string;
   /** what the owner uses this planet for; only changes the suggestions the game makes */
   role?: import('../shared/roles').PlanetRole;
   /** when the building queue ran dry (nothing running, nothing waiting); cleared when something starts */
@@ -356,6 +358,8 @@ export interface World {
   forges?: Record<string, ForgeJob>;
   /** scored alliance wars: the running one and recent history, newest first */
   wars?: War[];
+  /** looks were pinned on the worlds that existed when they were introduced */
+  looksAssigned?: boolean;
   /** alliance operations: shared targets members sign up for */
   operations?: import('./operations').Operation[];
   /** which alliance holds which system ("g:s") */

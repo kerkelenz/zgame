@@ -30,9 +30,11 @@ describe('planet and moon pictures', () => {
     if (!existsSync(dir)) return;
     for (const f of readdirSync(dir).filter((x) => /\.webp$/.test(x) && !/\.thumb\.webp$/.test(x))) {
       expect(ids, f).toContain(f.replace(/\.webp$/, ''));
-      expect(existsSync(`${dir}/${f.replace(/\.webp$/, '.thumb.webp')}`), `${f} needs its small copy: npm run art -- optimize`).toBe(true);
+      if (!/^(planet|moon)banner-/.test(f)) expect(existsSync(`${dir}/${f.replace(/\.webp$/, '.thumb.webp')}`), `${f} needs its small copy: npm run art -- optimize`).toBe(true);   // the wide banners have none
     }
     for (const k of Object.keys(PLANET_LOOKS)) expect(existsSync(`${dir}/planet-${k}.webp`), k).toBe(true);
     for (const k of Object.keys(MOON_LOOKS)) expect(existsSync(`${dir}/moon-${k}.webp`), k).toBe(true);
+    for (const k of Object.keys(PLANET_LOOKS)) expect(existsSync(`${dir}/planetbanner-${k}.webp`), 'banner ' + k).toBe(true);
+    for (const k of Object.keys(MOON_LOOKS)) expect(existsSync(`${dir}/moonbanner-${k}.webp`), 'banner ' + k).toBe(true);
   });
 });

@@ -6,6 +6,7 @@ import { Art } from '../art';
 import { useGame } from '../game';
 import { Card, CoordLink, coordStr, Cost, Countdown, fmt, Page, Progress, ItemIcon, copyLink } from '../ui';
 import { AdviceCard } from '../AdviceCard';
+import { PlanetHero } from '../PlanetHero';
 import { ROLES } from '../../../shared/roles';
 import { FleetEvents } from './FleetEvents';
 
@@ -23,31 +24,17 @@ export function Overview() {
   const ordered = planets.filter((x) => !x.isMoon).flatMap((x) => [x, ...planets.filter((y) => y.parentId === x.id)]);
   return (
     <Page title={`${planet.name} ${coordStr(planet.coords)}`}>
+      <PlanetHero />
       <FleetEvents />
       <AdviceCard />
 
       <div className="grid2">
-        <Card title="Planet">
-          <div className="bodies">
-            {[parentPlanet, moon].filter((b): b is typeof planet => !!b).map((b) => (
-              <button key={b.id} className={`celestial ${b.isMoon ? 'moon' : ''} ${b.id === planet.id ? 'on' : ''}`} onClick={() => selectPlanet(b.id)} title={b.isMoon ? 'Show the moon' : 'Show the planet'}>
-                <img src={Art.planet(b.id, b.maxTemp, !!b.isMoon)} alt="" />
-                <span>{b.isMoon ? '🌙 ' : ''}{b.name}</span>
-              </button>
-            ))}
-          </div>
-          <table className="kv">
-            <tbody>
-              {planet.diameter && <tr><td>Diameter</td><td>{fmt(planet.diameter)} km</td></tr>}
-              <tr><td>Fields</td><td>{planet.usedFields} / {planet.fields}</td></tr>
-              <tr><td>Max temperature</td><td>{planet.maxTemp} °C</td></tr>
-              <tr><td>Position</td><td><CoordLink c={planet.coords} /></td></tr>
-              {!planet.isMoon && POSITION_BONUS[planet.coords.p] && <tr><td>Orbit bonus</td><td>{Object.entries(POSITION_BONUS[planet.coords.p]).map(([k, v]) => `+${Math.round((v as number) * 100)}% ${k}`).join(', ')}</td></tr>}
-              {!planet.isMoon && (planet.fleet.crawler || 0) > 0 && <tr><td>Crawlers</td><td>{fmt(planet.fleet.crawler)} (+{(crawlerBonus(planet.fleet.crawler || 0, (planet.buildings.metalMine || 0) + (planet.buildings.crystalMine || 0) + (planet.buildings.deuteriumSynthesizer || 0), planet.detail.crawlerMul ?? 1) * 100).toFixed(1)}% mine output)</td></tr>}
-              <tr><td>Production / h</td><td><span className="metal"><ResIcon k="metal" size={14} />{fmt(planet.production.metal)}</span> · <span className="crystal"><ResIcon k="crystal" size={14} />{fmt(planet.production.crystal)}</span> · <span className="deut"><ResIcon k="deuterium" size={14} />{fmt(planet.production.deuterium)}</span></td></tr>
-              <tr><td><EnergyIcon size={16} /> Energy</td><td>{fmt(planet.production.energyProduced)} / {fmt(planet.production.energyUsed)} ({Math.round(planet.production.efficiency * 100)}%)</td></tr>
-            </tbody>
-          </table>
+        <Card title={`Manage this ${planet.isMoon ? 'moon' : 'planet'}`}>
+          {!planet.isMoon && (planet.fleet.crawler || 0) > 0 && (
+            <table className="kv"><tbody>
+              <tr><td>Crawlers</td><td>{fmt(planet.fleet.crawler)} (+{(crawlerBonus(planet.fleet.crawler || 0, (planet.buildings.metalMine || 0) + (planet.buildings.crystalMine || 0) + (planet.buildings.deuteriumSynthesizer || 0), planet.detail.crawlerMul ?? 1) * 100).toFixed(1)}% mine output)</td></tr>
+            </tbody></table>
+          )}
           <div className="row small">
             <button onClick={async () => { const r = await act(() => post(`/planets/${planet.id}/share`, { ships: shareShips })); if (r) await copyLink(r.id, toast); }}>Share this {planet.isMoon ? 'moon' : 'planet'}</button>
             <label className="row small"><input type="checkbox" checked={shareShips} onChange={() => setShareShips(!shareShips)} /> with ships and defenses</label>

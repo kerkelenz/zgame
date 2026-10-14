@@ -781,6 +781,20 @@ describe('using the game', () => {
 });
 
 describe('advice, planners and alliance tools', () => {
+  run('the Overview opens with the planet banner and its facts', async () => {
+    await go('Overview');
+    const hero = page.locator('.hero');
+    await hero.waitFor();
+    expect(await hero.evaluate((el) => getComputedStyle(el).backgroundImage)).toMatch(/planetbanner-[a-z]+/);
+    expect(await page.locator('.herokind').innerText()).toMatch(/planet|Gas giant/);
+    const chips = await page.locator('.herochip').allInnerTexts();
+    expect(chips.join(' ')).toMatch(/km/);
+    expect(chips.join(' ')).toMatch(/fields/);
+    expect(chips.join(' ')).toMatch(/°C/);
+    expect(await hero.evaluate((el) => el.getBoundingClientRect().width)).toBeGreaterThan(300);
+    noErrors();
+  });
+
   run('the Overview offers a role, and the Empire page shows it as a badge', async () => {
     await go('Overview');
     await page.getByLabel('What this planet is for').selectOption('mining');

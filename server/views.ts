@@ -1,4 +1,5 @@
 import { lvl } from '../shared/formulas';
+import { assignLook } from './looks';
 import type { BuildingId, TechId } from '../shared/types';
 import { ALLIANCE_UPGRADES } from '../shared/data';
 import { allianceBonuses, maxFields, planetCapacity, planetProduction, updatePlanet, usedFields } from './economy';
@@ -28,7 +29,7 @@ export function planetView(w: World, planet: Planet, now: number) {
   updatePlanet(w, planet, now);
   const prod = planetProduction(w, planet);
   return {
-    id: planet.id, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon, parentId: planet.parentId ?? null, role: planet.role ?? null,
+    id: planet.id, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon, parentId: planet.parentId ?? null, role: planet.role ?? null, look: assignLook(planet),
     jumpReadyAt: planet.jumpReadyAt ?? 0,
     forge: forgeView(w, planet, w.players[planet.ownerId]),
     maxTemp: planet.maxTemp, isHome: planet.isHome, buildings: planet.buildings, resources: planet.resources,

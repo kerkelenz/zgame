@@ -41,7 +41,9 @@ describe('sqlite store', () => {
     s.close();
     const back = open(file).load();
     expect(back.players).toEqual(w.players);
-    expect(back.planets).toEqual(w.planets);
+    // loading pins the look every world was showing (once), which the saved universe did not have yet
+    expect(Object.values(back.planets).every((x) => !!x.look)).toBe(true);
+    expect(Object.fromEntries(Object.entries(back.planets).map(([k, x]) => [k, { ...x, look: undefined }]))).toEqual(Object.fromEntries(Object.entries(w.planets).map(([k, x]) => [k, { ...x, look: undefined }])));
     expect(back.alliances).toEqual(w.alliances);
     expect(byId(back.messages)).toEqual(byId(w.messages));
     expect(back.chat).toEqual(w.chat);
@@ -89,6 +91,8 @@ describe('sqlite store', () => {
     const s2 = open(file);
     const loaded = s2.load({ economySpeed: 99 });
     expect(loaded.config.economySpeed).toBe(99); // overrides win
+    const first = s2.save({ ...loaded, config: w.config });
+    expect(first.deleted).toBe(0);                                   // the first save after loading writes the worlds that were given their look
     expect(s2.save({ ...loaded, config: w.config })).toMatchObject({ written: 0, deleted: 0 });
   });
 

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Coords, Mission } from '../../shared/types';
 import { ApiError, get, getToken, post, setToken } from './api';
+import { Art } from './art';
 import { playCue } from './sound';
 import { markAllRead, pushNote, type Note } from './notes';
 import { decodeRoute, encodeRoute, sameRoute, type Route } from './route';
@@ -121,6 +122,7 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
       const [m, ps, fl] = await Promise.all([get('/me'), get('/planets'), get('/fleets')]);
       setSkew(m.now - Date.now());
       setMe(m);
+      Art.setLooks(ps);
       setPlanets(ps);
       setFleets(fl);
       setOffline(false);

@@ -3,6 +3,13 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-u', date: '2026-10-15', title: 'Planet banners',
+    items: [
+      'The Overview opens with a wide banner of the planet or moon, in the style of OGame: its kind and a line about it, your role for it, a switch between the planet and its moon, and its size, fields, temperature, orbit bonus, production and energy over the picture.',
+      'Many more looks: 19 for planets (aurora, chrome, fungal, shattered, storm, swamp and twilight are new) and 29 for moons. A world keeps the look it has; new worlds draw from all of them, and planets still match their temperature.',
+    ],
+  },
+  {
     id: '2026-10-t', date: '2026-10-15', title: 'The Void invasion is a campaign',
     items: [
       'Invasions come in waves (four by default): Scouts, Assaults and the Mothership. A wave arrives on schedule or soon after you destroy the one before. Each wave is a kind of alien with a weakness: swarms, shield-breakers, bio-ships that regrow, armoured carriers.',

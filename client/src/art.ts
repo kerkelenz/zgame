@@ -5,7 +5,7 @@
  *     Art.overrides['planet:<planetId>'] = 'data:image/png;base64,...'
  */
 import { artFile, artThumb } from './artFiles';
-import { moonArtId, moonLook, planetArtId, planetLook } from '../../shared/artlist';
+import { legacyMoonLook, legacyPlanetLook, moonArtId, moonBannerId, planetArtId, planetBannerId } from '../../shared/artlist';
 
 type Kind = 'building' | 'tech' | 'ship' | 'defense';
 
@@ -30,8 +30,18 @@ const RES_HUE: Record<string, number> = {
 };
 
 const cache = new Map<string, string>();
+/** the look the server stored for each of your worlds (set whenever the planets are loaded) */
+const looks = new Map<string, string>();
+const lookOf = (id: string, tempMax: number, isMoon: boolean) => looks.get(id) ?? (isMoon ? legacyMoonLook(id) : legacyPlanetLook(id, tempMax));
 export const Art = {
   overrides: {} as Record<string, string>,
+  /** remember the looks the server sent, so every picture of a world is the same one */
+  setLooks(planets: { id: string; look?: string | null }[]) { for (const p of planets) if (p.look) looks.set(p.id, p.look); },
+  /** the wide banner of a planet or moon, or its round picture when there is no banner */
+  banner(id: string, tempMax: number, isMoon: boolean): string {
+    const look = lookOf(id, tempMax, isMoon);
+    return artFile(isMoon ? moonBannerId(look) : planetBannerId(look)) ?? this.planet(id, tempMax, isMoon);
+  },
   icon(kind: Kind, id: string, name: string): string {
     if (this.overrides[id]) return this.overrides[id];
     const file = artThumb(id);
@@ -45,8 +55,9 @@ export const Art = {
   planet(id: string, tempMax: number, isMoon: boolean): string {
     const k = 'planet:' + id;
     if (this.overrides[k]) return this.overrides[k];
-    // a world keeps the picture its id picks: moons from any moon look, planets from the looks that suit their temperature
-    const file = artThumb(isMoon ? moonArtId(moonLook(id)) : planetArtId(planetLook(id, tempMax)));
+    // a world shows the look the server stored for it
+    const look = lookOf(id, tempMax, isMoon);
+    const file = artThumb(isMoon ? moonArtId(look) : planetArtId(look));
     if (file) return file;
     const hit = cache.get(k);
     if (hit) return hit;

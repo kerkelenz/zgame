@@ -20,12 +20,16 @@ const dir = join(__dirname, '..', 'client', 'src', 'assets', 'art');
 mkdirSync(dir, { recursive: true });
 const IMG = /\.(png|webp|jpe?g)$/i;
 const MAX_SIDE = 768;
+/** the wide banners are shown across the page: up to this wide, and they get no small copy */
+const BANNER_WIDTH = 1400;
+const isBanner = (id: string) => /^(planet|moon)banner-/.test(id);
 const THUMB = /\.thumb\.webp$/i;
 const have = () => new Set(readdirSync(dir).filter((f) => IMG.test(f) && !THUMB.test(f)).map((f) => f.replace(/\.[a-z]+$/i, '')));
 const items = artItems();
 const [cmd = 'status', arg] = process.argv.slice(2);
 
 /** longest side at most MAX_SIDE, same proportions, WebP */
+const shrinkBanner = (input: Buffer) => sharp(input).resize(BANNER_WIDTH, undefined, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 78 }).toBuffer();
 const shrink = (input: Buffer) => sharp(input).resize(MAX_SIDE, MAX_SIDE, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
 /** the small square copy used by lists and icons: 256 px, cropped to the middle */
 const thumb = (input: Buffer) => sharp(input).resize(256, 256, { fit: 'cover' }).webp({ quality: 78 }).toBuffer();
@@ -50,9 +54,10 @@ async function ingest(from: string) {
     if (seen.has(id)) { console.log(`duplicate for ${id}: ${basename(f.path)} (keeping ${basename(seen.get(id)!)})`); continue; }
     seen.set(id, f.path);
     const src = readFileSync(f.path);
-    const out = await shrink(src);
+    const banner = isBanner(id);
+    const out = banner ? await shrinkBanner(src) : await shrink(src);
     writeFileSync(join(dir, `${id}.webp`), out);
-    writeFileSync(join(dir, `${id}.thumb.webp`), await thumb(out));
+    if (!banner) writeFileSync(join(dir, `${id}.thumb.webp`), await thumb(out));
     before += src.length; after += out.length;
     console.log(`${id.padEnd(24)} ${basename(f.path).slice(0, 40).padEnd(40)} ${kb(src.length)} -> ${kb(out.length)}`);
   }
@@ -66,8 +71,9 @@ async function optimize() {
     const p = join(dir, f);
     let src = readFileSync(p);
     const meta = await sharp(src).metadata();
-    if (Math.max(meta.width ?? 0, meta.height ?? 0) > MAX_SIDE || !/\.webp$/i.test(f)) {
-      const out = await shrink(src);
+    const banner = isBanner(f.replace(/\.[a-z]+$/i, ''));
+    if (banner ? (meta.width ?? 0) > BANNER_WIDTH || !/\.webp$/i.test(f) : Math.max(meta.width ?? 0, meta.height ?? 0) > MAX_SIDE || !/\.webp$/i.test(f)) {
+      const out = banner ? await shrinkBanner(src) : await shrink(src);
       writeFileSync(p.replace(/\.[a-z]+$/i, '.webp'), out);
       before += src.length; after += out.length; n++;
       console.log(`${f.padEnd(34)} ${kb(src.length)} -> ${kb(out.length)}`);
@@ -75,7 +81,7 @@ async function optimize() {
     }
     // every picture also has a small square copy for lists and icons
     const small = join(dir, f.replace(/\.[a-z]+$/i, '.thumb.webp'));
-    if (!existsSync(small)) { writeFileSync(small, await thumb(src)); thumbs++; }
+    if (!banner && !existsSync(small)) { writeFileSync(small, await thumb(src)); thumbs++; }
   }
   console.log(n ? `${n} shrunk, ${kb(before)} -> ${kb(after)}` : 'nothing to shrink', `; ${thumbs} small copies made`);
 }
@@ -100,7 +106,7 @@ if (cmd === 'ingest') {
 } else {
   const h = have(), missing = items.filter((i) => !h.has(i.id));
   console.log(`${items.length - missing.length}/${items.length} done`);
-  for (const k of ['resource', 'building', 'tech', 'ship', 'defense', 'planet', 'moon'] as const) {
+  for (const k of ['resource', 'building', 'tech', 'ship', 'defense', 'planet', 'moon', 'banner'] as const) {
     const of = items.filter((i) => i.kind === k);
     console.log(`${k.padEnd(9)} ${of.filter((i) => h.has(i.id)).length}/${of.length}${of.some((i) => !h.has(i.id)) ? '  missing: ' + of.filter((i) => !h.has(i.id)).map((i) => i.id).join(', ') : ''}`);
   }

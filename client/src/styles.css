@@ -537,3 +537,22 @@ nav .hubitem.active { background: #f0a93b22; border-color: var(--accent); color:
 .wave { padding: 4px 8px; border-left: 3px solid var(--line); border-radius: 0; }
 .wave.active { border-left-color: #ff6b8a; background: rgba(255, 107, 138, .08); }
 .wave.cleared { border-left-color: #5fd28a; }
+
+/* ---- the planet banner on the Overview ---- */
+.hero { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 60px; min-height: 250px; margin: 0 0 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background-size: cover; background-position: center; background-color: #070b18; isolation: isolate; }
+.hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(5, 8, 16, .82) 0%, rgba(5, 8, 16, .45) 45%, rgba(5, 8, 16, .05) 100%), linear-gradient(0deg, rgba(5, 8, 16, .85) 0%, rgba(5, 8, 16, 0) 55%); }
+.herotop { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.herotitle { display: flex; flex-direction: column; gap: 2px; max-width: 520px; text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
+.herokind { font-family: var(--f-display); font-size: 20px; font-weight: 600; letter-spacing: .02em; }
+.herorole { margin-left: 10px; font-size: 12px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--accent); color: var(--accent); background: rgba(8, 12, 26, .6); vertical-align: middle; }
+.herodesc { color: #c9d3ee; font-size: 13px; }
+.herobodies { display: flex; gap: 8px; }
+.herobody { display: flex; align-items: center; gap: 6px; padding: 4px 12px 4px 4px; border-radius: 24px; background: rgba(8, 12, 26, .72); backdrop-filter: blur(4px); border: 1px solid var(--line); }
+.herobody img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.herobody.on { border-color: var(--accent); box-shadow: 0 0 10px rgba(240, 169, 59, .4); }
+.herostats { display: flex; flex-wrap: wrap; gap: 8px; }
+.herochip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; font-size: 13px; background: rgba(8, 12, 26, .74); backdrop-filter: blur(4px); border: 1px solid var(--line); border-radius: 10px; white-space: nowrap; }
+.herochip.good { color: #7ee2a0; border-color: #2e5a3c; } .herochip.bad { color: #ff8da1; border-color: #6b2030; }
+.fieldbar { width: 64px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .15); overflow: hidden; display: inline-block; }
+.fieldbar i { display: block; height: 100%; background: var(--accent); }
+@media (max-width: 760px) { .hero { min-height: 200px; gap: 30px; padding: 10px; } .herokind { font-size: 17px; } .herochip { font-size: 12px; padding: 3px 8px; white-space: normal; } }
