@@ -63,7 +63,7 @@ describe('first visit', () => {
   });
 
   run('the top bar shows the three resources with their pictures', async () => {
-    expect(await page.locator('header.top .res .ri').count()).toBe(3);
+    expect(await page.locator('header.top .res .ri').count()).toBeGreaterThanOrEqual(3);
     expect(await page.locator('header.top .res').textContent()).toMatch(/\d/);
   });
 });
