@@ -597,6 +597,27 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('the planet bar and the tabs stay at the top while the page scrolls', async () => {
+    await go('Buildings');
+    await page.locator('.items .card').first().waitFor();
+    const at = () => page.evaluate(() => {
+      const m = document.querySelector('main')!, s = document.querySelector('.navstick')!;
+      return { gap: Math.round(s.getBoundingClientRect().top - m.getBoundingClientRect().top), scrolled: m.scrollTop, room: m.scrollHeight - m.clientHeight };
+    });
+    const before = await at();
+    expect(before.room).toBeGreaterThan(300);                                   // the page is longer than the screen
+    await page.evaluate(() => { const m = document.querySelector('main')!; m.scrollTop = m.scrollHeight; });
+    await expect.poll(async () => (await at()).scrolled).toBeGreaterThan(300);
+    const after = await at();
+    expect(Math.abs(after.gap)).toBeLessThanOrEqual(2);                         // still flush with the top of the page area
+    expect(await page.locator('.navstick .subtab.active').isVisible()).toBe(true);
+    expect(await page.locator('.navstick .pchip.on').isVisible()).toBe(true);
+    expect(await page.locator('.navstick.compact').count()).toBe(1);            // and slimmed down
+    await page.evaluate(() => { document.querySelector('main')!.scrollTop = 0; });
+    await expect.poll(() => page.locator('.navstick.compact').count()).toBe(0);
+    noErrors();
+  });
+
   run('Ctrl+K jumps to any item, and g then a letter opens a page', async () => {
     await page.keyboard.press('Control+k');
     await page.locator('.palette input').waitFor();

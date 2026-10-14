@@ -7,6 +7,7 @@ export const CHANGELOG: Release[] = [
     items: [
       'Every planet is a chip with its picture, name, role and coordinates, with its moon as a smaller part of the same chip. Small tags show what needs you: an attack on the way, an idle queue, time left on a build, a full store, low energy.',
       'With more than five planets the bar becomes one switcher with arrows and a searchable list. Keys 1 to 9 jump to a planet.',
+      'The planet bar and the page tabs stay at the top while you scroll, as a slimmer bar.',
       'The Build tabs now run Buildings, Research, Shipyard, Defense, Tech tree, Resources, Automation.',
     ],
   },

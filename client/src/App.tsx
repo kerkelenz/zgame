@@ -12,6 +12,7 @@ import { fullState, timeToFull } from './afford';
 import { resName } from '../../shared/data';
 import { Breadcrumb, Sidebar, SubTabs } from './NavParts';
 import { PlanetStrip } from './PlanetStrip';
+import { NavStick } from './NavStick';
 import { rememberPage } from './nav';
 import { Tour } from './Tour';
 import { MobileBar } from './MobileBar';
@@ -172,8 +173,10 @@ export function App() {
       <div className="body">
         <Sidebar />
         <main id="main" tabIndex={-1}>
-          <PlanetStrip />
-          <SubTabs />
+          <NavStick>
+            <PlanetStrip />
+            <SubTabs />
+          </NavStick>
           <Breadcrumb />
           {page_}
         </main>
