@@ -29,6 +29,10 @@ export function Invasion() {
   useEffect(() => { void load(); const t = setInterval(load, 10_000); return () => clearInterval(t); }, [load]);
   if (!d) return <Page title="Invasion"><p className="muted">Loading…</p></Page>;
   const inv = d.active;
+  // a server that has not been restarted since the update still answers in the old shape (no waves): say so instead of crashing
+  if (inv && !Array.isArray(inv.waves)) {
+    return <Page title="Void invasion"><Card title="This server needs a restart"><p>An invasion is under way, but this server is still running an older version that does not describe it in the way this page needs. Ask whoever runs the server to restart it: the invasion carries on as a single wave afterwards.</p></Card></Page>;
+  }
   const fly = (mission: 'invade' | 'scout' | 'supply', ships?: Record<string, number>) => { setTarget({ coords: inv.rift, mission, ships }); setPage('fleet'); };
   const wave = inv ? inv.waves[inv.waveIndex] : null;
   const next = inv ? inv.waves.find((x: any) => x.status === 'pending') : null;

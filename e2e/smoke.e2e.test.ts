@@ -910,6 +910,17 @@ describe('advice, planners and alliance tools', () => {
     noErrors();
   });
 
+  run('an invasion from a server that has not been restarted shows a notice, not a crash', async () => {
+    const now = Date.now();
+    await page.route('**/api/invasion', async (route) => { await route.fulfill({ json: { history: [], next: null, engageMinutes: 30, reward: {}, active: { number: 1, phase: 'active', startsAt: now, endsAt: now + 1e7, rift: { g: 1, s: 2, p: 16 }, level: 3, round: 0, boss: { fleet: {}, value: 1, startValue: 1 }, mine: null, players: [], alliances: [], front: [], combined: { fleets: 0, commanders: 0, value: 0 } } } }); });
+    await page.evaluate(() => { location.hash = '#/overview'; });
+    await page.evaluate(() => { location.hash = '#/invasion'; });
+    await page.getByText('This server needs a restart').waitFor({ timeout: 15_000 });
+    expect(await page.locator('main', { hasText: /Something went wrong/i }).count()).toBe(0);
+    await page.unroute('**/api/invasion');
+    noErrors();
+  });
+
   run('the tech tree cards can be walked with the arrow keys', async () => {
     await go('Tech tree');
     await page.locator('.icard').first().waitFor();
