@@ -22,6 +22,7 @@ import { NotificationBell } from './NotificationBell';
 import { IdleChip } from './AdviceCard';
 import { markChangelogSeen, unseenRelease } from './changelog';
 import { AlertStrip } from './AlertStrip';
+import { ResourceBar } from './ResourceBar';
 import { EncounterDialog } from './EncounterDialog';
 import { Alliance } from './pages/Alliance';
 import { Chat } from './pages/Chat';
@@ -155,6 +156,7 @@ export function App() {
         <Sidebar />
         <main id="main" tabIndex={-1}>
           <NavStick>
+            <ResourceBar />
             <PlanetStrip />
             <SubTabs />
           </NavStick>

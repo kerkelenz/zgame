@@ -130,8 +130,8 @@ describe('first visit', () => {
   });
 
   run('the resources, next to the planet cards, show the three resources with their pictures', async () => {
-    expect(await page.locator('.navstick .pres  .ri').count()).toBeGreaterThanOrEqual(3);
-    expect(await page.locator('.navstick .pres').textContent()).toMatch(/\d/);
+    expect(await page.locator('.navstick .res .ri').count()).toBeGreaterThanOrEqual(3);
+    expect(await page.locator('.navstick .res').textContent()).toMatch(/\d/);
   });
 });
 
@@ -623,7 +623,7 @@ describe('using the game', () => {
     noErrors();
   });
 
-  run('the planet bar and the tabs stay at the top while the page scrolls', async () => {
+  run('the resource bar, the planet cards and the tabs stay at the top while the page scrolls', async () => {
     await go('Buildings');
     await page.locator('.items .card').first().waitFor();
     const at = () => page.evaluate(() => {
@@ -638,9 +638,8 @@ describe('using the game', () => {
     expect(Math.abs(after.gap)).toBeLessThanOrEqual(2);                         // still flush with the top of the page area
     expect(await page.locator('.navstick .subtab.active').isVisible()).toBe(true);
     expect(await page.locator('.navstick .pchip.on').isVisible()).toBe(true);
-    expect(await page.locator('.navstick.compact').count()).toBe(1);            // and slimmed down
+    expect(await page.locator('.navstick .res').isVisible()).toBe(true);
     await page.evaluate(() => { document.querySelector('main')!.scrollTop = 0; });
-    await expect.poll(() => page.locator('.navstick.compact').count()).toBe(0);
     noErrors();
   });
 
@@ -798,19 +797,6 @@ describe('using the game', () => {
     expect(await strip.innerText()).toMatch(/New:/);
     await strip.getByRole('button', { name: 'Hide this notice' }).click();
     await strip.waitFor({ state: 'detached' });
-    noErrors();
-  });
-
-  run('the planet cards fold to a slim bar and stay folded after a reload', async () => {
-    await go('Overview');
-    const bar = page.locator('.navstick');
-    expect(await bar.getAttribute('class')).not.toMatch(/folded/);
-    await page.getByRole('button', { name: 'Fold the planet cards to a slim bar' }).click();
-    expect(await bar.getAttribute('class')).toMatch(/folded/);
-    await page.reload();
-    await page.waitForSelector('.navstick.folded');
-    await page.getByRole('button', { name: 'Show the planet cards in full' }).click();
-    expect(await bar.getAttribute('class')).not.toMatch(/folded/);
     noErrors();
   });
 

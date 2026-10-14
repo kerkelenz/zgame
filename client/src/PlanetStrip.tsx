@@ -5,7 +5,6 @@ import { Art } from './art';
 import { useGame } from './game';
 import { isPlanetPage } from './nav';
 import { worldGroups } from './planetBar';
-import { PlanetRes } from './PlanetRes';
 import { CoordLink, fmtDur } from './ui';
 
 type WorldView = ReturnType<typeof useGame>['planets'][number];
@@ -31,8 +30,10 @@ const Tags = ({ tags }: { tags: Tag[] }) => <>{tags.map((t) => <span key={t.text
 const roleLabel = (w: WorldView) => ROLES.find((r) => r.id === w.role)?.label;
 
 /**
- * Your planets, each a card with its name, role, coordinates, stock and what needs attention, the moon as a smaller part of its planet's card.
- * One row that scrolls sideways when there are many. Dimmed on pages that are not about a single planet.
+/**
+ * Your planets side by side, each a card with its name, role, coordinates and what needs attention, and its moon as a smaller child item
+ * under it. One row that scrolls sideways when there are many. Dimmed on pages that are not about a single planet. The stock is in the
+ * resource bar above.
  */
 export function PlanetStrip() {
   const { planets, planet, selectPlanet, page } = useGame();
@@ -51,7 +52,6 @@ export function PlanetStrip() {
       <img src={Art.planet(m.id, m.maxTemp, true)} alt="" /><span className="pn">{m.name}</span><Tags tags={tagsFor(m)} />
     </button>
   );
-  const moonRes = (m: WorldView) => <PlanetRes w={m} tour={m.id === planet.id} energy={false} />;
 
   return (
     <div className={`pstrip${dim}`} role="group" aria-label="Your planets" title={dimTitle} ref={strip}>
@@ -62,8 +62,7 @@ export function PlanetStrip() {
             <span className="ptext"><b>{p.name}</b>{roleLabel(p) && <span className="prole">{roleLabel(p)}</span>}</span>
           </button>
           <div className="pmeta"><CoordLink c={p.coords} /><Tags tags={tagsFor(p)} /></div>
-          <PlanetRes w={p} tour={p.id === planet.id} />
-          {moon && <div className="pchild">{moonChip(moon)}{moonRes(moon)}</div>}
+          {moon && <div className="pchild">{moonChip(moon)}</div>}
         </div>
       ))}
     </div>
