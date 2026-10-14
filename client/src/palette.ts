@@ -17,6 +17,7 @@ export const SHORTCUT_HELP: { keys: string; does: string }[] = [
   { keys: 'Ctrl+K', does: 'Open the palette: type a page, building, research, ship, player name or coordinates' },
   { keys: '/', does: 'Search players' },
   { keys: '[  and  ]', does: 'Previous and next planet or moon' },
+  { keys: '1 to 9', does: 'Jump to the first nine planets' },
   { keys: 'g then a letter', does: Object.entries(CHORDS).map(([k, v]) => `${k} ${v.label}`).join(' · ') },
   { keys: '?', does: 'This list' },
 ];

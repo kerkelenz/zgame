@@ -7,9 +7,11 @@ import { t, useLang } from './i18n';
 import { PlayerSearch } from './PlayerSearch';
 import { CommandPalette } from './CommandPalette';
 import { CHORDS, cycleId, isTypingTarget } from './palette';
+import { planetForKey, worldGroups } from './planetBar';
 import { fullState, timeToFull } from './afford';
 import { resName } from '../../shared/data';
-import { Breadcrumb, PlanetStrip, Sidebar, SubTabs } from './NavParts';
+import { Breadcrumb, Sidebar, SubTabs } from './NavParts';
+import { PlanetStrip } from './PlanetStrip';
 import { rememberPage } from './nav';
 import { Tour } from './Tour';
 import { MobileBar } from './MobileBar';
@@ -77,6 +79,7 @@ export function App() {
       if (e.key === 'g') { chord = Date.now() + 1200; return; }
       if (e.key === '/') { e.preventDefault(); document.querySelector<HTMLInputElement>('.psearch input')?.focus(); }
       else if (e.key === '?') { e.preventDefault(); openPalette(true); }
+      else if (planetForKey(worldGroups(game.planets), e.key)) game.selectPlanet(planetForKey(worldGroups(game.planets), e.key)!.id);
       else if ((e.key === '[' || e.key === ']') && game.planet) game.selectPlanet(cycleId(game.planets.map((p) => p.id), game.planet.id, e.key === ']' ? 1 : -1));
     };
     window.addEventListener('keydown', onKey);

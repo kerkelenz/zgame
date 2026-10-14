@@ -3,6 +3,14 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-s', date: '2026-10-15', title: 'A clearer planet bar',
+    items: [
+      'Every planet is a chip with its picture, name, role and coordinates, with its moon as a smaller part of the same chip. Small tags show what needs you: an attack on the way, an idle queue, time left on a build, a full store, low energy.',
+      'With more than five planets the bar becomes one switcher with arrows and a searchable list. Keys 1 to 9 jump to a planet.',
+      'The Build tabs now run Buildings, Research, Shipyard, Defense, Tech tree, Resources, Automation.',
+    ],
+  },
+  {
     id: '2026-10-r', date: '2026-10-14', title: 'A new menu',
     items: [
       'The long side menu is now seven hubs that are always showing: Home, Build, Fleet, Galaxy, Inbox, Alliance and More. The pages of a hub are tabs along the top, and a hub opens the page you were last on in it. Messages has its own hub with an unread count instead of hiding under Social.',

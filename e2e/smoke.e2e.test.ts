@@ -119,7 +119,7 @@ describe('every page', () => {
     const navLook = await page.locator('nav').evaluate((el) => ({ bar: getComputedStyle(el).scrollbarWidth }));
     expect(navLook.bar).toBe('none');                                      // no scroll bar drawn in the menu
     await page.locator('nav [data-tour="hub-build"]').click();
-    expect(await page.locator('.subtabs .subtab').allInnerTexts()).toEqual(expect.arrayContaining(['Buildings', 'Resources', 'Research', 'Shipyard', 'Defense', 'Tech tree']));
+    expect(await page.locator('.subtabs .subtab').allInnerTexts()).toEqual(['Buildings', 'Research', 'Shipyard', 'Defense', 'Tech tree', 'Resources']);       // in this order
     expect(await page.locator('.subtab.active').innerText()).toBe('Buildings');
     await page.locator('.subtabs [data-tour="nav-research"]').click();
     await page.locator('nav [data-tour="hub-home"]').click();
@@ -132,7 +132,9 @@ describe('every page', () => {
     expect(await page.locator('.subtab.active').innerText()).toBe('Buildings');
     expect(await page.locator('.crumbs').innerText()).toMatch(/Build\s*›\s*Buildings\s*›\s*Solar Plant/);
     // the planet strip shows your planets as pictures and dims on pages that are not about one planet
-    expect(await page.locator('.pstrip .pthumb').count()).toBeGreaterThanOrEqual(1);
+    expect(await page.locator('.pstrip .pchip').count()).toBeGreaterThanOrEqual(1);
+    expect(await page.locator('.pstrip .pchip.on').innerText()).toMatch(/Homeworld/);           // the name is on the chip, with the coordinates as a link
+    expect(await page.locator('.pstrip .pchip.on a').count()).toBeGreaterThanOrEqual(1);
     expect(await page.locator('.pstrip.dim').count()).toBe(0);
     await go('Empire');
     expect(await page.locator('.pstrip.dim').count()).toBe(1);

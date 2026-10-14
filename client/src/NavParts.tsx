@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
 import { nameOf } from '../../shared/effects';
-import { Art } from './art';
 import { useGame } from './game';
-import { breadcrumb, groupOfPage, tabOfItem, hubTarget, isPlanetPage, loadLastPages, visibleNav, useShowAllPages, type Features } from './nav';
+import { breadcrumb, groupOfPage, tabOfItem, hubTarget, loadLastPages, visibleNav, useShowAllPages, type Features } from './nav';
 import { t } from './i18n';
-import { CoordLink } from './ui';
 
 /** the groups this commander can see right now (features unlocked, admin, "show every page") */
 export function useVisibleNav() {
@@ -71,29 +69,6 @@ export function Breadcrumb() {
       {crumbs.map((c, i) => (
         <span key={i}>{i > 0 && <span className="muted" aria-hidden="true"> › </span>}{c.page && i < crumbs.length - 1 ? <a onClick={() => setPage(c.page!)}>{c.label}</a> : <b>{c.label}</b>}</span>
       ))}
-    </div>
-  );
-}
-
-/** the planets and moons as pictures under the header: click one to work on it; it is dimmed on pages that are not about a single planet */
-export function PlanetStrip() {
-  const { planets, planet, selectPlanet, page } = useGame();
-  if (!planet) return null;
-  const applies = isPlanetPage(page);
-  const bases = planets.filter((p) => !p.isMoon);
-  return (
-    <div className={`pstrip${applies ? '' : ' dim'}`} role="group" aria-label="Your planets" title={applies ? undefined : 'This page is not about a single planet'}>
-      {bases.map((b) => (
-        <span key={b.id} className="pgroup">
-          {[b, ...planets.filter((m) => m.parentId === b.id)].map((p) => (
-            <button key={p.id} className={`pthumb${p.isMoon ? ' moon' : ''}${p.id === planet.id ? ' on' : ''}`} onClick={() => selectPlanet(p.id)}
-              title={`${p.isMoon ? 'Moon' : 'Planet'} ${p.name} [${p.coords.g}:${p.coords.s}:${p.coords.p}]`} aria-label={`${p.isMoon ? 'Moon' : 'Planet'} ${p.name}`} aria-pressed={p.id === planet.id}>
-              <img src={Art.planet(p.id, p.maxTemp, !!p.isMoon)} alt="" />
-            </button>
-          ))}
-        </span>
-      ))}
-      <span className="pname"><b>{planet.name}</b> <CoordLink c={planet.coords} />{applies ? '' : <span className="muted small"> · this page covers all your planets</span>}</span>
     </div>
   );
 }
