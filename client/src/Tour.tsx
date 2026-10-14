@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGame } from './game';
 import { t, useLang } from './i18n';
+import { hasFinishedTutorial, startTutorial } from './tutorialSteps';
 
 export const TOUR_KEY = 'zg.tourDone';
 const seen = () => { try { return localStorage.getItem(TOUR_KEY) === '1'; } catch { return true; } };
@@ -15,17 +16,17 @@ export const STEPS: { page: string; title: string; text: string }[] = [
   { page: 'galaxy', title: 'The galaxy', text: 'Browse systems, spot inactive neighbours (i / I flags), bookmark favourites and send fleets from here. Beginners are protected until they grow.' },
   { page: 'fleet', title: 'Fleets', text: 'Send transports, spy, colonize, recycle debris or explore deep space. Always check the flight time and fuel before you launch.' },
   { page: 'alliance', title: 'Play together', text: 'Join an alliance to share a bank, buy bonuses, stand guard over each other\'s planets and plan wars or pacts. Command holds your class, officers and achievements.' },
-  { page: 'settings', title: 'Make it yours', text: 'Alerts reach you outside the game (Discord, phone push), vacation mode freezes your empire, and you can pick sounds and language. Press Ctrl+K anywhere to jump to any page, item or commander, and ? for the keyboard shortcuts. Have fun!' },
+  { page: 'settings', title: 'Make it yours', text: 'Alerts reach you outside the game (Discord, phone push), vacation mode freezes your empire, and you can pick sounds and language. Press Ctrl+K anywhere to jump to any page, item or commander, and ? for the keyboard shortcuts. Have fun! A short hands-on tutorial starts next: it points at the real buttons and waits for you to press them.' },
 ];
 
 export function Tour() {
   useLang();
-  const { setPage } = useGame();
+  const { setPage, me } = useGame();
   const [i, setI] = useState(0);
   const [open, setOpen] = useState(!seen());
   if (!open) return null;
   const s = STEPS[i], last = i === STEPS.length - 1;
-  const close = () => { finish(); setOpen(false); setPage('overview'); };
+  const close = () => { finish(); setOpen(false); setPage('overview'); if (me && !hasFinishedTutorial(me.player.id)) startTutorial(me.player.id); };
   const go = (n: number) => { setI(n); setPage(STEPS[n].page); };
   return (
     <div className="tour" role="dialog" aria-label="Welcome tour">

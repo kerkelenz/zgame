@@ -56,7 +56,7 @@ export function ItemIcon({ id, size = 20 }: { id: string; size?: number }) {
 /** An item name that opens its details page. */
 export function ItemLink({ id, children }: { id: string; children?: ReactNode }) {
   const { openItem } = useGame();
-  return <a className="itemlink" title="Show details" onClick={(e) => { e.preventDefault(); openItem(id); }}>{children ?? nameOf(id)}</a>;
+  return <a className="itemlink" data-tour={`link-${id}`} title="Show details" onClick={(e) => { e.preventDefault(); openItem(id); }}>{children ?? nameOf(id)}</a>;
 }
 
 export function ReqList({ reqs }: { reqs: Requirement[] }) {
@@ -67,9 +67,9 @@ export function ReqList({ reqs }: { reqs: Requirement[] }) {
   );
 }
 
-export function Card({ title, children, right }: { title?: ReactNode; children: ReactNode; right?: ReactNode }) {
+export function Card({ title, children, right, tour }: { title?: ReactNode; children: ReactNode; right?: ReactNode; /** what the tutorial can point at */ tour?: string }) {
   return (
-    <section className="card">
+    <section className="card" data-tour={tour}>
       {(title || right) && <header><h3>{title}</h3><div>{right}</div></header>}
       {children}
     </section>

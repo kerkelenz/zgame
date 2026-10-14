@@ -73,7 +73,7 @@ export function Items({ kind }: { kind: Kind }) {
   return (
     <Page title={TITLES[kind]}>
       {kind === 'building' && buildQ && (
-        <Card title={buildQ.down ? 'Being demolished' : 'Under construction'} right={<button onClick={() => void withUndo(() => post(`/planets/${planet.id}/build/cancel`), 'Cancelled', () => post(buildQ.down ? `/planets/${planet.id}/demolish` : `/planets/${planet.id}/build`, { id: buildQ.id }))}>Cancel</button>}>
+        <Card tour="queue" title={buildQ.down ? 'Being demolished' : 'Under construction'} right={<button onClick={() => void withUndo(() => post(`/planets/${planet.id}/build/cancel`), 'Cancelled', () => post(buildQ.down ? `/planets/${planet.id}/demolish` : `/planets/${planet.id}/build`, { id: buildQ.id }))}>Cancel</button>}>
           <div className="job"><div><ItemIcon id={buildQ.id} size={24} /> {buildQ.down ? 'Demolishing' : ''} {BUILDINGS[buildQ.id as BuildingId].name} → level {buildQ.level} · <Countdown to={buildQ.end} /></div><Progress from={buildQ.start} to={buildQ.end} />
             {buildQ.down && buildQ.refund && <div className="muted small">Returns <Cost cost={buildQ.refund} /> when it is done.</div>}</div>
         </Card>
@@ -149,7 +149,7 @@ export function Items({ kind }: { kind: Kind }) {
               <div>{pending > 0 ? `Level ${level + 1}` : 'Next'}: <Cost cost={cost} have={have} /> · {fmtDur(secs * 1000)}</div>
               {missing.length > 0 && <ReqList reqs={missing} />}
               {hint(cost, missing)}
-              <button className="primary" disabled={!ok} onClick={() => void act(() => post(`/planets/${planet.id}/build`, { id }), `${d.name} upgrade started`)}>
+              <button className="primary" data-tour={`build-${id}`} disabled={!ok} onClick={() => void act(() => post(`/planets/${planet.id}/build`, { id }), `${d.name} upgrade started`)}>
                 {buildQ ? 'Add to queue' : level === 0 ? 'Build' : `Upgrade to ${level + 1}`}
               </button>
               {built > 0 && (

@@ -116,7 +116,7 @@ export function ItemDetail() {
   const techs = me.player.techs;
   const ctx = detailCtxFrom(planet, techs);
   const have: Res = { ...live };
-  const back = <button onClick={closeItem}>← Back</button>;
+  const back = <button data-tour="back" onClick={closeItem}>← Back</button>;
 
   // ------------------------------------------------------------------ buildings and research
   if (kind === 'building' || kind === 'tech') {

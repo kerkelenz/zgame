@@ -58,8 +58,49 @@ describe('first visit', () => {
     expect(await page.locator('.tourbox h3').textContent()).toBe('Buildings');
     await page.getByRole('button', { name: 'Skip tour' }).click();
     await page.waitForSelector('.tour', { state: 'detached' });
+    // closing the tour starts the hands-on tutorial; this account skips it so the other tests have the game to themselves
+    await page.locator('.tutnote').waitFor();
+    expect(await page.locator('.tutnote h3').textContent()).toBe('Your resources');
+    await page.getByRole('button', { name: 'Skip tutorial' }).click();
+    await page.locator('.tutnote').waitFor({ state: 'detached' });
     expect(await heading().textContent()).toMatch(/Homeworld/);
     noErrors();
+  });
+
+  run('the hands-on tutorial points at the real buttons and carries on when they are pressed', async () => {
+    const c2 = await browser!.newContext({ viewport: { width: 1280, height: 900 }, locale: 'en-US' });
+    const p2 = await c2.newPage();
+    const title = () => p2.locator('.tutnote h3').textContent();
+    try {
+      await p2.goto(server.base + '/');
+      await p2.getByRole('button', { name: /New here\? Register/ }).click();
+      await p2.locator('input[autocomplete="username"]').fill('tutor_one');
+      await p2.locator('input[type="password"]').first().fill('correct-horse-9');
+      await p2.getByRole('button', { name: 'Create account' }).click();
+      await p2.waitForSelector('.tour', { timeout: 20_000 });
+      await p2.getByRole('button', { name: 'Skip tour' }).click();
+      await p2.locator('.tutnote').waitFor();
+      expect(await title()).toBe('Your resources');
+      expect(await p2.locator('.tutspot').isVisible()).toBe(true);
+      await p2.getByRole('button', { name: 'Next', exact: true }).click();
+      await expect.poll(title).toBe('Open Buildings');
+      await p2.locator('.navitem[data-tour="nav-buildings"]').click();                      // pressing the real thing moves it on
+      await expect.poll(title).toBe('Build a Metal Mine');
+      await p2.locator('[data-tour="build-metalMine"]').click();
+      await expect.poll(title).toBe('The construction queue');
+      await p2.getByRole('button', { name: 'Next', exact: true }).click();
+      await expect.poll(title).toBe('Energy for the mines');
+      await p2.locator('[data-tour="build-solarPlant"]').click();
+      await expect.poll(title).toBe('Look inside any item');
+      await p2.locator('[data-tour="link-metalMine"]').first().click();
+      await expect.poll(title).toBe('Go back');
+      await p2.locator('[data-tour="back"]').click();
+      await expect.poll(title).toBe('Research');
+      await p2.getByRole('button', { name: 'Skip tutorial' }).click();
+      await p2.reload();
+      await p2.waitForSelector('header.top');
+      expect(await p2.locator('.tutnote').count()).toBe(0);                           // finished or skipped: it does not come back
+    } finally { await c2.close(); }
   });
 
   run('the top bar shows the three resources with their pictures', async () => {
@@ -793,6 +834,7 @@ describe('the admin', () => {
   run('the reserved admin name registers from this machine and gets the Admin page', async () => {
     await register('boss');
     if (await page.locator('.tour').isVisible()) await page.getByRole('button', { name: 'Skip tour' }).click();   // the tour shows once per device
+    if (await page.locator('.tutnote').isVisible()) await page.getByRole('button', { name: 'Skip tutorial' }).click();
     await go('Admin');
     await page.getByText('Commanders').first().waitFor({ timeout: 10_000 });
     expect(await page.locator('main').innerText()).toMatch(/pilot_one/);

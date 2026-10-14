@@ -423,3 +423,13 @@ img.itemicon { vertical-align: middle; border-radius: 4px; object-fit: cover; ma
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
 }
+
+/* ---- hands-on tutorial ---- */
+.tut { position: fixed; inset: 0; z-index: 70; pointer-events: none; }
+.tutdim { position: absolute; inset: 0; background: rgba(5, 8, 16, .6); }
+.tutspot { position: absolute; border-radius: 10px; border: 2px solid var(--accent); box-shadow: 0 0 0 100vmax rgba(5, 8, 16, .62); transition: left .2s, top .2s, width .2s, height .2s; animation: zg-pulse 1.6s ease-in-out infinite; }
+@keyframes zg-pulse { 0%, 100% { border-color: var(--accent); } 50% { border-color: #fff; } }
+.tutnote { position: fixed; width: min(340px, calc(100vw - 16px)); background: var(--panel2); border: 1px solid var(--accent); border-radius: 10px; padding: 12px 14px; box-shadow: 0 10px 40px rgba(0,0,0,.65); pointer-events: auto; }
+.tutnote h3 { margin: 2px 0 6px; color: var(--accent); }
+.tutnote p { margin: 4px 0 8px; }
+.tutwait { color: #ffd37a; }

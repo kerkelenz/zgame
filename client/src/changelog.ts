@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-o', date: '2026-10-14', title: 'Hands-on tutorial',
+    items: [
+      'A hands-on tutorial follows the welcome tour. It highlights the real button to press, waits for you to press it, and moves on by itself: open Buildings, build a Metal Mine, queue a Solar Plant, open an item and go back, then Research, the Tech tree, the Galaxy and the Overview. You can skip a step or the whole tutorial, and start it again from Settings.',
+    ],
+  },
+  {
     id: '2026-10-n', date: '2026-10-14', title: 'Idle queues, planners, alliance tools and pictures everywhere',
     items: [
       'Feedback when something finishes: a level or ship count glows when it rises, pop-ups slide in and the bell shakes for a new message.',

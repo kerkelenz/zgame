@@ -35,12 +35,12 @@ export function MobileBar() {
       )}
       <div className="tabbar" role="navigation" aria-label="Main pages">
         {TABS.map((x) => (
-          <button key={x.id} className={page === x.id ? 'on' : ''} onClick={() => go(x.id)} aria-label={x.label}>
+          <button key={x.id} data-tour={`nav-${x.id}`} className={page === x.id ? 'on' : ''} onClick={() => go(x.id)} aria-label={x.label}>
             <span className="ti">{x.icon}</span><span className="tl">{x.label}</span>
             {x.id === 'messages' && me.unread > 0 && <b className="badge">{me.unread}</b>}
           </button>
         ))}
-        <button className={!inTabs || open ? 'on' : ''} onClick={() => setOpen(!open)} aria-label="Menu" aria-expanded={open}>
+        <button data-tour="nav-menu" className={!inTabs || open ? 'on' : ''} onClick={() => setOpen(!open)} aria-label="Menu" aria-expanded={open}>
           <span className="ti">☰</span><span className="tl">{inTabs ? 'Menu' : t(`nav.${page}`, groupOfPage(page))}</span>
         </button>
       </div>

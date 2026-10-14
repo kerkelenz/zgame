@@ -12,6 +12,8 @@ import { resName } from '../../shared/data';
 import { isOpen, loadCollapsed, saveCollapsed, setAllGroups, useShowAllPages, visibleNav } from './nav';
 import { Tour } from './Tour';
 import { MobileBar } from './MobileBar';
+import { Tutorial } from './Tutorial';
+import { loadTutorial } from './tutorialSteps';
 import { NotificationBell } from './NotificationBell';
 import { IdleChip } from './AdviceCard';
 import { CHANGELOG, markChangelogSeen, unseenRelease } from './changelog';
@@ -83,6 +85,8 @@ export function App() {
   // unread messages and hostile fleets show in the browser tab title
   const unread = me?.unread ?? 0, hostile = fleets.incoming.length;
   useEffect(() => { document.title = `${hostile ? '⚠ ' : ''}${unread ? `(${unread}) ` : ''}Zgame`; }, [unread, hostile]);
+  const myId = me?.player.id;
+  useEffect(() => { if (myId) loadTutorial(myId); }, [myId]);
   if (!me || !planet) return <div className="loading">Loading universe…</div>;
 
   const page_ = (() => {
@@ -124,6 +128,7 @@ export function App() {
       <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to the page</a>
       <canvas id="stars" ref={stars} aria-hidden="true" />
       <Tour />
+      <Tutorial />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <header className="top">
         <div className="brand">Zgame</div>
@@ -134,7 +139,7 @@ export function App() {
         <select value={planet.id} onChange={(e) => g.selectPlanet(e.target.value)}>
           {planets.map((p) => <option key={p.id} value={p.id}>{p.isMoon ? '🌙 ' : ''}{p.name} {coordStr(p.coords)}</option>)}
         </select>
-        <div className="res">
+        <div className="res" data-tour="resources">
           {(['metal', 'crystal', 'deuterium'] as const).map((k) => {
             const ms = timeToFull(live[k], planet.production[k], planet.capacity[k]);
             const st = fullState(ms);
@@ -184,7 +189,7 @@ export function App() {
                   <span>{open ? '▾' : '▸'} {t(`nav.group.${grp.id}`, grp.label)}</span>{!open && closedBadge > 0 && <b className="badge">{closedBadge}</b>}
                 </button>
                 {grp.items.map((it) => (
-                  <button key={it.id} className={`navitem${page === it.id ? ' active' : ''}`} onClick={() => setPage(it.id)}>
+                  <button key={it.id} data-tour={`nav-${it.id}`} className={`navitem${page === it.id ? ' active' : ''}`} onClick={() => setPage(it.id)}>
                     {t(`nav.${it.id}`, it.label)}{badge(it.id) !== 0 && <b className="badge">{badge(it.id)}</b>}
                   </button>
                 ))}

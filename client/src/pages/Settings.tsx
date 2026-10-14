@@ -7,6 +7,7 @@ import { playCue, setSound, soundOn } from '../sound';
 import { setShowAllPages, useShowAllPages } from '../nav';
 import { canInstall, disablePush, enablePush, installApp, isIos, isStandalone, onInstallChange, pushSupported, thisDeviceSubscription } from '../pwa';
 import { NumInput } from '../NumInput';
+import { startTutorial } from '../tutorialSteps';
 import { getProbes, setProbes } from '../prefs';
 
 function Vacation() {
@@ -179,6 +180,7 @@ function Interface() {
         <label className="check"><input type="checkbox" checked={!!me.prefs?.worldNews} onChange={(e) => void savePref('worldNews', e.target.checked)} /> <b>News about other commanders&apos; battles</b> <span className="muted small">- also hear when computer empires raid people you do not know. Off by default: you only hear about attacks on members of your own alliance.</span></label>
         <label className="row"><b>Spy probes to send</b> <NumInput className="sm" max={1000} value={probes} onChange={(n) => { setProbesState(n); setProbes(n); }} /> <span className="muted small">- how many Espionage Probes the Fleet page prepares when you press Spy in the galaxy (0 prepares none). Kept in this browser.</span></label>
         <button className="link" onClick={() => setPage('news')}>See what's new</button>
+        <button className="link" onClick={() => { startTutorial(me.player.id); setPage('overview'); }}>Start the hands-on tutorial</button>
         <button className="link" onClick={() => { try { localStorage.removeItem('zg.tourDone'); } catch { /* ignore */ } location.reload(); }}>Replay the welcome tour</button>
       </div>
     </Card>
