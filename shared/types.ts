@@ -13,7 +13,7 @@ export type TechId =
 
 export type ShipId =
   | 'smallCargo' | 'largeCargo' | 'lightFighter' | 'heavyFighter' | 'cruiser' | 'battleship'
-  | 'battlecruiser' | 'bomber' | 'destroyer' | 'deathstar' | 'recycler' | 'espionageProbe'
+  | 'battlecruiser' | 'bomber' | 'destroyer' | 'deathstar' | 'recycler' | 'reaper' | 'espionageProbe'
   | 'colonyShip' | 'solarSatellite' | 'crawler' | 'pathfinder';
 
 export type DefenseId =

@@ -166,7 +166,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
       if (colonyCount(w, player) >= maxPlanets(player)) throw new GameError(`Colony limit reached (${maxPlanets(player)} - research Astrophysics)`);
       break;
     case 'recycle':
-      if (!has('recycler')) throw new GameError('Recyclers are required');
+      if (!has('recycler') && !has('reaper')) throw new GameError('Recyclers or Reapers are required');
       if (!w.debris[ck(to)]) throw new GameError('There is no debris field there');
       break;
     case 'expedition':
@@ -388,7 +388,7 @@ function resolveRecycle(w: World, m: Movement, at: number) {
     sendHome(m, at);
     return;
   }
-  const free = (m.ships.recycler || 0) * UNITS.recycler.cargo - totalRes(m.cargo);
+  const free = (m.ships.recycler || 0) * UNITS.recycler.cargo + (m.ships.reaper || 0) * UNITS.reaper.cargo - totalRes(m.cargo);
   // recyclers take metal and crystal together, in the proportion they lie in the field, so a full load is never all of one kind
   const total = d.metal + d.crystal;
   const take = Math.min(total, Math.max(0, free));
@@ -515,7 +515,21 @@ function resolveAttack(w: World, lead: Movement, at: number) {
     else delete w.movements[h.id];
   });
   group.forEach((m, i) => { m.ships = onlyShips(res.attackers[i].after); });
-  addDebris(w, lead.to, res.debris.metal, res.debris.crystal);
+  // Reapers in the attacking fleets take part of the debris of the fight straight into their holds (up to 30%, as far as they have room)
+  let debrisM = res.debris.metal, debrisC = res.debris.crystal;
+  for (const m of group) {
+    const reapers = m.ships.reaper || 0;
+    if (!reapers || m.alien) continue;
+    const room = Math.max(0, reapers * UNITS.reaper.cargo - totalRes(m.cargo));
+    const total = debrisM + debrisC;
+    const take = Math.min(room, Math.floor(total * 0.3 * (reapers / Math.max(1, group.reduce((n, g) => n + (g.ships.reaper || 0), 0)))));
+    if (take <= 0 || total <= 0) continue;
+    const takeM = Math.min(debrisM, Math.round((take * debrisM) / total)), takeC = Math.min(debrisC, take - takeM);
+    debrisM -= takeM; debrisC -= takeC; m.cargo.metal += takeM; m.cargo.crystal += takeC;
+    const owner = attackerOf(m);
+    if (owner) owner.stats.harvested += takeM + takeC;
+  }
+  addDebris(w, lead.to, debrisM, debrisC);
   // the moon roll counts the whole field above the planet; the report says what the odds were and whether it happened
   const field = w.debris[ck(lead.to)] ?? res.debris;
   const moonPossible = !target.isMoon && !Object.values(w.planets).some((p) => p.parentId === target.id);
