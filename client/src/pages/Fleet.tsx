@@ -172,7 +172,7 @@ export function FleetPage() {
         </Card>
       )}
 
-      <Card title={<>Send fleet from {planet.name} <CoordLink c={planet.coords} /></>} right={(() => {
+      <Card tour="send-fleet" title={<>Send fleet from {planet.name} <CoordLink c={planet.coords} /></>} right={(() => {
         const again = last && repeatable(last, planet.fleet);
         return again ? <button title="Fill in the form with the fleet, target, mission and cargo of your last dispatch" onClick={() => { setShips(again.ships); setTo(again.to); setMission(again.mission); setSpeedPct(again.speedPct); setCargo(again.cargo); setHoldHours(again.holdHours); setToMoon(again.toMoon); }}>
           Repeat last: {Object.values(again.ships).reduce((a, b) => a + (b ?? 0), 0)} ships → [{again.to.g}:{again.to.s}:{again.to.p}] {MISSIONS.find(([k]) => k === again.mission)?.[1] ?? again.mission}</button> : null;

@@ -96,7 +96,33 @@ describe('first visit', () => {
       await expect.poll(title).toBe('Go back');
       await p2.locator('[data-tour="back"]').click();
       await expect.poll(title).toBe('Research');
-      await p2.getByRole('button', { name: 'Skip tutorial' }).click();
+      // the rest of the tour: each step is done by pressing the highlighted thing, or by Next on a note
+      await p2.locator('.subtabs [data-tour="nav-research"]').click();
+      await expect.poll(title).toBe('The Research Lab');
+      await p2.getByRole('button', { name: 'Next', exact: true }).click();
+      await expect.poll(title).toBe('The tech tree');
+      await p2.locator('.subtabs [data-tour="nav-techtree"]').click();
+      await expect.poll(title).toBe('The Shipyard');
+      await p2.locator('.subtabs [data-tour="nav-shipyard"]').click();
+      await expect.poll(title).toBe('The planner');
+      await p2.getByRole('button', { name: 'Next', exact: true }).click();
+      await expect.poll(title).toBe('Fleets');
+      await p2.locator('nav [data-tour="hub-fleet"]').click();
+      await expect.poll(title).toBe('Sending a fleet');
+      await p2.getByRole('button', { name: 'Next', exact: true }).click();
+      await expect.poll(title).toBe('The galaxy');
+      await p2.locator('nav [data-tour="hub-galaxy"]').click();
+      await expect.poll(title).toBe('Contracts');
+      await p2.locator('nav [data-tour="hub-home"]').click();
+      await p2.locator('.subtabs [data-tour="nav-contracts"]').click();
+      await expect.poll(title).toBe('Play together');
+      await p2.locator('nav [data-tour="hub-alliance"]').click();
+      await expect.poll(title).toBe('Back home');
+      await p2.locator('nav [data-tour="hub-home"]').click();
+      await p2.locator('.subtabs [data-tour="nav-overview"]').click();
+      await expect.poll(title).toBe('You know the basics');
+      await p2.getByRole('button', { name: 'Finish' }).click();
+      await p2.locator('.tutnote').waitFor({ state: 'detached' });
       await p2.reload();
       await p2.waitForSelector('header.top');
       expect(await p2.locator('.tutnote').count()).toBe(0);                           // finished or skipped: it does not come back
@@ -953,7 +979,7 @@ describe('alliance war', () => {
     await page.waitForSelector('header.top');
     await go('Alliance');
     await page.locator('select').filter({ hasText: 'alliance…' }).selectOption({ label: '[RIV] The Rivals' });
-    page.once('dialog', (d) => void d.accept());
+    page.once('dialog', (d) => d.accept().catch(() => undefined));
     await page.getByRole('button', { name: 'Declare war' }).click();
     await page.getByRole('heading', { name: 'War' }).waitFor({ timeout: 10_000 });
     expect(await page.locator('.warboard').innerText()).toMatch(/\[RIV\]/);

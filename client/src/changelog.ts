@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-v', date: '2026-10-16', title: 'A longer tutorial',
+    items: [
+      'The hands-on tutorial now also shows the Shipyard and its planner, the Fleet page and how to send a fleet, Contracts and Alliance, before it ends on the Overview. It still moves on by itself when you press the highlighted thing, and you can skip a step or the whole tutorial.',
+    ],
+  },
+  {
     id: '2026-10-u', date: '2026-10-15', title: 'Planet banners',
     items: [
       'The Overview opens with a wide banner of the planet or moon, in the style of OGame: its kind and a line about it, your role for it, a switch between the planet and its moon, and its size, fields, temperature, orbit bonus, production and energy over the picture.',

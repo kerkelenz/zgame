@@ -73,7 +73,8 @@ export function Tutorial() {
     if (!box || narrow) return narrow ? { top: 74, left: 8, right: 8 } : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
     const w = 340, h = tip.current?.offsetHeight ?? 160;
     // a target in the side menu gets its note to the right, so the rest of the menu stays visible
-    if (box.x + box.w < 240) return { top: Math.min(Math.max(8, box.y - 20), window.innerHeight - h - 8), left: box.x + box.w + PAD + 14, width: w };
+    // (and below the page tabs, which the next step may point at)
+    if (box.x + box.w < 240) return { top: Math.min(Math.max(300, box.y - 20), window.innerHeight - h - 8), left: box.x + box.w + PAD + 14, width: w };
     const below = box.y + box.h + PAD + 12 + h < window.innerHeight;
     const top = below ? box.y + box.h + PAD + 12 : Math.max(8, box.y - PAD - 12 - h);
     const left = Math.min(Math.max(8, box.x + box.w / 2 - w / 2), window.innerWidth - w - 8);

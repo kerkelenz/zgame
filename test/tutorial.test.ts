@@ -32,7 +32,7 @@ describe('the tutorial steps', () => {
   it('end with a note and cover the basics a newcomer needs', () => {
     expect(STEPS[STEPS.length - 1].done).toBeUndefined();
     const ids = STEPS.map((s) => s.id).join(' ');
-    for (const part of ['stock', 'metal-mine', 'solar', 'details', 'research', 'tree', 'galaxy', 'overview']) expect(ids, part).toContain(part);
+    for (const part of ['stock', 'metal-mine', 'solar', 'details', 'research', 'tree', 'shipyard', 'planner', 'fleet', 'galaxy', 'contracts', 'alliance', 'overview']) expect(ids, part).toContain(part);
   });
 });
 

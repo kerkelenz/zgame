@@ -33,7 +33,7 @@ export function PlannerCard({ kind }: { kind: 'ship' | 'defense' }) {
     await act(async () => undefined, queued ? `Queued ${queued} of ${plan.steps.length} steps` : 'Nothing could be queued yet: a queue is full or a step needs the one before it');
   };
   return (
-    <Card title="Planner">
+    <Card title="Planner" tour="planner">
       <div className="row">
         <select value={unit} onChange={(e) => setUnit(e.target.value as UnitId)} aria-label="What to plan">
           {ids.map((id) => <option key={id} value={id}>{UNITS[id].name}</option>)}
