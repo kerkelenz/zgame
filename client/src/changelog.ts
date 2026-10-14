@@ -3,6 +3,12 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-p', date: '2026-10-14', title: 'Battle replay',
+    items: [
+      'Watch any battle as an animated replay: both fleets as rows of pictures, beams across the gap, shields flashing, ships bursting as they fall and the counts ticking down, with Play, Pause, step by round, a slider and speeds from half to four times. Open it with Watch the replay in the battle message, in the full report or on a shared report link. The Simulator replays the first of its runs too.',
+    ],
+  },
+  {
     id: '2026-10-o', date: '2026-10-14', title: 'Hands-on tutorial',
     items: [
       'A hands-on tutorial follows the welcome tour. It highlights the real button to press, waits for you to press it, and moves on by itself: open Buildings, build a Metal Mine, queue a Solar Plant, open an item and go back, then Research, the Tech tree, the Galaxy and the Overview. You can skip a step or the whole tutorial, and start it again from Settings.',

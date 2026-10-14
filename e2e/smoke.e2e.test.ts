@@ -436,6 +436,48 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('a battle can be watched as an animated replay with play, pause, rounds and speed', async () => {
+    const side = (name: string, before: object, after: object) => ({ name, before, after, lost: {} });
+    const st = (n: number) => ({ attackers: { shots: 10 * n, damage: 5000 * n, absorbed: 1200 * n, hullDamage: 3800 * n, destroyed: n }, defenders: { shots: 20, damage: 800, absorbed: 100, hullDamage: 700, destroyed: 1 } });
+    const data = {
+      coords: { g: 1, s: 4, p: 7 }, planet: 'Target', rounds: 3, winner: 'attacker', debris: { metal: 90000, crystal: 40000 }, loot: { metal: 1000, crystal: 500, deuterium: 0 }, bounty: 0,
+      attackers: [side('Raider', { cruiser: 10 }, { cruiser: 8 })], defenders: [side('Victim', { lightFighter: 20, rocketLauncher: 6 }, { lightFighter: 0, rocketLauncher: 0 })],
+      roundLog: [{ a: { cruiser: 10 }, d: { lightFighter: 20, rocketLauncher: 6 } }, { a: { cruiser: 9 }, d: { lightFighter: 9, rocketLauncher: 4 } }, { a: { cruiser: 9 }, d: { lightFighter: 2, rocketLauncher: 1 } }, { a: { cruiser: 8 }, d: {} }],
+      roundStats: [1, 2, 3].map(st),
+    };
+    await page.route('**/api/messages', async (route) => {
+      if (route.request().method() !== 'GET') return route.continue();
+      await route.fulfill({ json: [{ id: 'bt2', to: 'x', from: null, kind: 'combat', subject: 'Battle at Target [1:4:7]: Attacker victory', body: 'x', at: Date.now(), read: true, data }] });
+    });
+    await go('Overview');                                  // the list is read afresh each time the page opens
+    await go('Messages');
+    await page.locator('.msghead').first().click();
+    await page.locator('.msgbody').getByRole('button', { name: /Watch the replay/ }).click();
+    const modal = page.locator('.modal');
+    await modal.locator('.replay canvas').waitFor();
+    // something is drawn: the canvas is not one flat colour
+    const colours = async () => page.evaluate(() => {
+      const c = document.querySelector('.replay canvas') as HTMLCanvasElement;
+      const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+      const seen = new Set<number>();
+      for (let i = 0; i < d.length; i += 4 * 97) seen.add((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]);
+      return seen.size;
+    });
+    await expect.poll(colours, { timeout: 10_000 }).toBeGreaterThan(20);
+    await modal.getByRole('button', { name: 'Pause', exact: true }).click();
+    await modal.getByRole('button', { name: 'Next round' }).click();
+    await expect.poll(() => modal.locator('.replay p').innerText()).toMatch(/^Round 1: attackers fired 10 shots/);
+    await modal.getByRole('button', { name: 'Next round' }).click();
+    await expect.poll(() => modal.locator('.replay p').innerText()).toMatch(/^Round 2: attackers fired 20 shots/);
+    await modal.getByLabel('Speed').selectOption('4');
+    await modal.getByRole('button', { name: 'Play', exact: true }).click();
+    await modal.getByRole('button', { name: /again/i }).waitFor({ timeout: 20_000 });      // at 4x it runs to the end and offers to watch again
+    await page.keyboard.press('Escape');
+    await modal.waitFor({ state: 'detached' });
+    await page.unroute('**/api/messages');
+    noErrors();
+  });
+
   run('the details page explains what an item does, colours what each level changes and shows engine changes', async () => {
     await go('Buildings');
     await page.locator('.items .card a.itemlink', { hasText: 'Fusion Reactor' }).first().click();

@@ -433,3 +433,9 @@ img.itemicon { vertical-align: middle; border-radius: 4px; object-fit: cover; ma
 .tutnote h3 { margin: 2px 0 6px; color: var(--accent); }
 .tutnote p { margin: 4px 0 8px; }
 .tutwait { color: #ffd37a; }
+
+/* ---- battle replay ---- */
+.replay { display: grid; gap: 8px; margin: 6px 0 10px; }
+.replay canvas { width: 100%; height: auto; aspect-ratio: 860 / 360; background: #070b18; border: 1px solid var(--line); border-radius: 10px; display: block; }
+.replayctl { flex-wrap: wrap; align-items: center; gap: 8px; }
+.replayctl input[type="range"] { flex: 1 1 160px; min-width: 120px; }

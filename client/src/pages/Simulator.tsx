@@ -7,6 +7,8 @@ import { get } from '../api';
 import { useGame } from '../game';
 import { Card, coordStr, fmt, Linkify, Page, ItemIcon } from '../ui';
 import { NumInput } from '../NumInput';
+import { ReplayToggle } from '../BattleReplay';
+import { canReplay } from '../replay';
 
 type Units = Partial<Record<UnitId, number>>;
 type Tech = { weapons: number; shielding: number; armour: number };
@@ -51,9 +53,11 @@ export function Simulator() {
   const run = () => {
     if (!count(att) || !count(def)) return;
     let wins = 0, draws = 0, rounds = 0, attLoss = 0, defLoss = 0, debris = 0, moon = 0;
+    let sample: { roundLog: unknown; roundStats: unknown; winner: string; rounds: number } | null = null;
     const seed = Math.floor(Math.random() * 2 ** 31);
     for (let i = 0; i < runs; i++) {
       const r = simulateCombat([sideOf(att, attTech, 'Attacker')], [sideOf(def, defTech, 'Defender')], makeRng(seed + i * 7919));
+      if (i === 0) sample = { roundLog: r.roundLog, roundStats: r.roundStats, winner: r.winner, rounds: r.rounds };           // the first run is the one you can watch
       if (r.winner === 'attacker') wins++; else if (r.winner === 'draw') draws++;
       rounds += r.rounds;
       attLoss += totalRes(r.attackers[0].lost) / runs;
@@ -64,7 +68,7 @@ export function Simulator() {
       // the roll after a battle counts the whole field above the planet: what was already there plus what this battle leaves
       moon += moonChance({ metal: r.debris.metal + oldDebris, crystal: r.debris.crystal }) / runs;
     }
-    setOut({ runs, wins, draws, losses: runs - wins - draws, rounds: rounds / runs, attLoss, defLoss, debris, moon, oldDebris });
+    setOut({ runs, wins, draws, losses: runs - wins - draws, rounds: rounds / runs, attLoss, defLoss, debris, moon, oldDebris, sample });
   };
 
   const table = (side: 'att' | 'def', ids: UnitId[], units: Units) => (
@@ -121,6 +125,7 @@ export function Simulator() {
             <tr><td>Chance of a moon</td><td className={out.moon > 0 ? 'good' : 'muted'} title="Only for a planet that has no moon yet: 20% once the field above it holds 100,000 resources, less below that. Debris left by earlier battles counts.">{(out.moon * 100).toFixed(out.moon > 0 && out.moon < 0.1 ? 1 : 0)}%</td></tr>
           </tbody></table>
         )}
+        {out?.sample && canReplay(out.sample) && <><h4>Watch one of the runs</h4><ReplayToggle key={out.sample.rounds + out.attLoss} d={out.sample as never} /></>}
       </Card>
     </Page>
   );

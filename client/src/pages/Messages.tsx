@@ -3,6 +3,8 @@ import { BUILDINGS, TECHS, UNITS } from '../../../shared/data';
 import { del, get, post } from '../api';
 import { useGame } from '../game';
 import type { Mission } from '../../../shared/types';
+import { ReplayToggle } from '../BattleReplay';
+import { canReplay } from '../replay';
 import { Card, CoordLink, Linkify, PlanetLink, Page, PlayerLink, fmt, when, ItemIcon, copyLink } from '../ui';
 
 const KINDS = ['all', 'combat', 'espionage', 'raid', 'news', 'expedition', 'transport', 'alliance', 'player', 'system'];
@@ -84,7 +86,7 @@ export function Rounds({ log, stats }: { log?: { a: Record<string, number>; d: R
 const moonLine = (m: any) => (m ? (m.formed ? `A moon formed above this planet (the chance was ${Math.round(m.chance * 100)}%).` : `No moon formed. The chance from the ${fmt(m.field)} of debris above this planet was ${Math.round(m.chance * 100)}%.`) : null);
 
 /** the result of a battle at a glance: who won, the losses on each side, loot, debris and the moon; the round-by-round detail is behind a link */
-export function BattleReport({ d, full, onOpen }: { d: any; /** show the round-by-round detail here too (the public page) */ full?: boolean; onOpen?: () => void }) {
+export function BattleReport({ d, full, onOpen, replay }: { d: any; /** show the round-by-round detail here too (the public page) */ full?: boolean; onOpen?: (replay?: boolean) => void; /** open the replay at once */ replay?: boolean }) {
   const side = (title: string, list: any[]) => (
     <div>
       <h4>{title}</h4>
@@ -105,14 +107,16 @@ export function BattleReport({ d, full, onOpen }: { d: any; /** show the round-b
       {(d.debris?.metal || d.debris?.crystal) ? <p>Debris: {fmt(d.debris.metal)} M, {fmt(d.debris.crystal)} C</p> : null}
       {moon && <p className={d.moon.formed ? 'good' : 'muted'}>{d.moon.formed ? '🌙 ' : ''}{moon}</p>}
       {d.bounty ? <p className="metal">Raider bounty: {fmt(d.bounty)}</p> : null}
-      {!full && onOpen && d.roundStats && <button className="primary" onClick={onOpen}>Full battle report</button>}
+      {!full && onOpen && d.roundStats && <button className="primary" onClick={() => onOpen()}>Full battle report</button>}
+      {!full && onOpen && canReplay(d) && <> <button onClick={() => onOpen(true)}>▶ Watch the replay</button></>}
+      {full && canReplay(d) && <><h4>Replay</h4><ReplayToggle d={d} startOpen={replay} /></>}
       {full && <><h4>Round by round</h4><Rounds log={d.roundLog} stats={d.roundStats} /></>}
     </>
   );
 }
 
 /** the full report in a popup window; Escape or a click outside closes it */
-export function BattlePopup({ d, subject, onClose }: { d: any; subject: string; onClose: () => void }) {
+export function BattlePopup({ d, subject, onClose, replay }: { d: any; subject: string; onClose: () => void; replay?: boolean }) {
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', key);
@@ -122,7 +126,7 @@ export function BattlePopup({ d, subject, onClose }: { d: any; subject: string; 
     <div className="modalback" onClick={onClose} role="presentation">
       <div className="modal" role="dialog" aria-label="Full battle report" onClick={(e) => e.stopPropagation()}>
         <div className="row between"><h3>{subject}</h3><button onClick={onClose} aria-label="Close">✕</button></div>
-        <BattleReport d={d} full />
+        <BattleReport d={d} full replay={replay} />
       </div>
     </div>
   );
@@ -133,7 +137,7 @@ export function Messages() {
   const [msgs, setMsgs] = useState<any[]>([]);
   const [kind, setKind] = useState('all');
   const [open, setOpen] = useState<string | null>(null);
-  const [popup, setPopup] = useState<{ d: any; subject: string } | null>(null);
+  const [popup, setPopup] = useState<{ d: any; subject: string; replay?: boolean } | null>(null);
   const [to, setTo] = useState('');
   const [text, setText] = useState('');
 
@@ -174,7 +178,7 @@ export function Messages() {
             {open === m.id && (
               <div className="msgbody">
                 {m.kind === 'espionage' && m.data?.resources ? <SpyReport d={m.data} /> : null}
-                {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers ? <BattleReport d={m.data} onOpen={() => setPopup({ d: m.data, subject: m.subject })} /> : <p style={{ whiteSpace: 'pre-wrap' }}><Linkify text={m.body} /></p>}
+                {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers ? <BattleReport d={m.data} onOpen={(replay) => setPopup({ d: m.data, subject: m.subject, replay })} /> : <p style={{ whiteSpace: 'pre-wrap' }}><Linkify text={m.body} /></p>}
                 {(m.kind === 'combat' || m.kind === 'raid') && m.data?.attackers && (
                   <button onClick={async () => {
                     const r = await act(() => post(`/messages/${m.id}/share`));
@@ -189,7 +193,7 @@ export function Messages() {
           </div>
         ))}
       </Card>
-      {popup && <BattlePopup d={popup.d} subject={popup.subject} onClose={() => setPopup(null)} />}
+      {popup && <BattlePopup d={popup.d} subject={popup.subject} replay={popup.replay} onClose={() => setPopup(null)} />}
     </Page>
   );
 }
