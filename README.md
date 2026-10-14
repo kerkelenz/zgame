@@ -128,6 +128,8 @@ Browser smoke tests: `npm run e2e` builds the client, starts a real server on a 
 
 `npm run balance:new` prints payback times and multipliers for crawlers, classes, orbit bonuses, the merchant deal, the supply depot and expedition ships (run it after changing any of those constants).
 
+`npm run balance:invasion [number]` dry-runs a Void invasion with simulated commanders (how big a share of the server fleets it takes to win, by fleet mix and technology); run it after changing the invasion strength, wave shares or alien kinds. `test/invasion-balance.test.ts` pins the targets: one commander never wins alone, about a third of the fleets together win.
+
 `npm test` runs the suite, `npm run typecheck` runs `tsc`, and `npm run balance -- 72` plays a greedy bot for 72 simulated hours and prints economy milestones (handy when tuning speeds or costs).
 
 ## Not implemented (ideas)

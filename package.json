@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "balance": "tsx server/balance-sim.ts",
     "balance:new": "tsx server/balance-new.ts",
+    "balance:invasion": "tsx server/balance-invasion.ts",
     "bench": "tsx server/bench.ts",
     "demo": "tsx server/seed-demo.ts && cross-env ZGAME_SAVE=data/demo-world.json tsx server/index.ts",
     "backup": "tsx server/backup.ts",

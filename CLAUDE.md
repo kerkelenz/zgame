@@ -9,3 +9,4 @@
 - **Every feature gets:** tests, UI, a README note, a check in the real browser on a private port (never the default save or port 3000), then a commit.
 - Players see **Vespene Gas**; the internal key is still `deuterium`. Use `resName()` from `shared/data.ts` when printing a resource key.
 - `npm run balance:new` after changing crawler, class, orbit, merchant, shop or expedition constants.
+- `npm run balance:invasion` after changing invasion strength, wave shares or alien kinds.
