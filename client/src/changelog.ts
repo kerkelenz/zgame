@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-ze', date: '2026-10-25', title: 'More motion',
     items: [
+      'In the hostile fleets list, "Defend ally" is now a link: it fills in the send form with the attacked ally planet and the Defend ally mission, and scrolls to it.',
       'Invasions are sized to the typical combat fleet: no single huge fleet counts for more than three times the median when the Armada is sized, so mid-size commanders can really help. The Invasion page has a new Can we win? line with an estimate with and without your own fleet, and supplies, home defense and scouting earn a bigger share of the rewards (damage at the front is 35%).',
       'Pages and cards fade in, the planet banners drift slowly, the selected planet glows, progress bars shimmer, the moon of a planet sweeps across its banner now and then as if in orbit (on a moon the planet does), Command Credits count up, a level that rises pops, and achievements and objectives throw a few sparks.',
       'Every fleet of yours, and every hostile fleet on its way, is a ship gliding along a line from its planet to its target on the Fleet page, turning round on the way home.',

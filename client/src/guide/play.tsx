@@ -48,7 +48,7 @@ export const PLAY: Topic[] = [
             <tr><td>Destroy moon</td><td>Deathstars only, against a moon. See Planets, colonies and moons.</td></tr>
             <tr><td>Transport</td><td>Delivers resources to any planet, yours or not.</td></tr>
             <tr><td>Deploy</td><td>Moves ships to another of your planets and keeps them there.</td></tr>
-            <tr><td>Defend ally (hold)</td><td>Stations your fleet at an ally's planet for up to 48 hours; it fights beside their defenses against attackers and raiders.</td></tr>
+            <tr><td>Defend ally (hold)</td><td>When a hostile fleet is heading for an ally, the <b>Defend ally</b> link in the hostile fleets list fills in the send form below with that planet and this mission. Stations your fleet at an ally's planet for up to 48 hours; it fights beside their defenses against attackers and raiders.</td></tr>
             <tr><td>Espionage</td><td>Probes return a report. More probes and more Espionage Technology than the target reveal more: resources, then fleet, defenses, buildings and finally research. Weak probes can be shot down.</td></tr>
             <tr><td>Colonize</td><td>Settles an empty planet with a Colony Ship.</td></tr>
             <tr><td>Recycle</td><td>Recyclers collect a debris field.</td></tr>

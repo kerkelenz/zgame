@@ -674,6 +674,31 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('"Defend ally" in the hostile fleet list fills in the send form with that planet and the Defend ally mission', async () => {
+    await page.route('**/api/planets', async (route) => {
+      const r = await route.fetch(); const j = await r.json() as any[];
+      await route.fulfill({ response: r, json: j.map((p, i) => (i === 0 ? { ...p, fleet: { ...p.fleet, smallCargo: 5 } } : p)) });
+    });
+    await page.route('**/api/fleets', async (route) => {
+      const r = await route.fetch(); const j = await r.json() as any;
+      const now = Date.now();
+      j.incoming = [{ id: 'ally1', ownerId: null, ownerName: 'Raiders', ownerAlliance: null, mission: 'attack', phase: 'outbound', ally: true, target: 'Locke (Ryza)', targetOwnerId: null, from: { g: 2, s: 14, p: 8 }, to: { g: 2, s: 40, p: 9 }, toMoon: false, departAt: now - 60_000, arriveAt: now + 120_000, ships: {} }];
+      await route.fulfill({ response: r, json: j });
+    });
+    await page.reload();
+    await page.waitForSelector('header.top');
+    await go('Fleet');
+    await page.getByRole('button', { name: 'Defend ally', exact: true }).click();
+    const mission = page.locator('select', { has: page.locator('option', { hasText: 'Defend ally' }) });
+    await expect.poll(() => mission.inputValue()).toBe('hold');
+    expect(await page.locator('input[value="40"]').count()).toBeGreaterThan(0);                // the target system of the ally
+    await page.unroute('**/api/planets');
+    await page.unroute('**/api/fleets');
+    await page.reload();
+    await page.waitForSelector('header.top');
+    noErrors();
+  });
+
   run('Ctrl+K jumps to any item, and g then a letter opens a page', async () => {
     await page.keyboard.press('Control+k');
     await page.locator('.palette input').waitFor();
