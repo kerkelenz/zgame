@@ -43,7 +43,7 @@ export function visibleNav(features: Features | undefined, showAll: boolean, isA
 }
 
 /** pages that are not tabs belong to the hub of what they are about: an item's page to Build, a commander's profile to Alliance */
-const EXTRA: Record<string, string> = { detail: 'build', profile: 'alliance' };
+const EXTRA: Record<string, string> = { detail: 'build', profile: 'alliance', battle: 'fleet' };
 export const groupOfPage = (page: string): string => EXTRA[page] ?? NAV_GROUPS.find((g) => g.items.some((i) => i.id === page))?.id ?? 'home';
 export const itemOfPage = (page: string): NavItem | undefined => NAV_GROUPS.flatMap((g) => g.items).find((i) => i.id === page);
 /** does the page work on the selected planet (so the planet strip applies)? */

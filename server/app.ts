@@ -7,6 +7,7 @@ import { bus } from './bus';
 import { authenticate, login, logout, register } from './accounts';
 import * as AL from './alliance';
 import { abandonPlanet, tradeResources, cancelBuilding, cancelResearch, cancelShipyardJob, processPlayer, queueBuilding, queueResearch, queueUnits, startDemolition, unqueueBuilding, unqueueResearch, moveQueuedBuilding, moveQueuedResearch } from './economy';
+import { battleView, engagedBattles, playRound, retreatBattle } from './battles';
 import { flightPlan, jumpGate, launchMissiles, phalanxScan, recallFleet, sendFleet } from './fleet';
 import { colonyCount, galaxyView, inBounds, playerPoints } from './galaxy';
 import { notifyPlayer } from './messages';
@@ -466,7 +467,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const b = req.body || {};
     const m = sendFleet(w, p, {
       fromPlanetId: str(b.fromPlanetId), to: { g: Number(b.to?.g), s: Number(b.to?.s), p: Number(b.to?.p) },
-      ships: b.ships || {}, mission: str(b.mission) as never, speedPct: Number(b.speedPct) || 100, cargo: b.cargo || {}, holdHours: Number(b.holdHours) || 1, toMoon: !!b.toMoon, joinFleetId: b.joinFleetId ? str(b.joinFleetId) : undefined,
+      ships: b.ships || {}, mission: str(b.mission) as never, speedPct: Number(b.speedPct) || 100, cargo: b.cargo || {}, holdHours: Number(b.holdHours) || 1, toMoon: !!b.toMoon, joinFleetId: b.joinFleetId ? str(b.joinFleetId) : undefined, command: !!b.command,
     }, now());
     return { id: m.id, arriveAt: m.arriveAt };
   }));
@@ -475,6 +476,14 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const m = launchMissiles(w, req.player!, str(b.fromPlanetId), { g: Number(b.to?.g), s: Number(b.to?.s), p: Number(b.to?.p) }, Number(b.count), now());
     return { id: m.id, arriveAt: m.arriveAt };
   }));
+  // battles a commander flies in person (against outposts)
+  A.get('/battles', wrap((req) => engagedBattles(w, req.player!.id)));
+  A.get('/battle/:id', wrap((req) => battleView(w, req.params.id, req.player!.id, now())));
+  A.post('/battle/:id/round', wrap((req) => {
+    const b = req.body || {};
+    return playRound(w, req.params.id, req.player!.id, { stance: str(b.stance) as never, target: str(b.target) as never, ability: (b.ability ? str(b.ability) : null) as never }, now());
+  }));
+  A.post('/battle/:id/retreat', wrap((req) => retreatBattle(w, req.params.id, req.player!.id, now())));
   A.post('/fleets/:id/recall', wrap((req) => {
     recallFleet(w, req.player!, req.params.id, now());
     return { ok: true };

@@ -46,6 +46,7 @@ import { Contracts } from './pages/Contracts';
 import { Market } from './pages/Market';
 import { Lifeform } from './pages/Lifeform';
 import { GameMap } from './pages/Map';
+import { BattlePage } from './pages/Battle';
 import { Upgrades } from './pages/Upgrades';
 import { Automation } from './pages/Automation';
 import { Highscore } from './pages/Highscore';
@@ -130,6 +131,7 @@ export function App() {
       case 'upgrades': return <Upgrades />;
       case 'lifeform': return <Lifeform />;
       case 'map': return <GameMap />;
+      case 'battle': return <BattlePage />;
       case 'automation': return <Automation />;
       case 'guide': return <Guide />;
       case 'settings': return <Settings />;

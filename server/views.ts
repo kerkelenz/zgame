@@ -25,6 +25,7 @@ const intelView = (w: World, p: Player, m: Movement) => { const { count, ...rest
 import { ALLIANCE_PERMS } from './world';
 import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
 import { OFFICERS, OFFICER_MAX, FACTIONS, JOIN_REP, FACTION_BY_ID, CHAR_CLASSES, CLASS_CHANGE_COST } from '../shared/data';
+import { engagedBattles } from './battles';
 import { planetAt, type Alliance, type Movement, type Planet, type Player, type World } from './world';
 
 export function planetView(w: World, planet: Planet, now: number) {
@@ -168,17 +169,17 @@ export function fleetsView(w: World, p: Player) {
   const stationed: ReturnType<typeof mv>[] = [];
   const joinable: (ReturnType<typeof mv> & { targetName: string })[] = [];
   for (const m of Object.values(w.movements)) {
-    if (m.ownerId === p.id) mine.push(mv(m, true));
+    if (m.ownerId === p.id) mine.push({ ...mv(m, true), engaged: !!m.engaged } as never);
     if ((m.mission === 'attack' || m.mission === 'missile' || m.mission === 'destroy') && m.phase === 'outbound' && m.ownerId !== p.id) {
       const hitMe = myCoords.some((c) => sameCoords(c, m.to));
       const hitAlly = allyCoords.find((a) => sameCoords(a.c, m.to));
       if (hitMe) incoming.push({ ...mv(m, false, w), helpAsked: !!m.helpAsked, ships: {}, target: 'you', ally: false, ...intelView(w, p, m) });
       else if (hitAlly) incoming.push({ ...mv(m, false, w), ships: {}, target: `${hitAlly.owner} (${hitAlly.name})`, ally: true, ...intelView(w, p, m), targetOwnerId: hitAlly.ownerId, targetOwner: hitAlly.owner, targetName: hitAlly.name });
     }
-    if (m.mission === 'attack' && m.phase === 'outbound' && m.ownerId && !m.acsId && (m.ownerId === p.id || allyIds.has(m.ownerId))) {
+    if (m.mission === 'attack' && m.phase === 'outbound' && !m.engaged && m.ownerId && !m.acsId && (m.ownerId === p.id || allyIds.has(m.ownerId))) {
       joinable.push({ ...mv(m, false), ships: {}, targetName: planetAt(w, m.to, !!m.toMoon)?.name ?? '?' });
     }
     if (m.mission === 'hold' && m.phase === 'holding' && m.ownerId !== p.id && myCoords.some((c) => sameCoords(c, m.to))) stationed.push(mv(m, false));
   }
-  return { mine, incoming, stationed, joinable, events: fleetEvents(w, p) };
+  return { mine, incoming, stationed, joinable, engaged: engagedBattles(w, p.id), events: fleetEvents(w, p) };
 }

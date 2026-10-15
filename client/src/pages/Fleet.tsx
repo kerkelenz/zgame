@@ -18,7 +18,7 @@ const MISSIONS: [Mission, string][] = [
 ];
 
 export function FleetPage() {
-  const { me, planet, planets, fleets, act, target, setTarget, now, openProfile, showInGalaxy } = useGame();
+  const { me, planet, planets, fleets, act, target, setTarget, now, openProfile, showInGalaxy, openBattle } = useGame();
   const [ships, setShips] = useState<Partial<Record<ShipId, number>>>({});
   const [to, setTo] = useState({ g: planet.coords.g, s: planet.coords.s, p: planet.coords.p === 1 ? 2 : 1 });
   const [mission, setMission] = useState<Mission>('transport');
@@ -26,6 +26,7 @@ export function FleetPage() {
   const [cargo, setCargo] = useState({ metal: 0, crystal: 0, deuterium: 0 });
   const [holdHours, setHoldHours] = useState(1);
   const [joinId, setJoinId] = useState('');
+  const [command, setCommand] = useState(false);
   const [presets, setPresets] = useState<{ id: string; name: string; ships: Partial<Record<ShipId, number>> }[]>([]);
   // presets live on the server so they follow you between devices; any saved in this browser before are uploaded once
   useEffect(() => {
@@ -77,7 +78,7 @@ export function FleetPage() {
   }, [JSON.stringify(chosen), to.g, to.s, to.p, speedPct, planet.id]);
 
   const send = async () => {
-    const r = await act(() => post('/fleets/send', { fromPlanetId: planet.id, to, ships: chosen, mission, speedPct, cargo, holdHours, toMoon: toMoon || mission === 'destroy', joinFleetId: mission === 'attack' && joinId ? joinId : undefined }), 'Fleet dispatched');
+    const r = await act(() => post('/fleets/send', { fromPlanetId: planet.id, to, ships: chosen, mission, speedPct, cargo, holdHours, toMoon: toMoon || mission === 'destroy', joinFleetId: mission === 'attack' && joinId ? joinId : undefined, command: mission === 'attack' && !joinId && command }), 'Fleet dispatched');
     setJoinId('');
     if (r) {
       saveLastSend({ ships: chosen, to, mission, speedPct, cargo, holdHours, toMoon: toMoon || mission === 'destroy' });
@@ -115,7 +116,8 @@ export function FleetPage() {
               {m.mission !== 'missile' && m.mission !== 'expedition' && <FlightLane m={m} />}
               <div className="muted small">{m.missiles ? `${m.missiles} interplanetary missile(s)` : shipList(m.ships)}{m.cargo && m.cargo.metal + m.cargo.crystal + m.cargo.deuterium > 0 ? ` · cargo ${fmt(m.cargo.metal)}M ${fmt(m.cargo.crystal)}C ${fmt(m.cargo.deuterium)}D` : ''}</div>
             </div>
-            {m.phase !== 'returning' && m.mission !== 'missile' && <button onClick={() => confirm('Recall this fleet? It turns around at once and cannot be sent on again from where it is.') && void act(() => post(`/fleets/${m.id}/recall`), 'Recalled')}>Recall</button>}
+            {m.engaged && <button className="primary" onClick={() => openBattle(m.id)}>⚔ Command the battle</button>}
+            {m.phase !== 'returning' && !m.engaged && m.mission !== 'missile' && <button onClick={() => confirm('Recall this fleet? It turns around at once and cannot be sent on again from where it is.') && void act(() => post(`/fleets/${m.id}/recall`), 'Recalled')}>Recall</button>}
           </div>
         ))}
       </Card>
@@ -248,6 +250,9 @@ export function FleetPage() {
                     {fleets.joinable.map((j) => <option key={j.id} value={j.id}>join {j.ownerName} → {j.targetName} {coordStr(j.to)} ({fmtDur(j.arriveAt - now)} left)</option>)}
                   </select>
                 </label>
+              )}
+              {mission === 'attack' && !joinId && (
+                <label className="row" title="Against a pirate or alien outpost your fleet waits at the target and you give orders round by round: a stance, how to aim, an ability. Against anyone else the fight is automatic."><input type="checkbox" checked={command} onChange={(e) => setCommand(e.target.checked)} data-tour="command-battle" /> Command the battle myself (outposts)</label>
               )}
               {mission === 'expedition' && (
                 <label>Stay out

@@ -150,3 +150,10 @@ describe('which pages a commander has unlocked', () => {
     expect(featuresOf(w, a).invasion).toBe(true);                           // history remains
   });
 });
+
+describe('the Battle screen', () => {
+  it('belongs to the Fleet hub and is not a tab', () => {
+    expect(groupOfPage('battle')).toBe('fleet');
+    expect(tabOfItem('battle')).toBeUndefined();
+  });
+});

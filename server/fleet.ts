@@ -13,6 +13,7 @@ import { allianceBonuses, planetCapacity, processPlayer, updatePlanet } from './
 import { colonyCount, createMoon, createPlanet, inBounds, isProtected, maxExpeditions, maxPlanets } from './galaxy';
 import { lifeformEffects } from '../shared/lifeforms';
 import { assignLook } from './looks';
+import { autoFinish, openBattle } from './battles';
 import { outpostBattle, outpostTag } from './outposts';
 import { notifyPlayer } from './messages';
 import { adjustRep } from './progress';
@@ -36,6 +37,8 @@ export interface SendRequest {
   toMoon?: boolean;
   /** join an allied outbound attack (same target) instead of attacking separately */
   joinFleetId?: string;
+  /** fly the battle in person (only against a pirate or alien outpost) */
+  command?: boolean;
 }
 
 const fmt = (c: Coords) => `[${c.g}:${c.s}:${c.p}]`;
@@ -206,6 +209,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
     m.acsId = joinLead.id;
     if (joinLead.ownerId && joinLead.ownerId !== player.id) notifyPlayer(w, joinLead.ownerId, 'alliance', 'Ally joined your attack', `${player.username} joined your attack on ${fmt(to)} with ${fleetCount(ships)} ships.`);
   }
+  if (req.command && mission === 'attack' && !joinLead && !toMoon && targetOwner?.npc?.outpost) m.command = true;
   w.movements[m.id] = m;
   if (mission !== 'expedition' && mission !== 'deploy' && mission !== 'scout' && mission !== 'supply') rememberTarget(player, to);
 
@@ -226,6 +230,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
 export function recallFleet(w: World, player: Player, id: string, now: number) {
   const m = w.movements[id];
   if (!m || m.ownerId !== player.id) throw new GameError('Unknown fleet', 404);
+  if (m.engaged) throw new GameError('This fleet is in a battle: use Retreat on the Battle screen');
   if (m.mission === 'missile') throw new GameError('Missiles cannot be recalled');
   if (m.phase === 'returning') throw new GameError('Fleet is already returning');
   if (m.phase === 'outbound' && m.mission === 'attack') {
@@ -479,7 +484,15 @@ function summarize(units: Record<string, number | undefined>): string {
   return parts.length ? parts.join(', ') : 'nothing';
 }
 
-function resolveAttack(w: World, lead: Movement, at: number) {
+/** a commanded battle is over (the commander finished it, or its deadline passed): settle it with the result it reached, or by plain automatic rounds */
+export function finishCommandedAttack(w: World, lead: Movement, at: number, preset?: CombatResult) {
+  const res = preset ?? autoFinish(lead.id) ?? undefined;
+  lead.engaged = undefined; lead.command = undefined; lead.arriveAt = at;
+  resolveAttack(w, lead, at, res);
+}
+
+function resolveAttack(w: World, lead: Movement, at: number, preset?: CombatResult) {
+  if (lead.engaged && !preset) return finishCommandedAttack(w, lead, at);
   // joint attack: every ally fleet that joined this one fights in the same battle
   const group = [lead, ...Object.values(w.movements).filter((x) => x.acsId === lead.id && x.phase === 'outbound' && x.mission === 'attack')];
   const target = planetAt(w, lead.to, !!lead.toMoon);
@@ -503,7 +516,9 @@ function resolveAttack(w: World, lead: Movement, at: number) {
   for (const h of holders) defenders.push(combatant(w, w.players[h.ownerId!], h.ownerName, h.ships));
 
   const rng = makeRng(Math.floor(Math.random() * 2 ** 31));
-  const res: CombatResult = simulateCombat(group.map((m) => (m.alien ? { ...combatant(w, null, m.ownerName, m.ships), weapons: m.alien.weapons, shielding: m.alien.shielding, armour: m.alien.armour } : combatant(w, attackerOf(m), m.ownerName, m.ships))), defenders, rng, { debrisRatio: debrisShare(attackerOf(lead)) });
+  const attackers: Combatant[] = group.map((m) => (m.alien ? { ...combatant(w, null, m.ownerName, m.ships), weapons: m.alien.weapons, shielding: m.alien.shielding, armour: m.alien.armour } : combatant(w, attackerOf(m), m.ownerName, m.ships)));
+  if (!preset && lead.command && group.length === 1 && lead.ownerId && !attackerOf(lead)?.npc && defOwner.npc?.outpost) return openBattle(w, lead, attackers, defenders, at);
+  const res: CombatResult = preset ?? simulateCombat(attackers, defenders, rng, { debrisRatio: debrisShare(attackerOf(lead)) });
 
   const planetAfter = res.defenders[0].after;
   target.fleet = onlyShips(planetAfter);

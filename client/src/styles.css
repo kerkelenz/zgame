@@ -744,3 +744,33 @@ i.lg.own { background: var(--accent); } i.lg.ally { background: #5fd08a; } i.lg.
 .mp-question { fill: #fff; font-size: 70px; font-weight: 700; opacity: .55; }
 .mp-count { fill: #fff; font-size: 11px; font-weight: 600; }
 .mp-unit.def image { filter: drop-shadow(0 0 6px rgba(255, 120, 120, .45)); } .mp-unit.ship image { filter: drop-shadow(0 0 6px rgba(120, 190, 255, .45)); }
+
+/* ---- the Battle screen: commanding a fight round by round ---- */
+.btsvg { display: block; width: 100%; height: auto; background: radial-gradient(ellipse at 50% 40%, #101a3a 0%, #070b18 70%); border: 1px solid var(--line); border-radius: 12px; user-select: none; }
+.btsvg text { paint-order: stroke; stroke: #070b18; stroke-width: 3px; stroke-linejoin: round; }
+.bt-side { fill: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .1em; }
+.bt-mid { stroke: #22305a; stroke-dasharray: 3 8; }
+.bt-tile rect:first-of-type { fill: rgba(18, 28, 60, .85); stroke: #2a3a66; stroke-width: 1.5; transition: opacity .4s; }
+.bt-tile.s0 rect:first-of-type { stroke: #3b6fd0; } .bt-tile.s1 rect:first-of-type { stroke: #b8553f; }
+.bt-tile.dead { opacity: .3; }
+.bt-name { fill: #cfd8f0; font-size: 12px; } .bt-n { fill: #fff; font-size: 17px; font-weight: 700; }
+.bt-bar { fill: #1d2a4c; } .bt-hp { fill: #5fd08a; transition: width .5s; } .bt-hp.low { fill: #e8685d; }
+.bt-lost { fill: #ff8da1; font-size: 15px; font-weight: 700; }
+@keyframes zg-btlaser { 0% { stroke-dashoffset: 1; opacity: 0; } 15% { opacity: 1; } 70% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes zg-bthit { 0% { transform: scale(.2); opacity: 0; } 30% { opacity: .95; } 100% { transform: scale(1.8); opacity: 0; } }
+@keyframes zg-btlost { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-16px); opacity: 0; } }
+.bt-volley line { stroke-linecap: round; opacity: 0; }
+.bt-volley.s0 line { stroke: #7fb2ff; filter: drop-shadow(0 0 4px #4d8dff); } .bt-volley.s1 line { stroke: #ff7f6b; filter: drop-shadow(0 0 4px #ff5a45); }
+.bt-hit { fill: none; stroke: #ffe9a8; stroke-width: 3; opacity: 0; transform-box: fill-box; transform-origin: center; }
+html[data-motion="full"] .bt-volley line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: zg-btlaser .55s ease-out both; animation-delay: inherit; }
+html[data-motion="full"] .bt-hit { animation: zg-bthit .45s ease-out both; }
+html[data-motion="full"] .bt-lost { animation: zg-btlost 1.4s ease-out both; animation-delay: 1.2s; }
+html[data-motion="reduced"] .bt-volley line { opacity: .8; animation: zg-fadein .3s both; }
+html[data-motion="off"] .bt-volley line { opacity: .8; }
+.bt-note { margin: 8px 0 0; }
+.bt-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px 22px; margin-bottom: 12px; }
+.bt-h { font-weight: 600; margin-bottom: 6px; }
+.bt-opts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.bt-opts button.on { background: var(--accent); color: #1a1205; border-color: var(--accent); }
+.bt-timer { font-variant-numeric: tabular-nums; color: var(--muted); } .bt-timer.hot { color: var(--bad, #e8685d); font-weight: 700; }
+table.btlog { width: 100%; border-collapse: collapse; font-size: 13px; } table.btlog th, table.btlog td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); }

@@ -674,6 +674,48 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('a commanded battle: the notice strip opens the Battle screen, orders go in, the rounds play and the result shows', async () => {
+    const grp = (id: string, n: number, hullPct = 100) => ({ id, n, hullPct });
+    const start = { a: [grp('cruiser', 20), grp('lightFighter', 40)], d: [grp('rocketLauncher', 60), grp('lightLaser', 30)] };
+    let round = 0;
+    const hist: any[] = [];
+    const view = () => ({ id: 'b1', coords: { g: 1, s: 5, p: 9 }, planet: 'Black Anchor', owner: 'Pirates', outpost: { name: 'Pirate outpost', tier: 1 }, round, maxRounds: 6, done: false,
+      a: round ? [grp('cruiser', 18, 80), grp('lightFighter', 30, 70)] : start.a, d: round ? [grp('rocketLauncher', 40, 60), grp('lightLaser', 30, 90)] : start.d, start, last: round ? {
+        round, a: [grp('cruiser', 18, 80)], d: [grp('rocketLauncher', 40, 60)], volleys: [{ side: 0, from: 'cruiser', to: 'rocketLauncher', n: 20 }, { side: 1, from: 'lightLaser', to: 'lightFighter', n: 12 }], destroyed: [{ side: 1, id: 'rocketLauncher', n: 20 }, { side: 0, id: 'lightFighter', n: 10 }], stats: { attackers: { damage: 100, destroyed: 20 }, defenders: { damage: 50, destroyed: 10 } } } : null,
+      history: hist, cooldowns: { repair: 0, emp: 0, decoy: 0, overcharge: 0 }, deadline: Date.now() + 300_000, pickSeconds: 15, now: Date.now(), names: { cruiser: 'Cruiser', lightFighter: 'Light Fighter', rocketLauncher: 'Rocket Launcher', lightLaser: 'Light Laser' } });
+    let posted: any = null;
+    await page.route('**/api/fleets', async (route) => {
+      const r = await route.fetch(); const j = await r.json() as any;
+      j.engaged = [{ id: 'b1', coords: { g: 1, s: 5, p: 9 }, planet: 'Black Anchor', outpost: { name: 'Pirate outpost', tier: 1 }, deadline: Date.now() + 300_000, started: false }];
+      await route.fulfill({ response: r, json: j });
+    });
+    await page.route('**/api/battle/b1', (route) => route.fulfill({ json: view() }));
+    await page.route('**/api/battle/b1/round', (route) => {
+      posted = route.request().postDataJSON();
+      round++;
+      hist.push({ round, dealt: 100, taken: 50, lostMine: 10, lostFoe: 20, stance: posted.stance, target: posted.target, ability: posted.ability, foeStance: 'assault' });
+      route.fulfill({ json: view() });
+    });
+    await page.reload();
+    await page.waitForSelector('header.top');
+    await page.locator('.alertrow', { hasText: 'command the battle' }).locator('.alerttext').click();
+    await page.locator('svg.btsvg').waitFor();
+    expect(await page.locator('svg.btsvg').textContent()).toMatch(/Cruiser[\s\S]*Rocket Launcher/);
+    await page.getByRole('button', { name: 'Boost attack' }).click();
+    await page.getByRole('button', { name: 'Focus the biggest' }).click();
+    await page.getByRole('button', { name: 'Overcharge' }).click();
+    await page.getByRole('button', { name: 'Fire!' }).click();
+    await expect.poll(() => posted).toEqual({ stance: 'assault', target: 'big', ability: 'overcharge' });
+    await expect.poll(async () => (await page.locator('table.btlog').innerText()).includes('Boost attack'), { timeout: 8000 }).toBe(true);
+    expect(await page.locator('.bt-tile.s1').first().textContent()).toMatch(/40/);                // the garrison numbers settled after the volleys
+    await page.unroute('**/api/fleets');
+    await page.unroute('**/api/battle/b1');
+    await page.unroute('**/api/battle/b1/round');
+    await page.goto(server.base + '/');
+    await page.waitForSelector('header.top');
+    noErrors();
+  });
+
   run('"Defend ally" in the hostile fleet list fills in the send form with that planet and the Defend ally mission', async () => {
     await page.route('**/api/planets', async (route) => {
       const r = await route.fetch(); const j = await r.json() as any[];

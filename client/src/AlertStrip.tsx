@@ -9,10 +9,11 @@ const RANK = { danger: 0, warn: 1, info: 2 };
 
 /** every notice about the game's state, most urgent first */
 export function useAlerts(whatsNew: boolean): Alert[] {
-  const { me, fleets, offline } = useGame();
+  const { me, fleets, offline, openBattle } = useGame();
   const out: Alert[] = [];
   const enc = me.encounter;
   if (enc) out.push({ id: `enc-${enc.id}`, level: 'warn', onOpen: () => setEncounterOpen(true), node: <>📡 {enc.title}{enc.planet && <> at <PlanetLink name={enc.planet.name} coords={enc.planet.coords} /></>} · <Countdown to={enc.expiresAt} /></> });
+  for (const b of fleets.engaged ?? []) out.push({ id: `battle-${b.id}`, level: 'danger', onOpen: () => openBattle(b.id), node: <>⚔ Your fleet is engaged at {b.outpost?.name ?? b.planet} <CoordLink c={b.coords} />: command the battle (it fights on its own in <Countdown to={b.deadline} />)</> });
   const inc = fleets.incoming;
   if (inc.length) out.push({ id: 'hostile', level: 'danger', go: 'fleet', node: <>⚠ {inc.length} hostile fleet{inc.length > 1 ? 's' : ''} inbound{inc.some((f) => f.ally) ? ' (also on allies)' : ''}{inc.length === 1 && <> · <PlayerLink id={inc[0].ownerId} name={inc[0].ownerName} /> from <CoordLink c={inc[0].from} /></>}</> });
   if (offline) out.push({ id: 'offline', level: 'danger', node: <>Connection to the server lost, retrying…</> });

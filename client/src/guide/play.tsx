@@ -87,6 +87,19 @@ export const PLAY: Topic[] = [
     ),
   },
   {
+    id: 'commanding', title: 'Commanding a battle',
+    body: (
+      <ul>
+        <li><b>Flying a fight yourself.</b> When you send an attack on a pirate or alien outpost, tick <b>Command the battle myself</b> under the mission. The fleet flies as usual, but on arrival it waits at the outpost instead of fighting at once, a red notice appears under the top bar and the fleet in <b>Active fleets</b> gets a <b>Command the battle</b> button. Against anyone else (players, computer empires, joint attacks, invasions) the fight is always automatic.</li>
+        <li><b>The Battle screen.</b> Your fleet is on the left and the garrison on the right, each type of ship or defense a tile with its count and the average state of its hulls. Every round you choose a <b>stance</b>, how to <b>aim</b> and, if one is ready, an <b>ability</b>, then press <b>Fire!</b>. The volleys fly across, the numbers settle and the table below the orders keeps what each round did. A battle lasts at most six rounds and ends early when one side is gone.</li>
+        <li><b>Stances.</b> <i>Balanced</i> changes nothing. <i>Boost attack</i> makes your shots hit 30% harder but you take 20% more. <i>Evasive maneuvers</i> cut the damage you take by 35% but you deal 15% less. <i>Brace shields</i> makes your shields hold 80% more for the round but you deal 10% less.</li>
+        <li><b>Aim.</b> <i>Spread fire</i> lets shots land anywhere. <i>Focus the biggest</i> sends most of them at the dearest enemy ships and <i>Finish the weakest</i> at the most damaged and fragile ones.</li>
+        <li><b>Abilities</b> (one per round, then a cooldown counted in rounds): <i>Repair</i> mends every damaged hull of yours by 40% (2 rounds), <i>EMP</i> makes the enemy deal 40% less and lose rapid fire for the round (3), <i>Decoy</i> sends three in ten enemy shots at decoys (2), <i>Overcharge</i> makes your rapid fire 50% stronger (3).</li>
+        <li><b>The garrison answers</b> with a stance and an aim of its own each round; the table shows which stance it used, so you can read what it favours. You have 15 seconds per round: when the timer runs out the orders you picked so far go in. <b>Retreat</b> ends the fight at once: the surviving ships fly home, the outpost stands and nothing is looted. A battle you leave alone plays itself out automatically after five minutes. The battle report, loot and the clearing bounty work exactly as in an automatic fight.</li>
+      </ul>
+    ),
+  },
+  {
     id: 'expeditions', title: 'Expeditions',
     body: (
       <ul>

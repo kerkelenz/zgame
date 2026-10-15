@@ -26,7 +26,7 @@ interface GameCtx {
   me: any | null;
   planets: any[];
   planet: any | null;
-  fleets: { mine: any[]; incoming: any[]; stationed: any[]; joinable: any[]; events: any[] };
+  fleets: { mine: any[]; incoming: any[]; stationed: any[]; joinable: any[]; events: any[]; engaged: any[] };
   selectPlanet: (id: string) => void;
   refresh: () => Promise<void>;
   /** server-corrected current time (ms) */
@@ -51,6 +51,8 @@ interface GameCtx {
   /** one-shot: where the Galaxy page should open */
   galaxyAt: { g: number; s: number } | null;
   showInGalaxy: (c: { g: number; s: number }) => void;
+  /** open the screen where a battle of yours is commanded round by round */
+  openBattle: (id: string) => void;
   openProfile: (id: string) => void;
   closeItem: () => void;
   target: Target | null;
@@ -69,7 +71,7 @@ export const useGame = () => useContext(Ctx);
 export function GameProvider({ onLogout, children }: { onLogout: () => void; children: ReactNode }) {
   const [me, setMe] = useState<any | null>(null);
   const [planets, setPlanets] = useState<any[]>([]);
-  const [fleets, setFleets] = useState({ mine: [] as any[], incoming: [] as any[], stationed: [] as any[], joinable: [] as any[], events: [] as any[] });
+  const [fleets, setFleets] = useState({ mine: [] as any[], incoming: [] as any[], stationed: [] as any[], joinable: [] as any[], events: [] as any[], engaged: [] as any[] });
   const [selected, setSelected] = useState<string>(() => { try { return localStorage.getItem('zg.planet') || ''; } catch { return ''; } });
   const [skew, setSkew] = useState(0);
   const [tick, setTick] = useState(0);
@@ -101,6 +103,7 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
   const profileId = route.player ?? null;
   const galaxyAt = route.galaxy ?? null;
   const showInGalaxy = useCallback((c: { g: number; s: number }) => go({ page: 'galaxy', galaxy: { g: c.g, s: c.s } }), [go]);
+  const openBattle = useCallback((id: string) => go({ page: 'battle', item: id }), [go]);
   const [offline, setOffline] = useState(false);
   const [chatEvents, setChatEvents] = useState<any[]>([]);
   const toastId = useRef(0);
@@ -211,6 +214,6 @@ export function GameProvider({ onLogout, children }: { onLogout: () => void; chi
 
   const logout = useCallback(() => { void post('/logout').catch(() => undefined); setToken(''); onLogout(); }, [onLogout]);
 
-  const value: GameCtx = { me, planets, planet, fleets, selectPlanet, refresh, now, act, toasts, notes, markNotesRead, clearNotes, toast, page, setPage, detailId, openItem, profileId, profileFrom: 'highscore', goBack, openProfile, galaxyAt, showInGalaxy, closeItem, target, setTarget, logout, offline, chatEvents, live };
+  const value: GameCtx = { openBattle, me, planets, planet, fleets, selectPlanet, refresh, now, act, toasts, notes, markNotesRead, clearNotes, toast, page, setPage, detailId, openItem, profileId, profileFrom: 'highscore', goBack, openProfile, galaxyAt, showInGalaxy, closeItem, target, setTarget, logout, offline, chatEvents, live };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

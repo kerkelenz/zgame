@@ -274,6 +274,10 @@ export interface Movement {
   toMoon?: boolean;
   /** interplanetary missile strikes */
   missiles?: number;
+  /** an attack on an outpost whose commander flies the battle in person (server/battles.ts) */
+  command?: boolean;
+  /** the fleet has arrived and waits for the commander's orders; arriveAt is then the deadline after which the battle plays itself */
+  engaged?: boolean;
 }
 
 export type AlliancePerm = 'applications' | 'kick' | 'bank' | 'upgrades' | 'edit' | 'message' | 'bulletin' | 'diplomacy';
