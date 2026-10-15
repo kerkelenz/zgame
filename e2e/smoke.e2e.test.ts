@@ -146,7 +146,7 @@ describe('every page', () => {
     const navLook = await page.locator('nav').evaluate((el) => ({ bar: getComputedStyle(el).scrollbarWidth }));
     expect(navLook.bar).toBe('none');                                      // no scroll bar drawn in the menu
     await page.locator('nav [data-tour="hub-build"]').click();
-    expect(await page.locator('.subtabs .subtab').allInnerTexts()).toEqual(['Buildings', 'Research', 'Shipyard', 'Defense', 'Tech tree', 'Resources', 'Lifeform', 'Upgrades']);       // in this order
+    expect(await page.locator('.subtabs .subtab').allInnerTexts()).toEqual(['Buildings', 'Research', 'Shipyard', 'Defense', 'Lifeform', 'Upgrades', 'Tech tree', 'Resources']);       // in this order
     expect(await page.locator('.subtab.active').innerText()).toBe('Buildings');
     await page.locator('.subtabs [data-tour="nav-research"]').click();
     await page.locator('nav [data-tour="hub-home"]').click();

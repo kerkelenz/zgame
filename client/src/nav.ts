@@ -17,7 +17,7 @@ export const NAV_GROUPS: NavGroup[] = [
   ] },
   { id: 'build', label: 'Build', icon: '🏗', items: [
     { id: 'buildings', label: 'Buildings', scope: 'planet' }, { id: 'research', label: 'Research', scope: 'planet' }, { id: 'shipyard', label: 'Shipyard', scope: 'planet' },
-    { id: 'defense', label: 'Defense', scope: 'planet' }, { id: 'techtree', label: 'Tech tree', scope: 'empire' }, { id: 'resources', label: 'Resources', scope: 'planet' }, { id: 'lifeform', label: 'Lifeform', scope: 'planet' }, { id: 'upgrades', label: 'Upgrades', scope: 'planet' },
+    { id: 'defense', label: 'Defense', scope: 'planet' }, { id: 'lifeform', label: 'Lifeform', scope: 'planet' }, { id: 'upgrades', label: 'Upgrades', scope: 'planet' }, { id: 'techtree', label: 'Tech tree', scope: 'empire' }, { id: 'resources', label: 'Resources', scope: 'planet' },
     { id: 'automation', label: 'Automation', feature: 'automation', scope: 'planet' },
   ] },
   { id: 'fleet', label: 'Fleet', icon: '🚀', items: [
