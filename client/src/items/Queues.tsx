@@ -55,7 +55,11 @@ export function Queues({ kind, d }: { kind: Kind; d: ItemsData }) {
           {planet.shipyardQueue.map((j: any, i: number) => (
             <div className="row between" key={i}>
               <span><ItemIcon id={j.id} size={20} /> {j.remaining} / {j.total}× {UNITS[j.id as UnitId].name} {i === 0 && <span className="muted">· next unit in <Countdown to={j.start + j.unitMs} /></span>} <span className="muted small">· row done in {fmtDur(rowTimes[i])}</span></span>
+              <span className="row">
+              {i > 0 && <><button disabled={i === 1} title="Earlier" onClick={() => void act(() => post(`/planets/${planet.id}/produce/move`, { index: i, dir: -1 }))}>↑</button>
+              <button disabled={i === planet.shipyardQueue.length - 1} title="Later" onClick={() => void act(() => post(`/planets/${planet.id}/produce/move`, { index: i, dir: 1 }))}>↓</button></>}
               <button onClick={() => void withUndo(() => post(`/planets/${planet.id}/produce/cancel`, { index: i }), `Cancelled ${j.remaining}× ${UNITS[j.id as UnitId].name}`, () => post(`/planets/${planet.id}/produce`, { id: j.id, count: j.remaining }))}>Cancel</button>
+              </span>
             </div>
           ))}
           <p className="muted small qtotal">All rows together: <b>{fmtDur(yardTotal)}</b></p>

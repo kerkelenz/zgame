@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { register } from '../server/accounts';
 import * as AL from '../server/alliance';
 import { buildingCost } from '../shared/formulas';
-import { abandonPlanet, queueBuilding, queueResearch, unqueueBuilding, unqueueResearch, moveQueuedBuilding, moveQueuedResearch, cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, planetProduction } from '../server/economy';
+import { abandonPlanet, queueBuilding, queueResearch, unqueueBuilding, unqueueResearch, moveQueuedBuilding, moveQueuedResearch, cancelBuilding, cancelResearch, processPlayer, queueUnits, startBuilding, startResearch, cancelShipyardJob, moveShipyardJob, planetProduction } from '../server/economy';
 import { launchMissiles, processMovements, recallFleet, sendFleet } from '../server/fleet';
 import { createPlanet, playerPoints } from '../server/galaxy';
 import { processRaids, spawnRaid } from '../server/npc';
@@ -118,6 +118,19 @@ describe('economy', () => {
     alice.techs.shielding = 6;
     queueUnits(w, alice, ap, 'smallShield', 1, T0);
     expect(() => queueUnits(w, alice, ap, 'smallShield', 1, T0)).toThrow(/Only 1/);
+  });
+
+  it('waiting shipyard rows can be moved, the row being built cannot', () => {
+    queueUnits(w, alice, ap, 'rocketLauncher', 5, T0);
+    queueUnits(w, alice, ap, 'lightFighter', 5, T0);
+    queueUnits(w, alice, ap, 'smallCargo', 5, T0);
+    moveShipyardJob(w, ap, 2, -1, T0);
+    expect(ap.shipyardQueue.map((j) => j.id)).toEqual(['rocketLauncher', 'smallCargo', 'lightFighter']);
+    moveShipyardJob(w, ap, 1, 1, T0);
+    expect(ap.shipyardQueue.map((j) => j.id)).toEqual(['rocketLauncher', 'lightFighter', 'smallCargo']);
+    expect(() => moveShipyardJob(w, ap, 0, 1, T0)).toThrow();
+    expect(() => moveShipyardJob(w, ap, 1, -1, T0)).toThrow();
+    expect(() => moveShipyardJob(w, ap, 2, 1, T0)).toThrow();
   });
 
   it('cancelling a shipyard job refunds the remaining units', () => {

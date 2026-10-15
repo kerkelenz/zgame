@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-zg', date: '2026-10-27', title: 'Command your battles',
     items: [
+      'The Shipyard and Defense production queue has up and down arrows on every waiting row, like the building queue; the row being built stays first.',
       'Attacks on pirate and alien outposts can be flown in person: tick Command the battle myself on the Fleet page. Your fleet waits at the outpost and a notice opens the new Battle screen.',
       'Each round you pick a stance (boost attack, evasive maneuvers, brace shields), how to aim (spread, focus the biggest, finish the weakest) and an ability with a cooldown (repair, EMP, decoy, overcharge), then fire. The garrison answers with its own stance and you see the volleys fly across.',
       'You have 15 seconds per round, can retreat at any time, and a battle you leave alone plays itself out after five minutes. The report, loot and bounty work as in any other fight.',

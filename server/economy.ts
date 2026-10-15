@@ -411,6 +411,14 @@ export function queueUnits(w: World, player: Player, planet: Planet, id: UnitId,
   if (planet.shipyardQueue.length === 1) planet.shipyardQueue[0].start = now;
 }
 
+/** Swap a waiting production row with its neighbour (dir -1 = earlier, +1 = later). The row being built (the first) stays where it is. */
+export function moveShipyardJob(w: World, planet: Planet, index: number, dir: number, now: number) {
+  updatePlanet(w, planet, now);
+  const j = index + (dir < 0 ? -1 : 1);
+  if (index < 1 || j < 1 || index >= planet.shipyardQueue.length || j >= planet.shipyardQueue.length) throw new GameError('Cannot move that row');
+  swapIn(planet.shipyardQueue, index, j);
+}
+
 export function cancelShipyardJob(w: World, planet: Planet, index: number, now: number) {
   updatePlanet(w, planet, now);
   const j = planet.shipyardQueue[index];
