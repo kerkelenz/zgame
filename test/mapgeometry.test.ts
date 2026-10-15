@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { VIEW, bodyPoint, bodySize, crumbs, depth, lerp, orbitAngle, orbitRadius, parentOf, shortNum, spiralPoint } from '../client/src/map/geometry';
+import { VIEW, bodyPoint, layoutBodies, bodySize, crumbs, depth, lerp, orbitAngle, orbitRadius, parentOf, shortNum, spiralPoint } from '../client/src/map/geometry';
 
 describe('the map geometry', () => {
   it('puts every system on a spiral inside the picture, apart from each other', () => {
@@ -38,6 +38,15 @@ describe('the map geometry', () => {
     expect(depth('planet')).toBeGreaterThan(depth('system'));
     expect(crumbs({ level: 'planet', g: 2, s: 7, planetId: 'x', planetName: 'Ryza' }).map((c) => c.label)).toEqual(['Universe', 'Galaxy 2', 'System 2:7', 'Ryza']);
     expect(crumbs({ level: 'universe' }).map((c) => c.label)).toEqual(['Universe']);
+  });
+
+  it('spreads a crowded system so every body has room for its label', () => {
+    const ps = Array.from({ length: 15 }, (_, k) => k + 1);
+    for (let sys = 1; sys <= 60; sys++) {
+      const m = layoutBodies(1, sys, ps, 15);
+      for (let a = 1; a <= 15; a++) for (let b = a + 1; b <= 15; b++) { const A = m.get(a)!, B = m.get(b)!; expect(Math.hypot(A.x - B.x, A.y - B.y), `system ${sys} ${a}/${b}`).toBeGreaterThan(60); }
+    }
+    expect(layoutBodies(1, 4, ps, 15)).toEqual(layoutBodies(1, 4, ps, 15));
   });
 
   it('never draws two bodies of one system on top of each other', () => {

@@ -1,7 +1,7 @@
 import { Art } from '../art';
 import { useGame } from '../game';
 import { Loading, fmtDur } from '../ui';
-import { VIEW, bodyPoint, bodySize, orbitRadius, shortNum, type Pt } from './geometry';
+import { VIEW, bodyPoint, layoutBodies, bodySize, orbitRadius, shortNum, type Pt } from './geometry';
 import { MovingShip, Route, RoundClip, useMapData, type Layers, type MoveView } from './parts';
 
 const cx = VIEW.w / 2, cy = VIEW.h / 2, squash = 0.8;
@@ -12,7 +12,8 @@ export function SystemView({ g, s, layers, open }: { g: number; s: number; layer
   const { now } = useGame();
   const d = useMapData<{ positions: any[]; positionCount: number; sector: any; rift: any; moves: MoveView[] }>(`/map/system/${g}/${s}`);
   if (!d) return <Loading />;
-  const at = (p: number): Pt => bodyPoint(g, s, p, d.positionCount, cx, cy, squash);
+  const spots = layoutBodies(g, s, d.positions.filter((x) => x.planet).map((x) => x.p), d.positionCount, cx, cy, squash);
+  const at = (p: number): Pt => spots.get(p) ?? bodyPoint(g, s, p, d.positionCount, cx, cy, squash);
   const edge = (p: Pt, k: number): Pt => { const a = Math.atan2(p.y - cy, p.x - cx); return { x: p.x + Math.cos(a) * k, y: p.y + Math.sin(a) * k }; };
   return (
     <>

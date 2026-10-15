@@ -726,6 +726,7 @@ i.lg.own { background: var(--accent); } i.lg.ally { background: #5fd08a; } i.lg.
 .mp-sector { fill: rgba(90, 120, 200, .05); stroke-width: 2; stroke-dasharray: 8 6; }
 .mp-sun { filter: drop-shadow(0 0 18px rgba(255, 190, 80, .55)); }
 .mp-empty circle { fill: #1f2d54; }
+.mapsvg text { paint-order: stroke; stroke: #070b18; stroke-width: 3px; stroke-linejoin: round; }
 .mp-body .mp-name { fill: #cfd8f0; font-size: 10.5px; } .mp-body:hover .mp-name { fill: #fff; }
 .mp-str { fill: #9fd0ff; font-size: 10px; } .mp-str.old { fill: #8d94a8; } .mp-str.none { fill: #6d7794; }
 .mp-body image { filter: drop-shadow(0 0 5px rgba(160, 190, 255, .35)); transition: transform .15s; transform-box: fill-box; transform-origin: center; }

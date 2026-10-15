@@ -8,6 +8,7 @@ export const CHANGELOG: Release[] = [
       'A new Map page in the Galaxy hub draws the galaxy from above: all galaxies, one galaxy, one system and one planet. Click to zoom in, use the trail, the Zoom out button or Escape to go back.',
       'Your own worlds show their defenses and fleet in full. Other commanders worlds show only what is public plus your latest spy report, with its age; no report means a question mark.',
       'Live layers you can switch on and off: fleets in flight as moving ships, territory and alliance colours, the Void rift, outposts and debris, and attack alerts on the systems and worlds being targeted.',
+      'Crowded systems on the Map spread their worlds out so every name and number stays readable.',
       'The Galaxy list has a Map button that opens the Map at the system you are looking at; on a planet, Spy, Attack, Transport and Defend open the Fleet page with it chosen.',
     ],
   },

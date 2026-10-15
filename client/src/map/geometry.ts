@@ -22,6 +22,29 @@ export function bodyPoint(g: number, s: number, p: number, positions: number, cx
   return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * squash };
 }
 
+/**
+ * Where every body of a system sits, with room for its name and numbers: each starts on its own orbit at its fixed angle, then any two closer than
+ * `gap` are turned apart along their orbits (a few passes, always the same result). A crowded system spreads out instead of piling up.
+ */
+export function layoutBodies(g: number, s: number, ps: number[], positions: number, cx = VIEW.w / 2, cy = VIEW.h / 2, squash = 0.8, gap = 84): Map<number, Pt> {
+  const ang = new Map(ps.map((p) => [p, orbitAngle(g, s, p)]));
+  const at = (p: number): Pt => { const r = orbitRadius(p, positions), a = ang.get(p)!; return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * squash }; };
+  for (let pass = 0; pass < 120; pass++) {
+    let moved = false;
+    for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) {
+      const a = at(ps[i]), b = at(ps[j]), d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (d >= gap) continue;
+      moved = true;
+      // turn the inner one back and the outer one on, by an angle that grows with how much room is missing (smaller on outer orbits, which are longer)
+      const step = (gap - d) / 2 / Math.max(40, orbitRadius(ps[i], positions)) + 0.004, stepJ = (gap - d) / 2 / Math.max(40, orbitRadius(ps[j], positions)) + 0.004;
+      const dir = Math.sin((ang.get(ps[j])! - ang.get(ps[i])!)) >= 0 ? 1 : -1;
+      ang.set(ps[i], ang.get(ps[i])! - dir * step); ang.set(ps[j], ang.get(ps[j])! + dir * stepJ);
+    }
+    if (!moved) break;
+  }
+  return new Map(ps.map((p) => [p, at(p)]));
+}
+
 /** the drawn size of a planet from its diameter in km (22 to 46 px) */
 export const bodySize = (diameter: number | null | undefined) => Math.round(22 + Math.min(1, Math.max(0, ((diameter ?? 9000) - 4000) / 12000)) * 24);
 
