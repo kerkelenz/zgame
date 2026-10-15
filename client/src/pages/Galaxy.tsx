@@ -6,6 +6,7 @@ import { useGame } from '../game';
 import { Card, CoordLink, Page, PlayerLink, coordStr, fmt } from '../ui';
 import { WorldBanner } from '../WorldBanner';
 import { tint } from './Territory';
+import { MAP_AT_KEY } from './Map';
 
 /** what a pirate or alien outpost is called in the list: its kind, strength (1 to 4) and whether it was cleared */
 export function OutpostTag({ o }: { o: { kind: string; tier: number; state: string; name: string } }) {
@@ -51,6 +52,7 @@ export function Galaxy() {
           <input type="number" className="sm" value={s} onChange={(e) => setS(clampS(Number(e.target.value)))} />
           <button onClick={() => setS(clampS(s + 1))}>▶</button>
           <button onClick={() => { setG(planet.coords.g); setS(planet.coords.s); }}>Home</button>
+          <button title="Open this system on the map" onClick={() => { try { sessionStorage.setItem(MAP_AT_KEY, JSON.stringify({ g, s })); } catch { /* ignore */ } setPage('map'); }}>Map</button>
           {soc && (bookmarked
             ? <button title="Remove bookmark" onClick={async () => { const r = await act(() => post('/social/bookmark/remove', { id: bookmarked.id })); if (r) setSoc(r); }}>★</button>
             : <button title="Bookmark this system" onClick={async () => { const r = await act(() => post('/social/bookmark', { name: `System ${g}:${s}`, coords: { g, s, p: 1 } }), 'Bookmarked'); if (r) setSoc(r); }}>☆</button>)}

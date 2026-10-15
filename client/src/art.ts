@@ -46,6 +46,10 @@ export const Art = {
   bannerOfLook(look: string | null | undefined, isMoon: boolean): string | undefined {
     return look ? artFile(isMoon ? moonBannerId(look) : planetBannerId(look)) ?? undefined : undefined;
   },
+  /** the cut-out picture of a look by its name (other commanders' worlds on the map), or nothing when there is none */
+  spriteOfLook(look: string | null | undefined, isMoon: boolean): string | undefined {
+    return look ? artSprite(isMoon ? moonArtId(look) : planetArtId(look)) ?? artThumb(isMoon ? moonArtId(look) : planetArtId(look)) : undefined;
+  },
   /** the cut-out picture of a world (see `npm run art -- sprites`), or its round picture when it has none */
   sprite(id: string, tempMax: number, isMoon: boolean): string {
     const look = lookOf(id, tempMax, isMoon);

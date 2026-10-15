@@ -137,7 +137,7 @@ describe('first visit', () => {
 });
 
 describe('every page', () => {
-  const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Empire', 'Economy', 'Contracts', 'Market', 'Lifeform', 'Upgrades', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
+  const PAGES = ['Overview', 'Resources', 'Buildings', 'Research', 'Tech tree', 'Shipyard', 'Defense', 'Fleet', 'Galaxy', 'Map', 'Empire', 'Economy', 'Contracts', 'Market', 'Lifeform', 'Upgrades', 'Command', 'Alliance', 'Contacts', 'Messages', 'Chat', 'Standing', 'Settings', 'Guide'];
 
   run('the menu is a handful of hubs, each with its pages as tabs, and a hub opens the page you were last on', async () => {
     await go('Overview');
@@ -830,6 +830,22 @@ describe('using the game', () => {
     await page.locator('table.galaxy tbody tr.mine').getByRole('button', { name: /^\d+$/ }).click();
     await page.locator('.wbanner').waitFor();
     expect(await page.locator('.wbanner').innerText()).toMatch(/\d+:\d+:\d+/);                        // name, coordinates link, commander
+    noErrors();
+  });
+
+  run('the Map zooms from the system to a planet and out again, with the trail and Escape', async () => {
+    await go('Map');
+    await page.locator('svg.mapsvg').waitFor();
+    expect(await page.locator('.maptrail').innerText()).toMatch(/System/);
+    await page.locator('.mp-body.mine').first().click();                                               // your own world: zoom in
+    await page.locator('svg[aria-label$="defenses and fleets"]').waitFor();
+    expect(await page.locator('svg.mapsvg').textContent()).toMatch(/Fleet at home/);
+    await page.keyboard.press('Escape');                                                                // back out to the system
+    await page.locator('.mp-body.mine').first().waitFor();
+    await page.locator('.maptrail button', { hasText: /^Galaxy \d+$/ }).click();
+    await page.locator('.mp-sys').first().waitFor();
+    await page.locator('.maptrail button', { hasText: 'Universe' }).click();
+    await page.locator('.mp-galaxy').first().waitFor();
     noErrors();
   });
 

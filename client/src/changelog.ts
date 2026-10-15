@@ -3,6 +3,15 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-zf', date: '2026-10-26', title: 'The Map',
+    items: [
+      'A new Map page in the Galaxy hub draws the galaxy from above: all galaxies, one galaxy, one system and one planet. Click to zoom in, use the trail, the Zoom out button or Escape to go back.',
+      'Your own worlds show their defenses and fleet in full. Other commanders worlds show only what is public plus your latest spy report, with its age; no report means a question mark.',
+      'Live layers you can switch on and off: fleets in flight as moving ships, territory and alliance colours, the Void rift, outposts and debris, and attack alerts on the systems and worlds being targeted.',
+      'The Galaxy list has a Map button that opens the Map at the system you are looking at; on a planet, Spy, Attack, Transport and Defend open the Fleet page with it chosen.',
+    ],
+  },
+  {
     id: '2026-10-ze', date: '2026-10-25', title: 'More motion',
     items: [
       'In the hostile fleets list, "Defend ally" is now a link: it fills in the send form with the attacked ally planet and the Defend ally mission, and scrolls to it.',

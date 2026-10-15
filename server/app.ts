@@ -27,6 +27,7 @@ import { endSeason, resetSeason, seasonView } from './season';
 import { gatherResources } from './logistics';
 import { buyItem, shopView } from './shop';
 import { outpostList } from './outposts';
+import { mapGalaxy, mapPlanet, mapSystem, mapUniverse } from './map';
 import { buyStructure, chooseLifeform, lifeformView } from './lifeforms';
 import { buildMonument, buyBoost, buyEmpireUpgrade, buyProject, upgradesView } from './upgrades';
 import { answerEncounter, encounterView, spawnEncounter, type EncounterKind } from './encounters';
@@ -508,6 +509,10 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     const level = buyStructure(w, p, planet, str(req.body.id), now());
     return { level, view: lifeformView(w, planet) };
   }));
+  A.get('/map/universe', wrap((req) => mapUniverse(w, req.player!, now())));
+  A.get('/map/galaxy/:g', wrap((req) => mapGalaxy(w, req.player!, Number(req.params.g), now())));
+  A.get('/map/system/:g/:s', wrap((req) => mapSystem(w, req.player!, Number(req.params.g), Number(req.params.s), now())));
+  A.get('/map/planet/:id', wrap((req) => mapPlanet(w, req.player!, req.params.id, now())));
   A.get('/encounter', wrap((req) => encounterView(w, req.player!, now())));
   A.post('/encounter/answer', wrap((req) => {
     const p = req.player!;

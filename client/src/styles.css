@@ -683,3 +683,63 @@ html[data-motion="full"] .herotop, html[data-motion="full"] .herostats { positio
 .flywrap { position: absolute; left: 0; top: 0; width: 56px; height: 56px; opacity: 0; will-change: transform, opacity; filter: drop-shadow(0 0 16px rgba(170, 195, 255, .32)); }
 .flywrap img { width: 100%; height: 100%; display: block; user-select: none; }
 .flywrap::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, .08), transparent 46%, rgba(2, 4, 12, .5) 100%); }
+
+/* ---- the Map: the galaxy from above ---- */
+.mapbar { margin-bottom: 8px; }
+.maptrail button.link { padding: 0 2px; }
+.mapstage { position: relative; margin-bottom: 10px; }
+.mapsvg { display: block; width: 100%; height: auto; background: radial-gradient(ellipse at 50% 45%, #0d1738 0%, #070b18 62%, #04060d 100%); border: 1px solid var(--line); border-radius: 12px; user-select: none; }
+.mapsvg [role="button"] { cursor: pointer; outline: none; }
+.mapsvg [role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@keyframes zg-zoomin { from { opacity: 0; transform: scale(.82); } to { opacity: 1; transform: none; } }
+@keyframes zg-zoomout { from { opacity: 0; transform: scale(1.18); } to { opacity: 1; transform: none; } }
+@keyframes zg-alertpulse { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+@keyframes zg-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+html[data-motion="full"] .mapstage.zoom-in { animation: zg-zoomin .42s ease-out both; }
+html[data-motion="full"] .mapstage.zoom-out { animation: zg-zoomout .42s ease-out both; }
+html[data-motion="reduced"] .mapstage { animation: zg-fadein .15s ease-out both; }
+html[data-motion="full"] .mp-alert { animation: zg-alertpulse 1.4s ease-in-out infinite; }
+html[data-motion="full"] .mp-unit.ship { animation: zg-bob 3.2s ease-in-out infinite; }
+
+.mp-disc { fill: rgba(22, 34, 70, .4); stroke: #2a3a66; stroke-width: 2; transition: stroke .15s, fill .15s; }
+.mp-galaxy:hover .mp-disc { fill: rgba(40, 60, 120, .5); stroke: #8fb4ff !important; }
+.mp-star { fill: #26355f; } .mp-star.lit { fill: #a9c8ff; }
+.mp-mine { fill: var(--accent); }
+.mp-title { fill: #dde4f4; font-size: 16px; font-weight: 600; }
+.mp-sub { fill: var(--muted); font-size: 11.5px; }
+.mp-label { fill: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.mp-num { fill: #7f8bb0; font-size: 9.5px; }
+.mp-mark { font-size: 12px; fill: #ffd37a; } .mp-mark.skull { fill: #ff8da1; font-size: 13px; } .mp-mark.deb { fill: #e8d65a; }
+.mp-alert { fill: none; stroke: var(--bad, #e8685d); stroke-width: 2.5; }
+.mp-rift { fill: rgba(170, 100, 255, .35); stroke: #b98bff; stroke-width: 1.5; }
+.mp-riftbig circle { fill: rgba(150, 90, 255, .4); stroke: #c9a2ff; stroke-width: 2; } .mp-riftbig text { fill: #fff; font-size: 16px; }
+.mp-hold { fill: none; stroke-width: 2; opacity: .9; }
+.mp-dot { transition: r .15s, stroke .15s; stroke: transparent; stroke-width: 2; }
+.mp-sys:hover .mp-dot { stroke: #fff; }
+.mp-sys.empty .mp-dot { fill: #1d2a4c; opacity: .55; }
+.mp-sys.npc .mp-dot { fill: #8a96b5; } .mp-sys.other .mp-dot { fill: #5b9bff; } .mp-sys.ally .mp-dot { fill: #5fd08a; } .mp-sys.mine .mp-dot { fill: var(--accent); }
+i.lg { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; background: #1d2a4c; }
+i.lg.own { background: var(--accent); } i.lg.ally { background: #5fd08a; } i.lg.other { background: #5b9bff; } i.lg.npc { background: #8a96b5; } i.lg.hostile { background: var(--bad, #e8685d); }
+.maplegend { gap: 6px 16px; margin: 2px 0; }
+
+.mp-orbit { fill: none; stroke: #22305a; stroke-width: 1; stroke-dasharray: 2 6; } .mp-orbit.inner { stroke: #1b2750; }
+.mp-sector { fill: rgba(90, 120, 200, .05); stroke-width: 2; stroke-dasharray: 8 6; }
+.mp-sun { filter: drop-shadow(0 0 18px rgba(255, 190, 80, .55)); }
+.mp-empty circle { fill: #1f2d54; }
+.mp-body .mp-name { fill: #cfd8f0; font-size: 10.5px; } .mp-body:hover .mp-name { fill: #fff; }
+.mp-str { fill: #9fd0ff; font-size: 10px; } .mp-str.old { fill: #8d94a8; } .mp-str.none { fill: #6d7794; }
+.mp-body image { filter: drop-shadow(0 0 5px rgba(160, 190, 255, .35)); transition: transform .15s; transform-box: fill-box; transform-origin: center; }
+.mp-body:hover image { transform: scale(1.12); }
+.mp-ring { fill: none; stroke: var(--accent); stroke-width: 2; } .mp-allyring { fill: none; stroke: #5fd08a; stroke-width: 1.5; stroke-dasharray: 3 3; }
+.mp-body.war .mp-name { fill: #ff9aa8; }
+
+.mp-route { stroke-width: 1.2; stroke-dasharray: 4 5; opacity: .45; fill: none; }
+.mp-route.own { stroke: #f0a93b; } .mp-route.hostile { stroke: #ff6b6b; opacity: .7; } .mp-route.ally { stroke: #5fd08a; } .mp-route.guest { stroke: #6aa8ff; }
+.mp-ship path { fill: #f0a93b; stroke: #0a0f1f; stroke-width: 1; filter: drop-shadow(0 0 4px currentColor); }
+.mp-ship.hostile path { fill: #ff6b6b; } .mp-ship.ally path { fill: #5fd08a; } .mp-ship.guest path { fill: #6aa8ff; }
+
+.mp-planetbig { filter: drop-shadow(0 0 22px rgba(160, 190, 255, .4)); }
+.mp-sibling { cursor: pointer; filter: drop-shadow(0 0 8px rgba(160, 190, 255, .4)); }
+.mp-question { fill: #fff; font-size: 70px; font-weight: 700; opacity: .55; }
+.mp-count { fill: #fff; font-size: 11px; font-weight: 600; }
+.mp-unit.def image { filter: drop-shadow(0 0 6px rgba(255, 120, 120, .45)); } .mp-unit.ship image { filter: drop-shadow(0 0 6px rgba(120, 190, 255, .45)); }

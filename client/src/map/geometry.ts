@@ -1,0 +1,51 @@
+/** Where things go on the Map: pure arithmetic, so it can be tested without a browser. */
+export const VIEW = { w: 1000, h: 560 };
+export type Pt = { x: number; y: number };
+
+/** the i-th of n systems on a spiral (the golden angle spreads them evenly) inside the picture */
+export function spiralPoint(i: number, n: number, w = VIEW.w, h = VIEW.h): Pt {
+  const r = Math.sqrt((i + 0.5) / Math.max(1, n));
+  const a = i * 2.399963;
+  return { x: w / 2 + Math.cos(a) * r * (w / 2 - 54), y: h / 2 + Math.sin(a) * r * (h / 2 - 44) };
+}
+
+/** the orbit of a position round the star: the first is closest, the last farthest */
+export const orbitRadius = (p: number, positions: number, min = 82, max = 262) => (positions <= 1 ? min : min + ((p - 1) * (max - min)) / (positions - 1));
+
+const hash = (s: string) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+/** a fixed angle for a position: the golden angle between neighbours keeps bodies of nearby orbits apart, a hash of the system turns the whole picture */
+export const orbitAngle = (g: number, s: number, p: number) => ((hash(`${g}:${s}`) / 4294967296) * Math.PI * 2 + p * 2.399963) % (Math.PI * 2);
+
+/** where a body sits: on its orbit at its angle, the orbits drawn a little flattened to look like a view from above at an angle */
+export function bodyPoint(g: number, s: number, p: number, positions: number, cx = VIEW.w / 2, cy = VIEW.h / 2, squash = 0.8): Pt {
+  const r = orbitRadius(p, positions), a = orbitAngle(g, s, p);
+  return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * squash };
+}
+
+/** the drawn size of a planet from its diameter in km (22 to 46 px) */
+export const bodySize = (diameter: number | null | undefined) => Math.round(22 + Math.min(1, Math.max(0, ((diameter ?? 9000) - 4000) / 12000)) * 24);
+
+export const lerp = (a: Pt, b: Pt, t: number): Pt => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+
+export const shortNum = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(n >= 1e5 ? 0 : 1)}k` : String(Math.round(n)));
+
+export type Level = 'universe' | 'galaxy' | 'system' | 'planet';
+export const LEVELS: Level[] = ['universe', 'galaxy', 'system', 'planet'];
+export interface MapAt { level: Level; g?: number; s?: number; planetId?: string; planetName?: string }
+/** how deep a view is, so the picture can zoom in or out when it changes */
+export const depth = (l: Level) => LEVELS.indexOf(l);
+
+/** the way back up: from a planet to its system, from a system to its galaxy, from a galaxy to the universe */
+export function parentOf(at: MapAt): MapAt | null {
+  if (at.level === 'planet') return { level: 'system', g: at.g, s: at.s };
+  if (at.level === 'system') return { level: 'galaxy', g: at.g };
+  if (at.level === 'galaxy') return { level: 'universe' };
+  return null;
+}
+export function crumbs(at: MapAt): { label: string; to: MapAt }[] {
+  const out: { label: string; to: MapAt }[] = [{ label: 'Universe', to: { level: 'universe' } }];
+  if (at.g !== undefined && at.level !== 'universe') out.push({ label: `Galaxy ${at.g}`, to: { level: 'galaxy', g: at.g } });
+  if (at.s !== undefined && (at.level === 'system' || at.level === 'planet')) out.push({ label: `System ${at.g}:${at.s}`, to: { level: 'system', g: at.g, s: at.s } });
+  if (at.level === 'planet') out.push({ label: at.planetName ?? 'Planet', to: at });
+  return out;
+}

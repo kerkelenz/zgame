@@ -99,7 +99,7 @@ describe('the breadcrumb', () => {
     expect(breadcrumb('buildings')).toEqual([{ label: 'Build', page: 'buildings' }, { label: 'Buildings' }]);
     expect(breadcrumb('detail', 'Metal Mine', 'buildings')).toEqual([{ label: 'Build', page: 'buildings' }, { label: 'Buildings', page: 'buildings' }, { label: 'Metal Mine' }]);
     expect(breadcrumb('detail', 'Metal Mine')).toEqual([{ label: 'Build', page: 'buildings' }, { label: 'Metal Mine' }]);
-    expect(breadcrumb('galaxy')).toEqual([{ label: 'Galaxy', page: 'galaxy' }]);           // a hub with one page needs no second step
+    expect(breadcrumb('galaxy')).toEqual([{ label: 'Galaxy', page: 'galaxy' }, { label: 'Galaxy' }]);
     expect(breadcrumb('profile', 'Alice')).toEqual([{ label: 'Alliance', page: 'alliance' }, { label: 'Standing', page: 'highscore' }, { label: 'Alice' }]);
   });
 });

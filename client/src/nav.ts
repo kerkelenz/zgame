@@ -23,7 +23,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { id: 'fleet', label: 'Fleet', icon: '🚀', items: [
     { id: 'fleet', label: 'Fleet', scope: 'planet' }, { id: 'simulator', label: 'Simulator', feature: 'simulator', scope: 'empire' }, { id: 'invasion', label: 'Invasion', feature: 'invasion', scope: 'empire' },
   ] },
-  { id: 'galaxy', label: 'Galaxy', icon: '🌌', items: [{ id: 'galaxy', label: 'Galaxy', scope: 'empire' }] },
+  { id: 'galaxy', label: 'Galaxy', icon: '🌌', items: [{ id: 'galaxy', label: 'Galaxy', scope: 'empire' }, { id: 'map', label: 'Map', scope: 'empire' }] },
   { id: 'inbox', label: 'Inbox', icon: '✉', items: [
     { id: 'messages', label: 'Messages', scope: 'empire' }, { id: 'chat', label: 'Chat', scope: 'empire' }, { id: 'contacts', label: 'Contacts', scope: 'empire' },
   ] },
