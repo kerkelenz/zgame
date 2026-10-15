@@ -774,3 +774,19 @@ html[data-motion="off"] .bt-volley line { opacity: .8; }
 .bt-opts button.on { background: var(--accent); color: #1a1205; border-color: var(--accent); }
 .bt-timer { font-variant-numeric: tabular-nums; color: var(--muted); } .bt-timer.hot { color: var(--bad, #e8685d); font-weight: 700; }
 table.btlog { width: 100%; border-collapse: collapse; font-size: 13px; } table.btlog th, table.btlog td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+
+/* ---- the public profile: picture, pinned medals, editor ---- */
+.profhead { display: flex; gap: 18px; align-items: center; margin: 6px 0 12px; flex-wrap: wrap; }
+.profname { margin: 0 0 2px; font-size: 26px; }
+.avatar { border-radius: 50%; object-fit: cover; background: #0b1126; border: 2px solid var(--line); box-shadow: 0 0 18px rgba(120, 160, 255, .25); flex: none; }
+.avatar.blank { display: inline-flex; align-items: center; justify-content: center; font-size: 44px; }
+.medals { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0 12px; }
+.medal { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid; box-shadow: 0 2px 10px rgba(0, 0, 0, .45), inset 0 0 8px rgba(255, 255, 255, .25); flex: none; cursor: default; user-select: none; }
+.medal.dim { filter: grayscale(.85) brightness(.7); }
+html[data-motion="full"] .medals .medal { transition: transform .15s; } html[data-motion="full"] .medals .medal:hover { transform: translateY(-3px) scale(1.06); }
+.medalbtn { background: none; border: 2px solid transparent; border-radius: 50%; padding: 0; line-height: 0; cursor: pointer; } .medalbtn.on { border-color: var(--accent); }
+.avgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; margin: 10px 0 14px; max-height: 260px; overflow: auto; }
+.avpick { padding: 4px; line-height: 0; border: 2px solid transparent; border-radius: 12px; background: rgba(255, 255, 255, .04); cursor: pointer; } .avpick.on { border-color: var(--accent); background: rgba(240, 169, 59, .15); }
+.avpick .avatar { box-shadow: none; border: none; }
+button.on { background: var(--accent); color: #1a1205; border-color: var(--accent); }
+ul.ach li.done { display: flex; align-items: center; gap: 10px; }

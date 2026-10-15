@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-zg', date: '2026-10-27', title: 'Command your battles',
     items: [
+      'Profiles have a picture, pinned achievements and a featured world: click your name in the top bar, then Edit profile. Pick a ship, defense, planet or moon as your picture, pin up to six achievements as medals, and feature one of your worlds.',
       'The Shipyard and Defense production queue has up and down arrows on every waiting row, like the building queue; the row being built stays first.',
       'Attacks on pirate and alien outposts can be flown in person: tick Command the battle myself on the Fleet page. Your fleet waits at the outpost and a notice opens the new Battle screen.',
       'Each round you pick a stance (boost attack, evasive maneuvers, brace shields), how to aim (spread, focus the biggest, finish the weakest) and an ability with a cooldown (repair, EMP, decoy, overcharge), then fire. The garrison answers with its own stance and you see the volleys fly across.',

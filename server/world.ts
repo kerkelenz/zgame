@@ -66,6 +66,8 @@ export interface Player {
   credits: number;
   officers: Partial<Record<OfficerId, number>>;
   achievements: Record<string, number>;
+  /** how the public profile shows off: a picture from the gallery, up to six pinned achievements, one featured world */
+  profile?: { avatar?: string; pinned?: string[]; featured?: string };
   objectives: Record<string, number>;
   faction: FactionId | null;
   /** standing with each faction (-100..100) */

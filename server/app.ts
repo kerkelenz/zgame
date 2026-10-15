@@ -19,7 +19,7 @@ import { checkProgress, chooseClass, hireOfficer, joinFaction, leaveFaction } fr
 import { answerTribute } from './empires';
 import { spawnRaid } from './npc';
 import { SCORE_CATEGORIES, categoryRows } from './rankings';
-import { profileView } from './profile';
+import { editProfile, profileView } from './profile';
 import { endVacation, startVacation } from './vacation';
 import { startRepair } from './wrecks';
 import * as ACC from './account';
@@ -554,6 +554,10 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
   }));
   A.get('/players/names', wrap(() => playerNames(w)));
   A.get('/players/:id', wrap((req) => profileView(w, req.params.id, now())));
+  A.post('/profile/edit', wrap((req) => {
+    editProfile(w, req.player!, req.body || {});
+    return profileView(w, req.player!.id, now());
+  }));
   A.get('/highscore', wrap((req) => {
     const category = typeof req.query.cat === 'string' ? req.query.cat : 'total';
     refreshStandingDay(w, now());

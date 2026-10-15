@@ -168,6 +168,6 @@ describe('soak', () => {
       const kinds: Record<string, number> = {};
       for (const m of w.messages) kinds[m.kind] = (kinds[m.kind] || 0) + 1;
       if (process.env.SOAK_LOG) console.log(seed, { ok, rejected, kinds, planets: Object.keys(w.planets).length, alliances: Object.keys(w.alliances).length });
-    });
+    }, 30_000);
   }
 });

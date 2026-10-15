@@ -4,6 +4,10 @@ import { useGame } from '../game';
 import { Card, CoordLink, coordStr, fmt, Page, PlanetLink, when, Loading } from '../ui';
 import { LineChart } from './Highscore';
 import { WorldBanner } from '../WorldBanner';
+import { Avatar, Medal } from '../Badge';
+import { PIN_MAX, avatarGallery, type AvatarKind } from '../../../shared/profile';
+
+const GALLERY_TABS: { kind: AvatarKind; label: string }[] = [{ kind: 'ship', label: 'Ships' }, { kind: 'defense', label: 'Defenses' }, { kind: 'planet', label: 'Planets' }, { kind: 'moon', label: 'Moons' }];
 
 const ACTIVITY: Record<string, string> = { online: 'online now', active: 'active', inactive: 'inactive for a week or more', longInactive: 'inactive for a month or more' };
 
@@ -13,6 +17,9 @@ export function Profile() {
   const [soc, setSoc] = useState<any>(null);
   const [note, setNote] = useState('');
   const [err, setErr] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [tab, setTab] = useState<AvatarKind>('ship');
+  const [draft, setDraft] = useState<{ avatar: string | null; pinned: string[]; featured: string }>({ avatar: null, pinned: [], featured: '' });
   useEffect(() => {
     if (!profileId) return;
     setP(null); setErr('');
@@ -26,11 +33,50 @@ export function Profile() {
   const s = p.stats;
   const isBuddy = !!soc?.buddies.some((b: any) => b.id === p.id);
   const isBlocked = !!soc?.blocked.some((b: any) => b.id === p.id);
+  const startEdit = () => { setDraft({ avatar: p.avatar, pinned: p.pinned, featured: p.featured?.id ?? '' }); setEditing(true); };
+  const saveEdit = async () => {
+    const r = await act(() => post('/profile/edit', { avatar: draft.avatar, pinned: draft.pinned, featured: draft.featured || null }), 'Profile saved');
+    if (r) { setP(r); setEditing(false); }
+  };
+  const togglePin = (id: string) => setDraft((d) => ({ ...d, pinned: d.pinned.includes(id) ? d.pinned.filter((x) => x !== id) : d.pinned.length < PIN_MAX ? [...d.pinned, id] : d.pinned }));
   const social = async (path: string, body: unknown, ok: string) => { const r = await act(() => post(path, body), ok); if (r) setSoc(r); };
   return (
     <Page title={p.username}>
       <div className="row">{back}{p.home && !mine && <button onClick={() => showInGalaxy(p.home)}>Find in galaxy {coordStr(p.home)}</button>}</div>
-      {p.homeLook && <WorldBanner look={p.homeLook}><b>{p.homeName}</b>{p.home && <CoordLink c={p.home} />}<span>Home world</span></WorldBanner>}
+      <div className="profhead">
+        <Avatar id={p.avatar} size={112} fallbackLook={p.homeLook} />
+        <div className="grow">
+          <h2 className="profname">{p.username}</h2>
+          <div className="muted small">{p.npc ? `Computer empire (${p.npc})` : 'Commander'}{p.alliance && <> · [{p.alliance.tag}] {p.alliance.name}</>}{p.faction && <> · {p.faction}</>}{p.charClass && <> · {p.charClass}</>}</div>
+          {p.pinned.length > 0 ? (
+            <div className="medals" aria-label="Pinned achievements">{p.pinned.map((id: string) => { const a = p.achievements.find((x: any) => x.id === id); return a ? <Medal key={id} id={id} name={a.name} desc={a.desc} size={60} /> : null; })}</div>
+          ) : mine && <div className="muted small">Pin up to {PIN_MAX} achievements here with Edit profile.</div>}
+        </div>
+        {mine && !p.npc && <button onClick={() => (editing ? setEditing(false) : startEdit())}>{editing ? 'Close editor' : 'Edit profile'}</button>}
+      </div>
+      {mine && editing && (
+        <Card title="Edit your profile">
+          <div className="bt-h">Picture</div>
+          <div className="row wrap">{GALLERY_TABS.map((t) => <button key={t.kind} className={tab === t.kind ? 'on' : ''} onClick={() => setTab(t.kind)}>{t.label}</button>)}<button onClick={() => setDraft({ ...draft, avatar: null })} disabled={!draft.avatar}>Use my home world</button></div>
+          <div className="avgrid" role="listbox" aria-label="Profile pictures">
+            {avatarGallery().filter((a) => a.kind === tab).map((a) => (
+              <button key={a.id} role="option" aria-selected={draft.avatar === a.id} className={`avpick${draft.avatar === a.id ? ' on' : ''}`} title={a.name} onClick={() => setDraft({ ...draft, avatar: a.id })}><Avatar id={a.id} size={56} /></button>
+            ))}
+          </div>
+          <div className="bt-h">Pinned achievements <span className="muted small">({draft.pinned.length} of {PIN_MAX}; the order you click is the order shown)</span></div>
+          {p.achievements.length === 0 ? <p className="muted small">Earn an achievement first.</p> : (
+            <div className="medals">{p.achievements.map((a: any) => <button key={a.id} className={`medalbtn${draft.pinned.includes(a.id) ? ' on' : ''}`} onClick={() => togglePin(a.id)} title={`${a.name}: ${a.desc}`} aria-pressed={draft.pinned.includes(a.id)}><Medal id={a.id} name={a.name} size={48} dim={!draft.pinned.includes(a.id)} /></button>)}</div>
+          )}
+          <div className="bt-h">Featured world</div>
+          <select value={draft.featured} onChange={(e) => setDraft({ ...draft, featured: e.target.value })}>
+            <option value="">None</option>
+            {p.locations.map((l: any) => <option key={l.id} value={l.id}>{l.name} {coordStr(l.coords)}{l.moon ? ' (moon)' : ''}</option>)}
+          </select>
+          <div className="row wrap"><button className="primary" onClick={() => void saveEdit()}>Save profile</button><button onClick={() => setEditing(false)}>Cancel</button></div>
+        </Card>
+      )}
+      {p.featured ? <WorldBanner look={p.featured.look} isMoon={p.featured.moon}><b>{p.featured.name}</b><CoordLink c={p.featured.coords} /><span>Featured world</span></WorldBanner>
+        : p.homeLook && <WorldBanner look={p.homeLook}><b>{p.homeName}</b>{p.home && <CoordLink c={p.home} />}<span>Home world</span></WorldBanner>}
       {!mine && !p.npc && soc && (
         <div className="row wrap">
           {isBuddy ? <button onClick={() => void social('/social/buddy/remove', { id: p.id }, 'Removed from buddies')}>Remove buddy</button> : <button onClick={() => void social('/social/buddy', { id: p.id }, 'Added to buddies')} disabled={isBlocked}>Add buddy</button>}
@@ -38,12 +84,8 @@ export function Profile() {
           <button onClick={() => { const reason = prompt(`Report ${p.username} to the admins. What happened?`); if (reason) void act(() => post('/report', { id: p.id, reason }), 'Report sent'); }}>Report</button>
         </div>
       )}
-      <p className="muted">
-        {p.npc ? `Computer empire (${p.npc})` : 'Commander'}
-        {p.alliance && <> · [{p.alliance.tag}] {p.alliance.name}</>}
-        {p.faction && <> · {p.faction}</>}
-        {p.charClass && <> · {p.charClass}</>}
-        {' · '}{p.planets} planet{p.planets === 1 ? '' : 's'}
+      <p className="muted small">
+        {p.planets} planet{p.planets === 1 ? '' : 's'}
         {p.activity && <> · {ACTIVITY[p.activity]}</>}{p.vacation && <> · on vacation</>}
         {' · '}joined {when(p.joinedAt)}
       </p>
@@ -100,7 +142,7 @@ export function Profile() {
       {p.monuments?.length > 0 && <p className="muted">🗿 Monuments: {p.monuments.join(', ')}</p>}
       <Card title={`Achievements ${p.achievements.length} / ${p.achievementsTotal}`}>
         {p.achievements.length === 0 ? <p className="muted">None yet.</p> : (
-          <ul className="ach">{p.achievements.map((a: any) => <li key={a.id} className="done"><span><b>{a.name}</b> - {a.desc}</span><span className="muted small">{when(a.doneAt)}</span></li>)}</ul>
+          <ul className="ach">{p.achievements.map((a: any) => <li key={a.id} className="done"><Medal id={a.id} name={a.name} size={32} /><span><b>{a.name}</b> - {a.desc}</span><span className="muted small">{when(a.doneAt)}</span></li>)}</ul>
         )}
       </Card>
     </Page>

@@ -716,6 +716,24 @@ describe('using the game', () => {
     noErrors();
   });
 
+  run('your profile: pick a picture and a featured world in the editor and the profile shows them', async () => {
+    await page.goto(server.base + '/');
+    await page.waitForSelector('header.top');
+    await page.locator('header.top a.plink').first().click();
+    await page.locator('.profhead').waitFor();
+    await page.getByRole('button', { name: 'Edit profile' }).click();
+    await page.getByRole('button', { name: 'Defenses', exact: true }).click();
+    await page.locator('.avpick').first().click();
+    await page.locator('.card select, .panel select, main select').last().selectOption({ index: 1 });
+    await page.getByRole('button', { name: 'Save profile' }).click();
+    await expect.poll(() => page.locator('.profhead img.avatar').getAttribute('alt')).not.toBe('Profile picture');
+    expect(await page.locator('.wbanner').innerText()).toMatch(/Featured world/);
+    await page.reload();
+    await page.waitForSelector('header.top');
+    expect(await page.locator('.wbanner').innerText()).toMatch(/Featured world/);          // saved on the server
+    noErrors();
+  });
+
   run('"Defend ally" in the hostile fleet list fills in the send form with that planet and the Defend ally mission', async () => {
     await page.route('**/api/planets', async (route) => {
       const r = await route.fetch(); const j = await r.json() as any[];
