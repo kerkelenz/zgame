@@ -22,7 +22,7 @@ export function BuildingCards({ d, only }: { d: ItemsData; only: boolean }) {
           const cost = buildingCost(id, level + 1);
           const secs = buildingTime(cost, robotics, nanite, cfg.economySpeed * cfg.constructionBoost, timeFactor * lfBuild);
           const missing = unmet(d.requires, planet.buildings, techs);
-          const ok = !missing.length && (!buildQ || bBacklog.length < MAXB) && canAfford(have, cost) && planet.usedFields + bBacklog.length < planet.fields;
+          const ok = !missing.length && (!buildQ || bBacklog.length < MAXB) && canAfford(have, cost) && (id === 'terraformer' || planet.usedFields + bBacklog.length < planet.fields);
           if (only && !ok) return null;
           return (
             <Card key={id} title={<><ItemLink id={id}>{d.name}</ItemLink> <Flashing className="lvl" value={built}>{built}{pending > 0 && <span className="muted"> +{pending}</span>}</Flashing></>}>
