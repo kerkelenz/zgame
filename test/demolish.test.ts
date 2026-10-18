@@ -91,11 +91,11 @@ describe('when it is not allowed', () => {
 
   it('not a Terraformer or Lunar Base level whose fields are in use', () => {
     ap.buildings = { terraformer: 1, metalMine: 10, solarPlant: 10 };
-    ap.fields = 22;                                                              // 5 more from the terraformer: 27 in all, 21 used
-    expect(maxFields(ap)).toBe(27);
+    ap.fields = 22;                                                              // 8 more from the terraformer: 30 in all, 21 used
+    expect(maxFields(ap)).toBe(30);
     expect(() => startDemolition(w, alice, ap, 'terraformer', T0)).not.toThrow();  // 20 used, 22 available afterwards: fine
     ap.buildQueue = null;
-    ap.buildings = { terraformer: 1, metalMine: 12, solarPlant: 12, crystalMine: 2 };   // 27 used of 27: the five extra fields are all occupied
+    ap.buildings = { terraformer: 1, metalMine: 12, solarPlant: 12, crystalMine: 2 };   // 30 used of 30: the eight extra fields are all occupied
     expect(() => startDemolition(w, alice, ap, 'terraformer', T0)).toThrow(/fields this level gives are in use/);
     const moon = createMoon(w, ap, T0);
     moon.fields = 1;

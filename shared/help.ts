@@ -19,7 +19,7 @@ export const HELP: Record<string, Help> = {
   crystalStorage: { does: 'Raises how much crystal the planet can hold. Production stops when the store is full.', tips: ['Storage does not protect against raids.'] },
   deuteriumTank: { does: 'Raises how much vespene gas the planet can hold. Production stops when the tank is full.', tips: ['Storage does not protect against raids.'] },
   missileSilo: { does: 'Stores missiles: 10 slots per level, an interplanetary missile takes 2 and an interceptor takes 1. Higher levels also reach further.', tips: ['Missiles only hit defenses, never ships.'] },
-  terraformer: { does: 'Reshapes the surface to create 5 extra building fields per level, so the planet can hold more buildings.', tips: ['The Terraformer itself uses no field.'] },
+  terraformer: { does: 'Reshapes the surface to create 8 extra building fields per level, so the planet can hold more buildings.', tips: ['The Terraformer itself uses no field.'] },
   spaceDock: { does: 'Rebuilds a share of the ships you lose defending this planet, for free, from the wreck field the battle leaves.', tips: ['3.5% of the wreck per level, at most 35% at level 10.', 'Only works on planets, not moons.'] },
   lunarBase: { does: 'A moon has almost no room: the base gives it usable building fields, 3 per level on top of 1 free field.', tips: ['Moon only.'] },
   sensorPhalanx: { does: 'Scans fleet movements around the moon: any planet within range shows what is flying to and from it.', tips: ['Range grows quickly with level (level squared minus one systems).', 'Each scan costs vespene gas.', 'Moon only.'] },

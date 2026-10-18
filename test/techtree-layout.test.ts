@@ -15,7 +15,7 @@ describe('the tech tree layout', () => {
   });
 
   it('shows every level something needs, and a few more', () => {
-    expect(levelsShown('energy')).toBe(12);
+    expect(levelsShown('energy')).toBe(10);
     expect(levelsShown('weapons')).toBeGreaterThanOrEqual(5);
     expect(levelsShown('deathstar')).toBe(1);
     for (const e of ITEM_EDGES) expect(levelsShown(e.from)).toBeGreaterThanOrEqual(e.level);

@@ -97,7 +97,7 @@ describe('building tables match what the engine charges and builds', () => {
     ap.buildings.solarPlant = 14;
     ap.buildings.metalStorage = 6;
     expect(buildingTable('metalStorage', ctx(), 6, 6).rows[0].v.cap).toBe(planetCapacity(w, ap).metal);
-    expect(buildingTable('terraformer', ctx(), 3, 3).rows[0].v.fields).toBe(15);
+    expect(buildingTable('terraformer', ctx(), 3, 3).rows[0].v.fields).toBe(24);
     expect(buildingTable('missileSilo', ctx(), 4, 4).rows[0].v).toEqual({ slots: 40, range: 19 });
     expect(buildingTable('sensorPhalanx', ctx(), 3, 3).rows[0].v.range).toBe(8);
     expect(buildingTable('jumpGate', ctx(), 2, 2).rows[0].v.cooldown * 1000).toBe(jumpCooldownMs(w, 2));

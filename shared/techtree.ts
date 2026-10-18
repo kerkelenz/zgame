@@ -136,7 +136,7 @@ export const FLOWS: Flow[] = [
     boosts: [
       { id: 'astrophysics', text: 'more planets and expedition slots' },
       { id: 'computer', text: '+1 fleet slot per level' },
-      { id: 'terraformer', text: '+5 building spaces on a planet' },
+      { id: 'terraformer', text: '+8 building spaces on a planet' },
       { id: 'lunarBase', text: 'moons only: +3 building spaces per level' },
       { text: 'Fleet Admiral officer, alliance Joint Command upgrade' },
     ],

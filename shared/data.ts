@@ -17,7 +17,7 @@ export const BUILDINGS: Record<BuildingId, BuildingDef> = {
   metalStorage: { id: 'metalStorage', name: 'Metal Storage', desc: 'Raises metal capacity.', base: r(1000), factor: 2, requires: [] },
   crystalStorage: { id: 'crystalStorage', name: 'Crystal Storage', desc: 'Raises crystal capacity.', base: r(1000, 500), factor: 2, requires: [] },
   missileSilo: { id: 'missileSilo', name: 'Missile Silo', desc: 'Stores 10 missile slots per level and sets missile range (5 systems per level).', base: r(20000, 20000, 1000), factor: 2, requires: [{ id: 'shipyard', level: 1 }] },
-  terraformer: { id: 'terraformer', name: 'Terraformer', desc: 'Reshapes the surface to create 5 extra building fields per level.', base: r(0, 50000, 100000), factor: 2, requires: [{ id: 'naniteFactory', level: 1 }, { id: 'energy', level: 12 }] },
+  terraformer: { id: 'terraformer', name: 'Terraformer', desc: 'Reshapes the surface to create 8 extra building fields per level.', base: r(0, 50000, 100000), factor: 1.7, requires: [{ id: 'naniteFactory', level: 1 }, { id: 'energy', level: 10 }] },
   spaceDock: { id: 'spaceDock', name: 'Space Dock', desc: 'Rebuilds a share of the ships you lose defending this planet from the wreck field the battle leaves behind.', base: r(200000, 0, 50000), factor: 5, requires: [{ id: 'shipyard', level: 2 }] },
   lunarBase: { id: 'lunarBase', name: 'Lunar Base', desc: 'Moons have almost no room: each level adds 3 usable fields.', base: r(20000, 40000, 20000), factor: 2, requires: [], moonOnly: true },
   sensorPhalanx: { id: 'sensorPhalanx', name: 'Sensor Phalanx', desc: 'Scans fleet movements around a planet within (level² - 1) systems. Each scan costs 5,000 vespene gas.', base: r(20000, 40000, 20000), factor: 2, requires: [{ id: 'lunarBase', level: 1 }], moonOnly: true },
@@ -88,6 +88,8 @@ export const buildingAllowed = (id: BuildingId, moon: boolean) => (moon ? MOON_B
 /** 3.5% of a wreck field per Space Dock level, at most 35% (reached at level 10) */
 export const wreckRepairShare = (level: number) => Math.min(0.35, 0.035 * Math.max(0, level));
 
+/** building fields a Terraformer level adds to a planet */
+export const TERRAFORMER_FIELDS = 8;
 export const SHIP_IDS = (Object.keys(UNITS) as UnitId[]).filter((k) => UNITS[k].kind === 'ship') as ShipId[];
 /** ships that never leave their planet */
 export const STATIONARY_SHIPS: readonly ShipId[] = ['solarSatellite', 'crawler'];

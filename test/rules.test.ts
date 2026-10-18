@@ -29,7 +29,7 @@ beforeEach(() => {
 });
 
 describe('terraformer', () => {
-  it('adds 5 fields per level and ignores the field limit itself', () => {
+  it('adds 8 fields per level and ignores the field limit itself', () => {
     ap.fields = 20;
     ap.buildings = { naniteFactory: 1, terraformer: 0, metalMine: 20 }; // 21 levels > 20 fields: full
     expect(() => startBuilding(w, alice, ap, 'metalStorage', T0)).toThrow(/fields/);
@@ -37,7 +37,7 @@ describe('terraformer', () => {
     expect(ap.buildQueue?.id).toBe('terraformer');
     ap.buildQueue = null;
     ap.buildings.terraformer = 2;
-    expect(maxFields(ap)).toBe(30);
+    expect(maxFields(ap)).toBe(36);
   });
 
   it('is cheap on metal, heavy on crystal and deuterium, and gated by nanites and energy tech', () => {

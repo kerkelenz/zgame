@@ -1,4 +1,4 @@
-import { ALLIANCE_UPGRADES, BUILDINGS, DEAL_FEE, TECHS, UNITS, buildingAllowed, dailyDeal, resName, tradeQuote } from '../shared/data';
+import { ALLIANCE_UPGRADES, BUILDINGS, DEAL_FEE, TECHS, TERRAFORMER_FIELDS, UNITS, buildingAllowed, dailyDeal, resName, tradeQuote } from '../shared/data';
 import { allianceEvent } from './allianceLog';
 import {
   buildingCost, buildingTime, canAfford, production, researchTime, scaleRes, storageCapacity,
@@ -195,7 +195,7 @@ export function requirementsMet(planet: Planet | null, player: Player, reqs: Req
 }
 
 export function maxFields(planet: Planet): number {
-  return planet.fields + (planet.isMoon ? 3 * lvl(planet.buildings, 'lunarBase') : 5 * lvl(planet.buildings, 'terraformer') + 2 * (planet.projects?.habitat ?? 0) + lifeformEffects(planet.lifeform).fields);
+  return planet.fields + (planet.isMoon ? 3 * lvl(planet.buildings, 'lunarBase') : TERRAFORMER_FIELDS * lvl(planet.buildings, 'terraformer') + 2 * (planet.projects?.habitat ?? 0) + lifeformEffects(planet.lifeform).fields);
 }
 
 export function usedFields(planet: Planet): number {
@@ -300,7 +300,7 @@ export function startDemolition(w: World, player: Player, planet: Planet, id: Bu
   if (id === 'researchLab' && player.research) throw new GameError('Cannot take the lab down while research is running');
   if ((id === 'shipyard' || id === 'naniteFactory') && planet.shipyardQueue.length) throw new GameError('Empty the shipyard queue first');
   // the fields this level provides must not be in use
-  const fieldsLost = id === 'terraformer' ? 5 : id === 'lunarBase' && planet.isMoon ? 3 : 0;
+  const fieldsLost = id === 'terraformer' ? TERRAFORMER_FIELDS : id === 'lunarBase' && planet.isMoon ? 3 : 0;
   if (fieldsLost && usedFields(planet) - 1 > maxFields(planet) - fieldsLost) throw new GameError(`The ${fieldsLost} fields this level gives are in use: demolish other buildings first`);
   if (id === 'missileSilo') {
     const slots = (u: string) => (u === 'interplanetaryMissile' ? 2 : 1);

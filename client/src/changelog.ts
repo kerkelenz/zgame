@@ -5,6 +5,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-zg', date: '2026-10-27', title: 'Command your battles',
     items: [
+      'The Terraformer is easier to reach and worth more: it needs Energy Technology 10 (was 12), adds 8 building fields per level (was 5) and each level costs 70% more than the last instead of double.',
       'Profiles have a picture, pinned achievements and a featured world: click your name in the top bar, then Edit profile. Pick a ship, defense, planet or moon as your picture, pin up to six achievements as medals, and feature one of your worlds.',
       'The Shipyard and Defense production queue has up and down arrows on every waiting row, like the building queue; the row being built stays first.',
       'Attacks on pirate and alien outposts can be flown in person: tick Command the battle myself on the Fleet page. Your fleet waits at the outpost and a notice opens the new Battle screen.',

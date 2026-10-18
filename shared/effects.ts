@@ -2,7 +2,7 @@
  * What an item does at each level, computed from the same formulas the server runs.
  * Pure functions: the client renders them as "details" pages, tests compare them to the engine.
  */
-import { BUILDINGS, DRIVE_SWITCH, GENERAL_FAST_SHIPS, TECHS, UNITS, isShip, wreckRepairShare } from './data';
+import { BUILDINGS, DRIVE_SWITCH, GENERAL_FAST_SHIPS, TECHS, TERRAFORMER_FIELDS, UNITS, isShip, wreckRepairShare } from './data';
 import {
   buildingCost, buildingTime, production, researchTime, shipSpeed, storageCapacity, techCost, unitTime, lvl,
   type Levels, type ProductionInput,
@@ -126,7 +126,7 @@ const EFFECTS: Partial<Record<BuildingId, Effect>> = {
   },
   terraformer: {
     columns: [{ key: 'fields', label: 'Extra building fields', fmt: 'int', delta: true }],
-    at: (L) => ({ fields: 5 * L }),
+    at: (L) => ({ fields: TERRAFORMER_FIELDS * L }),
     notes: ['The Terraformer itself does not use up a field.'],
   },
   spaceDock: {
