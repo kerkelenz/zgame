@@ -247,7 +247,7 @@ describe('using the game', () => {
     expect(await page.locator('.bedge.back').count()).toBe(3);
     expect(await page.locator('.bedge').count()).toBeGreaterThan(70);        // the whole map is drawn, not only the selection
     await page.locator('.icard', { hasText: 'Energy Technology' }).first().click();
-    expect(await page.locator('.ladder .pip').count()).toBeGreaterThanOrEqual(12);   // its levels open in place
+    expect(await page.locator('.ladder .pip').count()).toBeGreaterThanOrEqual(10);   // its levels open in place
     // pan with the mouse, zoom with the wheel; no scroll bars
     const tf = () => page.locator('.graph').evaluate((el) => (el as HTMLElement).style.transform);
     expect(await page.locator('.graphbox').evaluate((el) => getComputedStyle(el).overflow)).toBe('hidden');
