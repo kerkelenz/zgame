@@ -157,3 +157,27 @@ describe('the Battle screen', () => {
     expect(tabOfItem('battle')).toBeUndefined();
   });
 });
+
+describe('pages the quest line has not opened yet', () => {
+  const ids = (unlocked: string[] | null | undefined, current?: string, showAll = false) => visibleNav(undefined, showAll, false, current, unlocked).flatMap((g) => g.items.map((i) => i.id));
+  it('are left out of the menu until a quest opens them, and groups with nothing left vanish', () => {
+    const basics = ['overview', 'buildings', 'resources', 'quests', 'messages', 'settings', 'guide', 'news'];
+    const shown = ids(basics);
+    expect(shown).toEqual(expect.arrayContaining(['overview', 'quests', 'buildings', 'messages', 'settings']));
+    for (const hidden of ['research', 'shipyard', 'fleet', 'galaxy', 'market', 'alliance', 'command', 'chat']) expect(shown, hidden).not.toContain(hidden);
+    const groups = visibleNav(undefined, false, false, undefined, basics).map((g) => g.id);
+    expect(groups).toEqual(['home', 'build', 'inbox', 'more']);
+    expect(ids([...basics, 'research', 'fleet'])).toEqual(expect.arrayContaining(['research', 'fleet']));
+  });
+  it('are all there for a veteran, for "show every page" and for the page you are on', () => {
+    const all = ids(null);
+    expect(all).toEqual(expect.arrayContaining(['research', 'fleet', 'galaxy', 'market', 'alliance']));
+    expect(ids(undefined)).toEqual(all);
+    expect(ids(['overview'], undefined, true)).toEqual(expect.arrayContaining(all));
+    expect(ids(['overview'], 'fleet')).toContain('fleet');
+  });
+  it('leave the optional feature pages to the features, as before', () => {
+    expect(ids(['overview'])).not.toContain('automation');
+    expect(visibleNav({ automation: true, territory: false, invasion: false, simulator: false }, false, false, undefined, ['overview']).flatMap((g) => g.items.map((i) => i.id))).toContain('automation');
+  });
+});

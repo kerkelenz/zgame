@@ -11,7 +11,7 @@ export async function startServer(env: Record<string, string> = {}): Promise<Tes
   const dir = mkdtempSync(join(tmpdir(), 'sf-e2e-'));
   const port = 4100 + Math.floor(Math.random() * 800);
   const child: ChildProcess = spawn(process.execPath, ['--import', 'tsx', 'server/index.ts'], {
-    env: { ...process.env, PORT: String(port), ZGAME_SAVE: join(dir, 'world.json'), ZGAME_NPC_DENSITY: '0.1', ZGAME_RAID_INTERVAL_MIN: '0', ZGAME_INVASION_INTERVAL_HOURS: '0', ZGAME_ADMINS: 'boss', ...env },
+    env: { ...process.env, PORT: String(port), ZGAME_SAVE: join(dir, 'world.json'), ZGAME_NPC_DENSITY: '0.1', ZGAME_RAID_INTERVAL_MIN: '0', ZGAME_INVASION_INTERVAL_HOURS: '0', ZGAME_ADMINS: 'boss', ZGAME_ONBOARDING: '0', ...env },
     stdio: 'ignore',
   });
   const base = `http://127.0.0.1:${port}`;

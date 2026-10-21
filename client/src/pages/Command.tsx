@@ -5,7 +5,7 @@ import { useGame } from '../game';
 import { Card, Countdown, fmt, Linkify, Page, when, Loading } from '../ui';
 
 export function Command() {
-  const { act, refresh, planet, toast } = useGame();
+  const { act, refresh, planet, toast, setPage } = useGame();
   const [d, setD] = useState<any | null>(null);
   const [shop, setShop] = useState<any>(null);
   const load = useCallback(async () => { setD(await get('/command')); setShop(await get('/shop')); }, []);
@@ -75,7 +75,7 @@ export function Command() {
           </div>
         </Card>
       )}
-      <Card title="Objectives">
+      <Card title="Quests" right={<button onClick={() => setPage('quests')}>Open the Quests page</button>}>
         <ol className="objectives">
           {d.objectives.map((o: any) => (
             <li key={o.id} className={o.doneAt ? 'done' : o.current ? 'current' : ''}>

@@ -9,9 +9,11 @@ import { AdviceCard } from '../AdviceCard';
 import { PlanetHero } from '../PlanetHero';
 import { ROLES } from '../../../shared/roles';
 import { FleetEvents } from './FleetEvents';
+import { QuestCard, type QuestRow } from './Quests';
 
 export function Overview() {
   const { me, planet, planets, fleets, act, setPage, selectPlanet, toast } = useGame();
+  const openQuests: QuestRow[] = (me.quests ?? []).filter((q: QuestRow) => q.open);
   const [shareShips, setShareShips] = useState(false);
   const [name, setName] = useState('');
   const pts = me.player.points;
@@ -25,6 +27,12 @@ export function Overview() {
   return (
     <Page title={`${planet.name} ${coordStr(planet.coords)}`}>
       <PlanetHero />
+      {openQuests.length > 0 && (
+        <Card title={`Quests: ${me.quests.filter((q: QuestRow) => q.doneAt).length} of ${me.quests.length} done`} right={<button onClick={() => setPage('quests')}>All quests</button>} tour="quests">
+          {openQuests.slice(0, 3).map((q: QuestRow) => <QuestCard key={q.id} q={q} go={setPage} canGo={(pg) => !me.unlocked || me.unlocked.includes(pg)} />)}
+          {openQuests.length > 3 && <p className="muted small">{openQuests.length - 3} more open on the Quests page.</p>}
+        </Card>
+      )}
       <FleetEvents />
       <AdviceCard />
 
@@ -67,12 +75,6 @@ export function Overview() {
           </table>
         </Card>
       </div>
-
-      {me.objective && (
-        <Card title={`Objective ${me.objective.step} of ${me.objective.of}: ${me.objective.name}`} right={<button onClick={() => setPage('command')}>All objectives</button>}>
-          <p>{me.objective.hint}</p>
-        </Card>
-      )}
 
       {me.contractsClaimable > 0 && (
         <Card title="Contracts ready" right={<button className="primary" onClick={() => setPage('contracts')}>Collect</button>}>

@@ -8,7 +8,7 @@ import { t } from './i18n';
 export function useVisibleNav() {
   const { me, page } = useGame();
   const showAll = useShowAllPages();
-  return useMemo(() => visibleNav(me?.features as Features | undefined, showAll, !!me?.player.admin, page), [me?.features, me?.player.admin, showAll, page]);
+  return useMemo(() => visibleNav(me?.features as Features | undefined, showAll, !!me?.player.admin, page, me?.unlocked), [me?.features, me?.player.admin, me?.unlocked, showAll, page]);
 }
 
 /** how many things want attention inside a hub: unread messages, rewards to claim, an invasion under way */

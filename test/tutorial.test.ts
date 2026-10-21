@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BUILDINGS, TECHS } from '../shared/data';
 import { NAV_GROUPS } from '../client/src/nav';
-import { STEPS, hasFinishedTutorial, loadTutorial, resetTutorialStore, setTutorialStep, settle, startTutorial, stopTutorial, type TutCtx } from '../client/src/tutorialSteps';
+import { FEATURE_TUTORIALS, STEPS, TUTORIALS, autoTutorialFor, hasFinishedTutorial, hasSeenTutorial, loadTutorial, setTutorialsOff, resetTutorialStore, setTutorialStep, settle, startTutorial, stopTutorial, type TutCtx } from '../client/src/tutorialSteps';
 
 const sources = readdirSync('client/src', { recursive: true, encoding: 'utf8' }).filter((f) => /\.tsx$/.test(f)).map((f) => readFileSync(`client/src/${f}`, 'utf8')).join('\n');
 const store: Record<string, string> = {};
@@ -32,7 +32,7 @@ describe('the tutorial steps', () => {
   it('end with a note and cover the basics a newcomer needs', () => {
     expect(STEPS[STEPS.length - 1].done).toBeUndefined();
     const ids = STEPS.map((s) => s.id).join(' ');
-    for (const part of ['stock', 'metal-mine', 'solar', 'details', 'research', 'tree', 'shipyard', 'planner', 'fleet', 'galaxy', 'contracts', 'alliance', 'overview']) expect(ids, part).toContain(part);
+    for (const part of ['stock', 'metal-mine', 'solar', 'details', 'back', 'quests']) expect(ids, part).toContain(part);
   });
 });
 
@@ -80,5 +80,53 @@ describe('progress is kept per commander', () => {
     startTutorial('carol');
     setTutorialStep(STEPS.length);
     expect(hasFinishedTutorial('carol')).toBe(true);
+  });
+});
+
+describe('the per-page tutorials', () => {
+  const all = Object.entries(TUTORIALS).flatMap(([tut, steps]) => steps.map((s) => ({ tut, s })));
+  it('belong to real pages, have unique step ids and real text', () => {
+    const pages = new Set(NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id)));
+    for (const id of Object.keys(FEATURE_TUTORIALS)) expect(pages.has(id), id).toBe(true);
+    expect(new Set(all.map((x) => x.s.id)).size).toBe(all.length);
+    for (const { tut, s } of all) { expect(s.title.length, s.id).toBeGreaterThan(2); expect(s.text.length, `${tut}/${s.id}`).toBeGreaterThan(30); }
+  });
+  it('cover every page the quest line opens, apart from the ones that explain themselves', async () => {
+    const { OBJECTIVES } = await import('../server/progress');
+    const opened = new Set(OBJECTIVES.flatMap((o) => o.unlocks));
+    for (const page of opened) expect(Object.keys(FEATURE_TUTORIALS), page).toContain(page);
+  });
+  it('point only at things that exist: a page title, a menu entry or a mark a page really carries', () => {
+    expect(sources).toContain('data-tour="page-title"');
+    for (const { tut, s } of all) {
+      if (!s.target || tut === 'core') continue;
+      if (/^nav-/.test(s.target)) continue;
+      expect(sources.includes(`data-tour="${s.target}"`) || sources.includes(` tour="${s.target}"`), s.target).toBe(true);
+    }
+  });
+  it('start by themselves once per page for a commander on the quest line, after the first tutorial, never over another one', () => {
+    expect(autoTutorialFor('amy', 'research', true)).toBeNull();                       // the first tutorial has not even begun
+    startTutorial('amy');
+    expect(autoTutorialFor('amy', 'research', true)).toBeNull();                       // it is running
+    stopTutorial();
+    expect(autoTutorialFor('amy', 'research', true)).toBe('research');
+    expect(autoTutorialFor('amy', 'research', false)).toBeNull();                      // a veteran gets none by themselves
+    expect(autoTutorialFor('amy', 'overview', true)).toBeNull();                       // a page without a tutorial
+    startTutorial('amy', 'research');
+    expect(autoTutorialFor('amy', 'shipyard', true)).toBeNull();                       // another one is on screen
+    stopTutorial();
+    expect(hasSeenTutorial('amy', 'research')).toBe(true);
+    expect(autoTutorialFor('amy', 'research', true)).toBeNull();                       // once only
+    expect(autoTutorialFor('amy', 'shipyard', true)).toBe('shipyard');
+    setTutorialsOff(true);
+    expect(autoTutorialFor('amy', 'shipyard', true)).toBeNull();                       // switched off for good
+  });
+  it('keeps the progress of each tutorial apart', () => {
+    startTutorial('bea', 'fleet');
+    setTutorialStep(1);
+    expect(JSON.parse(store['zg.tutorial.bea.fleet'])).toEqual({ i: 1, done: false });
+    stopTutorial();
+    expect(hasFinishedTutorial('bea', 'fleet')).toBe(true);
+    expect(hasFinishedTutorial('bea')).toBe(false);
   });
 });

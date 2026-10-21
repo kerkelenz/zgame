@@ -23,7 +23,7 @@ import { fleetEvents, intelFields } from './events';
 import { forgeView } from './forge';
 const intelView = (w: World, p: Player, m: Movement) => { const { count, ...rest } = intelFields(w, p, m); return { ...rest, shipCount: count }; };
 import { ALLIANCE_PERMS } from './world';
-import { ACHIEVEMENTS, OBJECTIVES, currentObjective } from './progress';
+import { ACHIEVEMENTS, OBJECTIVES, currentObjective, openQuests, unlockedPages } from './progress';
 import { OFFICERS, OFFICER_MAX, FACTIONS, JOIN_REP, FACTION_BY_ID, CHAR_CLASSES, CLASS_CHANGE_COST } from '../shared/data';
 import { engagedBattles } from './battles';
 import { planetAt, type Alliance, type Movement, type Planet, type Player, type World } from './world';
@@ -120,7 +120,9 @@ export function meView(w: World, p: Player, now: number) {
     vacation: p.vacation,
     faction: p.faction,
     pendingTributes: p.tributes.filter((t) => !t.answered).length,
-    objective: (() => { const o = currentObjective(p); return o ? { id: o.id, name: o.name, hint: o.hint, step: OBJECTIVES.indexOf(o) + 1, of: OBJECTIVES.length } : null; })(),
+    objective: (() => { const o = currentObjective(p); return o ? { id: o.id, name: o.name, hint: o.hint, step: OBJECTIVES.filter((q) => p.objectives[q.id]).length + 1, of: OBJECTIVES.length } : null; })(),
+    quests: questsView(p),
+    unlocked: unlockedPages(w, p),
   };
 }
 
@@ -143,6 +145,7 @@ export function commandView(w: World, p: Player) {
     })),
     achievements: ACHIEVEMENTS.map((a) => ({ id: a.id, name: a.name, desc: a.desc, reward: a.reward, doneAt: p.achievements[a.id] ?? null })),
     objectives: OBJECTIVES.map((o) => ({ id: o.id, name: o.name, hint: o.hint, reward: o.reward, doneAt: p.objectives[o.id] ?? null, current: cur?.id === o.id })),
+    quests: questsView(p),
     stats: p.stats,
     tributes: p.tributes.filter((t) => !t.answered).map((t) => ({ id: t.id, npc: w.players[t.npc]?.username ?? '?', want: t.want, deadline: t.deadline })),
   };
@@ -156,6 +159,12 @@ const mv = (m: Movement, mine: boolean, w?: World) => ({
   cargo: mine ? m.cargo : undefined, arriveAt: m.arriveAt, returnAt: m.returnAt, holdUntil: m.holdUntil,
   acsId: m.acsId, toMoon: m.toMoon, missiles: m.missiles, ownerName: m.ownerName, ownerId: m.ownerId, speedPct: m.speedPct, flightMs: m.flightMs, departAt: m.departAt,
 });
+
+/** the quest line as the Quests page and the Overview draw it: every quest with its chapter, whether it is done or open and what it opens */
+export function questsView(p: Player) {
+  const open = new Set(openQuests(p).map((o) => o.id));
+  return OBJECTIVES.map((o) => ({ id: o.id, name: o.name, hint: o.hint, chapter: o.chapter, optional: !!o.optional, reward: o.reward, unlocks: o.unlocks, doneAt: p.objectives[o.id] ?? null, open: open.has(o.id) }));
+}
 
 export function fleetsView(w: World, p: Player) {
   const myCoords = p.planetIds.map((id) => w.planets[id].coords);

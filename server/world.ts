@@ -66,6 +66,10 @@ export interface Player {
   credits: number;
   officers: Partial<Record<OfficerId, number>>;
   achievements: Record<string, number>;
+  /** 'legacy': the account is older than the quest line and keeps every page; 'new' follows the quest line and its unlocked pages */
+  onboarding?: 'new' | 'legacy';
+  /** the quest line has been checked once for this commander (a veteran's finished quests are marked then) */
+  questsSeeded?: boolean;
   /** how the public profile shows off: a picture from the gallery, up to six pinned achievements, one featured world */
   profile?: { avatar?: string; pinned?: string[]; featured?: string };
   objectives: Record<string, number>;
@@ -121,7 +125,7 @@ export const blankStats = (): PlayerStats => ({ raidsRepelled: 0, battlesWon: 0,
 export function blankPlayer(id: string, username: string, now: number, extra: Partial<Player> = {}): Player {
   return {
     id, username, salt: '', hash: '', createdAt: now, lastSeen: now, techs: {}, research: null, researchBacklog: [],
-    allianceId: null, planetIds: [], stats: blankStats(), credits: 0, officers: {}, achievements: {}, objectives: {},
+    allianceId: null, planetIds: [], stats: blankStats(), credits: 0, officers: {}, achievements: {}, objectives: {}, onboarding: 'new',
     faction: null, rep: {}, heat: {}, truces: {}, tributes: [], nextTribute: 0, history: [], vacation: null, notify: defaultNotify(), charClass: null, ...extra,
   };
 }
@@ -130,6 +134,7 @@ export function blankPlayer(id: string, username: string, now: number, extra: Pa
 export function migratePlayer(p: Player) {
   const d = blankPlayer(p.id, p.username, p.createdAt);
   p.stats = { ...d.stats, ...(p.stats ?? {}) };
+  p.onboarding ??= 'legacy';
   p.credits ??= 0; p.officers ??= {}; p.achievements ??= {}; p.objectives ??= {}; p.faction ??= null;
   p.rep ??= {}; p.heat ??= {}; p.truces ??= {}; p.tributes ??= []; p.nextTribute ??= 0; p.history ??= [];
   p.vacation ??= null;

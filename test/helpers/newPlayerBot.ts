@@ -1,11 +1,12 @@
 /** A greedy new-player bot that follows the guided objectives with the real game rules: the guard against a quest nobody can finish. */
 import { register } from '../../server/accounts';
-import { planetCapacity, planetProduction, processPlayer, queueBuilding, queueResearch, queueUnits } from '../../server/economy';
+import { planetCapacity, planetProduction, processPlayer, queueBuilding, queueResearch, queueUnits, tradeResources } from '../../server/economy';
 import { processMovements, sendFleet } from '../../server/fleet';
-import { OBJECTIVES, checkProgress } from '../../server/progress';
+import { OBJECTIVES, checkProgress, chooseClass, openQuests } from '../../server/progress';
+import { buyEmpireUpgrade } from '../../server/upgrades';
 import { createWorld, planetAt } from '../../server/world';
 import { generateEmpires } from '../../server/empires';
-import { BUILDINGS, TECHS, UNITS } from '../../shared/data';
+import { BUILDINGS, CHAR_CLASSES, TECHS, UNITS } from '../../shared/data';
 import { lvl } from '../../shared/formulas';
 import { playerPoints } from '../../server/galaxy';
 
@@ -55,7 +56,12 @@ export function runBot(speed = 20, maxDays = 20) {
       case 'o2': { need('solarPlant', 4); if (planetProduction(w, home).efficiency < 0.999) need('solarPlant', lvl(home.buildings, 'solarPlant') + 1); break; }
       case 'o3': need('metalMine', 8) && need('crystalMine', 7); break;
       case 'o4': need('deuteriumSynthesizer', 5); break;
+      case 'q-lab': need('researchLab', 1); break;
       case 'o5': need('energy', 1); break;
+      case 'q-ships': if (!home.shipyardQueue.length && p.stats.shipsBuilt < 5) needUnit('lightFighter') && tryQ(() => queueUnits(w, p, home, 'lightFighter', 5, now)); break;
+      case 'q-trade': tryQ(() => tradeResources(w, home, 'metal', 'crystal', 2000, now)); break;
+      case 'q-upgrade': tryQ(() => buyEmpireUpgrade(w, p, home, 'archives', now)); break;
+      case 'q-class': tryQ(() => chooseClass(p, CHAR_CLASSES[0].id)); break;
       case 'o6': need('shipyard', 1); break;
       case 'o7': {
         if (!need('espionage', 2)) break;
@@ -102,7 +108,7 @@ export function runBot(speed = 20, maxDays = 20) {
   let iter = 0;
   while (now - T0 < maxDays * 24 * HOUR) {
     iter++;
-    const cur = OBJECTIVES.find((o) => !p.objectives[o.id]);
+    const cur = openQuests(p).find((o) => !o.optional);
     for (const o of OBJECTIVES) if (p.objectives[o.id] && !(o.id in done)) { done[o.id] = p.objectives[o.id]; lastProgress = now; }
     if (!cur) break;
     if (iter % 4 === 0) { work(cur.id); storage(); if (cur.id !== 'o12') grow(); }

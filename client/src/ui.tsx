@@ -7,6 +7,7 @@ import { Art } from './art';
 import type { Requirement, Res } from '../../shared/types';
 import { usePlayerDirectory } from './directory';
 import { useGame } from './game';
+import { hasTutorial, startTutorial } from './tutorialSteps';
 import { tokenize } from './linkify';
 
 import { fmt, fmtDur } from '../../shared/format';
@@ -87,7 +88,9 @@ export function Empty({ children, action }: { children: ReactNode; action?: Reac
 }
 
 export function Page({ title, children }: { title: string; children: ReactNode }) {
-  return <div className="page"><h2>{title}</h2>{children}</div>;
+  const { page, me } = useGame();
+  const help = !!me && hasTutorial(page);
+  return <div className="page"><h2 data-tour="page-title">{title}{help && <button className="link tuthelp" title="A short tour of this page" onClick={() => startTutorial(me.player.id, page)}>? Tutorial</button>}</h2>{children}</div>;
 }
 
 /** Coordinates that open the galaxy at that system when clicked. */

@@ -13,14 +13,16 @@ const steps = src.split(/\r?\n/).filter((l) => l.startsWith("  { page: '")).map(
 
 describe('the welcome tour', () => {
   it('has steps and every step points at a page that exists', () => {
-    expect(steps.length).toBeGreaterThanOrEqual(8);
+    expect(steps.length).toBeGreaterThanOrEqual(4);
     const pages = new Set(NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id)));
     for (const s of steps) expect(pages.has(s.page), s.page).toBe(true);
   });
 
   it('covers the main pages a new commander needs', () => {
     const covered = steps.map((s) => s.page);
-    for (const page of ['overview', 'buildings', 'research', 'techtree', 'shipyard', 'galaxy', 'fleet', 'alliance', 'settings']) expect(covered, page).toContain(page);
+    for (const page of ['overview', 'buildings', 'quests', 'settings']) expect(covered, page).toContain(page);
+    // the rest of the menu is opened one page at a time by the quests and explained by a tutorial of its own
+    for (const page of ['research', 'techtree', 'shipyard', 'galaxy', 'fleet', 'alliance']) expect(covered, page).not.toContain(page);
   });
 
   it('is plain instruction: no dates and no release talk', () => {

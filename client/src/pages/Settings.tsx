@@ -8,7 +8,7 @@ import { setShowAllPages, useShowAllPages } from '../nav';
 import { canInstall, disablePush, enablePush, installApp, isIos, isStandalone, onInstallChange, pushSupported, thisDeviceSubscription } from '../pwa';
 import { NumInput } from '../NumInput';
 import { setMotion, useMotion, type Motion } from '../motion';
-import { startTutorial } from '../tutorialSteps';
+import { setTutorialsOff, startTutorial, tutorialsOff } from '../tutorialSteps';
 import { getProbes, setProbes } from '../prefs';
 
 function Vacation() {
@@ -164,6 +164,7 @@ function Interface() {
   const { setPage } = useGame();
   const [sound, setS] = useState(soundOn());
   const showAll = useShowAllPages();
+  const [pageTutorialsOff, setPageTutorialsOff] = useState(tutorialsOff());
   const [probes, setProbesState] = useState(getProbes());
   const { me, act, refresh } = useGame();
   const savePref = async (k: 'quietCompletions' | 'worldNews', v: boolean) => { await act(() => post('/prefs', { [k]: v })); await refresh(); };
@@ -183,7 +184,8 @@ function Interface() {
         </label>
         <label className="check"><input type="checkbox" checked={sound} onChange={(e) => { setSound(e.target.checked); setS(e.target.checked); if (e.target.checked) playCue('done', true); }} /> <b>{t('common.sound', 'Sound cues')}</b> <span className="muted small">- a short tone for messages, finished jobs and attack alerts</span></label>
         {sound && <div className="row"><button onClick={() => playCue('alert', true)}>Test alert</button><button onClick={() => playCue('message', true)}>Test message</button></div>}
-        <label className="check"><input type="checkbox" checked={showAll} onChange={(e) => setShowAllPages(e.target.checked)} /> <b>Show every page in the menu</b> <span className="muted small">- Automation, Territory, Invasion and the Simulator normally appear once they are useful to you</span></label>
+        <label className="check"><input type="checkbox" checked={showAll} onChange={(e) => setShowAllPages(e.target.checked)} /> <b>Show every page in the menu</b> <span className="muted small">- the quests open the menu page by page, and Automation, Territory, Invasion and the Simulator appear once they are useful to you; this shows them all at once</span></label>
+        <label className="check"><input type="checkbox" checked={!pageTutorialsOff} onChange={(e) => { setTutorialsOff(!e.target.checked); setPageTutorialsOff(!e.target.checked); }} /> <b>Short tutorial when a new page opens</b> <span className="muted small">- a few steps the first time you open each page; every page also has a Tutorial button</span></label>
         <label className="check"><input type="checkbox" checked={!!me.prefs?.quietCompletions} onChange={(e) => void savePref('quietCompletions', e.target.checked)} /> <b>No messages when something finishes</b> <span className="muted small">- skip the in-game message when a building, research or production run completes (alerts outside the game are set up separately)</span></label>
         <label className="check"><input type="checkbox" checked={!!me.prefs?.worldNews} onChange={(e) => void savePref('worldNews', e.target.checked)} /> <b>News about other commanders&apos; battles</b> <span className="muted small">- also hear when computer empires raid people you do not know. Off by default: you only hear about attacks on members of your own alliance.</span></label>
         <label className="row"><b>Spy probes to send</b> <NumInput className="sm" max={1000} value={probes} onChange={(n) => { setProbesState(n); setProbes(n); }} /> <span className="muted small">- how many Espionage Probes the Fleet page prepares when you press Spy in the galaxy (0 prepares none). Kept in this browser.</span></label>

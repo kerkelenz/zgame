@@ -3,7 +3,7 @@ import { BUILDINGS, TECHS, isDefense, isShip } from '../../shared/data';
 
 /**
  * The navigation: a handful of hubs (Home, Build, Fleet, Galaxy, Inbox, Alliance, More), each with the pages that belong to it as tabs above the
- * page. Some pages are held back until they are relevant. Pure data and functions so it can be tested without a browser.
+ * page. Some pages are held back until they are relevant: optional ones by what the commander has done (features), the rest by the quest line. Pure data and functions so it can be tested without a browser.
  */
 export interface Features { automation: boolean; territory: boolean; invasion: boolean; simulator: boolean }
 /** `planet` pages work on the selected planet (the strip under the header picks it); `empire` pages are about everything you own or other people */
@@ -12,7 +12,7 @@ export interface NavGroup { id: string; label: string; icon: string; items: NavI
 
 export const NAV_GROUPS: NavGroup[] = [
   { id: 'home', label: 'Home', icon: '🏠', items: [
-    { id: 'overview', label: 'Overview', scope: 'planet' }, { id: 'empire', label: 'Empire', scope: 'empire' }, { id: 'economy', label: 'Economy', scope: 'empire' }, { id: 'market', label: 'Market', scope: 'planet' },
+    { id: 'overview', label: 'Overview', scope: 'planet' }, { id: 'quests', label: 'Quests', scope: 'empire' }, { id: 'empire', label: 'Empire', scope: 'empire' }, { id: 'economy', label: 'Economy', scope: 'empire' }, { id: 'market', label: 'Market', scope: 'planet' },
     { id: 'contracts', label: 'Contracts', scope: 'empire' }, { id: 'command', label: 'Command', scope: 'empire' },
   ] },
   { id: 'build', label: 'Build', icon: '🏗', items: [
@@ -36,9 +36,11 @@ export const NAV_GROUPS: NavGroup[] = [
 ];
 
 /** the groups to show: pages whose feature is not unlocked are left out (unless everything is requested), the admin page only for admins, empty groups vanish */
-export function visibleNav(features: Features | undefined, showAll: boolean, isAdmin: boolean, current?: string): NavGroup[] {
+export function visibleNav(features: Features | undefined, showAll: boolean, isAdmin: boolean, current?: string, unlocked?: readonly string[] | null): NavGroup[] {
+  // `unlocked` is the list of pages the quest line has opened so far (null or missing: all of them); a page you are on stays in the menu
+  const open = (i: NavItem) => showAll || !unlocked || !!i.feature || unlocked.includes(i.id) || i.id === current;
   return NAV_GROUPS
-    .map((g) => ({ ...g, items: g.items.filter((i) => (!i.admin || isAdmin) && (showAll || !i.feature || features?.[i.feature] || i.id === current)) }))
+    .map((g) => ({ ...g, items: g.items.filter((i) => (!i.admin || isAdmin) && open(i) && (showAll || !i.feature || features?.[i.feature] || i.id === current)) }))
     .filter((g) => g.items.length > 0);
 }
 

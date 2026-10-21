@@ -17,7 +17,8 @@ import { rememberPage } from './nav';
 import { Tour } from './Tour';
 import { MobileBar } from './MobileBar';
 import { Tutorial } from './Tutorial';
-import { loadTutorial } from './tutorialSteps';
+import { autoTutorialFor, loadTutorial, startTutorial } from './tutorialSteps';
+import { PAGE_LABEL } from './pages/Quests';
 import { NotificationBell } from './NotificationBell';
 import { IdleChip } from './AdviceCard';
 import { markChangelogSeen, unseenRelease } from './changelog';
@@ -47,6 +48,7 @@ import { Market } from './pages/Market';
 import { Lifeform } from './pages/Lifeform';
 import { GameMap } from './pages/Map';
 import { BattlePage } from './pages/Battle';
+import { Quests } from './pages/Quests';
 import { Upgrades } from './pages/Upgrades';
 import { Automation } from './pages/Automation';
 import { Highscore } from './pages/Highscore';
@@ -100,6 +102,27 @@ export function App() {
   useEffect(() => { document.title = `${hostile ? '⚠ ' : ''}${unread ? `(${unread}) ` : ''}Zgame`; }, [unread, hostile]);
   const myId = me?.player.id;
   useEffect(() => { if (myId) loadTutorial(myId); }, [myId]);
+  // a commander on the quest line gets a short tutorial the first time each page opens, a moment after it shows
+  const followsQuests = !!me?.unlocked;
+  useEffect(() => {
+    if (!myId || !followsQuests) return;
+    const id = autoTutorialFor(myId, page, true);
+    if (!id) return;
+    const timer = window.setTimeout(() => { if (autoTutorialFor(myId, page, true) === id) startTutorial(myId, id); }, 700);
+    return () => clearTimeout(timer);
+  }, [myId, page, followsQuests]);
+  // when a quest opens pages in the menu, say so (the first time this browser sees the list it only remembers it)
+  const unlockedKey = me?.unlocked?.join(',') ?? '';
+  useEffect(() => {
+    if (!myId || !me?.unlocked) return;
+    const k = `zg.seenPages.${myId}`;
+    let seen: string[] | null = null;
+    try { seen = JSON.parse(localStorage.getItem(k) || 'null'); } catch { seen = null; }
+    const now = me.unlocked as string[];
+    const fresh = seen ? now.filter((p) => !seen!.includes(p)) : [];
+    if (fresh.length) g.toast(`New page${fresh.length > 1 ? 's' : ''} open: ${fresh.map((p) => PAGE_LABEL[p] ?? p).join(', ')}`, 'info', { label: `Open ${PAGE_LABEL[fresh[0]] ?? fresh[0]}`, run: () => g.setPage(fresh[0]) });
+    try { localStorage.setItem(k, JSON.stringify(now)); } catch { /* ignore */ }
+  }, [myId, unlockedKey]);
   const credits = useCountUp(me?.credits ?? 0);        // before the early return below: hooks must run in the same order every render
   if (!me || !planet) return <div className="loading">Loading universe…</div>;
 
@@ -136,6 +159,7 @@ export function App() {
       case 'guide': return <Guide />;
       case 'settings': return <Settings />;
       case 'command': return <Command />;
+      case 'quests': return <Quests />;
       case 'simulator': return <Simulator />;
       default: return <Overview />;
     }
@@ -175,7 +199,7 @@ export function App() {
       </div>
       <MobileBar />
       <div className="toasts" role="status" aria-live="polite">
-        {toasts.map((t) => <div key={t.id} className={`toast ${t.kind}${/^(Achievement|Objective complete|Monument)/.test(t.text) ? ' celebrate' : ''}`}><Linkify text={t.text} />{t.action && <button className="link toastact" onClick={t.action.run}>{t.action.label}</button>}</div>)}
+        {toasts.map((t) => <div key={t.id} className={`toast ${t.kind}${/^(Achievement|Quest complete|Monument)/.test(t.text) ? ' celebrate' : ''}`}><Linkify text={t.text} />{t.action && <button className="link toastact" onClick={t.action.run}>{t.action.label}</button>}</div>)}
       </div>
     </div>
   );

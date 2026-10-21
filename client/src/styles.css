@@ -790,3 +790,11 @@ html[data-motion="full"] .medals .medal { transition: transform .15s; } html[dat
 .avpick .avatar { box-shadow: none; border: none; }
 button.on { background: var(--accent); color: #1a1205; border-color: var(--accent); }
 ul.ach li.done { display: flex; align-items: center; gap: 10px; }
+
+/* ---- quests and page tutorials ---- */
+.quest { padding: 10px 12px; margin: 8px 0; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, .03); }
+.quest.open { border-color: #f0a93b55; background: #f0a93b0d; }
+.quest p { margin: 4px 0 8px; }
+.quest .reward { color: var(--energy); }
+.objectives li.locked { color: var(--muted); opacity: .7; }
+.page > h2 .tuthelp { margin-left: 12px; font-size: 12px; font-weight: 400; vertical-align: middle; }

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useGame } from './game';
 import { groupOfPage } from './nav';
-import { STEPS, setTutorialStep, settle, stopTutorial, useTutorial } from './tutorialSteps';
+import { TUTORIALS, setTutorialStep, setTutorialsOff, settle, stopTutorial, useTutorial } from './tutorialSteps';
 
 interface Box { x: number; y: number; w: number; h: number }
 const PAD = 6;
@@ -33,12 +33,13 @@ export function Tutorial() {
   const [viaMenu, setViaMenu] = useState(false);
   const tip = useRef<HTMLDivElement>(null);
   const scrolledFor = useRef('');
-  const step = t?.active && t.i < STEPS.length ? STEPS[t.i] : null;
+  const steps = (t && TUTORIALS[t.id]) || [];
+  const step = t?.active && t.i < steps.length ? steps[t.i] : null;
 
   // moves on by itself when the game shows the step was done (and skips steps that are already done)
   useEffect(() => {
     if (!t?.active || !me || !planet) return;
-    const next = settle(t.i, { page, planet, me });
+    const next = settle(t.i, { page, planet, me }, steps);
     if (next !== t.i) setTutorialStep(next);
   }, [t, me, planet, page]);
 
@@ -65,7 +66,8 @@ export function Tutorial() {
   }, [step]);
 
   if (!step || !me) return null;
-  const last = step.id === STEPS[STEPS.length - 1].id;
+  const last = step.id === steps[steps.length - 1].id;
+  const core = t?.id === 'core';
   const waits = !!step.done;
   const narrow = window.innerWidth < 760;
   // the note sits below the target (or above it when there is no room); on a phone it stays at the top, clear of the tab bar
@@ -85,15 +87,16 @@ export function Tutorial() {
     <div className="tut" aria-live="polite">
       {box ? <div className="tutspot" style={{ left: box.x - PAD, top: box.y - PAD, width: box.w + PAD * 2, height: box.h + PAD * 2 }} /> : <div className="tutdim" />}
       <div className="tutnote" ref={tip} style={style} role="dialog" aria-label="Tutorial">
-        <div className="muted small">Tutorial · {STEPS.indexOf(step) + 1} of {STEPS.length}</div>
+        <div className="muted small">{core ? 'Tutorial' : 'About this page'} · {steps.indexOf(step) + 1} of {steps.length}</div>
         <h3>{step.title}</h3>
         <p>{step.text}{viaMenu ? ' (It is under More at the bottom.)' : ''}</p>
         {waits && <p className="small tutwait">{box ? 'Do it, and the tutorial carries on.' : 'Waiting for you to do it.'}</p>}
         <div className="row">
           <button className="link" onClick={stopTutorial}>Skip tutorial</button>
+          {!core && <button className="link" title="Stop the short tutorials that start when a new page opens. The Tutorial button on each page still works." onClick={() => { setTutorialsOff(true); stopTutorial(); }}>Don't show these</button>}
           <span className="spacer" />
-          {waits && <button onClick={() => setTutorialStep(STEPS.indexOf(step) + 1)}>Skip this step</button>}
-          {!waits && <button className="primary" onClick={() => (last ? stopTutorial() : setTutorialStep(STEPS.indexOf(step) + 1))}>{last ? 'Finish' : 'Next'}</button>}
+          {waits && <button onClick={() => setTutorialStep(steps.indexOf(step) + 1)}>Skip this step</button>}
+          {!waits && <button className="primary" onClick={() => (last ? stopTutorial() : setTutorialStep(steps.indexOf(step) + 1))}>{last ? 'Finish' : 'Next'}</button>}
         </div>
       </div>
     </div>

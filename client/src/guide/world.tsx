@@ -68,10 +68,10 @@ export const WORLD: Topic[] = [
     id: 'command', title: 'Command: classes, officers, credits and achievements',
     body: (
       <ul>
-        <li><b>Command Credits</b> come from objectives, achievements, the winner of a season and a fraction of expeditions. They buy officers, a class change and Supply depot items.</li>
+        <li><b>Command Credits</b> come from quests, achievements, the winner of a season and a fraction of expeditions. They buy officers, a class change and Supply depot items.</li>
         <li><b>Classes</b> - choose one in Command; the first choice is free, changing later costs 2,000 credits. <b>Collector:</b> +15% mine output, +10% energy, +25% cargo on Small and Large Cargo ships, a cheaper merchant, crawlers 25% stronger. <b>General:</b> +2 fleet slots, 25% less fuel, +25% speed for combat ships and recyclers, a little more debris. <b>Discoverer:</b> +1 expedition slot, +50% expedition finds, half the ambushes and black holes, +10% research speed, bigger colonies.</li>
         <li><b>Officers</b> are permanent upgrades with three ranks each: Quartermaster (mines), Chief Engineer (build, research and ship time, energy), Fleet Admiral (fleet and expedition slots), Spymaster (better reports, fewer lost probes) and Geologist (debris and expedition finds).</li>
-        <li><b>Objectives</b> on the Overview walk you through the first hours with rewards. <b>Achievements</b> pay credits for milestones such as reaching a mine level, winning battles, holding planets, destroying a moon or helping destroy a Void Armada.</li>
+        <li><b>Quests</b> (the Quests page and the Overview) walk you through the first hours with rewards. <b>Achievements</b> pay credits for milestones such as reaching a mine level, winning battles, holding planets, destroying a moon or helping destroy a Void Armada.</li>
       </ul>
     ),
   },

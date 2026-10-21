@@ -3,6 +3,16 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-zh', date: '2026-10-28', title: 'A gentler start',
+    items: [
+      'New commanders start with a short menu that grows as they play. The first hour has Overview, Quests, Buildings and Resources; Research, the Shipyard, Fleet, the Galaxy, the Market, Command and the rest open as quests are finished, with a notice and a button each time.',
+      'The twelve objectives are now a quest line of eighteen quests in chapters, on a Quests page under Home and as a card on the Overview. Several quests can be open at once, and a side quest (joining an alliance) holds nothing back.',
+      'Every page has a short tutorial of its own (two to four steps) that starts the first time you open it, and a Tutorial button next to the page title plays it again. Settings can switch the automatic ones off.',
+      'The welcome tour is shorter, and the hands-on tutorial now covers the first hour only (resources, Buildings, a Metal Mine, a Solar Plant, item details and Quests).',
+      'The Terraformer card on the Buildings page stays buildable when a planet has no free fields.',
+    ],
+  },
+  {
     id: '2026-10-zg', date: '2026-10-27', title: 'Command your battles',
     items: [
       'The Terraformer is easier to reach and worth more: it needs Energy Technology 10 (was 12), adds 8 building fields per level (was 5) and each level costs 70% more than the last instead of double.',

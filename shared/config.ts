@@ -36,6 +36,8 @@ export interface UniverseConfig {
   /** days without a login before a commander shows as inactive (i) and long inactive (I) */
   inactiveDays: number;
   longInactiveDays: number;
+  /** 1: new commanders follow the quest line and the menu opens page by page as they progress; 0: everyone has every page from the start */
+  onboarding: number;
   /** a season lasts this many days, then the universe resets (0 = endless) */
   seasonDays: number;
   /** hours between the end of a season and the automatic reset (0 = wait for an admin) */
@@ -117,6 +119,7 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   outpostRespawnHours: 12,
   marketFeePercent: 5,
   marketMaxOffers: 5,
+  onboarding: 1,
   seasonDays: 0,
   seasonResetHours: 24,
   victoryPoints: 0,

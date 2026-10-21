@@ -32,19 +32,19 @@ describe('objectives', () => {
     expect(alice.objectives.o1).toBe(T0 + 1000);
     expect(ap.resources.metal).toBeGreaterThanOrEqual(before.metal + 1500);
     expect(currentObjective(alice)?.id).toBe('o2'); // o2 needs 4 solar plants and balanced energy
-    expect(w.messages.some((m) => m.to === alice.id && /Objective complete: Dig in/.test(m.subject))).toBe(true);
+    expect(w.messages.some((m) => m.to === alice.id && /Quest complete: Dig in/.test(m.subject))).toBe(true);
   });
 
   it('can chain several completions at once when the state already satisfies them', () => {
     ap.buildings = { metalMine: 8, crystalMine: 7, solarPlant: 20, deuteriumSynthesizer: 5, researchLab: 1, roboticsFactory: 2, shipyard: 1 };
     alice.techs = { energy: 1 };
     checkProgress(w, alice, T0);
-    for (const id of ['o1', 'o2', 'o3', 'o4', 'o5', 'o6']) expect(alice.objectives[id], id).toBeTruthy();
-    expect(currentObjective(alice)?.id).toBe('o7');
+    for (const id of ['o1', 'o2', 'o3', 'o4', 'q-lab', 'o5', 'o6']) expect(alice.objectives[id], id).toBeTruthy();
+    expect(currentObjective(alice)?.id).toBe('q-ships');
   });
 
   it('credit-reward objectives pay Command Credits', () => {
-    for (const o of OBJECTIVES.slice(0, 6)) alice.objectives[o.id] = T0;
+    for (const id of ['o1', 'o2', 'o3', 'o4', 'q-lab', 'o5', 'o6', 'q-ships']) alice.objectives[id] = T0;
     alice.achievements.topTen = T0; // keep the rank achievement out of this test's credit math
     const w2 = w;
     w2.messages.push({ id: 'x', to: alice.id, from: null, kind: 'espionage', subject: 'Spy report foo [1:1:1]', body: '', at: T0, read: false });
@@ -175,7 +175,7 @@ describe('rankings', () => {
 
 describe('end to end: a raid earns the plunder objective', () => {
   it('first raid objective completes after a successful looting run', () => {
-    for (const o of OBJECTIVES.slice(0, 7)) alice.objectives[o.id] = T0;
+    for (const id of ['o1', 'o2', 'o3', 'o4', 'q-lab', 'o5', 'o6', 'q-ships', 'o7']) alice.objectives[id] = T0;
     const bp = w.planets[bob.planetIds[0]];
     ap.buildings = { shipyard: 6, roboticsFactory: 4 };
     alice.techs = { combustionDrive: 6 };
