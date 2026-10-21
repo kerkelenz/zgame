@@ -226,6 +226,8 @@ export interface Planet {
   parentId?: string;
   /** jump gate cooldown (ms timestamp) */
   jumpReadyAt?: number;
+  /** Deathstars launched from here on a combat mission rest until this time (ms timestamp) */
+  deathstarReadyAt?: number;
   buildings: Levels<BuildingId>;
   resources: Res;
   updatedAt: number;

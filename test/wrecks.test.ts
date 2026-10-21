@@ -46,6 +46,40 @@ const strike = (ships: Record<string, number>, mission: 'destroy' | 'attack' = '
   return sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, toMoon, ships, mission }, T0);
 };
 
+describe('Deathstar ignition and recovery', () => {
+  it('a combat launch burns Deuterium per Deathstar and puts the planet\'s Deathstars to rest', () => {
+    ap.resources = { metal: 0, crystal: 0, deuterium: 5e6 };
+    const before = ap.resources.deuterium;
+    const m = strike({ deathstar: 2 }, 'attack', false);
+    expect(before - ap.resources.deuterium).toBeGreaterThanOrEqual(2 * w.config.deathstarFuel);
+    expect(m.mission).toBe('attack');
+    expect(ap.deathstarReadyAt).toBe(T0 + w.config.deathstarCooldownHours * 3_600_000);
+    ap.fleet = { deathstar: 1 };
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { deathstar: 1 }, mission: 'attack' }, T0 + 1000)).toThrow(/recovering/);
+    expect(() => sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { deathstar: 1 }, mission: 'attack' }, ap.deathstarReadyAt! + 1)).not.toThrow();
+  });
+
+  it('refuses a launch the planet cannot pay for', () => {
+    ap.resources = { metal: 0, crystal: 0, deuterium: 400_000 };
+    expect(() => strike({ deathstar: 1 }, 'attack', false)).toThrow(/ignition/);
+    expect(ap.deathstarReadyAt).toBeUndefined();
+  });
+
+  it('transports, deployments and fleets without Deathstars are not charged, and 0 switches it off', () => {
+    ap.resources = { metal: 0, crystal: 0, deuterium: 5e6 };
+    ap.fleet = { deathstar: 1, cruiser: 5 };
+    sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { deathstar: 1 }, mission: 'transport' }, T0);
+    expect(ap.deathstarReadyAt).toBeUndefined();
+    expect(5e6 - ap.resources.deuterium).toBeLessThan(w.config.deathstarFuel);
+    sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { cruiser: 5 }, mission: 'attack' }, T0);
+    expect(ap.deathstarReadyAt).toBeUndefined();
+    w.config.deathstarFuel = 0; w.config.deathstarCooldownHours = 0;
+    ap.fleet = { deathstar: 1 };
+    sendFleet(w, alice, { fromPlanetId: ap.id, to: bp.coords, ships: { deathstar: 1 }, mission: 'attack' }, T0);
+    expect(ap.deathstarReadyAt).toBeUndefined();
+  });
+});
+
 describe('destroy mission rules', () => {
   it('needs a Deathstar and a moon target, and obeys the usual attack rules', () => {
     ap.fleet = { cruiser: 20, deathstar: 1 };
@@ -129,7 +163,7 @@ describe('moon destruction', () => {
     r.mockRestore();
     expect(w.planets[bm.id]).toBeTruthy();
     for (const mv of Object.values(w.movements)) delete w.movements[mv.id];
-    ap.fleet = {};
+    ap.fleet = {}; ap.deathstarReadyAt = 0; // the first strike left the planet's Deathstars resting
     const four = strike({ deathstar: 4 });
     r = dice(0.5, 0.4, 0.9);
     resolve(four);

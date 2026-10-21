@@ -189,11 +189,17 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   if (mission === 'attack' || mission === 'espionage' || mission === 'invade' || mission === 'destroy' || mission === 'scout') { cargo.metal = cargo.crystal = cargo.deuterium = 0; }
   const cap = cargoFor(player, ships);
   if (totalRes(cargo) > cap) throw new GameError(`Cargo exceeds capacity (${num(cap)})`);
-  const need = addRes(cargo, { metal: 0, crystal: 0, deuterium: plan.fuel });
-  if (!canAfford(planet.resources, need)) throw new GameError(`Not enough resources (fuel: ${num(plan.fuel)} deuterium)`);
+  // a Deathstar that goes to war burns a fortune in Deuterium, and its planet's Deathstars then need time to recover
+  const ds = ships.deathstar || 0;
+  const igniting = ds > 0 && (mission === 'attack' || mission === 'destroy' || mission === 'invade');
+  const ignition = igniting ? ds * w.config.deathstarFuel : 0;
+  if (igniting && (planet.deathstarReadyAt ?? 0) > now) throw new GameError(`The Deathstars here are still recovering (ready in ${Math.ceil((planet.deathstarReadyAt! - now) / 60_000)} min)`);
+  const need = addRes(cargo, { metal: 0, crystal: 0, deuterium: plan.fuel + ignition });
+  if (!canAfford(planet.resources, need)) throw new GameError(`Not enough resources (fuel: ${num(plan.fuel)} deuterium${ignition ? `, Deathstar ignition: ${num(ignition)} deuterium` : ''})`);
 
   if (joinLead && now + plan.secs * 1000 > joinLead.arriveAt) throw new GameError('Your fleet is too slow to arrive together with that attack');
   planet.resources = subRes(planet.resources, need);
+  if (igniting && w.config.deathstarCooldownHours > 0) planet.deathstarReadyAt = now + w.config.deathstarCooldownHours * 3_600_000;
   for (const [id, n] of Object.entries(ships)) planet.fleet[id as ShipId] = (planet.fleet[id as ShipId] || 0) - (n || 0);
   for (const id of SHIP_IDS) if (!planet.fleet[id]) delete planet.fleet[id];
 

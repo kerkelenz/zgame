@@ -40,6 +40,7 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `ZGAME_WAR_HOURS` | 48 | length of an alliance war in hours (0 = wars switched off) |
 | `ZGAME_DEBRIS_SHARE` | 0.15 | share of destroyed ships' metal and crystal that stays as a debris field (Geologist and the General class add to it) |
 | `ZGAME_FLEET_UPKEEP` | 0.0003 | deuterium per hour that the ships stationed on a planet burn, as a share of their metal and crystal value (0 = no upkeep). The rate grows with the fleet on one planet: it doubles at `ZGAME_FLEET_UPKEEP_KNEE` (20,000,000) of value, and it scales with economy speed × production boost ÷ 20. Satellites, crawlers, ships in flight and computer empires pay nothing |
+| `ZGAME_DEATHSTAR_FUEL` | 500000 | Deuterium each Deathstar burns to join an attack, moon destruction or invasion mission (0 = free); `ZGAME_DEATHSTAR_COOLDOWN_HOURS` (12) is how long the Deathstars of that planet then rest (0 = no rest) |
 | `ZGAME_FORGE_HOURS` | 12 | how long a Moon Forge takes (0 = switched off) |
 | `ZGAME_OUTPOSTS_PER_GALAXY` | 6 | pirate and alien outposts settled in every galaxy when the world is first started (0 = none) |
 | `ZGAME_OUTPOST_RESPAWN_HOURS` | 12 | hours before a cleared outpost is rebuilt |

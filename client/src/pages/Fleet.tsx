@@ -284,6 +284,8 @@ export function FleetPage() {
             <div className="row between">
               <div className="muted">
                 {plan ? <>Distance {fmt(plan.dist)} · duration {fmtDur(plan.secs * 1000)} · fuel {fmt(plan.fuel)} deuterium</> : 'Select ships to see the flight plan.'}
+                {plan && chosen.deathstar && ['attack', 'destroy', 'invade'].includes(mission) && me.config.deathstarFuel > 0 && <> · Deathstar ignition {fmt(chosen.deathstar * me.config.deathstarFuel)} deuterium{me.config.deathstarCooldownHours > 0 && <>, then the Deathstars here rest {me.config.deathstarCooldownHours} h</>}</>}
+                {planet.deathstarReadyAt > now && (planet.fleet.deathstar || 0) > 0 && <> · Deathstars recovering <Countdown to={planet.deathstarReadyAt} /></>}
               </div>
               <button className="primary" disabled={!count} onClick={send}>Send {count ? `${fmt(count)} ships` : ''}</button>
             </div>
