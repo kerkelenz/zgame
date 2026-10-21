@@ -17,7 +17,7 @@ describe('the explanations on the details page', () => {
       expect(h.does.length, id).toBeGreaterThan(30);
       expect(h.does.endsWith('.'), id).toBe(true);
       for (const t of h.tips ?? []) expect(t.endsWith('.'), `${id}: ${t}`).toBe(true);
-      expect(JSON.stringify(h), id).not.toMatch(/deuterium/i);
+      expect(JSON.stringify(h), id).not.toMatch(/vespene/i);
     }
   });
 

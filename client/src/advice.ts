@@ -24,7 +24,7 @@ export interface AdviceInput {
   now: number;
 }
 
-const NAMES = { metal: 'Metal', crystal: 'Crystal', deuterium: 'Vespene Gas' } as const;
+const NAMES = { metal: 'Metal', crystal: 'Crystal', deuterium: 'Deuterium' } as const;
 const ORDER = { idle: 0, warn: 1, tip: 2 } as const;
 const fmtMin = (ms: number) => (ms < 60_000 ? 'under a minute' : `${Math.round(ms / 60_000)} min`);
 

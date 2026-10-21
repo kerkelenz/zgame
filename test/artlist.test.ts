@@ -14,7 +14,7 @@ describe('art list', () => {
     for (const i of items) {
       expect(i.prompt).toContain(ART_STYLE);
       expect(i.prompt).toContain(i.name);
-      expect(i.prompt).not.toMatch(/deuterium/i);
+      expect(i.prompt).not.toMatch(/res-/);
     }
   });
 });

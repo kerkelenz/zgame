@@ -190,7 +190,7 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   const cap = cargoFor(player, ships);
   if (totalRes(cargo) > cap) throw new GameError(`Cargo exceeds capacity (${num(cap)})`);
   const need = addRes(cargo, { metal: 0, crystal: 0, deuterium: plan.fuel });
-  if (!canAfford(planet.resources, need)) throw new GameError(`Not enough resources (fuel: ${num(plan.fuel)} vespene gas)`);
+  if (!canAfford(planet.resources, need)) throw new GameError(`Not enough resources (fuel: ${num(plan.fuel)} deuterium)`);
 
   if (joinLead && now + plan.secs * 1000 > joinLead.arriveAt) throw new GameError('Your fleet is too slow to arrive together with that attack');
   planet.resources = subRes(planet.resources, need);
@@ -326,7 +326,7 @@ function arrive(w: World, m: Movement, at: number) {
       target.resources = addRes(target.resources, delivered);
       m.cargo = zeroRes();
       const owner = w.players[m.ownerId!];
-      const body = `${num(delivered.metal)} metal, ${num(delivered.crystal)} crystal, ${num(delivered.deuterium)} vespene gas delivered to ${target.name} ${fmt(m.to)}.`;
+      const body = `${num(delivered.metal)} metal, ${num(delivered.crystal)} crystal, ${num(delivered.deuterium)} deuterium delivered to ${target.name} ${fmt(m.to)}.`;
       notifyPlayer(w, owner.id, 'transport', 'Transport arrived', body);
       if (target.ownerId !== owner.id) notifyPlayer(w, target.ownerId, 'transport', `Delivery from ${owner.username}`, body);
       bus.push({ to: target.ownerId, type: 'refresh' });
@@ -444,7 +444,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   };
   const r = target.resources;
   notifyPlayer(w, spy.id, 'espionage', `Spy report ${target.name} ${fmt(m.to)}`,
-    `${def.username}: metal ${num(r.metal)}, crystal ${num(r.crystal)}, vespene gas ${num(r.deuterium)}.`, report);
+    `${def.username}: metal ${num(r.metal)}, crystal ${num(r.crystal)}, deuterium ${num(r.deuterium)}.`, report);
   spy.stats.spyReports++;
   archiveSpy(spy, target.id, { ...report, moon: !!target.isMoon }, at);
   sendHome(m, at);
@@ -640,7 +640,7 @@ function resolveAttack(w: World, lead: Movement, at: number, preset?: CombatResu
     `${names} vs ${defOwner.username} at ${target.name} ${fmt(lead.to)} - ${headline} after ${res.rounds} round(s).\n` +
     res.attackers.map((a) => `${a.name} lost: ${lost(a.before, a.after)}.\n`).join('') +
     `Defender lost: ${lost(res.defenders[0].before, res.defenders[0].after, res.defenders[0].rebuilt)}.\n` +
-    (totalRes(loot) ? `Loot: ${num(loot.metal)} metal, ${num(loot.crystal)} crystal, ${num(loot.deuterium)} vespene gas.\n` : '') +
+    (totalRes(loot) ? `Loot: ${num(loot.metal)} metal, ${num(loot.crystal)} crystal, ${num(loot.deuterium)} deuterium.\n` : '') +
     (res.debris.metal || res.debris.crystal ? `Debris field: ${num(res.debris.metal)} metal, ${num(res.debris.crystal)} crystal.\n` : '') +
     (bounty ? `Raider bounty: ${num(bounty)} resources shared among defenders.\n` : '') +
     (moonOdds === null ? '' : newMoon ? `The debris condensed into a moon! (chance ${Math.round(moonOdds * 100)}%)\n` : `No moon formed (chance ${Math.round(moonOdds * 100)}% from a debris field of ${num(field.metal + field.crystal)}).\n`) +
@@ -912,7 +912,7 @@ export function phalanxScan(w: World, player: Player, moonId: string, to: Coords
   if (to.g !== moon.coords.g || Math.abs(to.s - moon.coords.s) > phalanxRange(level)) throw new GameError(`Out of range (this phalanx reaches ${phalanxRange(level)} systems)`);
   const target = planetAt(w, to);
   if (!target) throw new GameError('There is no planet there');
-  if (moon.resources.deuterium < PHALANX_COST) throw new GameError(`The moon needs ${PHALANX_COST} vespene gas per scan - transport some there`);
+  if (moon.resources.deuterium < PHALANX_COST) throw new GameError(`The moon needs ${PHALANX_COST} deuterium per scan - transport some there`);
   moon.resources.deuterium -= PHALANX_COST;
   const moves = Object.values(w.movements).filter((m) => m.mission !== 'missile' && m.ownerId !== player.id && (sameCoords(m.from, to) || sameCoords(m.to, to)));
   return {

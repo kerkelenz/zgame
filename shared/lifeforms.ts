@@ -31,7 +31,7 @@ export const LIFEFORMS: Record<LifeformId, Lifeform> = {
     structures: [
       s('deepBore', 'Deep Bore Station', 'Shafts reach richer metal seams.', 'metal', 0.03, r(10000, 5000, 1500)),
       s('smelter', 'Crystal Smelter', 'Furnaces free more crystal from the rock.', 'crystal', 0.03, r(9000, 7000, 2000)),
-      s('gasPumps', 'Gas Pumps', 'Deep wells for more Vespene Gas.', 'deuterium', 0.03, r(9000, 6000, 3000)),
+      s('gasPumps', 'Gas Pumps', 'Deep wells for more Deuterium.', 'deuterium', 0.03, r(9000, 6000, 3000)),
       s('rockVaults', 'Rock Vaults', 'Chambers cut into the mountain for all three stores.', 'storage', 0.05, r(8000, 4000, 0)),
       s('stoneFortress', 'Stone Fortress', 'Hidden strongrooms: raiders find less to take.', 'vault', 0.03, r(12000, 9000, 2000)),
     ],
@@ -42,7 +42,7 @@ export const LIFEFORMS: Record<LifeformId, Lifeform> = {
       s('assemblyLines', 'Assembly Lines', 'Ships and defenses come off the lines sooner.', 'shipTime', 0.03, r(12000, 8000, 3000)),
       s('fabricationBay', 'Fabrication Bay', 'Self-building scaffolds: buildings go up sooner.', 'buildTime', 0.02, r(10000, 6000, 2000)),
       s('fusionCore', 'Fusion Core', 'A reactor tended by the machines: more energy.', 'energy', 0.04, r(9000, 7000, 3000)),
-      s('refineryDrones', 'Refinery Drones', 'Swarms that skim the atmosphere for Vespene Gas.', 'deuterium', 0.03, r(9000, 6000, 3000)),
+      s('refineryDrones', 'Refinery Drones', 'Swarms that skim the atmosphere for Deuterium.', 'deuterium', 0.03, r(9000, 6000, 3000)),
       s('droneHangars', 'Drone Hangars', 'Hangars in orbit that add building fields.', 'fields', 2, r(14000, 9000, 4000)),
     ],
   },

@@ -35,7 +35,7 @@ export function gatherResources(w: World, player: Player, toPlanetId: string, pe
     const want: Res = { metal: 0, crystal: 0, deuterium: 0 };
     for (const k of picks) want[k] = Math.floor(src.resources[k] * pct);
     const fuel = flightPlan(w, player, ships, src.coords, target.coords, 100).fuel;
-    if (src.resources.deuterium < fuel) { skip('not enough vespene gas for the trip'); continue; }
+    if (src.resources.deuterium < fuel) { skip('not enough deuterium for the trip'); continue; }
     want.deuterium = Math.max(0, Math.min(want.deuterium, src.resources.deuterium - fuel));
     // fill the holds, biggest stock first
     let room = cargoFor(player, ships);

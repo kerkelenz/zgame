@@ -22,7 +22,7 @@ const SUBJECT: Record<ArtKind, (name: string, desc: string) => string> = {
 const RESOURCES: { id: string; name: string; desc: string }[] = [
   { id: 'res-metal', name: 'Metal', desc: 'Stacked steel ingots and raw ore.' },
   { id: 'res-crystal', name: 'Crystal', desc: 'Cluster of cut blue crystals glowing from within.' },
-  { id: 'res-deuterium', name: 'Vespene Gas', desc: 'A canister of glowing green gas.' },
+  { id: 'res-deuterium', name: 'Deuterium', desc: 'A canister of glowing green gas.' },
   { id: 'res-energy', name: 'Energy', desc: 'A crackling yellow energy cell.' },
 ];
 

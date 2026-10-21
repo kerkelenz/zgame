@@ -219,7 +219,7 @@ describe('using the game', () => {
     expect(await page.locator('.band').count()).toBe(5);                     // rows grouped by purpose
     expect(await page.locator('.icard.ready').count()).toBeGreaterThan(5);   // what you can start right now stands out
     await page.locator('.icard', { hasText: 'Fusion Reactor' }).first().click();
-    expect(await page.locator('.treeinfo').innerText()).toMatch(/Vespene Extractor to level 5/);
+    expect(await page.locator('.treeinfo').innerText()).toMatch(/Deuterium Synthesizer to level 5/);
     expect(await page.locator('.icard.anc').count()).toBe(3);
     expect(await page.locator('.icard.dim').count()).toBeGreaterThan(40);
     expect(await page.locator('.bedge.back').count()).toBe(3);
@@ -505,7 +505,7 @@ describe('using the game', () => {
     await go('Buildings');
     await page.locator('.items .card a.itemlink', { hasText: 'Fusion Reactor' }).first().click();
     await page.getByRole('heading', { name: 'Fusion Reactor' }).first().waitFor();
-    expect(await page.locator('.explain').innerText()).toMatch(/Burns vespene gas to make a large amount of energy/);
+    expect(await page.locator('.explain').innerText()).toMatch(/Burns deuterium to make a large amount of energy/);
     expect(await page.locator('.explain .tips li').count()).toBeGreaterThanOrEqual(1);
     expect(await page.locator('.chg.good').count()).toBeGreaterThanOrEqual(1);                  // more energy is good news
     expect(await page.locator('.chg.bad').count()).toBeGreaterThanOrEqual(1);                   // more gas burned is bad news

@@ -7,6 +7,6 @@
 - **Release notes live elsewhere**: `client/src/changelog.ts`, shown on the *What's new* page (banner + Settings link). Add an item to the newest entry for each player-visible change (start a new entry with a new `id` for a batch, so the banner shows again).
 - Internal-only work (refactors, tests, deployment) needs neither; deployment and settings go in `README.md` / `docs/DEPLOY.md`. Server-operation details (environment variables, backups) do not belong in the Guide.
 - **Every feature gets:** tests, UI, a README note, a check in the real browser on a private port (never the default save or port 3000), then a commit.
-- Players see **Vespene Gas**; the internal key is still `deuterium`. Use `resName()` from `shared/data.ts` when printing a resource key.
+- Players see **Deuterium** (internal key `deuterium`). Use `resName()` from `shared/data.ts` when printing a resource key.
 - `npm run balance:new` after changing crawler, class, orbit, merchant, shop or expedition constants.
 - `npm run balance:invasion` after changing invasion strength, wave shares or alien kinds.

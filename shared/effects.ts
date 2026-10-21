@@ -71,13 +71,13 @@ const MINE = (res: 'metal' | 'crystal' | 'deuterium', used: 'usedMetal' | 'usedC
     const p = withB(ctx, res === 'metal' ? 'metalMine' : res === 'crystal' ? 'crystalMine' : 'deuteriumSynthesizer', L);
     return { out: p.detail.mine[res].total, net: p[res], energy: p.detail.energy[used], eff: p.efficiency };
   },
-  notes: res === 'deuterium' ? ['Output depends on the planet temperature: colder planets produce more vespene gas.'] : [],
+  notes: res === 'deuterium' ? ['Output depends on the planet temperature: colder planets produce more deuterium.'] : [],
 });
 
 const EFFECTS: Partial<Record<BuildingId, Effect>> = {
   metalMine: MINE('metal', 'usedMetal', 'Metal'),
   crystalMine: MINE('crystal', 'usedCrystal', 'Crystal'),
-  deuteriumSynthesizer: { ...MINE('deuterium', 'usedDeuterium', 'Vespene Gas') },
+  deuteriumSynthesizer: { ...MINE('deuterium', 'usedDeuterium', 'Deuterium') },
   solarPlant: {
     columns: [
       { key: 'solar', label: 'Energy from solar plants', fmt: 'int', delta: true },
@@ -89,7 +89,7 @@ const EFFECTS: Partial<Record<BuildingId, Effect>> = {
   fusionReactor: {
     columns: [
       { key: 'fusion', label: 'Energy from fusion', fmt: 'int', delta: true },
-      { key: 'burn', label: 'Vespene Gas burned / h', fmt: 'int', delta: true, lowerIsBetter: true },
+      { key: 'burn', label: 'Deuterium burned / h', fmt: 'int', delta: true, lowerIsBetter: true },
       { key: 'total', label: 'Planet energy', fmt: 'int', delta: true },
       { key: 'eff', label: 'Energy efficiency', fmt: 'pct' },
     ],
@@ -141,7 +141,7 @@ const EFFECTS: Partial<Record<BuildingId, Effect>> = {
   sensorPhalanx: {
     columns: [{ key: 'range', label: 'Scan range (systems)', fmt: 'int', delta: true }],
     at: (L) => ({ range: Math.max(0, L * L - 1) }),
-    notes: ['Each scan costs 5,000 vespene gas from the moon.'],
+    notes: ['Each scan costs 5,000 deuterium from the moon.'],
   },
   jumpGate: {
     columns: [{ key: 'cooldown', label: 'Recharge after a jump', fmt: 'dur', delta: true, lowerIsBetter: true }],
@@ -190,7 +190,7 @@ const TECH_EFFECTS: Partial<Record<TechId, Effect>> = {
     columns: [
       { key: 'm', label: 'Metal bonus', fmt: 'pct', delta: true },
       { key: 'c', label: 'Crystal bonus', fmt: 'pct', delta: true },
-      { key: 'd', label: 'Vespene Gas bonus', fmt: 'pct', delta: true },
+      { key: 'd', label: 'Deuterium bonus', fmt: 'pct', delta: true },
       { key: 'metal', label: 'This planet\'s metal / h', fmt: 'int', delta: true },
       { key: 'crystal', label: 'This planet\'s crystal / h', fmt: 'int', delta: true },
     ],

@@ -26,7 +26,7 @@ const onPage = (page: string) => (c: TutCtx) => c.page === page;
 
 export const STEPS: TutStep[] = [
   { id: 'stock', title: 'Your resources', target: 'resources',
-    text: 'The bar at the top always shows what you have, next to the most each store can hold, and the energy balance. Metal, crystal and vespene gas build everything. Point at one to see when its store is full.' },
+    text: 'The bar at the top always shows what you have, next to the most each store can hold, and the energy balance. Metal, crystal and deuterium build everything. Point at one to see when its store is full.' },
   { id: 'go-buildings', title: 'Open Buildings', target: 'nav-buildings', done: onPage('buildings'),
     text: 'Everything starts with buildings. Click Build in the menu: it opens the Buildings page, with the other pages of that part (Resources, Research, Shipyard and more) as tabs along the top.' },
   { id: 'metal-mine', title: 'Build a Metal Mine', target: 'build-metalMine', done: (c) => building(c, 'metalMine'),

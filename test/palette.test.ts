@@ -8,7 +8,7 @@ describe('palette', () => {
     expect(rankEntries(all, 'metal')[0].label).toBe('Metal Mine');
     expect(rankEntries(all, 'metal').map((e) => e.label)).toContain('Metal Storage');
     expect(rankEntries(all, 'mine').map((e) => e.label)).toEqual(expect.arrayContaining(['Metal Mine', 'Crystal Mine']));
-    expect(rankEntries(all, 'vespene').length).toBeGreaterThan(0);
+    expect(rankEntries(all, 'deuterium').length).toBeGreaterThan(0);
     expect(rankEntries(all, '')).toEqual([]);
     expect(rankEntries(all, 'zzzzqq')).toEqual([]);
   });

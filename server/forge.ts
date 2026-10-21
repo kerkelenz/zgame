@@ -19,7 +19,7 @@ export const FORGE = {
   shipyard: 12,
   /** the field above the planet must hold at least this much (metal + crystal) */
   minDebris: 1_000_000,
-  /** price, as a share of the debris consumed: vespene gas as much again, plus a quarter each of metal and crystal */
+  /** price, as a share of the debris consumed: deuterium as much again, plus a quarter each of metal and crystal */
   gasShare: 1, metalShare: 0.25, crystalShare: 0.25,
   /** moon size: 3,000 km at the minimum field, up to 8,000 km from this much debris */
   baseDiameter: 3000, maxDiameter: 8000, maxDebris: 5_000_000,

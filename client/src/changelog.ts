@@ -10,6 +10,7 @@ export const CHANGELOG: Release[] = [
       'Every page has a short tutorial of its own (two to four steps) that starts the first time you open it, and a Tutorial button next to the page title plays it again. Settings can switch the automatic ones off.',
       'The welcome tour is shorter, and the hands-on tutorial now covers the first hour only (resources, Buildings, a Metal Mine, a Solar Plant, item details and Quests).',
       'The Terraformer card on the Buildings page stays buildable when a planet has no free fields.',
+      'Vespene Gas is Deuterium again, and the Vespene Extractor and Vespene Tank are the Deuterium Synthesizer and Deuterium Tank.',
     ],
   },
   {
@@ -68,7 +69,7 @@ export const CHANGELOG: Release[] = [
     id: '2026-10-za', date: '2026-10-21', title: 'A notice strip',
     items: [
       'Hostile fleets, tribute demands, the Void invasion, the season and release notes no longer take a banner each across the page. They share one slim row under the top bar: the most urgent notice, "+N more" to list the rest, and a ✕ on the quieter ones.',
-      'The planet bar is a plain row of planet cards side by side, each with its moon as a smaller child item, and a resource bar above it shows the metal, crystal, Vespene Gas and energy of the selected planet or moon. Both stay in view while you scroll. Many planets scroll sideways, and a button folds the cards to one slim line whenever you like.',
+      'The planet bar is a plain row of planet cards side by side, each with its moon as a smaller child item, and a resource bar above it shows the metal, crystal, Deuterium and energy of the selected planet or moon. Both stay in view while you scroll. Many planets scroll sideways, and a button folds the cards to one slim line whenever you like.',
       'Every planet and every moon of every commander now has its own picture, as far as the looks last (43 for planets, 53 for moons); worlds that shared a picture with an older one were given a different one, once.',
       'Twenty-four new planet looks (abyss, ash, canyon, copper, dawn, derelict, ember, glacier, hive, iron, jade, lotus, maelstrom, mirage, night, plasma, prism, ruin, sanctuary, savanna, tempest, thorn, twin, void) and twenty-four new moon looks (amber, brine, cinnabar, citrine, cobalt, copper, coral, garnet, granite, ivory, jade, lapis, malachite, marble, onyx, pearl, pumice, ruby, sandstone, sapphire, slate, sulfur, topaz, verdigris), each with its banner.',
     ],
@@ -235,7 +236,7 @@ export const CHANGELOG: Release[] = [
   {
     id: '2026-10-h', date: '2026-10-11', title: 'Moon Forge',
     items: [
-      'The Moon Forge turns the debris field above one of your planets into a moon for certain. It needs Graviton Technology 1, a level 12 Shipyard on that planet and at least 1,000,000 resources of debris, costs vespene gas (as much as the debris) plus a quarter each of metal and crystal, and takes 12 hours. A bigger field makes a bigger moon, from 3,000 to 8,000 km.',
+      'The Moon Forge turns the debris field above one of your planets into a moon for certain. It needs Graviton Technology 1, a level 12 Shipyard on that planet and at least 1,000,000 resources of debris, costs deuterium (as much as the debris) plus a quarter each of metal and crystal, and takes 12 hours. A bigger field makes a bigger moon, from 3,000 to 8,000 km.',
       'The forge appears as a card on the Overview and as an entry in the Events list while it runs; cancelling gives back the price but not the debris.',
     ],
   },

@@ -35,7 +35,7 @@ export interface Boost { name: string; desc: string; hours: number; cost: Res }
 export const BOOSTS: Record<BoostId, Boost> = {
   rapidBuild: { name: 'Rapid Assembly', desc: 'Every build, research and ship timer runs a quarter shorter.', hours: 4, cost: r(20000, 10000, 4000) },
   researchSurge: { name: 'Research Surge', desc: 'Research runs a quarter shorter, on top of anything else.', hours: 4, cost: r(10000, 20000, 6000) },
-  fuelSaver: { name: 'Fuel Reserve', desc: 'Fleets burn 30% less Vespene Gas.', hours: 6, cost: r(0, 4000, 16000) },
+  fuelSaver: { name: 'Fuel Reserve', desc: 'Fleets burn 30% less Deuterium.', hours: 6, cost: r(0, 4000, 16000) },
 };
 export const BOOST_MAX_HOURS = 24;
 

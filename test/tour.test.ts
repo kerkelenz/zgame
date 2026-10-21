@@ -39,7 +39,7 @@ describe('the guided objectives', () => {
     for (const o of OBJECTIVES) {
       expect(o.hint.length, o.id).toBeGreaterThan(20);
       expect(Object.keys(o.reward).length, o.id).toBeGreaterThan(0);
-      expect(o.hint, o.id).not.toMatch(/deuterium/i);
+      expect(o.hint, o.id).not.toMatch(/vespene/i);
     }
   });
 });

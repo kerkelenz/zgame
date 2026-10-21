@@ -319,7 +319,7 @@ export function createApp(w: World, opts: { staticDir?: string; clock?: () => nu
     if (!t || t.npc) throw new GameError('No such commander', 404);
     const home = w.planets[t.planetIds[0]];
     for (const k of ['metal', 'crystal', 'deuterium'] as const) home.resources[k] += Math.max(0, Math.min(1e12, Math.floor(Number(req.body[k]) || 0)));
-    audit(w, req.player!, 'gift', now(), t, `${Math.floor(Number(req.body.metal) || 0)} metal, ${Math.floor(Number(req.body.crystal) || 0)} crystal, ${Math.floor(Number(req.body.deuterium) || 0)} vespene gas`);
+    audit(w, req.player!, 'gift', now(), t, `${Math.floor(Number(req.body.metal) || 0)} metal, ${Math.floor(Number(req.body.crystal) || 0)} crystal, ${Math.floor(Number(req.body.deuterium) || 0)} deuterium`);
     return { ok: true };
   }));
   A.post('/admin/delete', wrap((req) => {

@@ -25,7 +25,7 @@ function LevelTable({ table, current, prevEffects, have, hasCost = true }: { tab
         <thead>
           <tr>
             <th>Level</th>
-            {hasCost && <><th className="metal"><ResIcon k="metal" /> Metal</th><th className="crystal"><ResIcon k="crystal" /> Crystal</th><th className="deut"><ResIcon k="deuterium" /> Vespene Gas</th><th>Time</th></>}
+            {hasCost && <><th className="metal"><ResIcon k="metal" /> Metal</th><th className="crystal"><ResIcon k="crystal" /> Crystal</th><th className="deut"><ResIcon k="deuterium" /> Deuterium</th><th>Time</th></>}
             {table.columns.map((c) => <th key={c.key} title={c.hint}>{c.label}</th>)}
           </tr>
         </thead>
