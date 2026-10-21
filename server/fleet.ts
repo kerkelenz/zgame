@@ -518,7 +518,7 @@ function resolveAttack(w: World, lead: Movement, at: number, preset?: CombatResu
   const rng = makeRng(Math.floor(Math.random() * 2 ** 31));
   const attackers: Combatant[] = group.map((m) => (m.alien ? { ...combatant(w, null, m.ownerName, m.ships), weapons: m.alien.weapons, shielding: m.alien.shielding, armour: m.alien.armour } : combatant(w, attackerOf(m), m.ownerName, m.ships)));
   if (!preset && lead.command && group.length === 1 && lead.ownerId && !attackerOf(lead)?.npc && defOwner.npc?.outpost) return openBattle(w, lead, attackers, defenders, at);
-  const res: CombatResult = preset ?? simulateCombat(attackers, defenders, rng, { debrisRatio: debrisShare(attackerOf(lead)) });
+  const res: CombatResult = preset ?? simulateCombat(attackers, defenders, rng, { debrisRatio: debrisShare(w, attackerOf(lead)) });
 
   const planetAfter = res.defenders[0].after;
   target.fleet = onlyShips(planetAfter);

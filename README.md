@@ -25,10 +25,10 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `ZGAME_*` | | every setting below is a `ZGAME_` variable; the older `OGAME_` names still work (the `ZGAME_` one wins when both are set) |
 | `ZGAME_SAVE` | `data/world.json` | save file |
 | `ZGAME_ECONOMY_SPEED` | 20 | production ×, build/research/ship time ÷ |
-| `ZGAME_PRODUCTION_BOOST` | 5 | extra multiplier on all resource production, on top of the economy speed |
-| `ZGAME_RESEARCH_BOOST` | 5 | extra multiplier on research speed |
-| `ZGAME_CONSTRUCTION_BOOST` | 5 | extra multiplier on building construction speed |
-| `ZGAME_SHIPYARD_BOOST` | 5 | extra multiplier on ship and defense build speed |
+| `ZGAME_PRODUCTION_BOOST` | 1 | extra multiplier on all resource production, on top of the economy speed |
+| `ZGAME_RESEARCH_BOOST` | 1 | extra multiplier on research speed |
+| `ZGAME_CONSTRUCTION_BOOST` | 1 | extra multiplier on building construction speed |
+| `ZGAME_SHIPYARD_BOOST` | 1 | extra multiplier on ship and defense build speed |
 | `ZGAME_STORAGE_BOOST` | 5 | extra multiplier on storage (level-0 storage = 10,000 × economy speed × this = 1,000,000 by default) |
 | `ZGAME_FLEET_SPEED` | 10 | flight time ÷ |
 | `ZGAME_PROTECTION_POINTS` | 200 | players under this can't attack or be attacked |
@@ -38,6 +38,7 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `ZGAME_VACATION_MIN_HOURS` | 48 | minimum vacation stay |
 | `ZGAME_INVASION_INTERVAL_HOURS` | 72 | hours between Void invasions (0 = none); also `ZGAME_INVASION_ANNOUNCE_HOURS` (12), `ZGAME_INVASION_DURATION_HOURS` (24), `ZGAME_INVASION_ENGAGE_MINUTES` (30), `ZGAME_INVASION_STRENGTH` (0.35), `ZGAME_INVASION_MIN_PLAYERS` (2), `ZGAME_INVASION_WAVES` (4; 1 = a single Armada), `ZGAME_INVASION_HOME_SHARE` (0.5: the chance per wave that an active commander is hit by a strike team, 0 = none), `ZGAME_INVASION_STRIKE_STRENGTH` (1), `ZGAME_INVASION_BREATHER_MINUTES` (20). The Armada is `ZGAME_INVASION_STRENGTH` of the combat fleets, counting no commander for more than 3x the median fleet (`CAP_MEDIANS` in `server/invasion.ts`), so one huge fleet does not size it; `npm run balance:invasion` simulates equal fleets, not that skew |
 | `ZGAME_WAR_HOURS` | 48 | length of an alliance war in hours (0 = wars switched off) |
+| `ZGAME_DEBRIS_SHARE` | 0.15 | share of destroyed ships' metal and crystal that stays as a debris field (Geologist and the General class add to it) |
 | `ZGAME_FORGE_HOURS` | 12 | how long a Moon Forge takes (0 = switched off) |
 | `ZGAME_OUTPOSTS_PER_GALAXY` | 6 | pirate and alien outposts settled in every galaxy when the world is first started (0 = none) |
 | `ZGAME_OUTPOST_RESPAWN_HOURS` | 12 | hours before a cleared outpost is rebuilt |

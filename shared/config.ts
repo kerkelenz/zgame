@@ -60,6 +60,8 @@ export interface UniverseConfig {
   invasionStrength: number;
   /** hours a Moon Forge takes (0 = the Moon Forge is switched off) */
   forgeHours: number;
+  /** share of destroyed ships' metal and crystal that stays behind as a debris field, before Geologist and class bonuses */
+  debrisShare: number;
   /** hours a player-market offer stands before it expires (0 = the market is switched off), the fee in percent the market keeps from what a buyer receives (not on alliance offers), and how many offers one commander may have open */
   marketHours: number;
   marketFeePercent: number;
@@ -86,10 +88,10 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   systems: 40,
   positions: 15,
   economySpeed: 20,
-  productionBoost: 5,
-  researchBoost: 5,
-  constructionBoost: 5,
-  shipyardBoost: 5,
+  productionBoost: 1,
+  researchBoost: 1,
+  constructionBoost: 1,
+  shipyardBoost: 1,
   storageBoost: 5,
   fleetSpeed: 10,
   protectionPoints: 200,
@@ -111,6 +113,7 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   invasionMinPlayers: 2,
   warHours: 48,
   forgeHours: 12,
+  debrisShare: 0.15,
   marketHours: 48,
   encounterMinMinutes: 20,
   encounterMaxMinutes: 40,

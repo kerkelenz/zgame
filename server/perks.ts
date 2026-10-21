@@ -1,7 +1,7 @@
 import { FACTION_BY_ID, GENERAL_FAST_SHIPS, UNITS, TRADE_FEE, TRADE_FEE_COLLECTOR } from '../shared/data';
 import type { Fleet, OfficerId, ShipId } from '../shared/types';
 import { boostActive, empireLevel } from '../shared/upgrades';
-import type { Player } from './world';
+import type { Player, World } from './world';
 
 /** Officer ranks, faction perks and character classes, read through small helpers so the rest of the engine never needs to know where they come from. */
 export const officerRank = (p: Player, id: OfficerId): number => p.officers?.[id] ?? 0;
@@ -21,7 +21,7 @@ export const shieldMul = (p: Player | null | undefined) => (p && inFaction(p, 'i
 /** faction cargo bonus (applied on top of the per-ship class bonus in cargoFor) */
 export const cargoMul = (p: Player | null | undefined) => (p && inFaction(p, 'verge') ? 1.1 : 1);
 export const lootShare = (p: Player | null | undefined) => (p && inFaction(p, 'verge') ? 0.575 : 0.5);
-export const debrisShare = (p: Player | null | undefined) => 0.3 + (p ? 0.05 * officerRank(p, 'geologist') : 0) + (isClass(p, 'general') ? 0.03 : 0);
+export const debrisShare = (w: World, p: Player | null | undefined) => w.config.debrisShare + (p ? 0.05 * officerRank(p, 'geologist') : 0) + (isClass(p, 'general') ? 0.03 : 0);
 export const expeditionYield = (p: Player) => (1 + 0.15 * officerRank(p, 'geologist')) * (isClass(p, 'discoverer') ? 1.5 : 1) * (1 + 0.04 * empireLevel(p.upgrades, 'relay'));
 /** Discoverers turn half of the pirate ambushes and black holes into quiet trips */
 export const dodgesBadLuck = (p: Player) => isClass(p, 'discoverer');

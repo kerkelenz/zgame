@@ -3,12 +3,12 @@ import { OBJECTIVES } from '../server/progress';
 import { runBot } from './helpers/newPlayerBot';
 
 describe('the guided first hours can be finished', () => {
-  it('a bot that follows the objectives with the real rules completes every quest (side quests aside) in under a day at the default speed', () => {
-    const r = runBot(20, 3);
+  it('a bot that follows the objectives with the real rules completes every quest (side quests aside) in under four days at the default speed', () => {
+    const r = runBot(20, 6);
     expect(r.stuck, r.stuck).toBe('');
     for (const o of OBJECTIVES.filter((q) => !q.optional)) expect(r.done[o.id], `${o.id} ${o.name}`).toBeGreaterThan(0);
     expect(r.done.o6).toBeLessThan(3);                                    // the yards open within the first hours
-    expect(r.done.o12).toBeLessThan(24);
+    expect(r.done.o12).toBeLessThan(96);
     expect(r.points).toBeGreaterThanOrEqual(5000);
   }, 120_000);
   it('and the hints name what a newcomer needs for the harder steps', () => {

@@ -232,7 +232,7 @@ export function npcWars(w: World, now: number) {
     const fleet: Fleet = {};
     for (const [id, n] of Object.entries(base.fleet)) { const send = Math.floor((n || 0) * 0.6); if (send > 0) fleet[id as keyof Fleet] = send; }
     if (!shipTotal(fleet)) continue;
-    const res = simulateCombat([npcCombatant(npc, null, fleet, false)], [npcCombatant(defOwner, target, target.fleet, true)], makeRng(Math.floor(Math.random() * 2 ** 31)));
+    const res = simulateCombat([npcCombatant(npc, null, fleet, false)], [npcCombatant(defOwner, target, target.fleet, true)], makeRng(Math.floor(Math.random() * 2 ** 31)), { debrisRatio: w.config.debrisShare });
     // apply to both sides
     for (const [id, n] of Object.entries(fleet)) base.fleet[id as keyof Fleet] = Math.max(0, (base.fleet[id as keyof Fleet] || 0) - (n || 0) + (res.attackers[0].after[id as UnitId] || 0));
     target.fleet = onlyShips(res.defenders[0].after);

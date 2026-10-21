@@ -10,6 +10,8 @@ export const CHANGELOG: Release[] = [
       'Every page has a short tutorial of its own (two to four steps) that starts the first time you open it, and a Tutorial button next to the page title plays it again. Settings can switch the automatic ones off.',
       'The welcome tour is shorter, and the hands-on tutorial now covers the first hour only (resources, Buildings, a Metal Mine, a Solar Plant, item details and Quests).',
       'The Terraformer card on the Buildings page stays buildable when a planet has no free fields.',
+      'The game runs five times slower: mines produce, and buildings, research, ships and defenses finish, at a fifth of the former pace (storage is unchanged). A server that wants the old speed can set the boosts back to 5.',
+      'Battles leave half as much debris: about 15% of the cost of destroyed ships instead of 30%, so beating off a raid no longer pays for itself in scrap. Geologist and the General class still add to it.',
       'Vespene Gas is Deuterium again, and the Vespene Extractor and Vespene Tank are the Deuterium Synthesizer and Deuterium Tank.',
     ],
   },

@@ -67,7 +67,7 @@ interface Unit {
   dead: boolean;
 }
 
-const DEBRIS_RATIO = 0.3;
+const DEBRIS_RATIO = 0.15;
 const DEFENSE_REBUILD = 0.7;
 export const MAX_ROUNDS = 6;
 
