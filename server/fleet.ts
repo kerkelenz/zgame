@@ -293,6 +293,39 @@ function sendHome(m: Movement, at: number) {
   m.returnAt = at + m.flightMs;
 }
 
+/** survivors of a battle come home with some ships damaged; they cannot fly again until repaired */
+function damageSurvivors(w: World, m: Movement) {
+  const share = w.config.battleDamage;
+  if (!(share > 0) || !m.ownerId || m.alien || w.players[m.ownerId]?.npc) return;
+  const damaged: Fleet = {};
+  for (const [id, n] of Object.entries(m.ships)) {
+    const d = Math.floor((n || 0) * share + 0.5);
+    if (d > 0) damaged[id as ShipId] = d;
+  }
+  if (fleetCount(damaged)) m.damaged = damaged;
+}
+
+/** the damaged ships leave the hangar for `repairHours`, and the dock charges a share of their value (as far as the planet can pay) */
+function startRepair(w: World, planet: Planet, damaged: Fleet, at: number) {
+  const ships: Fleet = {};
+  let metal = 0, crystal = 0;
+  for (const [id, n] of Object.entries(damaged)) {
+    const d = Math.min(n || 0, planet.fleet[id as ShipId] || 0);
+    if (d <= 0) continue;
+    ships[id as ShipId] = d;
+    planet.fleet[id as ShipId] = (planet.fleet[id as ShipId] || 0) - d;
+    if (!planet.fleet[id as ShipId]) delete planet.fleet[id as ShipId];
+    metal += UNITS[id as ShipId].cost.metal * d * w.config.repairCost;
+    crystal += UNITS[id as ShipId].cost.crystal * d * w.config.repairCost;
+  }
+  if (!fleetCount(ships)) return;
+  const r = planet.resources;
+  const payM = Math.min(r.metal, metal), payC = Math.min(r.crystal, crystal);
+  r.metal -= payM; r.crystal -= payC;
+  (planet.repairs ||= []).push({ ships, readyAt: at + w.config.repairHours * 3_600_000 });
+  notifyPlayer(w, planet.ownerId, 'system', 'Repairs under way', `${num(fleetCount(ships))} damaged ships on ${planet.name} are in repair for ${w.config.repairHours} h (${num(payM)} metal and ${num(payC)} crystal).`);
+}
+
 /** Fleet reaches its home planet again (or deploy target). */
 function land(w: World, m: Movement, at: number, dest?: Planet) {
   delete w.movements[m.id];
@@ -305,6 +338,7 @@ function land(w: World, m: Movement, at: number, dest?: Planet) {
   updatePlanet(w, planet, at);
   for (const [id, n] of Object.entries(m.ships)) planet.fleet[id as ShipId] = (planet.fleet[id as ShipId] || 0) + (n || 0);
   planet.resources = addRes(planet.resources, m.cargo);
+  if (m.damaged) startRepair(w, planet, m.damaged, at);
   if (totalRes(m.cargo) > 0 || m.mission === 'deploy') {
     bus.push({ to: owner.id, type: 'toast', data: `Fleet arrived at ${planet.name}${totalRes(m.cargo) ? ` carrying ${num(totalRes(m.cargo))} resources` : ''}` });
   }
@@ -685,7 +719,7 @@ function resolveAttack(w: World, lead: Movement, at: number, preset?: CombatResu
 
   for (const m of group) {
     if (!m.ownerId || !fleetCount(m.ships)) delete w.movements[m.id];
-    else { sendHome(m, at); m.acsId = undefined; }
+    else { damageSurvivors(w, m); sendHome(m, at); m.acsId = undefined; }
   }
 
   if (moonGone) {

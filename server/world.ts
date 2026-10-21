@@ -228,6 +228,8 @@ export interface Planet {
   jumpReadyAt?: number;
   /** Deathstars launched from here on a combat mission rest until this time (ms timestamp) */
   deathstarReadyAt?: number;
+  /** ships back from a battle that are being repaired; they join the fleet here at `readyAt` */
+  repairs?: { ships: Fleet; readyAt: number }[];
   buildings: Levels<BuildingId>;
   resources: Res;
   updatedAt: number;
@@ -277,6 +279,8 @@ export interface Movement {
   holdHours?: number;
   /** for expeditions, a flag set when the outcome has been resolved */
   resolved?: boolean;
+  /** the part of `ships` that came out of a battle damaged: it goes into repair when the fleet lands */
+  damaged?: Fleet;
   /** joint attack: id of the leading movement this fleet joined */
   acsId?: string;
   /** target is the moon at the destination coordinates */

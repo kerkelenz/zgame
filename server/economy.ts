@@ -93,6 +93,7 @@ export function updatePlanet(w: World, planet: Planet, now: number) {
   if (now <= t) return;
   if (w.players[planet.ownerId]?.vacation) { planet.updatedAt = now; return; } // vacation: nothing is produced
   settleWreck(w, planet, now);
+  settleRepairs(w, planet, now);
   for (let job = planet.buildQueue; job && job.end <= now; job = planet.buildQueue) {
     accrue(w, planet, t, job.end);
     t = job.end;
@@ -155,6 +156,18 @@ function processShipyard(w: World, planet: Planet, now: number) {
       notifyPlayer(w, planet.ownerId, 'system', 'Production complete', `${j.total}× ${u.name} finished on ${planet.name}.`);
     } else break;
   }
+}
+
+/** ships that came back from a battle damaged rejoin the fleet when their repair is done */
+function settleRepairs(w: World, planet: Planet, now: number) {
+  if (!planet.repairs?.length) return;
+  const done = planet.repairs.filter((r) => r.readyAt <= now);
+  if (!done.length) return;
+  planet.repairs = planet.repairs.filter((r) => r.readyAt > now);
+  let count = 0;
+  for (const r of done) for (const [id, n] of Object.entries(r.ships)) { planet.fleet[id as keyof typeof planet.fleet] = (planet.fleet[id as keyof typeof planet.fleet] || 0) + (n || 0); count += n || 0; }
+  notifyPlayer(w, planet.ownerId, 'system', 'Ships repaired', `${count.toLocaleString('en-US')} damaged ships on ${planet.name} are repaired and ready again.`);
+  bus.push({ to: planet.ownerId, type: 'refresh' });
 }
 
 /** a finished repair returns its ships; an untouched wreck field eventually drifts away */

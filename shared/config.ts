@@ -68,6 +68,10 @@ export interface UniverseConfig {
   /** Deuterium every Deathstar burns to take part in a combat mission (attack, moon destruction, invasion), and the hours its planet's Deathstars then wait before the next one (0 = none) */
   deathstarFuel: number;
   deathstarCooldownHours: number;
+  /** share of a fleet's surviving ships that come home from a battle damaged (0 = no damage), the hours they then spend in repair on their home planet and the share of their metal and crystal value the repair costs */
+  battleDamage: number;
+  repairHours: number;
+  repairCost: number;
   /** hours a player-market offer stands before it expires (0 = the market is switched off), the fee in percent the market keeps from what a buyer receives (not on alliance offers), and how many offers one commander may have open */
   marketHours: number;
   marketFeePercent: number;
@@ -124,6 +128,9 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   fleetUpkeepKnee: 20_000_000,
   deathstarFuel: 500_000,
   deathstarCooldownHours: 12,
+  battleDamage: 0.3,
+  repairHours: 3,
+  repairCost: 0.1,
   marketHours: 48,
   encounterMinMinutes: 20,
   encounterMaxMinutes: 40,

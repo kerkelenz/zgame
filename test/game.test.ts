@@ -206,6 +206,7 @@ describe('fleets', () => {
   });
 
   it('attack: winner loots, creates debris, both get reports, fleet returns with loot', () => {
+    w.config.battleDamage = 0; // the repair bill is tested in battle-damage.test.ts
     ap.fleet = { battleship: 20, largeCargo: 20 };
     bp.fleet = { lightFighter: 10 };
     bp.defenses = { rocketLauncher: 10 };

@@ -281,6 +281,9 @@ export function FleetPage() {
                 })}
               </div>
             )}
+            {planet.repairs.length > 0 && (
+              <p className="muted small">In repair after battle: {(planet.repairs as { ships: Record<string, number>; readyAt: number }[]).map((r, i) => <span key={i}>{i > 0 && ' · '}{fmt(Object.values(r.ships).reduce((a, b) => a + (b || 0), 0))} ships, back in <Countdown to={r.readyAt} /></span>)}</p>
+            )}
             <div className="row between">
               <div className="muted">
                 {plan ? <>Distance {fmt(plan.dist)} · duration {fmtDur(plan.secs * 1000)} · fuel {fmt(plan.fuel)} deuterium</> : 'Select ships to see the flight plan.'}
