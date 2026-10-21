@@ -7,6 +7,7 @@ A co-op multiplayer, OGame-style space strategy game. Everyone shares one persis
 ```bash
 npm install
 npm start            # builds the client, serves everything on http://localhost:3000
+npm run start:slow   # same, with the production, research, construction and shipyard boosts set to 1, for a world saved before they became the default
 ```
 
 Development (hot reload, client on :5173 proxying to the server on :3000):
