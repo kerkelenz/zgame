@@ -62,6 +62,9 @@ export interface UniverseConfig {
   forgeHours: number;
   /** share of destroyed ships' metal and crystal that stays behind as a debris field, before Geologist and class bonuses */
   debrisShare: number;
+  /** deuterium per hour a planet's stationed ships burn, as a share of their metal and crystal value (0 = no upkeep); it grows with the size of the fleet on one planet, doubling at `fleetUpkeepKnee` value */
+  fleetUpkeep: number;
+  fleetUpkeepKnee: number;
   /** hours a player-market offer stands before it expires (0 = the market is switched off), the fee in percent the market keeps from what a buyer receives (not on alliance offers), and how many offers one commander may have open */
   marketHours: number;
   marketFeePercent: number;
@@ -114,6 +117,8 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   warHours: 48,
   forgeHours: 12,
   debrisShare: 0.15,
+  fleetUpkeep: 0.0003,
+  fleetUpkeepKnee: 20_000_000,
   marketHours: 48,
   encounterMinMinutes: 20,
   encounterMaxMinutes: 40,

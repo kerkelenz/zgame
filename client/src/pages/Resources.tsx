@@ -36,6 +36,7 @@ export function Resources() {
             <tr><td className="energy"><EnergyIcon size={20} /> Energy</td><td>{fmt(p.energyProduced)} produced / {fmt(p.energyUsed)} used</td><td className={p.efficiency < 1 ? 'bad' : 'muted'}>efficiency {Math.round(p.efficiency * 100)}%</td></tr>
           </tbody>
         </table>
+        {p.upkeep > 0 && <p className="muted">The ships stationed here burn {fmt(p.upkeep)} Deuterium per hour; the Deuterium line above is what remains.</p>}
         {ab > 0 && <p className="muted">Alliance mining network bonus: +{Math.round(ab * 100)}% on mine output.</p>}
         {p.efficiency < 1 && <p className="bad">Energy shortage! Build more solar plants or satellites – mines are running at {Math.round(p.efficiency * 100)}%.</p>}
       </Card>

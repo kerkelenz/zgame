@@ -40,7 +40,7 @@ export function planetView(w: World, planet: Planet, now: number) {
     diameter: planet.diameter ?? null,
     production: {
       metal: prod.metal, crystal: prod.crystal, deuterium: prod.deuterium,
-      energyProduced: prod.energyProduced, energyUsed: prod.energyUsed, efficiency: prod.efficiency,
+      energyProduced: prod.energyProduced, energyUsed: prod.energyUsed, efficiency: prod.efficiency, upkeep: prod.upkeep,
     },
     settings: planet.settings,
     /** the multipliers behind this planet's numbers, so the client can reproduce them exactly (details pages, economy planner) */

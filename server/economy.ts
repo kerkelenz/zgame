@@ -25,6 +25,20 @@ export function allianceBonuses(w: World, player: Player): AllianceBonuses {
   return b;
 }
 
+/** deuterium per hour the ships stationed on a planet burn: their value times the rate, rising with the size of the fleet; satellites and crawlers work for their keep and computer empires pay nothing */
+export function fleetUpkeep(w: World, planet: Planet): number {
+  const { fleetUpkeep: rate, fleetUpkeepKnee: knee } = w.config;
+  if (!(rate > 0) || w.players[planet.ownerId]?.npc) return 0;
+  let value = 0;
+  for (const [id, n] of Object.entries(planet.fleet)) {
+    if (id === 'solarSatellite' || id === 'crawler') continue;
+    const c = UNITS[id as UnitId].cost;
+    value += (c.metal + c.crystal) * (n || 0);
+  }
+  const speedK = Math.max(1, w.config.economySpeed * w.config.productionBoost) / 20;
+  return value * rate * speedK * (1 + value / knee);
+}
+
 export function planetProduction(w: World, planet: Planet) {
   const owner = w.players[planet.ownerId];
   const lf = lifeformEffects(planet.lifeform);
@@ -43,7 +57,8 @@ export function planetProduction(w: World, planet: Planet) {
     crawlers: planet.fleet.crawler || 0,
     crawlerMul: crawlerMul(owner),
   });
-  return { ...p, metal: p.metal * (1 + lf.metal), crystal: p.crystal * (1 + lf.crystal), deuterium: p.deuterium * (1 + lf.deuterium) };
+  const upkeep = fleetUpkeep(w, planet);
+  return { ...p, metal: p.metal * (1 + lf.metal), crystal: p.crystal * (1 + lf.crystal), deuterium: p.deuterium * (1 + lf.deuterium) - upkeep, upkeep };
 }
 
 /** Storage scales with universe speed: at x20 the mines fill twenty times faster, so a classic-sized silo would waste almost everything. */
