@@ -10,6 +10,7 @@
     "dev:client": "vite client",
     "build": "vite build client",
     "start": "npm run build && tsx server/index.ts",
+    "start:slow": "npm run build && cross-env ZGAME_PRODUCTION_BOOST=1 ZGAME_RESEARCH_BOOST=1 ZGAME_CONSTRUCTION_BOOST=1 ZGAME_SHIPYARD_BOOST=1 tsx server/index.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "balance": "tsx server/balance-sim.ts",

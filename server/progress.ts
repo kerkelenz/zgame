@@ -39,7 +39,7 @@ export const OBJECTIVES: Objective[] = [
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'solarPlant') >= 4 && planetProduction(w, x).efficiency >= 0.999) },
   { id: 'o3', chapter: 'Foundations', after: ['o2'], unlocks: [], name: 'Deeper shafts', hint: 'Metal Mine 8 and Crystal Mine 7. Your whole empire runs on this curve.', reward: { metal: 4000, crystal: 2500, deuterium: 500 },
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'metalMine') >= 8 && lvl(x.buildings, 'crystalMine') >= 7) },
-  { id: 'o4', chapter: 'Foundations', after: ['o3'], unlocks: [], name: 'Heavy water', hint: 'Build the Vespene Extractor to level 5 - fleets run on it.', reward: { deuterium: 2000 },
+  { id: 'o4', chapter: 'Foundations', after: ['o3'], unlocks: [], name: 'Heavy water', hint: 'Build the Deuterium Synthesizer to level 5 - fleets run on it.', reward: { deuterium: 2000 },
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'deuteriumSynthesizer') >= 5) },
   { id: 'q-lab', chapter: 'Research', after: ['o3'], unlocks: ['research', 'techtree'], name: 'Build a Research Lab', hint: 'Build a Research Lab on the Buildings page. It opens the Research page and the Tech tree.', reward: { crystal: 1500 },
     test: (w, p) => anyWorld(w, p, (x) => lvl(x.buildings, 'researchLab') >= 1) },
@@ -109,7 +109,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 ];
 
 const resLine = (r: Partial<Res> & { credits?: number }) =>
-  [r.metal && `${r.metal.toLocaleString('en-US')} metal`, r.crystal && `${r.crystal.toLocaleString('en-US')} crystal`, r.deuterium && `${r.deuterium.toLocaleString('en-US')} vespene gas`, r.credits && `${r.credits.toLocaleString('en-US')} credits`]
+  [r.metal && `${r.metal.toLocaleString('en-US')} metal`, r.crystal && `${r.crystal.toLocaleString('en-US')} crystal`, r.deuterium && `${r.deuterium.toLocaleString('en-US')} deuterium`, r.credits && `${r.credits.toLocaleString('en-US')} credits`]
     .filter(Boolean).join(', ');
 
 /** the quest to point a commander at first: the first open one that is not a side quest */

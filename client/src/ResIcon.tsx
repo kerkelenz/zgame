@@ -4,7 +4,7 @@ import { artThumb } from './artFiles';
 
 export type ResKey = 'metal' | 'crystal' | 'deuterium';
 
-/** Hand-drawn SVG pictures for the three resources: steel ingots, a cut crystal and a glowing canister of Vespene gas. */
+/** Hand-drawn SVG pictures for the three resources: steel ingots, a cut crystal and a glowing canister of deuterium. */
 export function ResIcon({ k, size = 16, title }: { k: ResKey; size?: number; title?: string }) {
   const label = title ?? resName(k);
   const pic = artThumb('res-' + k);

@@ -7,9 +7,9 @@ const r = (metal = 0, crystal = 0, deuterium = 0): Res => ({ metal, crystal, deu
 export const BUILDINGS: Record<BuildingId, BuildingDef> = {
   metalMine: { id: 'metalMine', name: 'Metal Mine', desc: 'Extracts metal ore. Consumes energy.', base: r(60, 15), factor: 1.5, requires: [] },
   crystalMine: { id: 'crystalMine', name: 'Crystal Mine', desc: 'Extracts crystal. Consumes energy.', base: r(48, 24), factor: 1.6, requires: [] },
-  deuteriumSynthesizer: { id: 'deuteriumSynthesizer', name: 'Vespene Extractor', desc: 'Filters vespene gas from water. Colder planets yield more.', base: r(225, 75), factor: 1.5, requires: [] },
+  deuteriumSynthesizer: { id: 'deuteriumSynthesizer', name: 'Deuterium Synthesizer', desc: 'Filters deuterium from water. Colder planets yield more.', base: r(225, 75), factor: 1.5, requires: [] },
   solarPlant: { id: 'solarPlant', name: 'Solar Plant', desc: 'Generates energy from sunlight.', base: r(75, 30), factor: 1.5, requires: [] },
-  fusionReactor: { id: 'fusionReactor', name: 'Fusion Reactor', desc: 'Burns vespene gas for large amounts of energy.', base: r(900, 360, 180), factor: 1.8, requires: [{ id: 'deuteriumSynthesizer', level: 5 }, { id: 'energy', level: 3 }] },
+  fusionReactor: { id: 'fusionReactor', name: 'Fusion Reactor', desc: 'Burns deuterium for large amounts of energy.', base: r(900, 360, 180), factor: 1.8, requires: [{ id: 'deuteriumSynthesizer', level: 5 }, { id: 'energy', level: 3 }] },
   roboticsFactory: { id: 'roboticsFactory', name: 'Robotics Factory', desc: 'Speeds up building construction.', base: r(400, 120, 200), factor: 2, requires: [] },
   naniteFactory: { id: 'naniteFactory', name: 'Nanite Factory', desc: 'Halves construction and shipbuilding time per level.', base: r(1_000_000, 500_000, 100_000), factor: 2, requires: [{ id: 'roboticsFactory', level: 10 }, { id: 'computer', level: 10 }] },
   shipyard: { id: 'shipyard', name: 'Shipyard', desc: 'Builds ships and defenses.', base: r(400, 200, 100), factor: 2, requires: [{ id: 'roboticsFactory', level: 2 }] },
@@ -20,9 +20,9 @@ export const BUILDINGS: Record<BuildingId, BuildingDef> = {
   terraformer: { id: 'terraformer', name: 'Terraformer', desc: 'Reshapes the surface to create 8 extra building fields per level.', base: r(0, 50000, 100000), factor: 1.7, requires: [{ id: 'naniteFactory', level: 1 }, { id: 'energy', level: 10 }] },
   spaceDock: { id: 'spaceDock', name: 'Space Dock', desc: 'Rebuilds a share of the ships you lose defending this planet from the wreck field the battle leaves behind.', base: r(200000, 0, 50000), factor: 5, requires: [{ id: 'shipyard', level: 2 }] },
   lunarBase: { id: 'lunarBase', name: 'Lunar Base', desc: 'Moons have almost no room: each level adds 3 usable fields.', base: r(20000, 40000, 20000), factor: 2, requires: [], moonOnly: true },
-  sensorPhalanx: { id: 'sensorPhalanx', name: 'Sensor Phalanx', desc: 'Scans fleet movements around a planet within (level² - 1) systems. Each scan costs 5,000 vespene gas.', base: r(20000, 40000, 20000), factor: 2, requires: [{ id: 'lunarBase', level: 1 }], moonOnly: true },
+  sensorPhalanx: { id: 'sensorPhalanx', name: 'Sensor Phalanx', desc: 'Scans fleet movements around a planet within (level² - 1) systems. Each scan costs 5,000 deuterium.', base: r(20000, 40000, 20000), factor: 2, requires: [{ id: 'lunarBase', level: 1 }], moonOnly: true },
   jumpGate: { id: 'jumpGate', name: 'Jump Gate', desc: 'Instantly teleports ships to another of your moons with a gate. Cooldown after each jump.', base: r(200000, 400000, 200000), factor: 2, requires: [{ id: 'lunarBase', level: 1 }, { id: 'hyperspace', level: 7 }], moonOnly: true },
-  deuteriumTank: { id: 'deuteriumTank', name: 'Vespene Tank', desc: 'Raises vespene gas capacity.', base: r(1000, 1000), factor: 2, requires: [] },
+  deuteriumTank: { id: 'deuteriumTank', name: 'Deuterium Tank', desc: 'Raises deuterium capacity.', base: r(1000, 1000), factor: 2, requires: [] },
 };
 
 export const TECHS: Record<TechId, TechDef> = {
@@ -30,7 +30,7 @@ export const TECHS: Record<TechId, TechDef> = {
   laser: { id: 'laser', name: 'Laser Technology', desc: 'Focused light for weapons.', base: r(200, 100), factor: 2, requires: [{ id: 'researchLab', level: 1 }, { id: 'energy', level: 2 }] },
   ion: { id: 'ion', name: 'Ion Technology', desc: 'Ion beams for heavy weapons.', base: r(1000, 300, 100), factor: 2, requires: [{ id: 'researchLab', level: 4 }, { id: 'energy', level: 4 }, { id: 'laser', level: 5 }] },
   hyperspace: { id: 'hyperspace', name: 'Hyperspace Technology', desc: 'Bends space; unlocks hyperspace drive.', base: r(0, 4000, 2000), factor: 2, requires: [{ id: 'researchLab', level: 7 }, { id: 'energy', level: 5 }, { id: 'shielding', level: 5 }] },
-  plasma: { id: 'plasma', name: 'Plasma Technology', desc: 'Boosts metal, crystal and vespene gas output by +1%/+0.66%/+0.33% per level.', base: r(2000, 4000, 1000), factor: 2, requires: [{ id: 'researchLab', level: 4 }, { id: 'energy', level: 8 }, { id: 'laser', level: 10 }, { id: 'ion', level: 5 }] },
+  plasma: { id: 'plasma', name: 'Plasma Technology', desc: 'Boosts metal, crystal and deuterium output by +1%/+0.66%/+0.33% per level.', base: r(2000, 4000, 1000), factor: 2, requires: [{ id: 'researchLab', level: 4 }, { id: 'energy', level: 8 }, { id: 'laser', level: 10 }, { id: 'ion', level: 5 }] },
   combustionDrive: { id: 'combustionDrive', name: 'Combustion Drive', desc: '+10% speed for combustion ships per level.', base: r(400, 0, 600), factor: 2, requires: [{ id: 'researchLab', level: 1 }, { id: 'energy', level: 1 }] },
   impulseDrive: { id: 'impulseDrive', name: 'Impulse Drive', desc: '+20% speed for impulse ships per level.', base: r(2000, 4000, 600), factor: 2, requires: [{ id: 'researchLab', level: 2 }, { id: 'energy', level: 1 }] },
   hyperspaceDrive: { id: 'hyperspaceDrive', name: 'Hyperspace Drive', desc: '+30% speed for hyperspace ships per level.', base: r(10000, 20000, 6000), factor: 2, requires: [{ id: 'researchLab', level: 7 }, { id: 'hyperspace', level: 3 }] },
@@ -65,7 +65,7 @@ export const UNITS: Record<UnitId, UnitDef> = {
   espionageProbe: ship('espionageProbe', 'Espionage Probe', { desc: 'Spies on other planets.', cost: r(0, 1000), attack: 0, shield: 0, hull: 100, cargo: 5, speed: 100_000_000, fuel: 1, drive: 'combustionDrive', rapidFire: none, requires: [{ id: 'shipyard', level: 3 }, { id: 'combustionDrive', level: 3 }, { id: 'espionage', level: 2 }] }),
   colonyShip: ship('colonyShip', 'Colony Ship', { desc: 'Founds new colonies.', cost: r(10000, 20000, 10000), attack: 50, shield: 100, hull: 3000, cargo: 7500, speed: 2500, fuel: 1000, drive: 'impulseDrive', rapidFire: none, requires: [{ id: 'shipyard', level: 4 }, { id: 'impulseDrive', level: 3 }] }),
   pathfinder: ship('pathfinder', 'Pathfinder', { desc: 'Long-range explorer built for deep space. On expeditions it raises finds (+10% each, up to 5) and can steer the fleet clear of black holes.', cost: r(8000, 5000, 2000), attack: 200, shield: 100, hull: 1300, cargo: 10000, speed: 12000, fuel: 200, drive: 'impulseDrive', rapidFire: { ...PS }, requires: [{ id: 'shipyard', level: 5 }, { id: 'impulseDrive', level: 4 }, { id: 'astrophysics', level: 2 }] }),
-  crawler: ship('crawler', 'Crawler', { desc: 'Mining machine that boosts metal, crystal and vespene gas output on its planet. Stays home; fragile.', cost: r(2000, 2000, 1000), attack: 1, shield: 1, hull: 500, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, requires: [{ id: 'shipyard', level: 5 }, { id: 'combustionDrive', level: 4 }] }),
+  crawler: ship('crawler', 'Crawler', { desc: 'Mining machine that boosts metal, crystal and deuterium output on its planet. Stays home; fragile.', cost: r(2000, 2000, 1000), attack: 1, shield: 1, hull: 500, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, requires: [{ id: 'shipyard', level: 5 }, { id: 'combustionDrive', level: 4 }] }),
   solarSatellite: ship('solarSatellite', 'Solar Satellite', { desc: 'Orbits the planet and generates energy.', cost: r(0, 2000, 500), attack: 1, shield: 1, hull: 200, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, requires: [{ id: 'shipyard', level: 1 }, { id: 'energy', level: 2 }] }),
 
   rocketLauncher: def('rocketLauncher', 'Rocket Launcher', { desc: 'Cheap basic defense.', cost: r(2000), attack: 80, shield: 20, hull: 200, cargo: 0, speed: 0, fuel: 0, drive: null, rapidFire: none, requires: [{ id: 'shipyard', level: 1 }] }),
@@ -169,7 +169,7 @@ export const BUILD_ORDER_TEMPLATES: { id: string; name: string; desc: string; st
 ];
 
 /** how each resource is shown to players (the internal key stays `deuterium`) */
-export const RES_NAME = { metal: 'metal', crystal: 'crystal', deuterium: 'vespene gas' } as const;
+export const RES_NAME = { metal: 'metal', crystal: 'crystal', deuterium: 'deuterium' } as const;
 export const resName = (k: string): string => (RES_NAME as Record<string, string>)[k] ?? k;
 
 export const TRADE_VALUE = { metal: 1, crystal: 1.5, deuterium: 3 } as const;

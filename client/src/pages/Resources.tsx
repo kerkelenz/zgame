@@ -7,7 +7,7 @@ import { Card, Countdown, Page, fmt } from '../ui';
 import { NumInput } from '../NumInput';
 
 const SOURCES: [string, string][] = [
-  ['metalMine', 'Metal Mine'], ['crystalMine', 'Crystal Mine'], ['deuteriumSynthesizer', 'Vespene Extractor'],
+  ['metalMine', 'Metal Mine'], ['crystalMine', 'Crystal Mine'], ['deuteriumSynthesizer', 'Deuterium Synthesizer'],
   ['solarPlant', 'Solar Plant'], ['fusionReactor', 'Fusion Reactor'], ['solarSatellite', 'Solar Satellites'],
 ];
 
@@ -32,15 +32,16 @@ export function Resources() {
           <tbody>
             <tr><td className="metal"><ResIcon k="metal" size={20} /> Metal</td><td>{fmt(p.metal)} / h</td><td className="muted">stored {fmt(planet.resources.metal)} of {fmt(planet.capacity.metal)}</td></tr>
             <tr><td className="crystal"><ResIcon k="crystal" size={20} /> Crystal</td><td>{fmt(p.crystal)} / h</td><td className="muted">stored {fmt(planet.resources.crystal)} of {fmt(planet.capacity.crystal)}</td></tr>
-            <tr><td className="deut"><ResIcon k="deuterium" size={20} /> Vespene Gas</td><td>{fmt(p.deuterium)} / h</td><td className="muted">stored {fmt(planet.resources.deuterium)} of {fmt(planet.capacity.deuterium)}</td></tr>
+            <tr><td className="deut"><ResIcon k="deuterium" size={20} /> Deuterium</td><td>{fmt(p.deuterium)} / h</td><td className="muted">stored {fmt(planet.resources.deuterium)} of {fmt(planet.capacity.deuterium)}</td></tr>
             <tr><td className="energy"><EnergyIcon size={20} /> Energy</td><td>{fmt(p.energyProduced)} produced / {fmt(p.energyUsed)} used</td><td className={p.efficiency < 1 ? 'bad' : 'muted'}>efficiency {Math.round(p.efficiency * 100)}%</td></tr>
           </tbody>
         </table>
+        {p.upkeep > 0 && <p className="muted">The ships stationed here burn {fmt(p.upkeep)} Deuterium per hour; the Deuterium line above is what remains.</p>}
         {ab > 0 && <p className="muted">Alliance mining network bonus: +{Math.round(ab * 100)}% on mine output.</p>}
         {p.efficiency < 1 && <p className="bad">Energy shortage! Build more solar plants or satellites – mines are running at {Math.round(p.efficiency * 100)}%.</p>}
       </Card>
       <Card title="Travelling merchant">
-        <p className="muted small">Swaps resources at 3 metal : 2 crystal : 1 vespene gas and keeps a {Math.round(fee * 100)}% cut{fee < TRADE_FEE ? ' (Collector rate)' : ''}. Works on {planet.name}'s stock.</p>
+        <p className="muted small">Swaps resources at 3 metal : 2 crystal : 1 deuterium and keeps a {Math.round(fee * 100)}% cut{fee < TRADE_FEE ? ' (Collector rate)' : ''}. Works on {planet.name}'s stock.</p>
         <p className="small"><b>Today's deal:</b> <span className="good"><ResIcon k={deal.give} /> {resName(deal.give)} → <ResIcon k={deal.get} /> {resName(deal.get)}</span> at just {Math.round(deal.fee * 100)}% for up to {fmt(deal.left)} {resName(deal.give)} more today (resets <Countdown to={deal.resetsAt} />).{give === deal.give && get === deal.get ? ' ✔ selected' : ''}
           <button className="link" onClick={() => { setGive(deal.give); setGet(deal.get); setAmount(Math.min(Math.floor(planet.resources[deal.give]), deal.left)); }}>use it</button></p>
         <div className="row wrap">

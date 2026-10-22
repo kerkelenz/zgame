@@ -20,9 +20,9 @@ function setup(cfg: Partial<typeof DEFAULT_CONFIG>) {
 }
 
 describe('default speeds', () => {
-  it('ship with 5x production, research and storage boosts on top of the economy speed', () => {
-    expect(DEFAULT_CONFIG.productionBoost).toBe(5);
-    expect(DEFAULT_CONFIG.researchBoost).toBe(5);
+  it('ship with no extra production, research or construction boost and a 5x storage boost on top of the economy speed', () => {
+    expect(DEFAULT_CONFIG.productionBoost).toBe(1);
+    expect(DEFAULT_CONFIG.researchBoost).toBe(1);
     expect(DEFAULT_CONFIG.storageBoost).toBe(5);
   });
 
@@ -62,9 +62,9 @@ describe('what the boosts change', () => {
 });
 
 describe('construction and shipyard speed', () => {
-  it('default to 5x', () => {
-    expect(DEFAULT_CONFIG.constructionBoost).toBe(5);
-    expect(DEFAULT_CONFIG.shipyardBoost).toBe(5);
+  it('default to 1x', () => {
+    expect(DEFAULT_CONFIG.constructionBoost).toBe(1);
+    expect(DEFAULT_CONFIG.shipyardBoost).toBe(1);
   });
 
   it('buildings take one fifth of the time', () => {
@@ -131,9 +131,18 @@ describe('existing saves', () => {
       delete raw.config.productionBoost; delete raw.config.researchBoost; delete raw.config.storageBoost; // as an old save would be
       writeFileSync(file, JSON.stringify(raw));
       const w = loadWorld(file);
-      expect([w.config.productionBoost, w.config.researchBoost, w.config.storageBoost]).toEqual([5, 5, 5]);
+      expect([w.config.productionBoost, w.config.researchBoost, w.config.storageBoost]).toEqual([1, 1, 5]);
       expect(w.config.economySpeed).toBe(raw.config.economySpeed); // their own speed is kept
       expect(loadWorld(file, { productionBoost: 2 }).config.productionBoost).toBe(2); // env overrides still win
     } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('debris share', () => {
+  it('is 15% of the cost of destroyed ships by default and follows the setting', async () => {
+    const { debrisShare } = await import('../server/perks');
+    expect(DEFAULT_CONFIG.debrisShare).toBe(0.15);
+    expect(debrisShare(createWorld({ npcDensity: 0 }, T0), null)).toBeCloseTo(0.15);
+    expect(debrisShare(createWorld({ npcDensity: 0, debrisShare: 0.4 }, T0), null)).toBeCloseTo(0.4);
   });
 });

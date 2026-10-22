@@ -54,7 +54,7 @@ export function PlanetHero() {
       <div className="herostats">
         {planet.diameter && <span className="herochip" title="Diameter">◎ {fmt(planet.diameter)} km</span>}
         <span className="herochip fields" title="Building fields in use"><span className="fieldbar"><i style={{ width: `${fieldsShare}%` }} /></span> {planet.usedFields} / {planet.fields} fields</span>
-        <span className="herochip" title="The warmest it gets here; colder planets make more vespene gas">🌡 {planet.maxTemp} °C</span>
+        <span className="herochip" title="The warmest it gets here; colder planets make more deuterium">🌡 {planet.maxTemp} °C</span>
         {bonus && <span className="herochip good" title="Orbit bonus">{Object.entries(bonus).map(([k, v]) => `+${Math.round((v as number) * 100)}% ${k}`).join(', ')}</span>}
         <span className="herochip" title="Production per hour"><span className="metal"><ResIcon k="metal" size={14} /> {fmt(p.metal)}</span> · <span className="crystal"><ResIcon k="crystal" size={14} /> {fmt(p.crystal)}</span> · <span className="deut"><ResIcon k="deuterium" size={14} /> {fmt(p.deuterium)}</span> <span className="muted small">/ h</span></span>
         <span className={`herochip${p.efficiency < 1 ? ' bad' : ''}`} title="Energy produced / used, and how fast the mines run"><EnergyIcon size={14} /> {fmt(p.energyProduced)} / {fmt(p.energyUsed)} ({Math.round(p.efficiency * 100)}%)</span>

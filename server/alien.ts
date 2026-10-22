@@ -164,7 +164,7 @@ export function deliverSupply(w: World, m: Movement, now: number, rng: () => num
   c.convoys = (c.convoys ?? 0) + 1;
   m.cargo = zero();
   notifyPlayer(w, owner.id, 'transport', caught ? 'Supply convoy hit, but got through' : 'Supply convoy delivered',
-    `${fmt(cargo.metal)} metal, ${fmt(cargo.crystal)} crystal and ${fmt(cargo.deuterium)} vespene gas reached the front${caught ? `; an alien patrol caught the convoy and you lost ${fmt(lostShips)} ships and a share of the cargo` : ''}. Supplies repair ships lost at the front before each engagement.`);
+    `${fmt(cargo.metal)} metal, ${fmt(cargo.crystal)} crystal and ${fmt(cargo.deuterium)} deuterium reached the front${caught ? `; an alien patrol caught the convoy and you lost ${fmt(lostShips)} ships and a share of the cargo` : ''}. Supplies repair ships lost at the front before each engagement.`);
   return { delivered: cargo, caught };
 }
 

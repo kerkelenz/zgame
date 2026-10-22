@@ -25,10 +25,10 @@ const hourly = (p: { metal: number; crystal: number; deuterium: number }) => val
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 const ratio = (n: number) => (n >= 100 ? n.toFixed(0) : n.toFixed(1));
 
-console.log(`economy x${speed} (production multiplier ${prodSpeed}); values weighted metal 1 : crystal 1.5 : vespene 3\n`);
+console.log(`economy x${speed} (production multiplier ${prodSpeed}); values weighted metal 1 : crystal 1.5 : deuterium 3\n`);
 
 console.log('1. CRAWLER vs MINE UPGRADE - hours until the purchase has paid for itself');
-console.log('   L = metal mine level (crystal 0.85 L, vespene 0.6 L); crawlers cost', fmt(val(UNITS.crawler.cost)), 'value each; cap', CRAWLER.perMineLevel, 'per mine level and +' + CRAWLER.cap * 100 + '%');
+console.log('   L = metal mine level (crystal 0.85 L, deuterium 0.6 L); crawlers cost', fmt(val(UNITS.crawler.cost)), 'value each; cap', CRAWLER.perMineLevel, 'per mine level and +' + CRAWLER.cap * 100 + '%');
 console.log('   L    income/h    best mine upgrade        crawler (first)   crawlers at cap   net bonus   cost incl. power');
 for (const L of [10, 15, 20, 25, 30, 35]) {
   const { b, techs } = state(L);

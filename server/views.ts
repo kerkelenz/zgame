@@ -34,13 +34,15 @@ export function planetView(w: World, planet: Planet, now: number) {
   return {
     id: planet.id, lifeform: planet.lifeform?.id ?? null, name: planet.name, coords: planet.coords, fields: maxFields(planet), usedFields: usedFields(planet), isMoon: !!planet.isMoon, parentId: planet.parentId ?? null, role: planet.role ?? null, look: assignLook(planet, w),
     jumpReadyAt: planet.jumpReadyAt ?? 0,
+    deathstarReadyAt: planet.deathstarReadyAt ?? 0,
+    repairs: planet.repairs ?? [],
     forge: forgeView(w, planet, w.players[planet.ownerId]),
     maxTemp: planet.maxTemp, isHome: planet.isHome, buildings: planet.buildings, resources: planet.resources,
     capacity: planetCapacity(w, planet),
     diameter: planet.diameter ?? null,
     production: {
       metal: prod.metal, crystal: prod.crystal, deuterium: prod.deuterium,
-      energyProduced: prod.energyProduced, energyUsed: prod.energyUsed, efficiency: prod.efficiency,
+      energyProduced: prod.energyProduced, energyUsed: prod.energyUsed, efficiency: prod.efficiency, upkeep: prod.upkeep,
     },
     settings: planet.settings,
     /** the multipliers behind this planet's numbers, so the client can reproduce them exactly (details pages, economy planner) */

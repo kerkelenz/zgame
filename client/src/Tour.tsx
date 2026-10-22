@@ -9,7 +9,7 @@ const finish = () => { try { localStorage.setItem(TOUR_KEY, '1'); } catch { /* i
 
 export const STEPS: { page: string; title: string; text: string }[] = [
   { page: 'overview', title: 'Welcome, Commander', text: 'This is your homeworld. Resources flow in even while you are away, and the bar above always shows your stock, storage and energy balance. The Events list shows every fleet movement that concerns you.' },
-  { page: 'buildings', title: 'Buildings', text: 'Mines make metal, crystal and vespene gas; solar plants keep them running. Queue upgrades here: they are paid for when queued and keep going while you are away.' },
+  { page: 'buildings', title: 'Buildings', text: 'Mines make metal, crystal and deuterium; solar plants keep them running. Queue upgrades here: they are paid for when queued and keep going while you are away.' },
   { page: 'quests', title: 'Quests', text: 'Quests tell you what to do next and pay a reward. Finishing some of them opens more of the menu (Research, the Shipyard, the Galaxy and the rest), so the game grows with you instead of showing everything at once.' },
   { page: 'settings', title: 'Make it yours', text: 'Alerts reach you outside the game (Discord, phone push), vacation mode freezes your empire, and you can pick sounds and language. Press Ctrl+K anywhere to jump to any page, item or commander, and ? for the keyboard shortcuts.' },
 ];

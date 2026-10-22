@@ -141,8 +141,8 @@ describe('General', () => {
       return d.metal + d.crystal;
     };
     const base = make(null), gen = make('general');
-    expect(gen / base).toBeGreaterThan(1.05);
-    expect(gen / base).toBeLessThan(1.15);
+    expect(gen / base).toBeGreaterThan(1.1);
+    expect(gen / base).toBeLessThan(1.3);  // 18% instead of 15% of the cost
   });
 
   it('unit details show the class speed on combat ships only', () => {

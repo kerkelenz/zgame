@@ -37,7 +37,7 @@ const word = (st: { effect: string; per: number }, n: number) => {
   const v = n * st.per;
   if (st.effect === 'fields') return `+${v} building fields`;
   const pct = `${Math.round(v * 1000) / 10}%`;
-  const what: Record<string, string> = { metal: 'metal output', crystal: 'crystal output', deuterium: 'Vespene Gas output', energy: 'energy', storage: 'storage', buildTime: 'shorter building times', shipTime: 'shorter ship and defense times', researchTime: 'shorter research here', vault: 'less taken when raided' };
+  const what: Record<string, string> = { metal: 'metal output', crystal: 'crystal output', deuterium: 'Deuterium output', energy: 'energy', storage: 'storage', buildTime: 'shorter building times', shipTime: 'shorter ship and defense times', researchTime: 'shorter research here', vault: 'less taken when raided' };
   return st.effect.endsWith('Time') || st.effect === 'vault' ? `${pct} ${what[st.effect]}` : `+${pct} ${what[st.effect]}`;
 };
 

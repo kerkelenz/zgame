@@ -7,6 +7,7 @@ A co-op multiplayer, OGame-style space strategy game. Everyone shares one persis
 ```bash
 npm install
 npm start            # builds the client, serves everything on http://localhost:3000
+npm run start:slow   # same, with the production, research, construction and shipyard boosts set to 1, for a world saved before they became the default
 ```
 
 Development (hot reload, client on :5173 proxying to the server on :3000):
@@ -25,10 +26,10 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `ZGAME_*` | | every setting below is a `ZGAME_` variable; the older `OGAME_` names still work (the `ZGAME_` one wins when both are set) |
 | `ZGAME_SAVE` | `data/world.json` | save file |
 | `ZGAME_ECONOMY_SPEED` | 20 | production ×, build/research/ship time ÷ |
-| `ZGAME_PRODUCTION_BOOST` | 5 | extra multiplier on all resource production, on top of the economy speed |
-| `ZGAME_RESEARCH_BOOST` | 5 | extra multiplier on research speed |
-| `ZGAME_CONSTRUCTION_BOOST` | 5 | extra multiplier on building construction speed |
-| `ZGAME_SHIPYARD_BOOST` | 5 | extra multiplier on ship and defense build speed |
+| `ZGAME_PRODUCTION_BOOST` | 1 | extra multiplier on all resource production, on top of the economy speed |
+| `ZGAME_RESEARCH_BOOST` | 1 | extra multiplier on research speed |
+| `ZGAME_CONSTRUCTION_BOOST` | 1 | extra multiplier on building construction speed |
+| `ZGAME_SHIPYARD_BOOST` | 1 | extra multiplier on ship and defense build speed |
 | `ZGAME_STORAGE_BOOST` | 5 | extra multiplier on storage (level-0 storage = 10,000 × economy speed × this = 1,000,000 by default) |
 | `ZGAME_FLEET_SPEED` | 10 | flight time ÷ |
 | `ZGAME_PROTECTION_POINTS` | 200 | players under this can't attack or be attacked |
@@ -38,6 +39,10 @@ Friends on your LAN/VPN just open `http://<your-ip>:3000`, register a commander 
 | `ZGAME_VACATION_MIN_HOURS` | 48 | minimum vacation stay |
 | `ZGAME_INVASION_INTERVAL_HOURS` | 72 | hours between Void invasions (0 = none); also `ZGAME_INVASION_ANNOUNCE_HOURS` (12), `ZGAME_INVASION_DURATION_HOURS` (24), `ZGAME_INVASION_ENGAGE_MINUTES` (30), `ZGAME_INVASION_STRENGTH` (0.35), `ZGAME_INVASION_MIN_PLAYERS` (2), `ZGAME_INVASION_WAVES` (4; 1 = a single Armada), `ZGAME_INVASION_HOME_SHARE` (0.5: the chance per wave that an active commander is hit by a strike team, 0 = none), `ZGAME_INVASION_STRIKE_STRENGTH` (1), `ZGAME_INVASION_BREATHER_MINUTES` (20). The Armada is `ZGAME_INVASION_STRENGTH` of the combat fleets, counting no commander for more than 3x the median fleet (`CAP_MEDIANS` in `server/invasion.ts`), so one huge fleet does not size it; `npm run balance:invasion` simulates equal fleets, not that skew |
 | `ZGAME_WAR_HOURS` | 48 | length of an alliance war in hours (0 = wars switched off) |
+| `ZGAME_DEBRIS_SHARE` | 0.15 | share of destroyed ships' metal and crystal that stays as a debris field (Geologist and the General class add to it) |
+| `ZGAME_FLEET_UPKEEP` | 0.0003 | deuterium per hour that the ships stationed on a planet burn, as a share of their metal and crystal value (0 = no upkeep). The rate grows with the fleet on one planet: it doubles at `ZGAME_FLEET_UPKEEP_KNEE` (20,000,000) of value, and it scales with economy speed × production boost ÷ 20. Satellites, crawlers, ships in flight and computer empires pay nothing |
+| `ZGAME_DEATHSTAR_FUEL` | 500000 | Deuterium each Deathstar burns to join an attack, moon destruction or invasion mission (0 = free); `ZGAME_DEATHSTAR_COOLDOWN_HOURS` (12) is how long the Deathstars of that planet then rest (0 = no rest) |
+| `ZGAME_BATTLE_DAMAGE` | 0.3 | share of each ship type in a surviving attacking fleet that comes home damaged and is repaired on its home planet (0 = no damage); `ZGAME_REPAIR_HOURS` (3) is how long the repair takes and `ZGAME_REPAIR_COST` (0.1) the share of the ships' metal and crystal value the dock charges. Computer empires and alien strike teams are not damaged |
 | `ZGAME_FORGE_HOURS` | 12 | how long a Moon Forge takes (0 = switched off) |
 | `ZGAME_OUTPOSTS_PER_GALAXY` | 6 | pirate and alien outposts settled in every galaxy when the world is first started (0 = none) |
 | `ZGAME_OUTPOST_RESPAWN_HOURS` | 12 | hours before a cleared outpost is rebuilt |
@@ -61,7 +66,7 @@ Config is stored in the save on first start; env vars override it on later start
 
 ## Features
 
-- **Economy** – metal/crystal/vespene gas mines, solar/fusion/satellite energy, storage caps, production sliders, robotics/nanite build speed, planet fields & temperature.
+- **Economy** – metal/crystal/deuterium mines, solar/fusion/satellite energy, storage caps, production sliders, robotics/nanite build speed, planet fields & temperature.
 - **Tech** – 14 researches with OGame-style prerequisites; drives change ship speeds, weapons/shielding/armour change combat.
 - **Shipyard** – 14 ships, 8 defenses, batch queues with refunds, shield-dome limits. Buildings and research can queue 4 deep (paid and reserved when queued, refunded if removed).
 - **Encounters** – (`server/encounters.ts`, saved on each player as `events`) while a commander's page is open (a request within 3 minutes) a clock counts play time; after 20-40 minutes a distress call, trader, anomaly, pirate patrol or lucky find is put at one of their planets for 10-20 minutes, shown as a card in the notice strip and a dialog. One at a time, never on vacation, rewards 1-2 hours of that planet's production. Admins can send one from the Commanders list.
@@ -75,7 +80,7 @@ Config is stored in the save on first start; env vars override it on later start
 - **Upgrades** – `shared/upgrades.ts` (the catalog, costs and the arithmetic) and `server/upgrades.ts` (buying, the view): seven empire upgrades per player (`player.upgrades`), four projects per planet (`planet.projects`), three timed boosts and five monuments. Costs scale with `ZGAME_ECONOMY_SPEED` and grow 1.7-2x a level; the effects are read through `server/perks.ts`, the queue limits through `buildBacklogMax` and `researchBacklogMax`. What is spent counts as standing points.
 - **Outposts** – `ZGAME_OUTPOSTS_PER_GALAXY` pirate and alien outposts per galaxy (`server/outposts.ts`, saved as `world.outposts`): frozen computer empires with one planet, a tier 1-4 garrison measured against the average combat fleet of the commanders seen this week (never below a floor) and a treasure of 30% of it (a measured balance: fleets that win comfortably lose a few percent of the garrison value, so the loot is meant to pay for the repairs and a little more). The first winning attack pays Command Credits (20/45/100/220, shared) and counts toward the Outpost Breaker achievement; `ZGAME_OUTPOST_RESPAWN_HOURS` (12) later the garrison is rebuilt. They never appear in the Standing and never hold grudges.
 - **Player market** – a Market tab under Home where commanders swap resources: an offer escrows its goods (taken from the selected planet), prices must stay within 80%-125% of the merchant's fair rate (no free transfers between accounts), a buyer takes an offer whole and the market keeps `ZGAME_MARKET_FEE_PERCENT` of what the buyer gets; alliance-only offers carry no fee; offers expire after `ZGAME_MARKET_HOURS` and return to their planet. Server code in `server/market.ts`, saved as `world.market`.
-- **Moon Forge** – a late-game way to make a moon for certain: Graviton Technology 1, Shipyard 12 and a 1M+ debris field above the planet; it consumes the field, costs vespene gas (as much as the debris) plus a quarter each of metal and crystal, takes `ZGAME_FORGE_HOURS` (12) and makes a moon of 3,000-8,000 km by field size.
+- **Moon Forge** – a late-game way to make a moon for certain: Graviton Technology 1, Shipyard 12 and a 1M+ debris field above the planet; it consumes the field, costs deuterium (as much as the debris) plus a quarter each of metal and crystal, takes `ZGAME_FORGE_HOURS` (12) and makes a moon of 3,000-8,000 km by field size.
 - **Moons** – after a battle over a planet without a moon, the debris above it (old debris included) condenses into one with a 20% chance once it holds 100k resources (proportionally less below). Build a Lunar Base for room, a **Sensor Phalanx** to scan fleet movements around planets in range (spot raiders heading for allies) and a **Jump Gate** to teleport ships between your moons. Missions can target moons.
 - **Computer empires** – hundreds of bot empires (inactive / active / aggressive) fill the galaxy with raid targets. They develop, expand, fight each other (wars leave debris and moons, with galaxy news), and aggressive ones raid commanders in fleets sized to your defenses. Raiding one builds a grudge that can turn it hostile; strong ones demand tribute (pay for a truce, refuse and face their fleet).
 - **Factions and reputation** – four factions with rival pairs. Raiding a faction's empires costs standing with it and earns half as much with its rival; at 40 standing you can join for a perk (shields, weapons, mine output, or plunder + cargo), a pact with its members (they stop raiding you) and supply convoys. Hit your own and you are expelled.

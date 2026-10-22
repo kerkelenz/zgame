@@ -232,7 +232,7 @@ export function npcWars(w: World, now: number) {
     const fleet: Fleet = {};
     for (const [id, n] of Object.entries(base.fleet)) { const send = Math.floor((n || 0) * 0.6); if (send > 0) fleet[id as keyof Fleet] = send; }
     if (!shipTotal(fleet)) continue;
-    const res = simulateCombat([npcCombatant(npc, null, fleet, false)], [npcCombatant(defOwner, target, target.fleet, true)], makeRng(Math.floor(Math.random() * 2 ** 31)));
+    const res = simulateCombat([npcCombatant(npc, null, fleet, false)], [npcCombatant(defOwner, target, target.fleet, true)], makeRng(Math.floor(Math.random() * 2 ** 31)), { debrisRatio: w.config.debrisShare });
     // apply to both sides
     for (const [id, n] of Object.entries(fleet)) base.fleet[id as keyof Fleet] = Math.max(0, (base.fleet[id as keyof Fleet] || 0) - (n || 0) + (res.attackers[0].after[id as UnitId] || 0));
     target.fleet = onlyShips(res.defenders[0].after);
@@ -287,7 +287,7 @@ export function factionAid(w: World, now: number) {
     const base = Math.max(20_000, playerPoints(w, p).total * 120);
     const gift = { metal: Math.round(base * (0.4 + Math.random() * 0.4)), crystal: Math.round(base * (0.2 + Math.random() * 0.3)), deuterium: Math.round(base * (0.05 + Math.random() * 0.15)) };
     for (const k of KEYS) planet.resources[k] += gift[k];
-    notifyPlayer(w, p.id, 'news', 'Your faction sent supplies', `A convoy unloaded at ${planet.name}: ${gift.metal.toLocaleString('en-US')} metal, ${gift.crystal.toLocaleString('en-US')} crystal, ${gift.deuterium.toLocaleString('en-US')} vespene gas.`);
+    notifyPlayer(w, p.id, 'news', 'Your faction sent supplies', `A convoy unloaded at ${planet.name}: ${gift.metal.toLocaleString('en-US')} metal, ${gift.crystal.toLocaleString('en-US')} crystal, ${gift.deuterium.toLocaleString('en-US')} deuterium.`);
   }
 }
 
@@ -327,7 +327,7 @@ export function demandTribute(w: World, p: Player, now: number) {
   const rec = { id: uid(), npc: npc.id, want, deadline: now + (2 * HOUR) / sec(w), answered: false as const };
   p.tributes.push(rec);
   notifyPlayer(w, p.id, 'news', `${npc.username} demands tribute`,
-    `${npc.username} will keep their fleets away from your systems for a while in exchange for ${want.metal.toLocaleString('en-US')} metal, ${want.crystal.toLocaleString('en-US')} crystal and ${want.deuterium.toLocaleString('en-US')} vespene gas. Answer in the Command screen before ${new Date(rec.deadline).toLocaleTimeString()} - silence counts as a refusal.`,
+    `${npc.username} will keep their fleets away from your systems for a while in exchange for ${want.metal.toLocaleString('en-US')} metal, ${want.crystal.toLocaleString('en-US')} crystal and ${want.deuterium.toLocaleString('en-US')} deuterium. Answer in the Command screen before ${new Date(rec.deadline).toLocaleTimeString()} - silence counts as a refusal.`,
     { tribute: rec });
   return rec;
 }

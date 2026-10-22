@@ -68,7 +68,7 @@ export const FLOWS: Flow[] = [
     limits: [{ id: 'crystalStorage', text: 'raises the cap production stops at' }],
   },
   {
-    id: 'gas', title: 'Vespene Gas', summary: 'Drawn by the Vespene Extractor; colder planets yield more. Fusion Reactors burn it.',
+    id: 'gas', title: 'Deuterium', summary: 'Drawn by the Deuterium Synthesizer; colder planets yield more. Fusion Reactors burn it.',
     boosts: [
       { id: 'deuteriumSynthesizer', text: 'the main source' },
       { id: 'plasma', text: '+0.33% per level' },
@@ -76,13 +76,13 @@ export const FLOWS: Flow[] = [
       { text: 'Colder planets (the far orbit positions)' },
       { text: 'Quartermaster officer, alliance Shared Mining Network upgrade, held systems' },
     ],
-    limits: [{ id: 'deuteriumTank', text: 'raises the cap production stops at' }, { id: 'fusionReactor', text: 'burns vespene gas for energy, which lowers the net amount' }],
+    limits: [{ id: 'deuteriumTank', text: 'raises the cap production stops at' }, { id: 'fusionReactor', text: 'burns deuterium for energy, which lowers the net amount' }],
   },
   {
     id: 'energy', title: 'Energy', summary: 'Every mine and every working crawler draws energy. If production falls short, all mines slow down together.',
     boosts: [
       { id: 'solarPlant', text: 'cheap and steady' },
-      { id: 'fusionReactor', text: 'large output for vespene gas; needs a Vespene Extractor and Energy Technology' },
+      { id: 'fusionReactor', text: 'large output for deuterium; needs a Deuterium Synthesizer and Energy Technology' },
       { id: 'energy', text: 'raises Fusion Reactor output' },
       { id: 'solarSatellite', text: 'a satellite in orbit adds energy without taking a building slot' },
       { text: 'Chief Engineer officer (+5% per rank)' },

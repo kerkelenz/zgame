@@ -134,7 +134,7 @@ export function FleetPage() {
             <input type="number" className="sm" value={scanTo.g} onChange={(e) => setScanTo({ ...scanTo, g: Number(e.target.value) })} />
             <input type="number" className="sm" value={scanTo.s} onChange={(e) => setScanTo({ ...scanTo, s: Number(e.target.value) })} />
             <input type="number" className="sm" value={scanTo.p} onChange={(e) => setScanTo({ ...scanTo, p: Number(e.target.value) })} />
-            <button onClick={async () => { const r = await act(() => post(`/planets/${planet.id}/phalanx`, { to: scanTo })); if (r) setScan(r); }}>Scan (5,000 vespene gas)</button>
+            <button onClick={async () => { const r = await act(() => post(`/planets/${planet.id}/phalanx`, { to: scanTo })); if (r) setScan(r); }}>Scan (5,000 deuterium)</button>
           </div>
           {scan && (
             <div>
@@ -269,7 +269,7 @@ export function FleetPage() {
               <div className="row wrap">
                 <span className="muted">Cargo (capacity {fmt(cap)}):</span>
                 {(['metal', 'crystal', 'deuterium'] as const).map((k) => {
-                  // the most this resource can be: what the planet has (less the fuel for vespene gas) and what still fits in the hold
+                  // the most this resource can be: what the planet has (less the fuel for deuterium) and what still fits in the hold
                   const others = (['metal', 'crystal', 'deuterium'] as const).filter((x) => x !== k).reduce((sum, x) => sum + cargo[x], 0);
                   const most = Math.max(0, Math.min(Math.floor(planet.resources[k]) - (k === 'deuterium' ? plan?.fuel ?? 0 : 0), cap - others));
                   return (
@@ -281,9 +281,14 @@ export function FleetPage() {
                 })}
               </div>
             )}
+            {planet.repairs.length > 0 && (
+              <p className="muted small">In repair after battle: {(planet.repairs as { ships: Record<string, number>; readyAt: number }[]).map((r, i) => <span key={i}>{i > 0 && ' · '}{fmt(Object.values(r.ships).reduce((a, b) => a + (b || 0), 0))} ships, back in <Countdown to={r.readyAt} /></span>)}</p>
+            )}
             <div className="row between">
               <div className="muted">
-                {plan ? <>Distance {fmt(plan.dist)} · duration {fmtDur(plan.secs * 1000)} · fuel {fmt(plan.fuel)} vespene gas</> : 'Select ships to see the flight plan.'}
+                {plan ? <>Distance {fmt(plan.dist)} · duration {fmtDur(plan.secs * 1000)} · fuel {fmt(plan.fuel)} deuterium</> : 'Select ships to see the flight plan.'}
+                {plan && chosen.deathstar && ['attack', 'destroy', 'invade'].includes(mission) && me.config.deathstarFuel > 0 && <> · Deathstar ignition {fmt(chosen.deathstar * me.config.deathstarFuel)} deuterium{me.config.deathstarCooldownHours > 0 && <>, then the Deathstars here rest {me.config.deathstarCooldownHours} h</>}</>}
+                {planet.deathstarReadyAt > now && (planet.fleet.deathstar || 0) > 0 && <> · Deathstars recovering <Countdown to={planet.deathstarReadyAt} /></>}
               </div>
               <button className="primary" disabled={!count} onClick={send}>Send {count ? `${fmt(count)} ships` : ''}</button>
             </div>

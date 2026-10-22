@@ -3,6 +3,17 @@ export interface Release { id: string; date: string; title: string; items: strin
 
 export const CHANGELOG: Release[] = [
   {
+    id: '2026-10-zi', date: '2026-10-28', title: 'A slower, harder game',
+    items: [
+      'Battles damage fleets: about 30% of the ships that survive an attack come home damaged and spend 3 hours in repair on their home planet (the dock charges 10% of their value), so a fleet cannot fight and move straight on. The Fleet page shows what is in repair.',
+      'Deathstars are a heavy weapon now: each one burns 500,000 Deuterium to join an attack, a moon destruction or an invasion fight, and the Deathstars of that planet then rest for 12 hours before they can go again. The Fleet page shows both.',
+      'Fleets cost upkeep: the ships stationed on a planet burn Deuterium every hour (about 0.03% of their value, more the bigger the fleet on that planet), shown on the Resources page. A handful of ships costs next to nothing; a Deathstar fleet costs a fortune. Satellites, Crawlers and ships in flight are free.',
+      'The game runs five times slower: mines produce, and buildings, research, ships and defenses finish, at a fifth of the former pace (storage is unchanged). A server that wants the old speed can set the boosts back to 5.',
+      'Battles leave half as much debris: about 15% of the cost of destroyed ships instead of 30%, so beating off a raid no longer pays for itself in scrap. Geologist and the General class still add to it.',
+      'Vespene Gas is Deuterium again, and the Vespene Extractor and Vespene Tank are the Deuterium Synthesizer and Deuterium Tank.',
+    ],
+  },
+  {
     id: '2026-10-zh', date: '2026-10-28', title: 'A gentler start',
     items: [
       'New commanders start with a short menu that grows as they play. The first hour has Overview, Quests, Buildings and Resources; Research, the Shipyard, Fleet, the Galaxy, the Market, Command and the rest open as quests are finished, with a notice and a button each time.',

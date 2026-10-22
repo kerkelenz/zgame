@@ -189,11 +189,17 @@ export function sendFleet(w: World, player: Player, req: SendRequest, now: numbe
   if (mission === 'attack' || mission === 'espionage' || mission === 'invade' || mission === 'destroy' || mission === 'scout') { cargo.metal = cargo.crystal = cargo.deuterium = 0; }
   const cap = cargoFor(player, ships);
   if (totalRes(cargo) > cap) throw new GameError(`Cargo exceeds capacity (${num(cap)})`);
-  const need = addRes(cargo, { metal: 0, crystal: 0, deuterium: plan.fuel });
-  if (!canAfford(planet.resources, need)) throw new GameError(`Not enough resources (fuel: ${num(plan.fuel)} vespene gas)`);
+  // a Deathstar that goes to war burns a fortune in Deuterium, and its planet's Deathstars then need time to recover
+  const ds = ships.deathstar || 0;
+  const igniting = ds > 0 && (mission === 'attack' || mission === 'destroy' || mission === 'invade');
+  const ignition = igniting ? ds * w.config.deathstarFuel : 0;
+  if (igniting && (planet.deathstarReadyAt ?? 0) > now) throw new GameError(`The Deathstars here are still recovering (ready in ${Math.ceil((planet.deathstarReadyAt! - now) / 60_000)} min)`);
+  const need = addRes(cargo, { metal: 0, crystal: 0, deuterium: plan.fuel + ignition });
+  if (!canAfford(planet.resources, need)) throw new GameError(`Not enough resources (fuel: ${num(plan.fuel)} deuterium${ignition ? `, Deathstar ignition: ${num(ignition)} deuterium` : ''})`);
 
   if (joinLead && now + plan.secs * 1000 > joinLead.arriveAt) throw new GameError('Your fleet is too slow to arrive together with that attack');
   planet.resources = subRes(planet.resources, need);
+  if (igniting && w.config.deathstarCooldownHours > 0) planet.deathstarReadyAt = now + w.config.deathstarCooldownHours * 3_600_000;
   for (const [id, n] of Object.entries(ships)) planet.fleet[id as ShipId] = (planet.fleet[id as ShipId] || 0) - (n || 0);
   for (const id of SHIP_IDS) if (!planet.fleet[id]) delete planet.fleet[id];
 
@@ -287,6 +293,39 @@ function sendHome(m: Movement, at: number) {
   m.returnAt = at + m.flightMs;
 }
 
+/** survivors of a battle come home with some ships damaged; they cannot fly again until repaired */
+function damageSurvivors(w: World, m: Movement) {
+  const share = w.config.battleDamage;
+  if (!(share > 0) || !m.ownerId || m.alien || w.players[m.ownerId]?.npc) return;
+  const damaged: Fleet = {};
+  for (const [id, n] of Object.entries(m.ships)) {
+    const d = Math.floor((n || 0) * share + 0.5);
+    if (d > 0) damaged[id as ShipId] = d;
+  }
+  if (fleetCount(damaged)) m.damaged = damaged;
+}
+
+/** the damaged ships leave the hangar for `repairHours`, and the dock charges a share of their value (as far as the planet can pay) */
+function startRepair(w: World, planet: Planet, damaged: Fleet, at: number) {
+  const ships: Fleet = {};
+  let metal = 0, crystal = 0;
+  for (const [id, n] of Object.entries(damaged)) {
+    const d = Math.min(n || 0, planet.fleet[id as ShipId] || 0);
+    if (d <= 0) continue;
+    ships[id as ShipId] = d;
+    planet.fleet[id as ShipId] = (planet.fleet[id as ShipId] || 0) - d;
+    if (!planet.fleet[id as ShipId]) delete planet.fleet[id as ShipId];
+    metal += UNITS[id as ShipId].cost.metal * d * w.config.repairCost;
+    crystal += UNITS[id as ShipId].cost.crystal * d * w.config.repairCost;
+  }
+  if (!fleetCount(ships)) return;
+  const r = planet.resources;
+  const payM = Math.min(r.metal, metal), payC = Math.min(r.crystal, crystal);
+  r.metal -= payM; r.crystal -= payC;
+  (planet.repairs ||= []).push({ ships, readyAt: at + w.config.repairHours * 3_600_000 });
+  notifyPlayer(w, planet.ownerId, 'system', 'Repairs under way', `${num(fleetCount(ships))} damaged ships on ${planet.name} are in repair for ${w.config.repairHours} h (${num(payM)} metal and ${num(payC)} crystal).`);
+}
+
 /** Fleet reaches its home planet again (or deploy target). */
 function land(w: World, m: Movement, at: number, dest?: Planet) {
   delete w.movements[m.id];
@@ -299,6 +338,7 @@ function land(w: World, m: Movement, at: number, dest?: Planet) {
   updatePlanet(w, planet, at);
   for (const [id, n] of Object.entries(m.ships)) planet.fleet[id as ShipId] = (planet.fleet[id as ShipId] || 0) + (n || 0);
   planet.resources = addRes(planet.resources, m.cargo);
+  if (m.damaged) startRepair(w, planet, m.damaged, at);
   if (totalRes(m.cargo) > 0 || m.mission === 'deploy') {
     bus.push({ to: owner.id, type: 'toast', data: `Fleet arrived at ${planet.name}${totalRes(m.cargo) ? ` carrying ${num(totalRes(m.cargo))} resources` : ''}` });
   }
@@ -326,7 +366,7 @@ function arrive(w: World, m: Movement, at: number) {
       target.resources = addRes(target.resources, delivered);
       m.cargo = zeroRes();
       const owner = w.players[m.ownerId!];
-      const body = `${num(delivered.metal)} metal, ${num(delivered.crystal)} crystal, ${num(delivered.deuterium)} vespene gas delivered to ${target.name} ${fmt(m.to)}.`;
+      const body = `${num(delivered.metal)} metal, ${num(delivered.crystal)} crystal, ${num(delivered.deuterium)} deuterium delivered to ${target.name} ${fmt(m.to)}.`;
       notifyPlayer(w, owner.id, 'transport', 'Transport arrived', body);
       if (target.ownerId !== owner.id) notifyPlayer(w, target.ownerId, 'transport', `Delivery from ${owner.username}`, body);
       bus.push({ to: target.ownerId, type: 'refresh' });
@@ -444,7 +484,7 @@ function resolveEspionage(w: World, m: Movement, at: number) {
   };
   const r = target.resources;
   notifyPlayer(w, spy.id, 'espionage', `Spy report ${target.name} ${fmt(m.to)}`,
-    `${def.username}: metal ${num(r.metal)}, crystal ${num(r.crystal)}, vespene gas ${num(r.deuterium)}.`, report);
+    `${def.username}: metal ${num(r.metal)}, crystal ${num(r.crystal)}, deuterium ${num(r.deuterium)}.`, report);
   spy.stats.spyReports++;
   archiveSpy(spy, target.id, { ...report, moon: !!target.isMoon }, at);
   sendHome(m, at);
@@ -518,7 +558,7 @@ function resolveAttack(w: World, lead: Movement, at: number, preset?: CombatResu
   const rng = makeRng(Math.floor(Math.random() * 2 ** 31));
   const attackers: Combatant[] = group.map((m) => (m.alien ? { ...combatant(w, null, m.ownerName, m.ships), weapons: m.alien.weapons, shielding: m.alien.shielding, armour: m.alien.armour } : combatant(w, attackerOf(m), m.ownerName, m.ships)));
   if (!preset && lead.command && group.length === 1 && lead.ownerId && !attackerOf(lead)?.npc && defOwner.npc?.outpost) return openBattle(w, lead, attackers, defenders, at);
-  const res: CombatResult = preset ?? simulateCombat(attackers, defenders, rng, { debrisRatio: debrisShare(attackerOf(lead)) });
+  const res: CombatResult = preset ?? simulateCombat(attackers, defenders, rng, { debrisRatio: debrisShare(w, attackerOf(lead)) });
 
   const planetAfter = res.defenders[0].after;
   target.fleet = onlyShips(planetAfter);
@@ -640,7 +680,7 @@ function resolveAttack(w: World, lead: Movement, at: number, preset?: CombatResu
     `${names} vs ${defOwner.username} at ${target.name} ${fmt(lead.to)} - ${headline} after ${res.rounds} round(s).\n` +
     res.attackers.map((a) => `${a.name} lost: ${lost(a.before, a.after)}.\n`).join('') +
     `Defender lost: ${lost(res.defenders[0].before, res.defenders[0].after, res.defenders[0].rebuilt)}.\n` +
-    (totalRes(loot) ? `Loot: ${num(loot.metal)} metal, ${num(loot.crystal)} crystal, ${num(loot.deuterium)} vespene gas.\n` : '') +
+    (totalRes(loot) ? `Loot: ${num(loot.metal)} metal, ${num(loot.crystal)} crystal, ${num(loot.deuterium)} deuterium.\n` : '') +
     (res.debris.metal || res.debris.crystal ? `Debris field: ${num(res.debris.metal)} metal, ${num(res.debris.crystal)} crystal.\n` : '') +
     (bounty ? `Raider bounty: ${num(bounty)} resources shared among defenders.\n` : '') +
     (moonOdds === null ? '' : newMoon ? `The debris condensed into a moon! (chance ${Math.round(moonOdds * 100)}%)\n` : `No moon formed (chance ${Math.round(moonOdds * 100)}% from a debris field of ${num(field.metal + field.crystal)}).\n`) +
@@ -679,7 +719,7 @@ function resolveAttack(w: World, lead: Movement, at: number, preset?: CombatResu
 
   for (const m of group) {
     if (!m.ownerId || !fleetCount(m.ships)) delete w.movements[m.id];
-    else { sendHome(m, at); m.acsId = undefined; }
+    else { damageSurvivors(w, m); sendHome(m, at); m.acsId = undefined; }
   }
 
   if (moonGone) {
@@ -912,7 +952,7 @@ export function phalanxScan(w: World, player: Player, moonId: string, to: Coords
   if (to.g !== moon.coords.g || Math.abs(to.s - moon.coords.s) > phalanxRange(level)) throw new GameError(`Out of range (this phalanx reaches ${phalanxRange(level)} systems)`);
   const target = planetAt(w, to);
   if (!target) throw new GameError('There is no planet there');
-  if (moon.resources.deuterium < PHALANX_COST) throw new GameError(`The moon needs ${PHALANX_COST} vespene gas per scan - transport some there`);
+  if (moon.resources.deuterium < PHALANX_COST) throw new GameError(`The moon needs ${PHALANX_COST} deuterium per scan - transport some there`);
   moon.resources.deuterium -= PHALANX_COST;
   const moves = Object.values(w.movements).filter((m) => m.mission !== 'missile' && m.ownerId !== player.id && (sameCoords(m.from, to) || sameCoords(m.to, to)));
   return {

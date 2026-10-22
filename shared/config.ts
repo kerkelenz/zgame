@@ -60,6 +60,18 @@ export interface UniverseConfig {
   invasionStrength: number;
   /** hours a Moon Forge takes (0 = the Moon Forge is switched off) */
   forgeHours: number;
+  /** share of destroyed ships' metal and crystal that stays behind as a debris field, before Geologist and class bonuses */
+  debrisShare: number;
+  /** deuterium per hour a planet's stationed ships burn, as a share of their metal and crystal value (0 = no upkeep); it grows with the size of the fleet on one planet, doubling at `fleetUpkeepKnee` value */
+  fleetUpkeep: number;
+  fleetUpkeepKnee: number;
+  /** Deuterium every Deathstar burns to take part in a combat mission (attack, moon destruction, invasion), and the hours its planet's Deathstars then wait before the next one (0 = none) */
+  deathstarFuel: number;
+  deathstarCooldownHours: number;
+  /** share of a fleet's surviving ships that come home from a battle damaged (0 = no damage), the hours they then spend in repair on their home planet and the share of their metal and crystal value the repair costs */
+  battleDamage: number;
+  repairHours: number;
+  repairCost: number;
   /** hours a player-market offer stands before it expires (0 = the market is switched off), the fee in percent the market keeps from what a buyer receives (not on alliance offers), and how many offers one commander may have open */
   marketHours: number;
   marketFeePercent: number;
@@ -86,10 +98,10 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   systems: 40,
   positions: 15,
   economySpeed: 20,
-  productionBoost: 5,
-  researchBoost: 5,
-  constructionBoost: 5,
-  shipyardBoost: 5,
+  productionBoost: 1,
+  researchBoost: 1,
+  constructionBoost: 1,
+  shipyardBoost: 1,
   storageBoost: 5,
   fleetSpeed: 10,
   protectionPoints: 200,
@@ -111,6 +123,14 @@ export const DEFAULT_CONFIG: UniverseConfig = {
   invasionMinPlayers: 2,
   warHours: 48,
   forgeHours: 12,
+  debrisShare: 0.15,
+  fleetUpkeep: 0.0003,
+  fleetUpkeepKnee: 20_000_000,
+  deathstarFuel: 500_000,
+  deathstarCooldownHours: 12,
+  battleDamage: 0.3,
+  repairHours: 3,
+  repairCost: 0.1,
   marketHours: 48,
   encounterMinMinutes: 20,
   encounterMaxMinutes: 40,

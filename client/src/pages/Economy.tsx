@@ -11,7 +11,7 @@ import { useGame } from '../game';
 import { fmtDurShort } from '../../../shared/format';
 import { Card, CoordLink, coordStr, fmt, fmtDur, ItemLink, Page } from '../ui';
 
-const LABEL: Record<ResKey, string> = { metal: 'Metal', crystal: 'Crystal', deuterium: 'Vespene Gas' };
+const LABEL: Record<ResKey, string> = { metal: 'Metal', crystal: 'Crystal', deuterium: 'Deuterium' };
 const CLS: Record<ResKey, string> = { metal: 'metal', crystal: 'crystal', deuterium: 'deut' };
 const hours = (h: number | null) => (h == null ? '–' : h === Infinity ? 'never' : h < 1 ? `${Math.max(1, Math.round(h * 60))} min` : h < 100 ? `${h.toFixed(1)} h` : `${Math.round(h / 24)} days`);
 const signed = (n: number) => (Math.abs(n) < 0.5 ? '0' : (n > 0 ? '+' : '−') + fmt(Math.abs(n)));
@@ -76,13 +76,13 @@ export function Economy() {
             </div>
           ))}
         </div>
-        <p className="muted small">In metal-equivalents (crystal ×1.5, vespene gas ×3): <b>{fmt(totals.value.perHour)}</b> per hour · <b>{fmt(totals.value.perDay)}</b> per day · stockpile <b>{fmt(totals.value.stock)}</b>.</p>
+        <p className="muted small">In metal-equivalents (crystal ×1.5, deuterium ×3): <b>{fmt(totals.value.perHour)}</b> per hour · <b>{fmt(totals.value.perDay)}</b> per day · stockpile <b>{fmt(totals.value.stock)}</b>.</p>
         {totals.lostValuePerHour > 1 && <p className="bad">⚠ Energy shortages are costing you about {fmt(totals.lostValuePerHour)} metal-equivalents every hour. Open the planet below to fix it.</p>}
       </Card>
 
       <Card title="Planet by planet">
         <div className="dwrap"><table className="table">
-          <thead><tr><th>Planet</th><th className="metal"><ResIcon k="metal" /> Metal / h</th><th className="crystal"><ResIcon k="crystal" /> Crystal / h</th><th className="deut"><ResIcon k="deuterium" /> Vespene / h</th><th><EnergyIcon size={14} /> Energy</th><th>Store fills</th><th>Best next upgrade</th></tr></thead>
+          <thead><tr><th>Planet</th><th className="metal"><ResIcon k="metal" /> Metal / h</th><th className="crystal"><ResIcon k="crystal" /> Crystal / h</th><th className="deut"><ResIcon k="deuterium" /> Deuterium / h</th><th><EnergyIcon size={14} /> Energy</th><th>Store fills</th><th>Best next upgrade</th></tr></thead>
           <tbody>
             {rows.map((r) => {
               const soonest = KEYS.map((k) => ({ k, s: r.economy.fullIn[k] })).filter((x) => x.s != null).sort((a, b) => a.s! - b.s!)[0];
@@ -146,7 +146,7 @@ export function Economy() {
           <div>
             <h4>Used by mines: {fmt(eco.energy.used)}</h4>
             <Stack total={Math.max(eco.energy.used, 1)} parts={[
-              { label: 'Metal mine', v: d.energy.usedMetal, cls: 'seg-basic' }, { label: 'Crystal mine', v: d.energy.usedCrystal, cls: 'seg-mine' }, { label: 'Vespene extractor', v: d.energy.usedDeuterium, cls: 'seg-plasma' }, { label: 'Crawlers', v: d.energy.usedCrawlers, cls: 'seg-crawl' }]} />
+              { label: 'Metal mine', v: d.energy.usedMetal, cls: 'seg-basic' }, { label: 'Crystal mine', v: d.energy.usedCrystal, cls: 'seg-mine' }, { label: 'Deuterium synthesizer', v: d.energy.usedDeuterium, cls: 'seg-plasma' }, { label: 'Crawlers', v: d.energy.usedCrawlers, cls: 'seg-crawl' }]} />
             <div className="legend">
               <span><i className="seg-basic" /><ItemLink id="metalMine" /> <b>{fmt(d.energy.usedMetal)}</b></span>
               <span><i className="seg-mine" /><ItemLink id="crystalMine" /> <b>{fmt(d.energy.usedCrystal)}</b></span>
@@ -185,7 +185,7 @@ export function Economy() {
         <div className="chips"><button className={sort === 'payback' ? 'active' : ''} onClick={() => setSort('payback')}>fastest payback</button><button className={sort === 'cost' ? 'active' : ''} onClick={() => setSort('cost')}>cheapest</button></div>}>
         {best && <p>Best next step on {sel.p.name}: <b><ItemLink id={best.id} /> {best.level}</b> pays for itself in about <b>{hours(best.paybackHours)}</b>.</p>}
         <div className="dwrap"><table className="table">
-          <thead><tr><th>Upgrade</th><th>Cost</th><th>Time</th><th className="metal"><ResIcon k="metal" /> Metal</th><th className="crystal"><ResIcon k="crystal" /> Crystal</th><th className="deut"><ResIcon k="deuterium" /> Vespene Gas</th><th>Energy</th><th>Payback</th><th>Can afford in</th><th></th></tr></thead>
+          <thead><tr><th>Upgrade</th><th>Cost</th><th>Time</th><th className="metal"><ResIcon k="metal" /> Metal</th><th className="crystal"><ResIcon k="crystal" /> Crystal</th><th className="deut"><ResIcon k="deuterium" /> Deuterium</th><th>Energy</th><th>Payback</th><th>Can afford in</th><th></th></tr></thead>
           <tbody>
             {planner.map((o) => (
               <tr key={o.id} className={o.id === best?.id ? 'next' : ''}>
@@ -201,7 +201,7 @@ export function Economy() {
             ))}
           </tbody>
         </table></div>
-        <p className="muted small">Payback = cost ÷ extra income, both in metal-equivalents (crystal ×1.5, vespene gas ×3). Energy buildings pay back by lifting the efficiency of every mine. Storage and facility upgrades are not ranked here because they pay back in other ways (room to grow, faster building).</p>
+        <p className="muted small">Payback = cost ÷ extra income, both in metal-equivalents (crystal ×1.5, deuterium ×3). Energy buildings pay back by lifting the efficiency of every mine. Storage and facility upgrades are not ranked here because they pay back in other ways (room to grow, faster building).</p>
       </Card>
     </Page>
   );

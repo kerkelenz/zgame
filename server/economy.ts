@@ -25,6 +25,20 @@ export function allianceBonuses(w: World, player: Player): AllianceBonuses {
   return b;
 }
 
+/** deuterium per hour the ships stationed on a planet burn: their value times the rate, rising with the size of the fleet; satellites and crawlers work for their keep and computer empires pay nothing */
+export function fleetUpkeep(w: World, planet: Planet): number {
+  const { fleetUpkeep: rate, fleetUpkeepKnee: knee } = w.config;
+  if (!(rate > 0) || w.players[planet.ownerId]?.npc) return 0;
+  let value = 0;
+  for (const [id, n] of Object.entries(planet.fleet)) {
+    if (id === 'solarSatellite' || id === 'crawler') continue;
+    const c = UNITS[id as UnitId].cost;
+    value += (c.metal + c.crystal) * (n || 0);
+  }
+  const speedK = Math.max(1, w.config.economySpeed * w.config.productionBoost) / 20;
+  return value * rate * speedK * (1 + value / knee);
+}
+
 export function planetProduction(w: World, planet: Planet) {
   const owner = w.players[planet.ownerId];
   const lf = lifeformEffects(planet.lifeform);
@@ -43,7 +57,8 @@ export function planetProduction(w: World, planet: Planet) {
     crawlers: planet.fleet.crawler || 0,
     crawlerMul: crawlerMul(owner),
   });
-  return { ...p, metal: p.metal * (1 + lf.metal), crystal: p.crystal * (1 + lf.crystal), deuterium: p.deuterium * (1 + lf.deuterium) };
+  const upkeep = fleetUpkeep(w, planet);
+  return { ...p, metal: p.metal * (1 + lf.metal), crystal: p.crystal * (1 + lf.crystal), deuterium: p.deuterium * (1 + lf.deuterium) - upkeep, upkeep };
 }
 
 /** Storage scales with universe speed: at x20 the mines fill twenty times faster, so a classic-sized silo would waste almost everything. */
@@ -78,6 +93,7 @@ export function updatePlanet(w: World, planet: Planet, now: number) {
   if (now <= t) return;
   if (w.players[planet.ownerId]?.vacation) { planet.updatedAt = now; return; } // vacation: nothing is produced
   settleWreck(w, planet, now);
+  settleRepairs(w, planet, now);
   for (let job = planet.buildQueue; job && job.end <= now; job = planet.buildQueue) {
     accrue(w, planet, t, job.end);
     t = job.end;
@@ -140,6 +156,18 @@ function processShipyard(w: World, planet: Planet, now: number) {
       notifyPlayer(w, planet.ownerId, 'system', 'Production complete', `${j.total}× ${u.name} finished on ${planet.name}.`);
     } else break;
   }
+}
+
+/** ships that came back from a battle damaged rejoin the fleet when their repair is done */
+function settleRepairs(w: World, planet: Planet, now: number) {
+  if (!planet.repairs?.length) return;
+  const done = planet.repairs.filter((r) => r.readyAt <= now);
+  if (!done.length) return;
+  planet.repairs = planet.repairs.filter((r) => r.readyAt > now);
+  let count = 0;
+  for (const r of done) for (const [id, n] of Object.entries(r.ships)) { planet.fleet[id as keyof typeof planet.fleet] = (planet.fleet[id as keyof typeof planet.fleet] || 0) + (n || 0); count += n || 0; }
+  notifyPlayer(w, planet.ownerId, 'system', 'Ships repaired', `${count.toLocaleString('en-US')} damaged ships on ${planet.name} are repaired and ready again.`);
+  bus.push({ to: planet.ownerId, type: 'refresh' });
 }
 
 /** a finished repair returns its ships; an untouched wreck field eventually drifts away */

@@ -17,7 +17,7 @@ export const PAGE_LABEL: Record<string, string> = {
   alliance: 'Alliance', chat: 'Chat', empire: 'Empire', economy: 'Economy', market: 'Market', command: 'Command', upgrades: 'Upgrades', lifeform: 'Lifeform',
 };
 
-export const rewardText = (r: QuestRow['reward']) => [r.metal && `${fmt(r.metal)} metal`, r.crystal && `${fmt(r.crystal)} crystal`, r.deuterium && `${fmt(r.deuterium)} vespene gas`, r.credits && `${fmt(r.credits)} Command Credits`].filter(Boolean).join(' · ');
+export const rewardText = (r: QuestRow['reward']) => [r.metal && `${fmt(r.metal)} metal`, r.crystal && `${fmt(r.crystal)} crystal`, r.deuterium && `${fmt(r.deuterium)} deuterium`, r.credits && `${fmt(r.credits)} Command Credits`].filter(Boolean).join(' · ');
 const opens = (q: QuestRow) => (q.unlocks.length ? `Opens ${q.unlocks.map((p) => PAGE_LABEL[p] ?? p).join(', ')}` : '');
 
 /** One quest as a card: what to do, what it pays and which pages it opens */
